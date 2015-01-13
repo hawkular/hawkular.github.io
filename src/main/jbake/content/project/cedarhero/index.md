@@ -11,6 +11,9 @@ ingenieux cedarhero is our set of [Apache Maven](http://maven.apache.org/) plugi
 
 In order to effectively use cedarhero, you need to have a basic understanding of [Apache Maven](http://maven.apache.org/) and [Heroku](http://www.heroku.com/).
 
+#### Foo
+  * [foo](foo.html): asciidoc stuff
+
 #### Basic Usage
 
 Here are the basic cedarhero usage instructions:
