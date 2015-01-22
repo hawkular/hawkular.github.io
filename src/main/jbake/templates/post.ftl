@@ -1,13 +1,15 @@
 <#include "header.ftl">
-      
-      <div class="row-fluid marketing">
-		<div class="span12">
-				<h2>${content.title}</h2>
-				<p class="post-date">${content.date?string("dd MMMM yyyy")}</p>
-				<p>${content.body}</p>	
-		</div>
+	
+	<#include "menu.ftl">
+	
+	<div class="page-header">
+		<h1><#escape x as x?xml>${content.title}</#escape></h1>
 	</div>
 
-	<hr>
+	<p><em>${content.date?string("dd MMMM yyyy")}</em></p>
+
+	<p>${content.body}</p>
+
+	<hr />
 	
 <#include "footer.ftl">

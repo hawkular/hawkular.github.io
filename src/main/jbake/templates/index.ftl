@@ -1,24 +1,20 @@
 <#include "header.ftl">
+	
+	<#include "menu.ftl">
 
-      <!--<div class="jumbotron">
-        <h1>Bake your own site!</h1>
-        <p class="lead">Cras justo odio, dapibus ac facilisis in, egestas eget quam. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh, ut fermentum massa justo sit amet risus.</p>
-        <a class="btn btn-large btn-success" href="#">Sign up today</a>
-      </div>
-
-	<hr>-->
-
-	<div class="row-fluid marketing">
-		<div class="span12">
-			<#list posts as post>
-			<h4><a href="${post.uri}">${post.title}</a></h4>
-			<p>${post.date?string("dd MMMM yyyy")} - ${post.body?substring(0, 150)}...</p>
-			<#if post_index = 2><#break></#if>
-			</#list>
-			<a href="/archive.html">Archive</a>
-		</div>
+	<div class="page-header">
+		<h1>Blog</h1>
 	</div>
-
-	<hr>
+	<#list posts as post>
+  		<#if (post.status == "published")>
+  			<a href="${post.uri}"><h1><#escape x as x?xml>${post.title}</#escape></h1></a>
+  			<p>${post.date?string("dd MMMM yyyy")}</p>
+  			<p>${post.body}</p>
+  		</#if>
+  	</#list>
+	
+	<hr />
+	
+	<p>Older posts are available in the <a href="/${config.archive_file}">archive</a>.</p>
 
 <#include "footer.ftl">
