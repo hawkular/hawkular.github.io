@@ -18,7 +18,7 @@
             <li>
               <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/#getting-started">Getting Started</a>
             </li>
-            <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads">Downloads</a></li>
+            <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
             <li class="dropdown"><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs">Documentation</a></li>
             <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
               Community
@@ -29,7 +29,7 @@
                 <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community">Home</a>
               </li>
               <li>
-                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>license">License</a>
+                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>license.html">License</a>
               </li>
               <li>
                 <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>builds">CI Builds</a>
