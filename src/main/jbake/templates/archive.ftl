@@ -1,6 +1,6 @@
 <#include "header.ftl">
 
-	<#include "menu.ftl">
+	<#include "navigation.ftl">
 	
 	<div class="page-header">
 		<h1>Blog Archive</h1>
