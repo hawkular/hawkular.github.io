@@ -35,7 +35,7 @@
         <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
         <script>
             window.addEventListener('load', function() {
-                 renderTabzilla("<PROJECT_NAME>", "<PROJECT_URL_NAME>", false );
+                 renderTabzilla("<PROJECT_NAME>", "<PROJECT_URL_NAME>", true );
             }, false);
         </script>
       </div>
