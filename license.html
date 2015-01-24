@@ -35,7 +35,7 @@
         <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
         <script>
             window.addEventListener('load', function() {
-                 renderTabzilla("<PROJECT_NAME>", "<PROJECT_URL_NAME>", true );
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
             }, false);
         </script>
       </div>
