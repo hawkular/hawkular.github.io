@@ -4,7 +4,7 @@
     <div class="homepage">
       <section class="main-banner">
         <div class="container">
-          <h1 class="fade-in-up one">
+          <h1 class="fade-in-up one" id="largeText">
             The Open Source
             <span>Monitoring and Management Platform</span>
           </h1>
@@ -14,6 +14,8 @@
           </div>
           <p class="version fade-in three"><i class="fa fa-list-ul"></i>0.0.1.Alpha01 - 10 Feb 2015
           </p>
+        </div>
+        <div id="datGui">
         </div>
       </section>
       <section class="boxes">
