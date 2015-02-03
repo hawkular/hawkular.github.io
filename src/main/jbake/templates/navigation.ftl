@@ -32,10 +32,10 @@
                 <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>license.html">License</a>
               </li>
               <li>
-                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>builds">CI Builds</a>
+                <a href="https://travis-ci.org/hawkular/hawkular/builds">CI Builds</a>
               </li>
             </ul></li>
-            <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog">Blog</a></li>
+            <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog.html">Blog</a></li>
           </ul>
         </div>
       </div>
