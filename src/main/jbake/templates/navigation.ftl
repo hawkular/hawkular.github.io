@@ -16,17 +16,22 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>index.html">Hawkular</a></li>
             <li>
-              <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/#getting-started">Getting Started</a>
+              <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/getting-started.html">Getting
+                  Started</a>
             </li>
             <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
-            <li class="dropdown"><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs">Documentation</a></li>
+            <li class="dropdown"><a href="<#if (content.rootpath)??>${content
+            .rootpath}<#else></#if>docs/index.html">Documentation</a></li>
             <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
               Community
               <span class="caret"></span>
             </a>
             <ul class="dropdown-menu" role="menu">
               <li>
-                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community">Home</a>
+                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/index.html">Home</a>
+              </li>
+              <li>
+                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/join.html">Join</a>
               </li>
               <li>
                 <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>license.html">License</a>
