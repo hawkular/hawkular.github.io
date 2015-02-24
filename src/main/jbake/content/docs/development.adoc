@@ -2,6 +2,7 @@
 Heiko Rupp
 2015-02-16
 :description: Hacking on Hawkular
+:icons: font
 :jbake-type: page
 :jbake-status: published
 
@@ -15,48 +16,47 @@ Project assembly is run via Apache Maven.
 
 The UI code consists mostly of AngularJS directives written in Typescript and then translated into JavaScript.
 
-= Components
+== Components
 
-== Hawkular
+[cols="4*", options="header"]
+|===
+|Name|GitHub|Bug tracking|Description
+|Hawkular|https://github.com/hawkular/hawkular|https://issues.jboss.org/browse/HAWKULAR|The “glue” use all
+components to build the hawkular solution, this is the project that users would build and run, it consumes all the components.
+|Hawkular-Alerts|https://github.com/hawkular/hawkular-alerts|https://issues.jboss.org/browse/HWKALERTS|Model and services to model and define alerts. It also runs the engine to tell when an alert needs to be triggered.
+|Hawkular-Metrics|https://github.com/hawkular/hawkular-metrics|https://issues.jboss.org/browse/HWKMETRICS|Model and service for metrics and availability storage.
+|Hawkular-Bus|https://github.com/hawkular/hawkular-bus|https://issues.jboss.org/browse/HWKBUS|Communication back bone
+|Hawkular-Inventory|https://github.com/hawkular/hawkular-inventory|https://issues.jboss.org/browse/HWKINVENT|In charge of modeling the various components to monitor and their relationships.
+|Hawkular-Build-Tools|https://github.com/hawkular/hawkular-build-tools|https://issues.jboss.org/browse/HAWKULAR|Various tools to help for the build, contains checkstyle definitions for instance
+|===
 
-Description: The “glue” use all components to build the hawkular solution, this is the project that users would build and run, it consumes all the components.
+== Building
 
-GitHub link: https://github.com/hawkular/hawkular
+Each hawkular component should be buildable on its own, but may have dependencies on other components.
+We regularly publish snapshots into the JBoss Nexus snapshot repository.
 
-JIRA: https://issues.jboss.org/browse/HAWKULAR
+=== Full distribution
 
+To build the full distribution, you need to check out the main hawkular repo
 
-== Hawkular Alerts
-Description: Model and services to model and define alerts. It also runs the engine to tell when an alert needs to be triggered.
+[source,shell]
+----
+git clone https://github.com/hawkular/hawkular.git
+cd hawkular
+mvn install -Pdev -Dlicense.skip
+cd kettle/target
+cd wildfly-8.2.0.Final
+bin/standalone.sh
+----
 
-JIRA: https://issues.jboss.org/browse/HWKALERTS
+When you build the Kettle, all sub-components are deployed to
+`modules/system/layers/base/org/hawkular/nest/main/deployments/` inside the WildFly server.
 
-GitHub link: https://github.com/hawkular/hawkular-alerts
+TIP: If you want hot-deploy during development, you need to remove the respective component from above modules
+directory and can then copy your deployment into the normal deployment directory at `standalone/deployments/`.
 
-== Hawkular Metrics
-Description: Model and service for metrics and availability storage.
+TIP: If you want to attach a remote debugger, you can start the server with `--debug` option like this:
 
-JIRA: https://issues.jboss.org/browse/HWKMETRICS
-
-GitHub link: https://github.com/hawkular/hawkular-metrics
-
-== Hawkular Bus
-Description: Communication back bone
-
-JIRA: https://issues.jboss.org/browse/HWKBUS
-
-GitHub link: https://github.com/hawkular/hawkular-bus
-
-== Hawkular Inventory
-Description: In charge of modeling the various components to monitor and their relationships.
-
-JIRA: https://issues.jboss.org/browse/HWKINVENT
-
-GitHub link: https://github.com/hawkular/hawkular-inventory
-
-== Hawkular Build Tools
-Description: Various tools to help for the build, contains checkstyle definitions for instance.
-
-JIRA: https://issues.jboss.org/browse/HAWKULAR
-
-GitHub link: https://github.com/hawkular/hawkular-build-tools
+----
+bin/standalone.sh --debug
+----
