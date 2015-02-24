@@ -2,6 +2,8 @@
 
 <#include "navigation.ftl">
 
+<div class="container">
+
 <section class="main-banner">
     <div class="container">
         <h1>Blog Archive</h1>
@@ -25,5 +27,7 @@
 	<#assign last_month = post.date?string("MMMM yyyy")>
 </#list>
 </ul>
+
+</div>
 
 <#include "footer.ftl">
