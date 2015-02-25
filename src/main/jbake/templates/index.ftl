@@ -4,22 +4,19 @@
 <div class="homepage">
     <section class="main-banner">
         <div class="container">
-            <h1 class="fade-in-up one" id="largeText">
-                The Open Source
-                <span>Monitoring and Management Platform</span>
-            </h1>
-
-            <div class="buttons fade-in two">
-                <a class="btn btn-primary btn-lg" href="https://github.com/hawkular/hawkular">Download Hawkular</a>
-                <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
-            </div>
-            <p class="version fade-in three"><i class="fa fa-list-ul"></i>0.0.1.Alpha01 - 10 Feb 2015
-            </p>
+          <h1 class="fade-in-up one">
+            The Open Source
+            <span>Monitoring and Management Platform</span>
+          </h1>
+          <div class="buttons fade-in two">
+            <a class="btn btn-primary btn-lg" href="https://github.com/hawkular/hawkular">Download Hawkular</a>
+            <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
+          </div>
+          <p class="version fade-in three"><i class="fa fa-list-ul"></i>0.0.1.Alpha01 - 10 Mar 2015
+          </p>
         </div>
-        <div id="datGui">
-        </div>
-    </section>
-    <section class="boxes">
+      </section>
+      <section class="boxes">
         <div class="row">
             <div class="server-side box col-sm-4">
                 <div class="content">
