@@ -1,4 +1,4 @@
-#https://github.com/hawkular/hawkular.github.io/tree/pages
+#https://github.com/hawkular/hawkular.github.io/tree/master/docker
 
 FROM fedora/apache
 MAINTAINER Jiri Kremser <jkremser@redhat.com>
