@@ -9,11 +9,11 @@
             <span>Monitoring and Management Platform</span>
           </h1>
           <div class="buttons fade-in two">
-            <a class="btn btn-primary btn-lg" href="https://github.com/hawkular/hawkular">Download Hawkular</a>
+            <!--<a class="btn btn-primary btn-lg" href="https://github.com/hawkular/hawkular">Download Hawkular</a>-->
             <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
           </div>
-          <p class="version fade-in three"><i class="fa fa-list-ul"></i>0.0.1.Alpha01 - 10 Mar 2015
-          </p>
+          <!--<p class="version fade-in three"><i class="fa fa-list-ul"></i>0.0.1.Alpha01 - 10 Mar 2015
+          </p>-->
         </div>
       </section>
       <section class="boxes">

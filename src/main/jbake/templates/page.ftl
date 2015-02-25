@@ -17,6 +17,4 @@
       </div>
     </section>
 
-	<hr />
-
 <#include "footer.ftl">

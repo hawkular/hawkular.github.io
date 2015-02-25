@@ -8,7 +8,6 @@
       </div>
     </div>
 
-
     <section class="redhat">
       <div class="container">
         <p class="text-center">
