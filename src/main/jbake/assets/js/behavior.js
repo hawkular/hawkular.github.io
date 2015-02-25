@@ -33,11 +33,17 @@ $(document).ready(function(){
   var colors = gui.addFolder('Colors');
   colors.addColor(params, 'defaultColor').onChange(function(value){
     document.styleSheets[5].cssRules[1132].style.setProperty('color', value, null);
-    document.styleSheets[5].cssRules[1115].style.setProperty('color', value, null);
     document.styleSheets[5].cssRules[1120].style.setProperty('background', value, null);
 //    [1132].color= #428bca   //6496
 //    [1120].cssText = "background: #428bca" //6421
   });
+
+ // colors.addColor(params, 'fooColor').onChange(function(value){
+//    document.styleSheets[5].cssRules[1132].style.setProperty('color', value, null);
+//    document.styleSheets[5].cssRules[1120].style.setProperty('background', value, null);
+//    [1132].color= #428bca   //6496
+//    [1120].cssText = "background: #428bca" //6421
+ // });
   colors.open();
-  gui.close();
+
 });
