@@ -7,9 +7,19 @@ notifications:
     channels:
     - chat.freenode.net#hawkular
     on_success: change
+    on_failure: change
 
 env:
   global:
     secure: "CHhMe+l5PsSiV9JEUH4Pxqxj/MGpnhwwmD/hp3BuF1c1f8sdrTax7xduNpttJ84Mp3GdEDspfL5sI695/JZU5SqSSIvBxJMEwGtt7/c8gSHdmMdSrpsIgob24D9NIUtrzmqaXRa1Upy7Vll0hs30siOdnxQJKZnjv719Dq+73To="
+
 install:
-  - mvn -s .travis.settings.xml install
+  # download all the universe
+  - mvn -version -B
+script:
+  # bake the pages
+  - mvn install -B
+
+after_success:
+  # push to master
+  - test "${TRAVIS_BRANCH}" = "pages" && test "${TRAVIS_PULL_REQUEST}" = "false" && mvn -s .travis.settings.xml site
