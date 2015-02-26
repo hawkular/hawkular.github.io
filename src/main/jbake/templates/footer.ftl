@@ -27,6 +27,12 @@
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/jbossorg-tabzilla.js"></script>
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/behavior.js"></script>
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/prettify.js"></script>
+
+    <p><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-blue">
+        Fork me on GitHub
+      </a>
+    </span></p>
     
 <#include "analytics.ftl">
 
