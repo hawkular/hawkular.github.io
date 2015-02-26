@@ -28,24 +28,25 @@
             <div class="services box col-sm-4">
                 <div class="content">
                     <h3>Monitoring ready to use</h3>
-
-                    <p>Storage, security, push and more</p>
                 </div>
             </div>
             <div class="cloud box col-sm-4">
                 <div class="content">
                     <h3>On-premise or in the cloud</h3>
 
-                    <p>Also running on OpenShift</p>
+                    <p>Will also run on OpenShift</p>
                 </div>
             </div>
         </div>
     </section>
     <section class="description">
         <p>
-            Hawkular provides a flexible and easy to use Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-            eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-            exercitation ullamco laboris nisi ut aliquip you need.
+            Hawkular is a new Open Source monitoring solution. While it is under heavy development, this is
+            also a great time to <a href="/community/join.html" target="_blank">join the discussions</a> and
+            why not even <a href="https://github.com/hawkular" target="_blank">contribute</a>. We know it's
+            very rough at the moment and documentation is coming up but feel free to ask anything on
+            <a href="irc://irc.freenode.net/#hawkular" target="_blank">IRC</a> or by 
+            <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev" target="_blank">EMail</a>.
         </p>
     </section>
     <section class="main-features">
