@@ -16,7 +16,7 @@
           <ul class="nav navbar-nav">
             <li class="active"><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>index.html">Hawkular</a></li>
             <li>
-              <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/getting-started.html">Getting
+              <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/getting-started.html">Getting
                   Started</a>
             </li>
             <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
