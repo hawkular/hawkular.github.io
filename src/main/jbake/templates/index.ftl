@@ -41,7 +41,12 @@
     </section>
     <section class="description">
         <p>
-            Hawkular is a new Open Source monitoring solution. While it is under heavy development, this is also a great time to <a href="/community/join.html" target="_blank">join the discussions</a> and why not even <a href="https://github.com/hawkular" target="_blank">contribute</a>. We know it's very rough at the moment and documentation is coming up but feel free to ask anything on <a href="irc://irc.freenode.net/#hawkular" target="_blank">IRC</a> or by <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev" target="_blank">EMail</a>.
+            Hawkular is a new Open Source monitoring solution. While it is under heavy development, this is
+            also a great time to <a href="/community/join.html" target="_blank">join the discussions</a> and
+            why not even <a href="https://github.com/hawkular" target="_blank">contribute</a>. We know it's
+            very rough at the moment and documentation is coming up but feel free to ask anything on
+            <a href="irc://irc.freenode.net/#hawkular" target="_blank">IRC</a> or by 
+            <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev" target="_blank">EMail</a>.
         </p>
     </section>
     <section class="main-features">
