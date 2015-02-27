@@ -1,12 +1,12 @@
 $(document).ready(function(){
   if (!!$('#toc').offset()) {
-    var topOffset = 120;
+    var topOffset = 100;
     var stickyTop = $('#toc').offset().top - topOffset ; 
     $(window).scroll(function(){ 
       var windowTop = $(window).scrollTop(); 
  
       if (stickyTop < windowTop) {
-        $('#toc').css({ position: 'fixed', top: topOffset });
+        $('#toc').css({ position: 'fixed', top: topOffset + 40 });
       } else {
         $('#toc').css('position','static');
       }
