@@ -20,6 +20,6 @@ $(document).ready(function(){
     .css('float', 'left')
     .css('padding-top', '40px')
     .css('float', 'left')
-    .css('margin-right', '30px');
+    .css('margin-right', '10px');
 });
 
