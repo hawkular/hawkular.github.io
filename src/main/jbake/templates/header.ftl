@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - <#if (content.title)??><#escape x as x?xml>${content.title}</#escape><#else>About</#if></title>
+    <title>Hawkular<#if (content.title)??> - <#escape x as x?xml>${content.title}</#escape></#if></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
