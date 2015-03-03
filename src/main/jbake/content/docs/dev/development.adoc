@@ -59,9 +59,15 @@ When the server is running you can hit the UI at http://localhost:8080/
 When you build the Kettle, all sub-components are deployed to
 `modules/system/layers/base/org/hawkular/nest/main/deployments/` inside the WildFly server.
 
-TIP: If you want hot-deploy during development, you need to enable the deployment scanner at `standalone/configuration/standalone.xml` 
-by setting `<deployment-scanner scan-enabled="true" ...`, remove the respective component from above modules directory and can 
-then copy your deployment into the normal deployment directory at `standalone/deployments/`.
+TIP: If you want to hot-deploy your component during development, you need to enable the deployment scanner. You can do this
+via the JBoss CLI by running this command:
+[source,shell]
+----
+bin/jboss-cli.sh --connect --command='/subsystem=deployment-scanner/scanner=default/:write-attribute(name=scan-enabled,value=true)'
+----
+You can set this manually by editing `standalone/configuration/standalone.xml` and setting `<deployment-scanner scan-enabled="true" ...`.
+Once the scanner is enabled, you need to remove the respective component from the above modules directory. Now you can 
+then copy your component's deployment into the scanner's deployment directory at `standalone/deployments/`.
 
 TIP: If you want to attach a remote debugger, you can start the server with `--debug` option like this:
 `bin/standalone.sh --debug`
