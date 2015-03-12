@@ -1,0 +1,942 @@
+title=swagger
+description=Hawkular is released under Apache License v 2.0
+date=2015-01-23
+type=page
+tags=asciidoc
+status=published
+~~~~~~
+
+== APIs
+=== Metrics related REST interface
+
+====  `/{tenantId}/metrics/numeric`
+
+Create numeric metric definition.
+
+Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.
+
+----
+*POST* `/{tenantId}/metrics/numeric`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<NumericMetric,NumericMetric>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric definition created successfully | -
+| 400    | Metric with given id already exists or request is otherwise incorrect | [Error](#<<Error>>)
+| 500    | Metric definition creation failed due to an unexpected error | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/availability`
+
+Create availability metric definition. Same notes as creating numeric metric apply.
+
+
+
+----
+*POST* `/{tenantId}/metrics/availability`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<AvailabilityMetric,AvailabilityMetric>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric definition created successfully | -
+| 400    | Metric with given id already exists | [Error](#<<Error>>)
+| 500    | Metric definition creation failed due to an unexpected error | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/availability/{id}/data`
+
+Add data for a single availability metric.
+
+
+
+----
+*POST* `/{tenantId}/metrics/availability/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of availability datapoints|<<Availability,List[Availability]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [Error](#<<Error>>)
+|=======================
+
+
+Retrieve availability data.
+
+
+
+----
+*GET* `/{tenantId}/metrics/availability/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+|=======================
+
+===== Response
+[Availability](#Availability)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched availability data. | -
+| 204    | No availability data was found. | -
+|=======================
+
+====  `/{tenantId}/metrics/numeric/data`
+
+Add metric data for multiple numeric metrics in a single call.
+
+
+
+----
+*POST* `/{tenantId}/metrics/numeric/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of metrics|<<NumericMetric,List[NumericMetric]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/availability/data`
+
+Add metric data for multiple availability metrics in a single call.
+
+
+
+----
+*POST* `/{tenantId}/metrics/availability/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of availability metrics|<<AvailabilityMetric,List[AvailabilityMetric]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/numeric`
+
+Find numeric metrics data by their tags.
+
+
+
+----
+*GET* `/{tenantId}/numeric`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tags|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[List[Map]](#Map)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    |  | -
+| 500    | Any error in the query. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/data`
+
+Retrieve numeric data.
+
+
+
+----
+*GET* `/{tenantId}/metrics/numeric/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+    |buckets|false|The number of buckets or intervals in which to divide the time range. A value of 60 for example will return 60 equally spaced buckets for the time period between start and end times having max/min/avg calculated for each bucket.|int
+|=======================
+
+===== Response
+[List](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched numeric data. | -
+| 204    | No numeric data was found. | -
+| 500    | Unexpected error occurred while fetching numeric data. | [Error](#<<Error>>)
+|=======================
+
+
+Add data for a single numeric metric.
+
+
+
+----
+*POST* `/{tenantId}/metrics/numeric/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of datapoints containing timestamp and value|<<NumericData,List[NumericData]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 500    | Unexpected error happened while storing the data | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/availability`
+
+Find availabilities metrics data by their tags.
+
+
+
+----
+*GET* `/{tenantId}/availability`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tags|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[List[Map]](#Map)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    |  | -
+| 204    | No matching availability metrics were found. | -
+| 500    | Any error in the query. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/tag`
+
+Add or update numeric metric&#39;s tags.
+
+
+
+----
+*POST* `/{tenantId}/metrics/numeric/{id}/tag`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<TagRequest,TagRequest>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tags were modified successfully. | -
+|=======================
+
+====  `/{tenantId}/metrics/availability/{id}/tag`
+
+Add or update availability metric&#39;s tags.
+
+
+
+----
+*POST* `/{tenantId}/metrics/availability/{id}/tag`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<TagRequest,TagRequest>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tags were modified successfully. | -
+|=======================
+
+====  `/{tenantId}/tags/numeric/{tag}`
+
+Find numeric metric data with given tags.
+
+
+
+----
+*GET* `/{tenantId}/tags/numeric/{tag}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |tag|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[List[Map]](#Map)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Numeric values fetched successfully | -
+| 500    | Any error while fetching data. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/tags/availability/{tag}`
+
+Find availability metric data with given tags.
+
+
+
+----
+*GET* `/{tenantId}/tags/availability/{tag}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |tag|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[List[Map]](#Map)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Availability values fetched successfully | -
+| 500    | Any error while fetching data. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics`
+
+Find tenant&#39;s metric definitions.
+
+Does not include any metric values. 
+
+----
+*GET* `/{tenantId}/metrics`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |type|true|Queried metric type|string
+|=======================
+
+===== Response
+[List[List]](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully retrieved at least one metric definition. | -
+| 204    | No metrics found. | -
+| 400    | Given type is not a valid type. | [Error](#<<Error>>)
+| 500    | Failed to retrieve metrics due to unexpected error. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/tags`
+
+Retrieve tags associated with the metric definition.
+
+
+
+----
+*GET* `/{tenantId}/metrics/numeric/{id}/tags`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+
+===== Response
+[Metric](#Metric)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully retrieved. | -
+| 204    | Query was successful, but no metrics were found. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+
+Update tags associated with the metric definition.
+
+
+
+----
+*PUT* `/{tenantId}/metrics/numeric/{id}/tags`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully updated. | -
+| 500    | Unexpected error occurred while updating metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/tags/{tags}`
+
+Delete tags associated with the metric definition.
+
+
+
+----
+*DELETE* `/{tenantId}/metrics/numeric/{id}/tags/{tags}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+    |tags|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully deleted. | -
+| 500    | Unexpected error occurred while trying to delete metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/availability/{id}/tags`
+
+Retrieve tags associated with the metric definition.
+
+
+
+----
+*GET* `/{tenantId}/metrics/availability/{id}/tags`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+
+===== Response
+[Map](#Map)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully retrieved. | -
+| 204    | Query was successful, but no metrics were found. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+
+Update tags associated with the metric definition.
+
+
+
+----
+*PUT* `/{tenantId}/metrics/availability/{id}/tags`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully updated. | -
+| 500    | Unexpected error occurred while updating metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+====  `/{tenantId}/metrics/availability/{id}/tags/{tags}`
+
+Delete tags associated with the metric definition.
+
+
+
+----
+*DELETE* `/{tenantId}/metrics/availability/{id}/tags/{tags}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+    |tags|true|A list of tags in the format of name:value|string
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully deleted. | -
+| 500    | Unexpected error occurred while trying to delete metric&#39;s tags. | [Error](#<<Error>>)
+|=======================
+
+=== Tenants related REST interface
+
+====  `/tenants`
+
+Create a new tenant. 
+
+Clients are not required to create explicitly create a tenant before starting to store metric data. It is recommended to do so however to ensure that there are no tenant id naming collisions and to provide default data retention settings. 
+
+----
+*POST* `/tenants`
+----
+
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Tenant,Tenant>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tenant has been succesfully created. | -
+| 400    | Retention properties are invalid.  | [Error](#<<Error>>)
+| 409    | Given tenant id has already been created. | [Error](#<<Error>>)
+| 500    | An unexpected error occured while trying to create a tenant. | [Error](#<<Error>>)
+|=======================
+
+
+Returns a list of tenants.
+
+
+
+----
+*GET* `/tenants`
+----
+
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Returned a list of tenants successfully. | -
+| 204    | No tenants were found. | -
+| 500    | Unexpected error occurred while fetching tenants. | [Error](#<<Error>>)
+|=======================
+
+
+== Data Types
+
+[[AggregationTemplate]]
+=== AggregationTemplate
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|type|MetricTypeMetricType|optional|-|- Allowable values:numeric, availability, log event|-
+|interval|IntervalInterval|optional|-|-|-
+|functions|SetSet|optional|-|-|-
+|=======================
+
+
+[[Availability]]
+=== Availability
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|tTL|int|optional|-|-|-
+|value|AvailabilityTypeAvailabilityType|optional|-|- Allowable values:AvailabilityType{code=0, text=up}, AvailabilityType{code=1, text=down}|-
+|timestamp|long|optional|-|-|-
+|writeTime|long|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|=======================
+
+
+[[AvailabilityMetric]]
+=== AvailabilityMetric
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|type|MetricTypeMetricType|optional|-|- Allowable values:numeric, availability, log event|-
+|data|TArray[T]|optional|-|-|-
+|tenantId|string|optional|-|-|-
+|id|MetricIdMetricId|optional|-|-|-
+|dataRetention|int|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|=======================
+
+
+[[Error]]
+=== Error
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|errorMsg|string|optional|-|Detailed error message of what happened|Detailed error message of what happened
+|=======================
+
+
+[[Interval]]
+=== Interval
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|length|int|optional|-|-|-
+|units|UnitsUnits|optional|-|- Allowable values:MINUTES, HOURS, DAYS|-
+|=======================
+
+
+[[Map]]
+=== Map
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|empty|boolean|optional|-|-|-
+|=======================
+
+
+[[Metric]]
+=== Metric
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|data|TArray[T]|optional|-|-|-
+|tenantId|string|optional|-|-|-
+|dataRetention|int|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|id|MetricIdMetricId|optional|-|-|-
+|=======================
+
+
+[[MetricId]]
+=== MetricId
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|name|string|optional|-|-|-
+|interval|IntervalInterval|optional|-|-|-
+|=======================
+
+
+[[NumericData]]
+=== NumericData
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|aggregatedValues|SetSet|optional|-|-|-
+|tTL|int|optional|-|-|-
+|value|double|optional|-|-|-
+|timestamp|long|optional|-|-|-
+|writeTime|long|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|=======================
+
+
+[[NumericMetric]]
+=== NumericMetric
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|type|MetricTypeMetricType|optional|-|- Allowable values:numeric, availability, log event|-
+|data|TArray[T]|optional|-|-|-
+|tenantId|string|optional|-|-|-
+|id|MetricIdMetricId|optional|-|-|-
+|dataRetention|int|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|=======================
+
+
+[[TagRequest]]
+=== TagRequest
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|timestamp|long|optional|-|-|-
+|end|long|optional|-|-|-
+|start|long|optional|-|-|-
+|tags|Map[string,string]Map[string,string]|optional|-|-|-
+|=======================
+
+
+[[Tenant]]
+=== Tenant
+[options="header"]
+|=======================
+| name | type | required | access | description | notes
+|aggregationTemplates|AggregationTemplateArray[AggregationTemplate]|optional|-|-|-
+|id|string|optional|-|-|-
+|=======================
+
+
