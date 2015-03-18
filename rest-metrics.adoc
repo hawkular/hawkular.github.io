@@ -3,14 +3,14 @@
 == APIs
 === Metrics related REST interface
 
-====  `/{tenantId}/metrics/availability/{id}/data`
+====  `/{tenantId}/metrics/availability`
 
-Add data for a single availability metric.
+Create availability metric definition. Same notes as creating numeric metric apply.
 
 
 
 ----
-*POST* `/{tenantId}/metrics/availability/{id}/data`
+*POST* `/{tenantId}/metrics/availability`
 ----
 
 ===== path parameters
@@ -19,14 +19,13 @@ Add data for a single availability metric.
 |=======================
 |Parameter|Required|Description|Data Type
     |tenantId|true||string
-    |id|true||string
 |=======================
 ===== body parameters
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of availability datapoints|<<Availability,List[Availability]>>
+    |body|true||<<AvailabilityMetric,AvailabilityMetric>>
 |=======================
 
 ===== Response
@@ -36,18 +35,20 @@ Add data for a single availability metric.
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Adding data succeeded. | -
+| 201    | Metric definition created successfully | -
 | 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
-| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+| 409    | Numeric metric with given id already exists | [ApiError](#<<ApiError>>)
+| 500    | Metric definition creation failed due to an unexpected error | [ApiError](#<<ApiError>>)
 |=======================
 
+====  `/{tenantId}/metrics/numeric/{id}/tags`
 
-Retrieve availability data.
+Retrieve tags associated with the metric definition.
 
 
 
 ----
-*GET* `/{tenantId}/metrics/availability/{id}/data`
+*GET* `/{tenantId}/metrics/numeric/{id}/tags`
 ----
 
 ===== path parameters
@@ -58,34 +59,26 @@ Retrieve availability data.
     |tenantId|true||string
     |id|true||string
 |=======================
-===== query parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |start|false|Defaults to now - 8 hours|long
-    |end|false|Defaults to now|long
-|=======================
 
 ===== Response
-[Availability](#Availability)
+[Metric](#Metric)
 
 ===== Status codes
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Successfully fetched availability data. | -
-| 204    | No availability data was found. | -
+| 200    | Metric&#39;s tags were successfully retrieved. | -
+| 204    | Query was successful, but no metrics were found. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [ApiError](#<<ApiError>>)
 |=======================
 
-====  `/{tenantId}/metrics/numeric/data`
 
-Add metric data for multiple numeric metrics in a single call.
+Update tags associated with the metric definition.
 
 
 
 ----
-*POST* `/{tenantId}/metrics/numeric/data`
+*PUT* `/{tenantId}/metrics/numeric/{id}/tags`
 ----
 
 ===== path parameters
@@ -94,13 +87,14 @@ Add metric data for multiple numeric metrics in a single call.
 |=======================
 |Parameter|Required|Description|Data Type
     |tenantId|true||string
+    |id|true||string
 |=======================
 ===== body parameters
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of metrics|<<NumericMetric,List[NumericMetric]>>
+    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
 |=======================
 
 ===== Response
@@ -110,8 +104,8 @@ Add metric data for multiple numeric metrics in a single call.
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Adding data succeeded. | -
-| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+| 200    | Metric&#39;s tags were successfully updated. | -
+| 500    | Unexpected error occurred while updating metric&#39;s tags. | [ApiError](#<<ApiError>>)
 |=======================
 
 ====  `/{tenantId}/metrics/availability/data`
@@ -223,6 +217,237 @@ Find availabilities metrics data by their tags.
 | 500    | Any error in the query. | [ApiError](#<<ApiError>>)
 |=======================
 
+====  `/{tenantId}/metrics/numeric/{id}/data`
+
+Retrieve numeric data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket.
+
+
+
+----
+*GET* `/{tenantId}/metrics/numeric/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+    |buckets|false|Total number of buckets|int
+    |bucketDuration|false|Bucket duration|<<Duration,Duration>>
+|=======================
+
+===== Response
+[List](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched numeric data. | -
+| 204    | No numeric data was found. | -
+| 400    | buckets or bucketDuration parameter is invalid, or both are used. | [ApiError](#<<ApiError>>)
+| 500    | Unexpected error occurred while fetching numeric data. | [ApiError](#<<ApiError>>)
+|=======================
+
+
+Add data for a single numeric metric.
+
+
+
+----
+*POST* `/{tenantId}/metrics/numeric/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of datapoints containing timestamp and value|<<NumericData,List[NumericData]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
+| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/periods`
+
+Retrieve periods for which the condition holds true for each consecutive data point.
+
+
+
+----
+*GET* `/{tenantId}/metrics/numeric/{id}/periods`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+    |threshold|true|A threshold against which values are compared|double
+    |op|true|A comparison operation to perform between values and the threshold. Supported operations include ge, gte, lt, lte, and eq|string
+|=======================
+
+===== Response
+[List](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched periods. | -
+| 204    | No numeric data was found. | -
+| 400    | Missing or invalid query parameters | -
+|=======================
+
+====  `/{tenantId}/metrics/availability/{id}/data`
+
+Retrieve availability data.
+
+
+
+----
+*GET* `/{tenantId}/metrics/availability/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== query parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+|=======================
+
+===== Response
+[Availability](#Availability)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched availability data. | -
+| 204    | No availability data was found. | -
+|=======================
+
+
+Add data for a single availability metric.
+
+
+
+----
+*POST* `/{tenantId}/metrics/availability/{id}/data`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of availability datapoints|<<Availability,List[Availability]>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
+| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+|=======================
+
+====  `/{tenantId}/metrics/numeric/{id}/tag`
+
+Add or update numeric metric&#39;s tags.
+
+
+
+----
+*POST* `/{tenantId}/metrics/numeric/{id}/tag`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tenantId|true||string
+    |id|true||string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<TagRequest,TagRequest>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tags were modified successfully. | -
+|=======================
+
 ====  `/{tenantId}/metrics/availability/{id}/tag`
 
 Add or update availability metric&#39;s tags.
@@ -319,14 +544,14 @@ Find availability metric data with given tags.
 | 500    | Any error while fetching data. | [ApiError](#<<ApiError>>)
 |=======================
 
-====  `/{tenantId}/metrics/availability`
+====  `/{tenantId}/metrics`
 
-Create availability metric definition. Same notes as creating numeric metric apply.
+Find tenant&#39;s metric definitions.
 
-
+Does not include any metric values. 
 
 ----
-*POST* `/{tenantId}/metrics/availability`
+*GET* `/{tenantId}/metrics`
 ----
 
 ===== path parameters
@@ -336,25 +561,25 @@ Create availability metric definition. Same notes as creating numeric metric app
 |Parameter|Required|Description|Data Type
     |tenantId|true||string
 |=======================
-===== body parameters
+===== query parameters
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<AvailabilityMetric,AvailabilityMetric>>
+    |type|true|Queried metric type|string
 |=======================
 
 ===== Response
-[](#)
+[List[List]](#)
 
 ===== Status codes
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Metric definition created successfully | -
-| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
-| 409    | Numeric metric with given id already exists | [ApiError](#<<ApiError>>)
-| 500    | Metric definition creation failed due to an unexpected error | [ApiError](#<<ApiError>>)
+| 200    | Successfully retrieved at least one metric definition. | -
+| 204    | No metrics found. | -
+| 400    | Given type is not a valid type. | [ApiError](#<<ApiError>>)
+| 500    | Failed to retrieve metrics due to unexpected error. | [ApiError](#<<ApiError>>)
 |=======================
 
 ====  `/{tenantId}/metrics/numeric`
@@ -524,14 +749,14 @@ Delete tags associated with the metric definition.
 | 500    | Unexpected error occurred while trying to delete metric&#39;s tags. | [ApiError](#<<ApiError>>)
 |=======================
 
-====  `/{tenantId}/metrics/numeric/{id}/data`
+====  `/{tenantId}/metrics/numeric/data`
 
-Add data for a single numeric metric.
+Add metric data for multiple numeric metrics in a single call.
 
 
 
 ----
-*POST* `/{tenantId}/metrics/numeric/{id}/data`
+*POST* `/{tenantId}/metrics/numeric/data`
 ----
 
 ===== path parameters
@@ -540,14 +765,13 @@ Add data for a single numeric metric.
 |=======================
 |Parameter|Required|Description|Data Type
     |tenantId|true||string
-    |id|true||string
 |=======================
 ===== body parameters
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of datapoints containing timestamp and value|<<NumericData,List[NumericData]>>
+    |body|true|List of metrics|<<NumericMetric,List[NumericMetric]>>
 |=======================
 
 ===== Response
@@ -558,231 +782,7 @@ Add data for a single numeric metric.
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | Adding data succeeded. | -
-| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
 | 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
-|=======================
-
-
-Retrieve numeric data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket.
-
-
-
-----
-*GET* `/{tenantId}/metrics/numeric/{id}/data`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-===== query parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |start|false|Defaults to now - 8 hours|long
-    |end|false|Defaults to now|long
-    |buckets|false|Total number of buckets|int
-    |bucketDuration|false|Bucket duration|<<Duration,Duration>>
-|=======================
-
-===== Response
-[List](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully fetched numeric data. | -
-| 204    | No numeric data was found. | -
-| 400    | buckets or bucketDuration parameter is invalid, or both are used. | [ApiError](#<<ApiError>>)
-| 500    | Unexpected error occurred while fetching numeric data. | [ApiError](#<<ApiError>>)
-|=======================
-
-====  `/{tenantId}/metrics/numeric/{id}/tags`
-
-Retrieve tags associated with the metric definition.
-
-
-
-----
-*GET* `/{tenantId}/metrics/numeric/{id}/tags`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-
-===== Response
-[Metric](#Metric)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Metric&#39;s tags were successfully retrieved. | -
-| 204    | Query was successful, but no metrics were found. | -
-| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [ApiError](#<<ApiError>>)
-|=======================
-
-
-Update tags associated with the metric definition.
-
-
-
-----
-*PUT* `/{tenantId}/metrics/numeric/{id}/tags`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-===== Response
-[](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Metric&#39;s tags were successfully updated. | -
-| 500    | Unexpected error occurred while updating metric&#39;s tags. | [ApiError](#<<ApiError>>)
-|=======================
-
-====  `/{tenantId}/metrics`
-
-Find tenant&#39;s metric definitions.
-
-Does not include any metric values. 
-
-----
-*GET* `/{tenantId}/metrics`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-|=======================
-===== query parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |type|true|Queried metric type|string
-|=======================
-
-===== Response
-[List[List]](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully retrieved at least one metric definition. | -
-| 204    | No metrics found. | -
-| 400    | Given type is not a valid type. | [ApiError](#<<ApiError>>)
-| 500    | Failed to retrieve metrics due to unexpected error. | [ApiError](#<<ApiError>>)
-|=======================
-
-====  `/{tenantId}/metrics/numeric/{id}/periods`
-
-Retrieve periods for which the condition holds true for each consecutive data point.
-
-
-
-----
-*GET* `/{tenantId}/metrics/numeric/{id}/periods`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-===== query parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |start|false|Defaults to now - 8 hours|long
-    |end|false|Defaults to now|long
-    |threshold|true|A threshold against which values are compared|double
-    |op|true|A comparison operation to perform between values and the threshold. Supported operations include ge, gte, lt, lte, and eq|string
-|=======================
-
-===== Response
-[List](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully fetched periods. | -
-| 204    | No numeric data was found. | -
-| 400    | Missing or invalid query parameters | -
-|=======================
-
-====  `/{tenantId}/metrics/numeric/{id}/tag`
-
-Add or update numeric metric&#39;s tags.
-
-
-
-----
-*POST* `/{tenantId}/metrics/numeric/{id}/tag`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<TagRequest,TagRequest>>
-|=======================
-
-===== Response
-[](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Tags were modified successfully. | -
 |=======================
 
 === Tenants related REST interface
@@ -884,9 +884,9 @@ Returns a list of tenants.
 |type|MetricTypeMetricType|optional|-|- Allowable values:numeric, availability, log event|-
 |data|TArray[T]|optional|-|-|-
 |tenantId|string|optional|-|-|-
+|id|MetricIdMetricId|optional|-|-|-
 |dataRetention|int|optional|-|-|-
 |tags|Map[string,string]Map[string,string]|optional|-|-|-
-|id|MetricIdMetricId|optional|-|-|-
 |=======================
 
 
@@ -964,9 +964,9 @@ Returns a list of tenants.
 |type|MetricTypeMetricType|optional|-|- Allowable values:numeric, availability, log event|-
 |data|TArray[T]|optional|-|-|-
 |tenantId|string|optional|-|-|-
+|id|MetricIdMetricId|optional|-|-|-
 |dataRetention|int|optional|-|-|-
 |tags|Map[string,string]Map[string,string]|optional|-|-|-
-|id|MetricIdMetricId|optional|-|-|-
 |=======================
 
 
