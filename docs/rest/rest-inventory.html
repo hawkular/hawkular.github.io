@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Metrics REST API</title>
+    <title>Hawkular - Inventory REST API</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -115,7 +115,7 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Metrics REST API</h1>
+          <h1>Inventory REST API</h1>
           <p>Auto-generated swagger documentation</p>
         </div>
       </section>
@@ -128,15 +128,15 @@
 <h2 id="_apis">APIs</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_metrics_related_rest_interface">Metrics related REST interface</h3>
+<h3 id="_metrics_crud">Metrics CRUD</h3>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_id_tags_code"><code>/{tenantId}/metrics/availability/{id}/tags</code></h4>
+<h4 id="__code_tenantid_environmentid_metrics_code"><code>/{tenantId}/{environmentId}/metrics</code></h4>
 <div class="paragraph">
-<p>Retrieve tags associated with the metric definition.</p>
+<p>Retrieves all metrics in an environment</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/metrics/availability/{id}/tags`</pre>
+<pre>*GET* `/{tenantId}/{environmentId}/metrics`</pre>
 </div>
 </div>
 <div class="sect4">
@@ -164,7 +164,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -175,7 +175,7 @@
 <div class="sect4">
 <h5 id="_response">Response</h5>
 <div class="paragraph">
-<p>[Map](#Map)</p>
+<p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
@@ -196,27 +196,27 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully retrieved.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or environment doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>Update tags associated with the metric definition.</p>
+<p>Creates a new metric in given environment</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*PUT* `/{tenantId}/metrics/availability/{id}/tags`</pre>
+<pre>*POST* `/{tenantId}/{environmentId}/metrics`</pre>
 </div>
 </div>
 </div>
@@ -245,7 +245,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -275,7 +275,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[string]">UNKNOWN[string]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricJSON">MetricJSON</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -303,13 +303,23 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully updated.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric created</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid inputs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while updating metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -317,13 +327,13 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_id_tags_tags_code"><code>/{tenantId}/metrics/availability/{id}/tags/{tags}</code></h4>
+<h4 id="__code_tenantid_environmentid_metrics_metricid_code"><code>/{tenantId}/{environmentId}/metrics/{metricId}</code></h4>
 <div class="paragraph">
-<p>Delete tags associated with the metric definition.</p>
+<p>Retrieves a single metric</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*DELETE* `/{tenantId}/metrics/availability/{id}/tags/{tags}`</pre>
+<pre>*GET* `/{tenantId}/{environmentId}/metrics/{metricId}`</pre>
 </div>
 </div>
 <div class="sect4">
@@ -351,15 +361,15 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
+<td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 </tbody>
@@ -389,26 +399,28 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or metrics doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_id_data_code"><code>/{tenantId}/metrics/numeric/{id}/data</code></h4>
 <div class="paragraph">
-<p>Add data for a single numeric metric.</p>
+<p>Updates a metric</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/numeric/{id}/data`</pre>
+<pre>*PUT* `/{tenantId}/{environmentId}/metrics/{metricId}`</pre>
+</div>
 </div>
 </div>
 <div class="sect4">
@@ -436,7 +448,13 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -464,9 +482,9 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of datapoints containing timestamp and value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#NumericData">List[NumericData]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricUpdateJSON">MetricUpdateJSON</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -494,28 +512,33 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or the metric doesn&#39;t exist</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The update failed because of invalid data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>Retrieve numeric data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket.</p>
+<p>Deletes a metric</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/metrics/numeric/{id}/data`</pre>
+<pre>*DELETE* `/{tenantId}/{environmentId}/metrics/{metricId}`</pre>
 </div>
 </div>
 </div>
@@ -544,7 +567,13 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -553,54 +582,9 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_query_parameters">query parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">bucketDuration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Duration">Duration</a></p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
 <h5 id="_response_5">Response</h5>
 <div class="paragraph">
-<p>[List](#)</p>
+<p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
@@ -620,37 +604,40 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched numeric data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No numeric data was found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets or bucketDuration parameter is invalid, or both are used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or the metric doesn&#39;t exist</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The delete failed because it would make inventory invalid</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching numeric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_resources_crud">Resources CRUD</h3>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_id_data_code"><code>/{tenantId}/metrics/availability/{id}/data</code></h4>
+<h4 id="__code_tenantid_environmentid_resources_code"><code>/{tenantId}/{environmentId}/resources</code></h4>
 <div class="paragraph">
-<p>Add data for a single availability metric.</p>
+<p>Creates a new resource</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/availability/{id}/data`</pre>
+<pre>*POST* `/{tenantId}/{environmentId}/resources`</pre>
 </div>
 </div>
 <div class="sect4">
@@ -678,7 +665,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -707,8 +694,8 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability datapoints</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Availability">List[Availability]</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#ResourceJSON">ResourceJSON</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -736,28 +723,38 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource successfully created</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource already exists</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>Retrieve availability data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and availability statistics will be computed for each bucket.</p>
+<p>Retrieves resources in the environment, optionally filtering by resource type</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/metrics/availability/{id}/data`</pre>
+<pre>*GET* `/{tenantId}/{environmentId}/resources`</pre>
 </div>
 </div>
 </div>
@@ -786,7 +783,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -795,7 +792,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_query_parameters_2">query parameters</h5>
+<h5 id="_query_parameters">query parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -813,28 +810,16 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">typeVersion</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">bucketDuration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Duration">Duration</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 </tbody>
 </table>
@@ -842,7 +827,7 @@
 <div class="sect4">
 <h5 id="_response_7">Response</h5>
 <div class="paragraph">
-<p>[List](#)</p>
+<p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
@@ -863,22 +848,17 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched availability data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No availability data was found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets or bucketDuration parameter is invalid, or both are used.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or environment doesn&#39;t exist</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching availability data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -886,13 +866,13 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_data_code"><code>/{tenantId}/metrics/numeric/data</code></h4>
+<h4 id="__code_tenantid_environmentid_resources_resourceid_code"><code>/{tenantId}/{environmentId}/resources/{resourceId}</code></h4>
 <div class="paragraph">
-<p>Add metric data for multiple numeric metrics in a single call.</p>
+<p>Retrieves a single resource</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/numeric/data`</pre>
+<pre>*DELETE* `/{tenantId}/{environmentId}/resources/{resourceId}`</pre>
 </div>
 </div>
 <div class="sect4">
@@ -919,32 +899,17 @@
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_body_parameters_4">body parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
 <tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#NumericMetric">List[NumericMetric]</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 </tbody>
 </table>
@@ -972,13 +937,105 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or resource doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Retrieves a single resource</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/{environmentId}/resources/{resourceId}`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_9">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_9">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_9">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or resource doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -986,17 +1043,398 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_data_code"><code>/{tenantId}/metrics/availability/data</code></h4>
+<h4 id="__code_tenantid_environmentid_resources_resourceid_metrics_code"><code>/{tenantId}/{environmentId}/resources/{resourceId}/metrics/</code></h4>
 <div class="paragraph">
-<p>Add metric data for multiple availability metrics in a single call.</p>
+<p>Associates a pre-existing metric with a resource</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/availability/data`</pre>
+<pre>*POST* `/{tenantId}/{environmentId}/resources/{resourceId}/metrics/`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_9">path parameters</h5>
+<h5 id="_path_parameters_10">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_body_parameters_4">body parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Collection">Collection</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_10">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_10">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment, resource or metric doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="__code_tenantid_environmentid_resources_resourceid_metrics_code_2"><code>/{tenantId}/{environmentId}/resources/{resourceId}/metrics</code></h4>
+<div class="paragraph">
+<p>Retrieves all metrics associated with a resource</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/{environmentId}/resources/{resourceId}/metrics`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_11">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_11">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_11">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The list of metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment or resource doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="__code_tenantid_environmentid_resources_resourceid_metrics_metricid_code"><code>/{tenantId}/{environmentId}/resources/{resourceId}/metrics/{metricId}</code></h4>
+<div class="paragraph">
+<p>Retrieves a single resource</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/{environmentId}/resources/{resourceId}/metrics/{metricId}`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_12">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_12">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_12">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The resource</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, environment, resource or metric doesn&#39;t exist or if the metric is not associated with the resource</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_resource_type_crud">Resource type CRUD</h3>
+<div class="sect3">
+<h4 id="__code_tenantid_resourcetypes_code"><code>/{tenantId}/resourceTypes</code></h4>
+<div class="paragraph">
+<p>Retrieves all resource types</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/resourceTypes`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_13">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_13">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_13">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">the list of resource types</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Creates a new resource type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*POST* `/{tenantId}/resourceTypes`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_14">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1042,21 +1480,21 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#AvailabilityMetric">List[AvailabilityMetric]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#ResourceTypeJSON">ResourceTypeJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_9">Response</h5>
+<h5 id="_response_14">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_9">Status codes</h5>
+<h5 id="_status_codes_14">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1072,13 +1510,28 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Resource type already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -1086,117 +1539,17 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_numeric_code"><code>/{tenantId}/numeric</code></h4>
+<h4 id="__code_tenantid_resourcetypes_resourcetypeid_metrictypes_code"><code>/{tenantId}/resourceTypes/{resourceTypeId}/metricTypes</code></h4>
 <div class="paragraph">
-<p>Find numeric metrics data by their tags.</p>
+<p>Retrieves all metric types associated with the resource type</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/numeric`</pre>
+<pre>*GET* `/{tenantId}/resourceTypes/{resourceTypeId}/metricTypes`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_10">path parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_query_parameters_3">query parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_response_10">Response</h5>
-<div class="paragraph">
-<p>[List[Map]](#Map)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_status_codes_10">Status codes</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Any error in the query.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_id_tag_code"><code>/{tenantId}/metrics/numeric/{id}/tag</code></h4>
-<div class="paragraph">
-<p>Add or update numeric metric&#39;s tags.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>*POST* `/{tenantId}/metrics/numeric/{id}/tag`</pre>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_path_parameters_11">path parameters</h5>
+<h5 id="_path_parameters_15">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1220,7 +1573,88 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_15">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_15">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">the list of metric types associated with the resource type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or resource type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Associates a pre-existing metric type with a resource type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*POST* `/{tenantId}/resourceTypes/{resourceTypeId}/metricTypes`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_16">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -1248,21 +1682,21 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#TagRequest">TagRequest</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#IdJSON">IdJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_11">Response</h5>
+<h5 id="_response_16">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_11">Status codes</h5>
+<h5 id="_status_codes_16">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1278,26 +1712,36 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tags were modified successfully.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, resource type or metric type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_id_tag_code"><code>/{tenantId}/metrics/availability/{id}/tag</code></h4>
+<h4 id="__code_tenantid_resourcetypes_resourcetypeid_metrictypes_metrictypeid_code"><code>/{tenantId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypeId}</code></h4>
 <div class="paragraph">
-<p>Add or update availability metric&#39;s tags.</p>
+<p>Disassociates the resource type with a metric type</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/availability/{id}/tag`</pre>
+<pre>*DELETE* `/{tenantId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypeId}`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_12">path parameters</h5>
+<h5 id="_path_parameters_17">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1321,7 +1765,418 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_17">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_17">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant, resource type or metric type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="__code_tenantid_resourcetypes_resourcetypeid_code"><code>/{tenantId}/resourceTypes/{resourceTypeId}</code></h4>
+<div class="paragraph">
+<p>Retrieves a single resource type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/resourceTypes/{resourceTypeId}`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_18">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_18">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_18">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">the resource type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or resource type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Deletes a resource type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*DELETE* `/{tenantId}/resourceTypes/{resourceTypeId}`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_19">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_19">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_19">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or resource type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="__code_tenantid_resourcetypes_resourcetypeid_resources_code"><code>/{tenantId}/resourceTypes/{resourceTypeId}/resources</code></h4>
+<div class="paragraph">
+<p>Retrieves all resources with given resource types</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/resourceTypes/{resourceTypeId}/resources`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_20">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">resourceTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_20">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_20">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">the list of resources</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or resource type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_metric_types_crud">Metric types CRUD</h3>
+<div class="sect3">
+<h4 id="__code_tenantid_metrictypes_code"><code>/{tenantId}/metricTypes</code></h4>
+<div class="paragraph">
+<p>Retrieves all metric types</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*GET* `/{tenantId}/metricTypes`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_21">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_21">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_21">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Creates a new metric type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*POST* `/{tenantId}/metricTypes`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_22">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -1351,19 +2206,19 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#TagRequest">TagRequest</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricTypeJSON">MetricTypeJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_12">Response</h5>
+<h5 id="_response_22">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_12">Status codes</h5>
+<h5 id="_status_codes_22">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1379,26 +2234,46 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tags were modified successfully.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric type successfully created</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric type already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_tags_numeric_tag_code"><code>/{tenantId}/tags/numeric/{tag}</code></h4>
+<h4 id="__code_tenantid_metrictypes_metrictypeid_code"><code>/{tenantId}/metricTypes/{metricTypeId}</code></h4>
 <div class="paragraph">
-<p>Find numeric metric data with given tags.</p>
+<p>Retrieves a single metric type</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/tags/numeric/{tag}`</pre>
+<pre>*GET* `/{tenantId}/metricTypes/{metricTypeId}`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_13">path parameters</h5>
+<h5 id="_path_parameters_23">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1422,22 +2297,22 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tag</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
+<td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_13">Response</h5>
+<h5 id="_response_23">Response</h5>
 <div class="paragraph">
-<p>[List[Map]](#Map)</p>
+<p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_13">Status codes</h5>
+<h5 id="_status_codes_23">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1454,30 +2329,32 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric values fetched successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or metric type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Any error while fetching data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_tags_availability_tag_code"><code>/{tenantId}/tags/availability/{tag}</code></h4>
 <div class="paragraph">
-<p>Find availability metric data with given tags.</p>
+<p>Updates a metric type</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/tags/availability/{tag}`</pre>
+<pre>*PUT* `/{tenantId}/metricTypes/{metricTypeId}`</pre>
+</div>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_14">path parameters</h5>
+<h5 id="_path_parameters_24">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1501,83 +2378,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tag</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_response_14">Response</h5>
-<div class="paragraph">
-<p>[List[Map]](#Map)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_status_codes_14">Status codes</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Availability values fetched successfully</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Any error while fetching data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_code"><code>/{tenantId}/metrics/numeric</code></h4>
-<div class="paragraph">
-<p>Create numeric metric definition.</p>
-</div>
-<div class="paragraph">
-<p>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>*POST* `/{tenantId}/metrics/numeric`</pre>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_path_parameters_15">path parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -1607,19 +2408,19 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#NumericMetric">NumericMetric</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricTypeUpdateJSON">MetricTypeUpdateJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_15">Response</h5>
+<h5 id="_response_24">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_15">Status codes</h5>
+<h5 id="_status_codes_24">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1635,41 +2436,205 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric type successfully updated</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric metric with given id already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Deletes a metric type</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*DELETE* `/{tenantId}/metricTypes/{metricTypeId}`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_25">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_25">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_25">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric type successfully deleted</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric type cannot be deleted because of constraints on it</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or metric type doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_crud_of_environments">CRUD of environments.</h3>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_availability_code"><code>/{tenantId}/metrics/availability</code></h4>
+<h4 id="__code_tenantid_environments_code"><code>/{tenantId}/environments</code></h4>
 <div class="paragraph">
-<p>Create availability metric definition. Same notes as creating numeric metric apply.</p>
+<p>Returns all environments under given tenant.</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/{tenantId}/metrics/availability`</pre>
+<pre>*GET* `/{tenantId}/environments`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_16">path parameters</h5>
+<h5 id="_path_parameters_26">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_26">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_26">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[Set](#<a href="#Set">Set</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant not found</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Creates a new environment in given tenant.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*POST* `/{tenantId}/environments`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_27">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1717,19 +2682,19 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#AvailabilityMetric">AvailabilityMetric</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#IdJSON">IdJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_16">Response</h5>
+<h5 id="_response_27">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_16">Status codes</h5>
+<h5 id="_status_codes_27">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1746,22 +2711,22 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment created</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant not found</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Numeric metric with given id already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment already exists</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -1769,17 +2734,17 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_id_tags_code"><code>/{tenantId}/metrics/numeric/{id}/tags</code></h4>
+<h4 id="__code_tenantid_environments_environmentid_code"><code>/{tenantId}/environments/{environmentId}</code></h4>
 <div class="paragraph">
-<p>Retrieve tags associated with the metric definition.</p>
+<p>Retrieves a single environment</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/{tenantId}/metrics/numeric/{id}/tags`</pre>
+<pre>*GET* `/{tenantId}/environments/{environmentId}`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_17">path parameters</h5>
+<h5 id="_path_parameters_28">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1803,7 +2768,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -1812,13 +2777,13 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_17">Response</h5>
+<h5 id="_response_28">Response</h5>
 <div class="paragraph">
-<p>[Metric](#Metric)</p>
+<p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_17">Status codes</h5>
+<h5 id="_status_codes_28">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1835,32 +2800,32 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully retrieved.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or environment doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
-<p>Update tags associated with the metric definition.</p>
+<p>Updates properties of the environment</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*PUT* `/{tenantId}/metrics/numeric/{id}/tags`</pre>
+<pre>*PUT* `/{tenantId}/environments/{environmentId}`</pre>
 </div>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_18">path parameters</h5>
+<h5 id="_path_parameters_29">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1884,7 +2849,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
@@ -1914,19 +2879,19 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[string]">UNKNOWN[string]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[java.lang.String">java.lang.Object],UNKNOWN[java.lang.String, java.lang.Object]</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_18">Response</h5>
+<h5 id="_response_29">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_18">Status codes</h5>
+<h5 id="_status_codes_29">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -1943,30 +2908,37 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully updated.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The properties of the environment successfully updated</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Properties invalid</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or environment not found</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while updating metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_id_tags_tags_code"><code>/{tenantId}/metrics/numeric/{id}/tags/{tags}</code></h4>
 <div class="paragraph">
-<p>Delete tags associated with the metric definition.</p>
+<p>Deletes the environment from the tenant</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*DELETE* `/{tenantId}/metrics/numeric/{id}/tags/{tags}`</pre>
+<pre>*DELETE* `/{tenantId}/environments/{environmentId}`</pre>
+</div>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_path_parameters_19">path parameters</h5>
+<h5 id="_path_parameters_30">path parameters</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 25%;">
@@ -1990,28 +2962,22 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">environmentId</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_19">Response</h5>
+<h5 id="_response_30">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_19">Status codes</h5>
+<h5 id="_status_codes_30">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -2026,362 +2992,25 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_code"><code>/{tenantId}/metrics</code></h4>
-<div class="paragraph">
-<p>Find tenant&#39;s metric definitions.</p>
-</div>
-<div class="paragraph">
-<p>Does not include any metric values.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>*GET* `/{tenantId}/metrics`</pre>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_path_parameters_20">path parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_query_parameters_4">query parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Queried metric type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_response_20">Response</h5>
-<div class="paragraph">
-<p>[List[List]](#)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_status_codes_20">Status codes</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully retrieved at least one metric definition.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No metrics found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Environment successfully deleted</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given type is not a valid type.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Delete failed because it would leave inventory in invalid state</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant or environment not found</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Failed to retrieve metrics due to unexpected error.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_availability_code"><code>/{tenantId}/availability</code></h4>
-<div class="paragraph">
-<p>Find availabilities metrics data by their tags.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>*GET* `/{tenantId}/availability`</pre>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_path_parameters_21">path parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_query_parameters_5">query parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A list of tags in the format of name:value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_response_21">Response</h5>
-<div class="paragraph">
-<p>[List[Map]](#Map)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_status_codes_21">Status codes</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No matching availability metrics were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Any error in the query.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="__code_tenantid_metrics_numeric_id_periods_code"><code>/{tenantId}/metrics/numeric/{id}/periods</code></h4>
-<div class="paragraph">
-<p>Retrieve periods for which the condition holds true for each consecutive data point.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>*GET* `/{tenantId}/metrics/numeric/{id}/periods`</pre>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_path_parameters_22">path parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_query_parameters_6">query parameters</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">threshold</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A threshold against which values are compared</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">double</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">op</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A comparison operation to perform between values and the threshold. Supported operations include ge, gte, lt, lte, and eq</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect4">
-<h5 id="_response_22">Response</h5>
-<div class="paragraph">
-<p>[List](#)</p>
-</div>
-</div>
-<div class="sect4">
-<h5 id="_status_codes_22">Status codes</h5>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched periods.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No numeric data was found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid query parameters</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
 </table>
@@ -2389,18 +3018,63 @@
 </div>
 </div>
 <div class="sect2">
-<h3 id="_tenants_related_rest_interface">Tenants related REST interface</h3>
+<h3 id="_crud_for_tenants">CRUD for tenants</h3>
 <div class="sect3">
-<h4 id="__code_tenants_code"><code>/tenants</code></h4>
+<h4 id="__code_tenants_code"><code>/tenants/</code></h4>
 <div class="paragraph">
-<p>Create a new tenant.</p>
-</div>
-<div class="paragraph">
-<p>Clients are not required to create explicitly create a tenant before starting to store metric data. It is recommended to do so however to ensure that there are no tenant id naming collisions and to provide default data retention settings.</p>
+<p>Lists all tenants</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*POST* `/tenants`</pre>
+<pre>*GET* `/tenants/`</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_response_31">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_31">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The list of tenants</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Creates a new tenant</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*POST* `/tenants/`</pre>
+</div>
 </div>
 </div>
 <div class="sect4">
@@ -2423,21 +3097,21 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
 <td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tenant">Tenant</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#IdJSON">IdJSON</a></p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_23">Response</h5>
+<h5 id="_response_32">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_23">Status codes</h5>
+<h5 id="_status_codes_32">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -2454,43 +3128,100 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant has been succesfully created.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid retention properties.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Given tenant id has already been created.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant already exists</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An unexpected error occured while trying to create a tenant.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
 </table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="__code_tenants_tenantid_code"><code>/tenants/{tenantId}</code></h4>
 <div class="paragraph">
-<p>Returns a list of tenants.</p>
+<p>Updates properties of a tenant</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>*GET* `/tenants`</pre>
-</div>
+<pre>*PUT* `/tenants/{tenantId}`</pre>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_response_24">Response</h5>
+<h5 id="_path_parameters_31">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_body_parameters_12">body parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[java.lang.String">java.lang.Object],UNKNOWN[java.lang.String, java.lang.Object]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_33">Response</h5>
 <div class="paragraph">
 <p>[](#)</p>
 </div>
 </div>
 <div class="sect4">
-<h5 id="_status_codes_24">Status codes</h5>
+<h5 id="_status_codes_33">Status codes</h5>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 33%;">
@@ -2506,18 +3237,98 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returned a list of tenants successfully.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No tenants were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid input data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching tenants.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>Deletes a tenant</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>*DELETE* `/tenants/{tenantId}`</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_path_parameters_32">path parameters</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_34">Response</h5>
+<div class="paragraph">
+<p>[](#)</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_status_codes_34">Status codes</h5>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">OK</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant doesn&#39;t exist</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Server error</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -2530,55 +3341,6 @@
 <div class="sect1">
 <h2 id="_data_types">Data Types</h2>
 <div class="sectionbody">
-<div class="sect2">
-<h3 id="AggregationTemplate">AggregationTemplate</h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">name</th>
-<th class="tableblock halign-left valign-top">type</th>
-<th class="tableblock halign-left valign-top">required</th>
-<th class="tableblock halign-left valign-top">access</th>
-<th class="tableblock halign-left valign-top">description</th>
-<th class="tableblock halign-left valign-top">notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricTypeMetricType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:numeric, availability, log event</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">interval</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">IntervalInterval</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">functions</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetSet</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-</tbody>
-</table>
-</div>
 <div class="sect2">
 <h3 id="ApiError">ApiError</h3>
 <table class="tableblock frame-all grid-all spread">
@@ -2602,6 +3364,14 @@
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">details</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ObjectObject</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional details about the error beyond what&#8217;s provided in the error message.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional details about the error beyond what&#8217;s provided in the error message.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">errorMsg</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
@@ -2613,227 +3383,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="Availability">Availability</h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">name</th>
-<th class="tableblock halign-left valign-top">type</th>
-<th class="tableblock halign-left valign-top">required</th>
-<th class="tableblock halign-left valign-top">access</th>
-<th class="tableblock halign-left valign-top">description</th>
-<th class="tableblock halign-left valign-top">notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tTL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AvailabilityTypeAvailabilityType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:AvailabilityType{code=0, text=up}, AvailabilityType{code=1, text=down}</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">timestamp</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">writeTime</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="AvailabilityMetric">AvailabilityMetric</h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">name</th>
-<th class="tableblock halign-left valign-top">type</th>
-<th class="tableblock halign-left valign-top">required</th>
-<th class="tableblock halign-left valign-top">access</th>
-<th class="tableblock halign-left valign-top">description</th>
-<th class="tableblock halign-left valign-top">notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricTypeMetricType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:numeric, availability, log event</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">data</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TArray[T]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">dataRetention</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricIdMetricId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="Duration">Duration</h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">name</th>
-<th class="tableblock halign-left valign-top">type</th>
-<th class="tableblock halign-left valign-top">required</th>
-<th class="tableblock halign-left valign-top">access</th>
-<th class="tableblock halign-left valign-top">description</th>
-<th class="tableblock halign-left valign-top">notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">timeUnit</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TimeUnitTimeUnit</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="Interval">Interval</h3>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-<col style="width: 16%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">name</th>
-<th class="tableblock halign-left valign-top">type</th>
-<th class="tableblock halign-left valign-top">required</th>
-<th class="tableblock halign-left valign-top">access</th>
-<th class="tableblock halign-left valign-top">description</th>
-<th class="tableblock halign-left valign-top">notes</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">length</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">units</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">UnitsUnits</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:MINUTES, HOURS, DAYS</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="Map">Map</h3>
+<h3 id="Collection">Collection</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -2866,7 +3416,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="Metric">Metric</h3>
+<h3 id="IdJSON">IdJSON</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -2888,32 +3438,41 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">data</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TArray[T]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="MetricJSON">MetricJSON</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+</colgroup>
+<thead>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">dataRetention</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">required</th>
+<th class="tableblock halign-left valign-top">access</th>
+<th class="tableblock halign-left valign-top">description</th>
+<th class="tableblock halign-left valign-top">notes</th>
 </tr>
+</thead>
+<tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -2921,7 +3480,7 @@
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricIdMetricId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -2931,7 +3490,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="MetricId">MetricId</h3>
+<h3 id="MetricTypeJSON">MetricTypeJSON</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -2953,7 +3512,7 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">unit</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -2961,8 +3520,8 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">interval</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">IntervalInterval</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -2972,7 +3531,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="NumericData">NumericData</h3>
+<h3 id="MetricTypeUpdateJSON">MetricTypeUpdateJSON</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -2994,48 +3553,16 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">aggregatedValues</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetSet</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">properties</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,Object]Map[string,Object]</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tTL</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">double</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">timestamp</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">writeTime</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">unit</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -3045,7 +3572,48 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="NumericMetric">NumericMetric</h3>
+<h3 id="MetricUpdateJSON">MetricUpdateJSON</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">name</th>
+<th class="tableblock halign-left valign-top">type</th>
+<th class="tableblock halign-left valign-top">required</th>
+<th class="tableblock halign-left valign-top">access</th>
+<th class="tableblock halign-left valign-top">description</th>
+<th class="tableblock halign-left valign-top">notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">metricTypeId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">properties</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,Object]Map[string,Object]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="ResourceJSON">ResourceJSON</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -3068,39 +3636,7 @@
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricTypeMetricType</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">- Allowable values:numeric, availability, log event</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">data</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">TArray[T]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">dataRetention</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ResourceTypeJSONResourceTypeJSON</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -3108,7 +3644,7 @@
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">MetricIdMetricId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -3118,7 +3654,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="TagRequest">TagRequest</h3>
+<h3 id="ResourceTypeJSON">ResourceTypeJSON</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -3140,32 +3676,16 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">timestamp</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Map[string,string]Map[string,string]</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -3175,7 +3695,7 @@
 </table>
 </div>
 <div class="sect2">
-<h3 id="Tenant">Tenant</h3>
+<h3 id="Set">Set</h3>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 16%;">
@@ -3197,16 +3717,8 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">aggregationTemplates</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AggregationTemplateArray[AggregationTemplate]</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">empty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">optional</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
