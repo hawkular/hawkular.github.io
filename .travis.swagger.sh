@@ -26,13 +26,17 @@ addHeaders() {
     title="$(tr '[:lower:]' '[:upper:]' <<< ${title:0:1})${title:1} REST API"
     echo $title
 
-    HEADER="title=$title\n\
-description=Auto-generated swagger documentation\n\
-date=`date "+%Y-%m-%d"`\n\
-type=page\n\
-tags=swagger,rest,asciidoc\n\
-status=published\n\
-~~~~~~\n\
+    HEADER="= $title\n\
+Travis CI\n\
+`date "+%Y-%m-%d"`\n\
+:description: Auto-generated swagger documentation\n\
+:icons: font\n\
+:jbake-type: page\n\
+:jbake-status: published\n\
+:toc: macro\n\
+:toc-title:\n\
+\n\
+toc::[]\n\
 "
     # add the header
     sed -i.bak "1s;^;$HEADER;" $file
