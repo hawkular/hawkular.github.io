@@ -108,6 +108,79 @@ ActionService should not be invoked directly. This method is for demo/poc purpos
 | Status Code | Reason      | Response Model
 |=======================
 
+====  `/actions/`
+
+Find all action ids
+
+Pagination is not yet implemented
+
+----
+*GET* `/actions/`
+----
+
+
+===== Response
+[Collection[string]](#Collection[string])
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+
+Create a new action
+
+Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties
+
+----
+*POST* `/actions/`
+----
+
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+===== Response
+[Map&lt;String, String&gt;[java.lang.String]](#Map&lt;String, String&gt;[java.lang.String])
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+====  `/actions/plugin/{actionPlugin}`
+
+Find all action ids of an specific action plugin
+
+Pagination is not yet implemented
+
+----
+*GET* `/actions/plugin/{actionPlugin}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin to filter query for action ids|string
+|=======================
+
+===== Response
+[Collection[string]](#Collection[string])
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
 ====  `/actions/{actionId}`
 
 Get an existing action
@@ -194,79 +267,6 @@ Delete an existing action
 | Status Code | Reason      | Response Model
 |=======================
 
-====  `/actions/`
-
-Find all action ids
-
-Pagination is not yet implemented
-
-----
-*GET* `/actions/`
-----
-
-
-===== Response
-[Collection[string]](#Collection[string])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-
-Create a new action
-
-Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties
-
-----
-*POST* `/actions/`
-----
-
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-===== Response
-[Map&lt;String, String&gt;[java.lang.String]](#Map&lt;String, String&gt;[java.lang.String])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-====  `/actions/plugin/{actionPlugin}`
-
-Find all action ids of an specific action plugin
-
-Pagination is not yet implemented
-
-----
-*GET* `/actions/plugin/{actionPlugin}`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to filter query for action ids|string
-|=======================
-
-===== Response
-[Collection[string]](#Collection[string])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
 === Query operations for action plugins.
 
 ====  `/plugins/`
@@ -345,14 +345,60 @@ Returns Tag created if operation finished correctly
 | Status Code | Reason      | Response Model
 |=======================
 
-====  `/triggers/{triggerId}/dampenings/{dampeningId}`
+====  `/triggers/`
 
-Delete an existing dampening definition
+Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated
+
+Returns Trigger created if operation finished correctly
+
+----
+*POST* `/triggers/`
+----
+
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
+|=======================
+
+===== Response
+[Trigger](#Trigger)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+
+Find all triggers definitions
+
+Pagination is not yet implemented
+
+----
+*GET* `/triggers/`
+----
+
+
+===== Response
+[Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger]](#Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger])
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+====  `/triggers/{triggerId}`
+
+Get an existing trigger definition
 
 
 
 ----
-*DELETE* `/triggers/{triggerId}/dampenings/{dampeningId}`
+*GET* `/triggers/{triggerId}`
 ----
 
 ===== path parameters
@@ -361,7 +407,39 @@ Delete an existing dampening definition
 |=======================
 |Parameter|Required|Description|Data Type
     |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id for dampening definition to be deleted|string
+|=======================
+
+===== Response
+[Trigger](#Trigger)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+
+Update an existing trigger definition
+
+
+
+----
+*PUT* `/triggers/{triggerId}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be updated|string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Updated trigger definition|<<Trigger,Trigger>>
 |=======================
 
 ===== Response
@@ -373,6 +451,121 @@ Delete an existing dampening definition
 | Status Code | Reason      | Response Model
 |=======================
 
+
+Delete an existing trigger definition
+
+
+
+----
+*DELETE* `/triggers/{triggerId}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be deleted|string
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+====  `/triggers/{triggerId}/dampenings`
+
+Get a list with all dampenings linked with a trigger.
+
+Pagination is not yet implemented 
+
+----
+*GET* `/triggers/{triggerId}/dampenings`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+===== Response
+[Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]](#Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening])
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+
+Create a new dampening
+
+Returns Dampening created if operation finished correctly
+
+----
+*POST* `/triggers/{triggerId}/dampenings`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id attached to dampening|string
+|=======================
+===== body parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
+|=======================
+
+===== Response
+[Dampening](#Dampening)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+====  `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
+
+Get a dampening using triggerId and triggerMode
+
+Similar as getDampening(dampeningId)
+
+----
+*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
+|=======================
+
+===== Response
+[Dampening](#Dampening)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+====  `/triggers/{triggerId}/dampenings/{dampeningId}`
 
 Get an existing dampening
 
@@ -423,6 +616,33 @@ Update an existing dampening definition
 |=======================
 |Parameter|Required|Description|Data Type
     |body|true|Updated dampening definition|<<Dampening,Dampening>>
+|=======================
+
+===== Response
+[](#)
+
+===== Status codes
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+|=======================
+
+
+Delete an existing dampening definition
+
+
+
+----
+*DELETE* `/triggers/{triggerId}/dampenings/{dampeningId}`
+----
+
+===== path parameters
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |dampeningId|true|Dampening id for dampening definition to be deleted|string
 |=======================
 
 ===== Response
@@ -644,226 +864,6 @@ Get tags for a trigger.
 
 ===== Response
 [Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]](#Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-====  `/triggers/`
-
-Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated
-
-Returns Trigger created if operation finished correctly
-
-----
-*POST* `/triggers/`
-----
-
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
-|=======================
-
-===== Response
-[Trigger](#Trigger)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-
-Find all triggers definitions
-
-Pagination is not yet implemented
-
-----
-*GET* `/triggers/`
-----
-
-
-===== Response
-[Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger]](#Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-====  `/triggers/{triggerId}`
-
-Get an existing trigger definition
-
-
-
-----
-*GET* `/triggers/{triggerId}`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-===== Response
-[Trigger](#Trigger)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-
-Update an existing trigger definition
-
-
-
-----
-*PUT* `/triggers/{triggerId}`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be updated|string
-|=======================
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated trigger definition|<<Trigger,Trigger>>
-|=======================
-
-===== Response
-[](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-
-Delete an existing trigger definition
-
-
-
-----
-*DELETE* `/triggers/{triggerId}`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be deleted|string
-|=======================
-
-===== Response
-[](#)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-====  `/triggers/{triggerId}/dampenings`
-
-Get a list with all dampenings linked with a trigger.
-
-Pagination is not yet implemented 
-
-----
-*GET* `/triggers/{triggerId}/dampenings`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-===== Response
-[Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]](#Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening])
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-
-Create a new dampening
-
-Returns Dampening created if operation finished correctly
-
-----
-*POST* `/triggers/{triggerId}/dampenings`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id attached to dampening|string
-|=======================
-===== body parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
-|=======================
-
-===== Response
-[Dampening](#Dampening)
-
-===== Status codes
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-|=======================
-
-====  `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-
-Get a dampening using triggerId and triggerMode
-
-Similar as getDampening(dampeningId)
-
-----
-*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-----
-
-===== path parameters
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
-|=======================
-
-===== Response
-[Dampening](#Dampening)
 
 ===== Status codes
 [options="header"]
