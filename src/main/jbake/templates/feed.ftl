@@ -1,4 +1,4 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Hawkular Blog</title>
@@ -13,6 +13,9 @@
     <item>
       <title><#escape x as x?xml>${post.title}</#escape></title>
       <link>${config.site_host}/${post.uri}</link>
+      <#if post.author??>
+      <author>noreply@hawkular.org (${post.author})</author>
+      </#if>
       <pubDate>${post.date?string("EEE, d MMM yyyy HH:mm:ss Z")}</pubDate>
       <guid isPermaLink="false">${post.uri}</guid>
       	<description>
@@ -23,5 +26,5 @@
     </item>
     </#list>
 
-  </channel> 
+  </channel>
 </rss>
