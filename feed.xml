@@ -6,9 +6,202 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Wed, 8 Apr 2015 13:43:59 +0000</pubDate>
-    <lastBuildDate>Wed, 8 Apr 2015 13:43:59 +0000</lastBuildDate>
+    <pubDate>Wed, 8 Apr 2015 13:54:39 +0000</pubDate>
+    <lastBuildDate>Wed, 8 Apr 2015 13:54:39 +0000</lastBuildDate>
 
+    <item>
+      <title>Testing collectd integration</title>
+      <link>http://www.hawkular.org/blog/2015/2015-04-08-1.html</link>
+      <author>noreply@hawkular.org (Thomas Segismont)</author>
+      <pubDate>Wed, 8 Apr 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/2015-04-08-1.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Metrics is able to store data coming from &lt;a href=&quot;http://collectd.org/&quot; target=&quot;_blank&quot;&gt;collectd&lt;/a&gt;. To enable this
+feature, you need to start the
+&lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator&quot; target=&quot;_blank&quot;&gt;ptrans&lt;/a&gt; proxy, point it
+to your Metrics server, and configure the collectd network plugin to send data to ptrans.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-stack&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org../../img/blog/2015/collectd-ptrans-metrics.png&quot; alt=&quot;collectd/ptrans/metrics stack&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. collectd/ptrans/metrics stack&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://commons.wikimedia.org/wiki/File:Logo_der_Software_collectd.svg#/media/File:Logo_der_Software_collectd.svg&quot;&gt;
+collectd logo by Florian Forster. Licensed under CC BY-SA 2.0 de via Wikimedia Commons&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;regression_test_requirements&quot;&gt;Regression test requirements&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To make sure the collectd/ptrans/Hawkular stack never gets broken, we wanted to have an integration test. This test
+should fill the following requirements:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;do not fail the build on machines where collectd is not available (non-Linux developers machines, or simply machines
+where collectd is not installed)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;run on Travis-CI, where each pull request is tested before being merged&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;make sure all data sent from collectd lands on the Hawkular Metrics server&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;run as quickly as possible&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here&amp;#8217;s an outline of the implementation.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;skip_test_when_collectd_is_not_available&quot;&gt;Skip test when collectd is not available&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/junit-team/junit/wiki/Assumptions-with-assume&quot; target=&quot;_blank&quot;&gt;jUnit Assumptions&lt;/a&gt; provide a nice way
+to test the presence of external dependencies. The default jUnit runner will skip the test if the assumption fails. So
+skipping the test when collectd is not available is just a matter of testing if the collectd binary exists, is a regular
+file, and is executable.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;private static final String COLLECTD_PATH = System.getProperty(&quot;collectd.path&quot;, &quot;/usr/sbin/collectd&quot;);
+
+// ...
+
+@Before
+public void setUp() throws Exception {
+    // ...
+    assumeCollectdIsPresent();
+    // ...
+}
+
+private void assumeCollectdIsPresent() {
+    Path path = Paths.get(COLLECTD_PATH);
+    assumeTrue(COLLECTD_PATH + &quot; does not exist&quot;, Files.exists(path));
+    assumeTrue(COLLECTD_PATH + &quot; is not a file&quot;, Files.isRegularFile(path));
+    assumeTrue(COLLECTD_PATH + &quot; is not executable&quot;, Files.isExecutable(path));
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;run_on_travis_ci&quot;&gt;Run on Travis-CI&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;http://docs.travis-ci.com/user/installing-dependencies/&quot;&gt;
+Travis lets you customize the virtual running the build&lt;/a&gt;. Installing packages on the Ubuntu-based VM is very
+straightforward, just add a couple of lines in the &lt;code&gt;before_install&lt;/code&gt; target of your &lt;code&gt;.travis.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -qq collectd collectd-utils&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;verify_data_has_landed_on_the_metrics_server&quot;&gt;Verify data has landed on the Metrics server&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;collectd lets you configure one or more &lt;em&gt;write plugins&lt;/em&gt;. The network plugin is required to send data to ptrans. We also
+activate the csv plugin and make it log the measurements to &lt;em&gt;stdout&lt;/em&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-conf&quot; data-lang=&quot;conf&quot;&gt;LoadPlugin csv
+&amp;lt;Plugin csv&amp;gt;
+    DataDir stdout
+&amp;lt;/Plugin&amp;gt;
+
+LoadPlugin network
+&amp;lt;Plugin network&amp;gt;
+    Server &quot;127.0.0.1&quot; &quot;25826&quot;
+    ReportStats false
+&amp;lt;/Plugin&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Then we start collectd, preventing it to fork to the background with the &lt;code&gt;-f&lt;/code&gt; option, and wait until a minimum number
+of measurements has been sent:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;@Test
+public void shouldFindCollectdMetricsOnServer() throws Exception {
+
+    // ...
+
+    ImmutableList.Builder&amp;lt;String&amp;gt; collectdCmd = ImmutableList.builder();
+    collectdCmd.add(COLLECTD_PATH, &quot;-C&quot;, collectdConfFile.getAbsolutePath(), &quot;-f&quot;);
+    collectdProcessBuilder.command(collectdCmd.build());
+    collectdProcess = collectdProcessBuilder.start();
+
+    waitForCollectdValues();
+
+    // ...
+
+}
+
+private void waitForCollectdValues() throws Exception {
+    long c;
+    do {
+        Thread.sleep(MILLISECONDS.convert(1, SECONDS));
+        c = Files.lines(collectdOut.toPath())
+                 .filter(l -&amp;gt; l.startsWith(&quot;PUTVAL&quot;))
+                 .collect(counting());
+    } while (c &amp;lt; MINIMUM);
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When enough measurements have been collected and sent, all we need to do is to parse collectd &lt;em&gt;stdout&lt;/em&gt; and compare with
+server data, which can be loaded with an HTTP request.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;run_as_quickly_as_possible&quot;&gt;Run as quickly as possible&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this point, all the ingredients can be combined to build an integration test. But the experience showed that running
+it could take quite some time, even if the minimum number of measurements was low, and data collectd frequently (every
+second).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A bit of investigation demonstrated that the test was spending an unexpected amount of time in  the
+&lt;code&gt;waitForCollectdValues&lt;/code&gt; method. It turned out that buffering of collectd output was the cause. To avoid it, we can use
+the &lt;code&gt;stdbuf&lt;/code&gt; tool from GNU &lt;code&gt;coreutils&lt;/code&gt;: as explained in the manual page, it&amp;#8217;s a tool to run a command &quot;with modified
+buffering operations for its standard streams&quot;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With this slight modification, the test runs in a few seconds:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;File stdbuf = new File(&quot;/usr/bin/stdbuf&quot;);
+ImmutableList.Builder&amp;lt;String&amp;gt; collectdCmd = ImmutableList.builder();
+if (stdbuf.exists() &amp;amp;&amp;amp; stdbuf.canExecute()) {
+    collectdCmd.add(stdbuf.getAbsolutePath(), &quot;-o0&quot;, &quot;-e0&quot;);
+}
+collectdCmd.add(COLLECTD_PATH, &quot;-C&quot;, collectdConfFile.getAbsolutePath(), &quot;-f&quot;);
+collectdProcessBuilder.command(collectdCmd.build());
+collectdProcess = collectdProcessBuilder.start();&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That&amp;#8217;s it!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Discontinued</title>
       <link>http://www.hawkular.org/blog/2015/2015-04-01-1.html</link>
