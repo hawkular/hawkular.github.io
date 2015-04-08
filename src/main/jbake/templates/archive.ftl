@@ -1,3 +1,6 @@
+<#assign head_extras>
+<link rel="alternate" href="feed.xml" title="Hawkular Blog - RSS" type="application/rss+xml">
+</#assign>
 <#include "header.ftl">
 <#assign numberOfBlogPosts = 5 />
 
