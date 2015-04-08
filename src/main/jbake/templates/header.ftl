@@ -29,6 +29,7 @@
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
     <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
     <link rel="shortcut icon" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>favicon.ico">
+    <#if head_extras??>${head_extras}</#if>
   </head>
   <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
     <div id="wrap">
