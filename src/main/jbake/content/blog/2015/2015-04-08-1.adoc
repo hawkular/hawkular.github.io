@@ -1,0 +1,155 @@
+= Testing collectd integration
+Thomas Segismont
+2015-04-08
+:jbake-type: post
+:jbake-status: draft
+:jbake-tags: blog, testing, collectd, Travis
+:idprefix:
+:linkattrs:
+
+Hawkular Metrics is able to store data coming from http://collectd.org/[collectd, window="_blank"]. To enable this
+feature, you need to start the
+https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator[ptrans, window="_blank"] proxy, point it
+to your Metrics server, and configure the collectd network plugin to send data to ptrans.
+
+[[img-stack]]
+.collectd/ptrans/metrics stack
+image::../../img/blog/2015/collectd-ptrans-metrics.png["collectd/ptrans/metrics stack"]
+
+https://commons.wikimedia.org/wiki/File:Logo_der_Software_collectd.svg#/media/File:Logo_der_Software_collectd.svg[
+collectd logo by Florian Forster. Licensed under CC BY-SA 2.0 de via Wikimedia Commons]
+
+== Regression test requirements
+
+To make sure the collectd/ptrans/Hawkular stack never gets broken, we wanted to have an integration test. This test
+should fill the following requirements:
+
+* do not fail the build on machines where collectd is not available (non-Linux developers machines, or simply machines
+where collectd is not installed)
+* run on Travis-CI, where each pull request is tested before being merged
+* make sure all data sent from collectd lands on the Hawkular Metrics server
+* run as quickly as possible
+
+Here's an outline of the implementation.
+
+=== Skip test when collectd is not available
+
+https://github.com/junit-team/junit/wiki/Assumptions-with-assume[jUnit Assumptions, window="_blank"] provide a nice way
+to test the presence of external dependencies. The default jUnit runner will skip the test if the assumption fails. So
+skipping the test when collectd is not available is just a matter of testing if the collectd binary exists, is a regular
+file, and is executable.
+
+[source,java]
+----
+private static final String COLLECTD_PATH = System.getProperty("collectd.path", "/usr/sbin/collectd");
+
+// ...
+
+@Before
+public void setUp() throws Exception {
+    // ...
+    assumeCollectdIsPresent();
+    // ...
+}
+
+private void assumeCollectdIsPresent() {
+    Path path = Paths.get(COLLECTD_PATH);
+    assumeTrue(COLLECTD_PATH + " does not exist", Files.exists(path));
+    assumeTrue(COLLECTD_PATH + " is not a file", Files.isRegularFile(path));
+    assumeTrue(COLLECTD_PATH + " is not executable", Files.isExecutable(path));
+}
+----
+
+=== Run on Travis-CI
+
+http://docs.travis-ci.com/user/installing-dependencies/[
+Travis lets you customize the virtual running the build]. Installing packages on the Ubuntu-based VM is very
+straightforward, just add a couple of lines in the `before_install` target of your `.travis.yml` file:
+
+[source,yaml]
+----
+before_install:
+- sudo apt-get update -qq
+- sudo apt-get install -qq collectd collectd-utils
+----
+
+=== Verify data has landed on the Metrics server
+
+collectd lets you configure one or more _write plugins_. The network plugin is required to send data to ptrans. We also
+activate the csv plugin and make it log the measurements to _stdout_:
+
+[source, conf]
+----
+LoadPlugin csv
+<Plugin csv>
+    DataDir stdout
+</Plugin>
+
+LoadPlugin network
+<Plugin network>
+    Server "127.0.0.1" "25826"
+    ReportStats false
+</Plugin>
+----
+
+Then we start collectd, preventing it to fork to the background with the `-f` option, and wait until a minimum number
+of measurements has been sent:
+
+[source,java]
+----
+@Test
+public void shouldFindCollectdMetricsOnServer() throws Exception {
+
+    // ...
+
+    ImmutableList.Builder<String> collectdCmd = ImmutableList.builder();
+    collectdCmd.add(COLLECTD_PATH, "-C", collectdConfFile.getAbsolutePath(), "-f");
+    collectdProcessBuilder.command(collectdCmd.build());
+    collectdProcess = collectdProcessBuilder.start();
+
+    waitForCollectdValues();
+
+    // ...
+
+}
+
+private void waitForCollectdValues() throws Exception {
+    long c;
+    do {
+        Thread.sleep(MILLISECONDS.convert(1, SECONDS));
+        c = Files.lines(collectdOut.toPath())
+                 .filter(l -> l.startsWith("PUTVAL"))
+                 .collect(counting());
+    } while (c < MINIMUM);
+}
+----
+
+When enough measurements have been collected and sent, all we need to do is to parse collectd _stdout_ and compare with
+server data, which can be loaded with an HTTP request.
+
+=== Run as quickly as possible
+
+At this point, all the ingredients can be combined to build an integration test. But the experience showed that running
+it could take quite some time, even if the minimum number of measurements was low, and data collectd frequently (every
+second).
+
+A bit of investigation demonstrated that the test was spending an unexpected amount of time in  the
+`waitForCollectdValues` method. It turned out that buffering of collectd output was the cause. To avoid it, we can use
+the `stdbuf` tool from GNU `coreutils`: as explained in the manual page, it's a tool to run a command "with modified
+buffering operations for its standard streams".
+
+With this slight modification, the test runs in a few seconds:
+
+[source,java]
+----
+File stdbuf = new File("/usr/bin/stdbuf");
+ImmutableList.Builder<String> collectdCmd = ImmutableList.builder();
+if (stdbuf.exists() && stdbuf.canExecute()) {
+    collectdCmd.add(stdbuf.getAbsolutePath(), "-o0", "-e0");
+}
+collectdCmd.add(COLLECTD_PATH, "-C", collectdConfFile.getAbsolutePath(), "-f");
+collectdProcessBuilder.command(collectdCmd.build());
+collectdProcess = collectdProcessBuilder.start();
+----
+
+That's it!
