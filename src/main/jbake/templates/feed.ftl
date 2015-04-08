@@ -20,7 +20,7 @@
       <guid isPermaLink="false">${post.uri}</guid>
       	<description>
 	<#escape x as x?xml>
-	${post.body?replace("src=\"","src=\"${config.site_host}")}
+	${post.body?replace("src=\"","src=\"${config.site_host}/")}
 	</#escape>
 	</description>
     </item>
