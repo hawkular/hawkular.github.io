@@ -54,10 +54,7 @@ downloadAndProcess() {
     wget -P $DOC_PATH $file
   done
   addHeaders $DOC_PATH
-  if [ -e $DOC_PATH/*.bak ]
-  then
-    rm $DOC_PATH/*.bak
-  fi
+  for f in $DOC_PATH/*.bak; do [[ -e $f ]] && rm $f; done
 }
 
 downloadAndProcess
