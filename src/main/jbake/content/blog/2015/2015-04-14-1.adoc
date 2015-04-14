@@ -1,0 +1,55 @@
+= Hawkular-Monitor Agent
+John Mazzitelli
+2015-04-14
+
+The https://github.com/hawkular/hawkular-agent[Hawkular Monitor agent] is in good enough shape now
+to be able to blog about it.
+
+The Hawkular Monitor agent is a Wildfly subsystem extension deployed as a module inside Wildfly.
+At the time of writing, this currently works in Wildfly 8.2 Final.
+
+== How To Build
+. Clone https://github.com/hawkular/hawkular-agent[the source code]
+. Build via Maven: "mvn clean install"
+* The Wildfly module that houses the Hawkular Monitor agent will be found in a zip file under hawkular-agent/hawkular-wildfly-monitor.
+. Unzip the Hawkular Monitor agent into whatever Wildfly 8.2 instance you want.
+* Alternatively, you can use the Maven wildfly-extension-plugin to do this:
+** cd hawkular-agent/hawkular-wildfly-monitor
+** mvn -Dorg.hawkular.wildfly.home=/source/hawkular/kettle/target/wildfly-8.2.0.Final/ clean install wildfly-extension:deploy
+** Notice the above command installed Hawkular Monitor agent inside my Hawkular Kettle build
+
+== DMR Client
+
+A standalone library has been included in the hawkular-agent repository that can be used to talk to a WildFly's
+management interface via a more strongly-typed API that sits above the DMR API. The
+https://github.com/hawkular/hawkular-agent/tree/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient[DMR Client]
+provides this capability in a single-jar library. The Hawkular Monitor agent uses it, but since it is a
+standalone library, anyone that wants to talk to WildFly's management interface can use it.
+
+A simple example in its usage is as follows:
+[source,java]
+----
+import org.jboss.as.controller.client.ModelControllerClient;
+import org.hawkular.dmrclient.Address;
+import org.hawkular.dmrclient.CoreJBossASClient;
+
+// ...
+
+ModelControllerClient mcc = ModelControllerClient.Factory.create("myhostname", 9990);
+// now use the hawkular-dmr-client library
+try (CoreJBossASClient client = new CoreJBossASClient(mcc)) {
+    // get version of the wildfly instance from DMR root resource "/"
+    String rv = client.getStringAttribute("release-version", Address.root());
+    
+    // get install directory of the WildFly instance from DMR resource "/core-service=server-environment"
+    String hd = client.getStringAttribute("home-dir", Address.parse("/core-service=server-environment"));
+} catch (Exception e) {
+    // do something about the error
+}
+----
+
+CoreJBossASClient is one of several strongly-typed API objects that extend
+https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/JBossASClient.java[JBossASClient].
+Others can be used to access common resource types in the DMR hierarchy, such as
+https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/DatasourceJBossASClient.java[DatasourceJBossASClient]
+which can be used to manipulate datasources.
