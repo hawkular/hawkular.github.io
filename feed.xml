@@ -6,14 +6,191 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Tue, 14 Apr 2015 20:17:07 +0000</pubDate>
-    <lastBuildDate>Tue, 14 Apr 2015 20:17:07 +0000</lastBuildDate>
+    <pubDate>Tue, 14 Apr 2015 20:45:00 +0000</pubDate>
+    <lastBuildDate>Tue, 14 Apr 2015 20:45:00 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular-Monitor Agent</title>
+      <link>http://www.hawkular.org/blog/2015/04/14/hawkular-monitor-agent-intro.html</link>
+      <author>noreply@hawkular.org (John Mazzitelli)</author>
+      <pubDate>Tue, 14 Apr 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/04/14/hawkular-monitor-agent-intro.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;a href=&quot;https://github.com/hawkular/hawkular-agent&quot;&gt;Hawkular Monitor agent&lt;/a&gt; is in good enough shape now
+to be able to blog about it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The Hawkular Monitor agent is a Wildfly subsystem extension deployed as a module inside Wildfly.
+At the time of writing, this currently works in Wildfly 8.2 Final.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You define what metrics you want to collect and what availabilty checks to make by adding metric sets and avail sets
+to standalone.xml. You could also use the JBoss CLI to do this, rather than directly editing standalone.xml, if you wish.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A sample configuration &lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/assembly/subsystem.xml&quot;&gt;is found here&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An example of a metric to be collected is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;&amp;lt;metric-dmr name=&quot;heap.used&quot;
+            interval=&quot;30&quot;
+            timeUnits=&quot;seconds&quot;
+            resource=&quot;/core-service=platform-mbean/type=memory&quot;
+            attribute=&quot;heap-memory-usage#used&quot; /&amp;gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This defines a metric named &quot;heap.used&quot; which is the heap memory used by the WildFly VM.
+The metric will be collected every 30 seconds.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here is an example of an availability check:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;&amp;lt;avail-dmr name=&quot;app-server&quot;
+           interval=&quot;30&quot;
+           timeUnits=&quot;seconds&quot;
+           resource=&quot;/&quot;
+           attribute=&quot;server-state&quot;
+           upRegex=&quot;run.*&quot; /&amp;gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This will look at the WildFly&amp;#8217;s &quot;server-state&quot; and if its value matches the
+regular expression &quot;run.*&quot; then this availability check will report UP. Otherwise, it will report DOWN.
+If no upRegex is provided, then some simple heuristics are performed to determine the availability status
+(specifically if the value is a number then a 0 is considered DOWN and non-zero is considered UP;
+otherwise, if the value is the string &quot;up&quot; or &quot;ok&quot; (case insenstive) it is considered UP,
+otherwise it is considered DOWN.)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The full XML Schema for the Hawkular Monitor agent subsystem configuration can be
+&lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/resources/schema/hawkular-agent-monitor-subsystem.xsd&quot;&gt;found here&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Currently, what can be monitored or checked for availability is any resource in the WildFly management hierachy
+(in the same WildFly where Hawkular Monitor agent is deployed). Future development is underway to allow the
+Hawkular Monitor agent to monitor resources in remote WildFly instances, as well as remote JMX resources.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Today, you have the option to store the metric and availability data directly to a Hawkular-Metrics instance or to
+a Hawkular ecosystem (this is the &amp;lt;storage-adapter&amp;gt; definition). As the Hawkular ecosystem is built out (specifically, as inventory is brought into the picture),
+a fuller integration with Hawkular Monitor agent will be possible.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you have any questions on this, or suggestions on what features we need to add or enhance, please ping us on
+the #hawkular freenode chat room or send an email to the &lt;a href=&quot;https://lists.jboss.org/mailman/listinfo/hawkular-dev&quot;&gt;hawkular-dev mailing list&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;how_to_build&quot;&gt;How To Build&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Clone &lt;a href=&quot;https://github.com/hawkular/hawkular-agent&quot;&gt;the source code&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Build via Maven: &quot;mvn clean install&quot;&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The Wildfly module that houses the Hawkular Monitor agent will be found in a zip file under hawkular-agent/hawkular-wildfly-monitor.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Unzip the Hawkular Monitor agent into whatever Wildfly 8.2 instance you want.&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Alternatively, you can use the Maven wildfly-extension-plugin to do this:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;cd hawkular-agent/hawkular-wildfly-monitor&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;mvn -Dorg.hawkular.wildfly.home=/source/hawkular/kettle/target/wildfly-8.2.0.Final/ clean install wildfly-extension:deploy&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Notice the above command installed Hawkular Monitor agent inside my Hawkular Kettle build&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;dmr_client&quot;&gt;DMR Client&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A standalone library has been included in the hawkular-agent repository that can be used to talk to a WildFly&amp;#8217;s
+management interface via a more strongly-typed API that sits above the DMR API. The
+&lt;a href=&quot;https://github.com/hawkular/hawkular-agent/tree/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient&quot;&gt;DMR Client&lt;/a&gt;
+provides this capability in a single-jar library. The Hawkular Monitor agent uses it, but since it is a
+standalone library, anyone that wants to talk to WildFly&amp;#8217;s management interface can use it. Currently, its snapshots are
+released on Nexus which you can
+&lt;a href=&quot;https://repository.jboss.org/nexus/content/repositories/snapshots/org/hawkular/agent/hawkular-dmr-client/&quot;&gt;find here&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A simple example of its usage is as follows:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;import org.jboss.as.controller.client.ModelControllerClient;
+import org.hawkular.dmrclient.Address;
+import org.hawkular.dmrclient.CoreJBossASClient;
+
+// ...
+
+ModelControllerClient mcc = ModelControllerClient.Factory.create(&quot;myhostname&quot;, 9990);
+// now use the hawkular-dmr-client library
+try (CoreJBossASClient client = new CoreJBossASClient(mcc)) {
+    // get version of the wildfly instance from DMR root resource &quot;/&quot;
+    String rv = client.getStringAttribute(&quot;release-version&quot;, Address.root());
+
+    // get install directory of the WildFly instance from DMR resource &quot;/core-service=server-environment&quot;
+    String hd = client.getStringAttribute(&quot;home-dir&quot;, Address.parse(&quot;/core-service=server-environment&quot;));
+} catch (Exception e) {
+    // do something about the error
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You no longer have to worry about how to build DMR ModelNodes in the correct format to perform these kinds of operations.
+The Hawkular DMR Client API will build the ModelNode requests and process the ModelNode responses for you.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;CoreJBossASClient is one of several strongly-typed API objects that extend
+&lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/JBossASClient.java&quot;&gt;JBossASClient&lt;/a&gt;.
+Others can be used to access common resource types in the DMR hierarchy, such as
+&lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/DatasourceJBossASClient.java&quot;&gt;DatasourceJBossASClient&lt;/a&gt;
+which can be used to manipulate datasources.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Alert notifiers for mobile devices</title>
       <link>http://www.hawkular.org/blog/2015/04/09/alert-notifiers-for-mobile-devices.html</link>
       <author>noreply@hawkular.org (Thomas Segismont)</author>
-      <pubDate>Tue, 14 Apr 2015 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 9 Apr 2015 00:00:00 +0000</pubDate>
       <guid isPermaLink="false">blog/2015/04/09/alert-notifiers-for-mobile-devices.html</guid>
       	<description>
 	&lt;div id=&quot;preamble&quot;&gt;

@@ -124,8 +124,181 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/04/14/hawkular-monitor-agent-intro.html"><h1>Hawkular-Monitor Agent</h1></a>
+            <p>14 April 2015, by John Mazzitelli</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="https://github.com/hawkular/hawkular-agent">Hawkular Monitor agent</a> is in good enough shape now
+to be able to blog about it.</p>
+</div>
+<div class="paragraph">
+<p>The Hawkular Monitor agent is a Wildfly subsystem extension deployed as a module inside Wildfly.
+At the time of writing, this currently works in Wildfly 8.2 Final.</p>
+</div>
+<div class="paragraph">
+<p>You define what metrics you want to collect and what availabilty checks to make by adding metric sets and avail sets
+to standalone.xml. You could also use the JBoss CLI to do this, rather than directly editing standalone.xml, if you wish.</p>
+</div>
+<div class="paragraph">
+<p>A sample configuration <a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/assembly/subsystem.xml">is found here</a>.</p>
+</div>
+<div class="paragraph">
+<p>An example of a metric to be collected is:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>&lt;metric-dmr name="heap.used"
+            interval="30"
+            timeUnits="seconds"
+            resource="/core-service=platform-mbean/type=memory"
+            attribute="heap-memory-usage#used" /&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This defines a metric named "heap.used" which is the heap memory used by the WildFly VM.
+The metric will be collected every 30 seconds.</p>
+</div>
+<div class="paragraph">
+<p>Here is an example of an availability check:</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>&lt;avail-dmr name="app-server"
+           interval="30"
+           timeUnits="seconds"
+           resource="/"
+           attribute="server-state"
+           upRegex="run.*" /&gt;</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will look at the WildFly&#8217;s "server-state" and if its value matches the
+regular expression "run.*" then this availability check will report UP. Otherwise, it will report DOWN.
+If no upRegex is provided, then some simple heuristics are performed to determine the availability status
+(specifically if the value is a number then a 0 is considered DOWN and non-zero is considered UP;
+otherwise, if the value is the string "up" or "ok" (case insenstive) it is considered UP,
+otherwise it is considered DOWN.)</p>
+</div>
+<div class="paragraph">
+<p>The full XML Schema for the Hawkular Monitor agent subsystem configuration can be
+<a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/resources/schema/hawkular-agent-monitor-subsystem.xsd">found here</a>.</p>
+</div>
+<div class="paragraph">
+<p>Currently, what can be monitored or checked for availability is any resource in the WildFly management hierachy
+(in the same WildFly where Hawkular Monitor agent is deployed). Future development is underway to allow the
+Hawkular Monitor agent to monitor resources in remote WildFly instances, as well as remote JMX resources.</p>
+</div>
+<div class="paragraph">
+<p>Today, you have the option to store the metric and availability data directly to a Hawkular-Metrics instance or to
+a Hawkular ecosystem (this is the &lt;storage-adapter&gt; definition). As the Hawkular ecosystem is built out (specifically, as inventory is brought into the picture),
+a fuller integration with Hawkular Monitor agent will be possible.</p>
+</div>
+<div class="paragraph">
+<p>If you have any questions on this, or suggestions on what features we need to add or enhance, please ping us on
+the #hawkular freenode chat room or send an email to the <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev">hawkular-dev mailing list</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="how_to_build">How To Build</h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Clone <a href="https://github.com/hawkular/hawkular-agent">the source code</a></p>
+</li>
+<li>
+<p>Build via Maven: "mvn clean install"</p>
+<div class="ulist">
+<ul>
+<li>
+<p>The Wildfly module that houses the Hawkular Monitor agent will be found in a zip file under hawkular-agent/hawkular-wildfly-monitor.</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Unzip the Hawkular Monitor agent into whatever Wildfly 8.2 instance you want.</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Alternatively, you can use the Maven wildfly-extension-plugin to do this:</p>
+<div class="ulist">
+<ul>
+<li>
+<p>cd hawkular-agent/hawkular-wildfly-monitor</p>
+</li>
+<li>
+<p>mvn -Dorg.hawkular.wildfly.home=/source/hawkular/kettle/target/wildfly-8.2.0.Final/ clean install wildfly-extension:deploy</p>
+</li>
+<li>
+<p>Notice the above command installed Hawkular Monitor agent inside my Hawkular Kettle build</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="dmr_client">DMR Client</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A standalone library has been included in the hawkular-agent repository that can be used to talk to a WildFly&#8217;s
+management interface via a more strongly-typed API that sits above the DMR API. The
+<a href="https://github.com/hawkular/hawkular-agent/tree/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient">DMR Client</a>
+provides this capability in a single-jar library. The Hawkular Monitor agent uses it, but since it is a
+standalone library, anyone that wants to talk to WildFly&#8217;s management interface can use it. Currently, its snapshots are
+released on Nexus which you can
+<a href="https://repository.jboss.org/nexus/content/repositories/snapshots/org/hawkular/agent/hawkular-dmr-client/">find here</a>.</p>
+</div>
+<div class="paragraph">
+<p>A simple example of its usage is as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">import org.jboss.as.controller.client.ModelControllerClient;
+import org.hawkular.dmrclient.Address;
+import org.hawkular.dmrclient.CoreJBossASClient;
+
+// ...
+
+ModelControllerClient mcc = ModelControllerClient.Factory.create("myhostname", 9990);
+// now use the hawkular-dmr-client library
+try (CoreJBossASClient client = new CoreJBossASClient(mcc)) {
+    // get version of the wildfly instance from DMR root resource "/"
+    String rv = client.getStringAttribute("release-version", Address.root());
+
+    // get install directory of the WildFly instance from DMR resource "/core-service=server-environment"
+    String hd = client.getStringAttribute("home-dir", Address.parse("/core-service=server-environment"));
+} catch (Exception e) {
+    // do something about the error
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You no longer have to worry about how to build DMR ModelNodes in the correct format to perform these kinds of operations.
+The Hawkular DMR Client API will build the ModelNode requests and process the ModelNode responses for you.</p>
+</div>
+<div class="paragraph">
+<p>CoreJBossASClient is one of several strongly-typed API objects that extend
+<a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/JBossASClient.java">JBossASClient</a>.
+Others can be used to access common resource types in the DMR hierarchy, such as
+<a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/DatasourceJBossASClient.java">DatasourceJBossASClient</a>
+which can be used to manipulate datasources.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/04/09/alert-notifiers-for-mobile-devices.html"><h1>Alert notifiers for mobile devices</h1></a>
-            <p>14 April 2015, by Thomas Segismont</p>
+            <p>09 April 2015, by Thomas Segismont</p>
             <p><div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
@@ -628,44 +801,13 @@ code.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/2015-03-30-1.html"><h1>Dockerized Hawkular builds available</h1></a>
-            <p>30 March 2015, by Heiko W. Rupp</p>
-            <p><div class="paragraph">
-<p>As described earlier, we have assembled all the components of Hawkular into a single package, the <em>Kettle</em>.
-This allows you to just build/download one package, start and work with it instead of caring of the individual
-sub-packages.</p>
-</div>
-<div class="paragraph">
-<p>To make the process to play with Hawkular even easier, we have also created a build-pipeline that creates a Docker
-image out of the Kettle and publishes it to Docker Hub as hawkular/hawkular.</p>
-</div>
-<div class="paragraph">
-<p>You can download and run them like this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ docker run -d -p 8081:8080 hawkular/hawkular</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>After the download of the image has finished, it will take a while until Hawkular is fully started up.
-When it is up, you can reach the Hawkular UI at <a href="http://localhost:8081/" class="bare">http://localhost:8081/</a>  ( If you are
-running docker on OS/X via boot2docker, you need to use the IP address that is stored in the <code>DOCKER_HOST</code>
-environment variable instead of <code>localhost</code>.)</p>
-</div>
-<div class="paragraph">
-<p>More information is available in the
-<a href="/docs/user/getting-started">Getting started</a> document.</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>30 March 2015 - <a href="blog/2015/2015-03-30-1.html">Dockerized Hawkular builds available</a></li>
           <li>24 February 2015 - <a href="blog/2015/2015-02-24-1.html">The Kettle starts boiling</a></li>
           <li>16 February 2015 - <a href="blog/2015/2015-02-16-1.html">Hawkular-Metrics 0.2.7 release</a></li>
         <br/><br/>
