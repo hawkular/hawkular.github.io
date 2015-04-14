@@ -8,6 +8,52 @@ to be able to blog about it.
 The Hawkular Monitor agent is a Wildfly subsystem extension deployed as a module inside Wildfly.
 At the time of writing, this currently works in Wildfly 8.2 Final.
 
+You define what metrics you want to collect and what availabilty checks to make by adding metric sets and avail sets
+to standalone.xml. You could also use the JBoss CLI to do this, rather than directly editing standalone.xml, if you wish.
+
+A sample configuration https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/assembly/subsystem.xml[is found here].
+
+An example of a metric to be collected is:
+
+    <metric-dmr name="heap.used"
+                interval="30"
+                timeUnits="seconds"
+                resource="/core-service=platform-mbean/type=memory"
+                attribute="heap-memory-usage#used" />
+
+This defines a metric named "heap.used" which is the heap memory used by the WildFly VM.
+The metric will be collected every 30 seconds.
+
+Here is an example of an availability check:
+
+    <avail-dmr name="app-server"
+               interval="30"
+               timeUnits="seconds"
+               resource="/"
+               attribute="server-state"
+               upRegex="run.*" />
+
+This will look at the WildFly's "server-state" and if its value matches the
+regular expression "run.*" then this availability check will report UP. Otherwise, it will report DOWN.
+If no upRegex is provided, then some simple heuristics are performed to determine the availability status
+(specifically if the value is a number then a 0 is considered DOWN and non-zero is considered UP;
+otherwise, if the value is the string "up" or "ok" (case insenstive) it is considered UP,
+otherwise it is considered DOWN.)
+
+The full XML Schema for the Hawkular Monitor agent subsystem configuration can be
+https://github.com/hawkular/hawkular-agent/blob/master/hawkular-wildfly-monitor/src/main/resources/schema/hawkular-agent-monitor-subsystem.xsd[found here].
+
+Currently, what can be monitored or checked for availability is any resource in the WildFly management hierachy
+(in the same WildFly where Hawkular Monitor agent is deployed). Future development is underway to allow the
+Hawkular Monitor agent to monitor resources in remote WildFly instances, as well as remote JMX resources.
+
+Today, you have the option to store the metric and availability data directly to a Hawkular-Metrics instance or to
+a Hawkular ecosystem (this is the <storage-adapter> definition). As the Hawkular ecosystem is built out (specifically, as inventory is brought into the picture),
+a fuller integration with Hawkular Monitor agent will be possible.
+
+If you have any questions on this, or suggestions on what features we need to add or enhance, please ping us on
+the #hawkular freenode chat room or send an email to the https://lists.jboss.org/mailman/listinfo/hawkular-dev[hawkular-dev mailing list].
+
 == How To Build
 . Clone https://github.com/hawkular/hawkular-agent[the source code]
 . Build via Maven: "mvn clean install"
@@ -24,9 +70,11 @@ A standalone library has been included in the hawkular-agent repository that can
 management interface via a more strongly-typed API that sits above the DMR API. The
 https://github.com/hawkular/hawkular-agent/tree/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient[DMR Client]
 provides this capability in a single-jar library. The Hawkular Monitor agent uses it, but since it is a
-standalone library, anyone that wants to talk to WildFly's management interface can use it.
+standalone library, anyone that wants to talk to WildFly's management interface can use it. Currently, its snapshots are
+released on Nexus which you can
+https://repository.jboss.org/nexus/content/repositories/snapshots/org/hawkular/agent/hawkular-dmr-client/[find here].
 
-A simple example in its usage is as follows:
+A simple example of its usage is as follows:
 [source,java]
 ----
 import org.jboss.as.controller.client.ModelControllerClient;
@@ -47,6 +95,9 @@ try (CoreJBossASClient client = new CoreJBossASClient(mcc)) {
     // do something about the error
 }
 ----
+
+You no longer have to worry about how to build DMR ModelNodes in the correct format to perform these kinds of operations.
+The Hawkular DMR Client API will build the ModelNode requests and process the ModelNode responses for you.
 
 CoreJBossASClient is one of several strongly-typed API objects that extend
 https://github.com/hawkular/hawkular-agent/blob/master/hawkular-dmr-client/src/main/java/org/hawkular/dmrclient/JBossASClient.java[JBossASClient].
