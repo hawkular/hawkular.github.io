@@ -6,9 +6,157 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Tue, 14 Apr 2015 12:02:30 +0000</pubDate>
-    <lastBuildDate>Tue, 14 Apr 2015 12:02:30 +0000</lastBuildDate>
+    <pubDate>Tue, 14 Apr 2015 12:12:44 +0000</pubDate>
+    <lastBuildDate>Tue, 14 Apr 2015 12:12:44 +0000</lastBuildDate>
 
+    <item>
+      <title>Alert notifiers for mobile devices</title>
+      <link>http://www.hawkular.org/blog/2015/04/09/alert-notifiers-for-mobile-devices.html</link>
+      <author>noreply@hawkular.org (Thomas Segismont)</author>
+      <pubDate>Tue, 14 Apr 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/04/09/alert-notifiers-for-mobile-devices.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts has new notifications senders which target mobile devices. Let&amp;#8217;s start with a brief explanation of
+notification sending.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;how_notification_senders_work&quot;&gt;How notification senders work?&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When the alert engine detects a problem, it sends an action message to the configured sender(s) for this type of issue.
+The action message has all the details:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;which problem triggered the alert&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;who are the configured recipients&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-action-plugins&quot; class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2015/alert-action-plugins.png&quot; alt=&quot;Action plugins overview&quot; width=&quot;600&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Action plugins overview&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;The alert engine inspects notification data to determine which action messages should be sent to the Hawkular bus.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Then it sends a message for each configured notification (email/SMS/push).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Action plugins pick up their messages and build the notification with the details given in the notification message.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Makes sense? Now which new plugins do we have?&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;unified_push_notifications&quot;&gt;Unified Push Notifications&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alert&amp;#8217;s &lt;code&gt;areogear&lt;/code&gt; plugin is able to send notification messages to
+&lt;a href=&quot;https://www.jboss.org/unifiedpush/&quot;&gt;Aerogear&amp;#8217;s Unified Push Server&lt;/a&gt;. Which means that you can send alerts as native push
+messages to an Android, iOS, Windows or Firefox OS application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At the time of writing, Hawkular doesn&amp;#8217;t have a mobile application for any of these platforms (an Android application
+might come soon with the help of a Google Summer of Code student). So for demonstration purposes we&amp;#8217;ve built a sample
+application, &lt;code&gt;Hawkugear&lt;/code&gt; and ran it with the Android Emulator.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-action-plugins&quot; class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2015/hawkugear-android-app.png&quot; alt=&quot;Hawkugear Android application&quot; width=&quot;350&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2. Hawkugear Android application&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The application lacks proper formatting of course, but you can see on this screenshot that the notification message
+landed properly on the mobile device after travelling through the Hawkular Bus, the Aerogear Unified Push Server and
+Google Cloud&amp;#8217;s Messaging platform.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To configure the &lt;code&gt;aerogear&lt;/code&gt; sender plugin, add these system property definitions (with your own values) into your
+Wildfly &lt;code&gt;standalone.xml&lt;/code&gt; file:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-xml&quot; data-lang=&quot;xml&quot;&gt;&amp;lt;system-properties&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.aerogear.root.server.url&quot; value=&quot;http://localhost:9191/ag-push/&quot;/&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.aerogear.application.id&quot; value=&quot;as304-6019-8a256afkbc-935b274-16247&quot;/&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.aerogear.master.secret&quot; value=&quot;94b2-qc156s-719725j6-4k04d566-bs0a340&quot;/&amp;gt;
+&amp;lt;/system-properties&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Or using the CLI:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;/system-property=org.hawkular.actions.aerogear.root.server.url:add(value=&quot;http://localhost:9191/ag-push/&quot;)
+/system-property=org.hawkular.actions.aerogear.application.id:add(value=&quot;as304-6019-8a256afkbc-935b274-16247&quot;)
+/system-property=org.hawkular.actions.aerogear.master.secret:add(value=&quot;94b2-qc156s-719725j6-4k04d566-bs0a340&quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;short_message_service&quot;&gt;Short Message Service&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There&amp;#8217;s also an &lt;code&gt;sms&lt;/code&gt; plugin which is built on &lt;a href=&quot;https://www.twilio.com/sms&quot;&gt;Twilio&amp;#8217;s SMS services&lt;/a&gt;. No mobile application
+required here, all you need to do is to create a Twilio account and configure the plugin with your application &lt;code&gt;sid&lt;/code&gt;,
+authorization &lt;code&gt;token&lt;/code&gt;, and &lt;code&gt;from&lt;/code&gt; number.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As for the &lt;code&gt;aerogear&lt;/code&gt; plugin, add these system property definitions (with your own values) into your Wildfly
+&lt;code&gt;standalone.xml&lt;/code&gt; file:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-xml&quot; data-lang=&quot;xml&quot;&gt;&amp;lt;system-properties&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.sms.sid&quot; value=&quot;ACdc5f132a3c49700934481addd5ce1659&quot;/&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.sms.token&quot; value=&quot;3036d49cAf5Cd019c81de12354d57ac49a&quot;/&amp;gt;
+    &amp;lt;property name=&quot;org.hawkular.actions.sms.from&quot; value=&quot;+14158141829&quot;/&amp;gt;
+&amp;lt;/system-properties&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Or using the CLI:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;/system-property=org.hawkular.actions.sms.sid:add(value=&quot;ACdc5f132a3c49700934481addd5ce1659&quot;)
+/system-property=org.hawkular.actions.sms.token:add(value=&quot;3036d49cAf5Cd019c81de12354d57ac49a&quot;)
+/system-property=org.hawkular.actions.sms.from:add(value=&quot;+14158141829&quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;more_to_come&quot;&gt;More to come&amp;#8230;&amp;#8203;&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We have planned to integrate with &lt;a href=&quot;http://www.pagerduty.com/&quot;&gt;PagerDuty&lt;/a&gt;. In the beginning, each notification message
+will be sent with a new indentifier. As a consequence, PagerDuty will see recurrent notifications of the same problem
+as different incidents. The Hawkular Alerts team is working on an incident worflow and we should be able to solve this
+problem in the near future.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That&amp;#8217;s it! Questions? Comments? Feel free to ask here or &lt;a href=&quot;irc://irc.freenode.net/#hawkular&quot;&gt;join us on Freenode&lt;/a&gt;!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Testing collectd integration</title>
       <link>http://www.hawkular.org/blog/2015/2015-04-08-1.html</link>
