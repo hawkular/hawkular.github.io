@@ -1,0 +1,337 @@
+= Hawkular Accounts for developers
+Juraci Paixão Kröhling
+2015-04-22
+:description: Consuming Hawkular Accounts
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+Hawkular Accounts is the Hawkular component that deals with authentication and authorization and is meant to be
+consumed by other Hawkular components, such as Metrics, Inventory, Alerts and so on.
+
+There are two main facets for Hawkular Accounts:
+
+* Inner engine, which handles the integration with Keycloak, the permission framework, authorization-related data
+storage user interface for logging in, persona switcher, organization management and so on.
+* API and helpers for other components, such as CDI providers for authorization and authentication services, hawt.io
+integration, AngularJS events and so on.
+
+== Terms and concepts
+
+What you need to know:
+
+* *Resource* - something that you want to protect; it might be an Alert, an Inventory item, a Metric, ...
+* *Persona* - either a User or an Organization. A real User can be impersonating an Organization, so, this Organization
+  would be the current Persona. In most cases, the current Persona corresponds to an intuitive notion of the
+  "current user" or "current tenant".
+
+What you might want to know:
+
+* *User* - a real user of the application. In most cases, consumers of Hawkular Accounts do not need to deal directly
+  with users.
+* *Organization* - a non-user which has an Owner and a set of Members. In most cases, consumers of Hawkular Accounts
+  do not need to deal directly with organizations.
+* *Owner* - owns a Resource, and can be (currently) either a Hawkular User or an Organization.
+* *Member* - a User or Organization that can be part of an Organization.
+
+Besides those terms, other common terms in the realm of authentication and authorization are used:
+
+* *Operation* - an action that a Persona performs on a resource, such as "metrics-create"
+* *Role* - the role that a Persona has on a given organization, such as "Super User".
+* *Permission* - a relationship between a Role and an Operation, such as "Super User can execute metrics-create"
+
+== Quick start
+
+Hawkular Accounts handles all the login, logout and authentication for Hawkular, both in the front end and in backend,
+in a mostly seamless way.
+
+=== Backend
+
+In your backend, you'll need to add the dependency to the Account's API:
+
+`pom.xml`:
+[source,xml]
+----
+<dependency>
+  <groupId>org.hawkular.accounts</groupId>
+  <artifactId>hawkular-accounts-api</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+</dependency>
+----
+
+If you are using a standalone backend instead of Kettle, you'll need to deploy the Hawkular Accounts backend and
+install the Keycloak adapters and modules. To do that, please refer to the Keycloak's documentation. You can refer to
+the `distribution` module in the Account's source code for an example on how to accomplish that.
+
+For Kettle, the following needs to be added to the `standalone.xsl`:
+
+`standalone.xsl`:
+[source,xml]
+----
+<secure-deployment name="hawkular-accounts.war">
+    <realm>hawkular</realm>
+    <resource>hawkular-accounts-backend</resource>
+    <use-resource-role-mappings>true</use-resource-role-mappings>
+    <enable-cors>true</enable-cors>
+    <enable-basic-auth>true</enable-basic-auth>
+    <credential name="secret"><xsl:value-of select="$uuid.hawkular.accounts.backend" /></credential>
+</secure-deployment>
+----
+
+You can refer to the http://docs.jboss.org/keycloak/docs/1.2.0.Beta1/userguide/html_single/index.html[Keycloak documentation]
+for details on what each option does.
+
+Apart from that, you'll need also to change your `web.xml` to activate the authentication via Keycloak.
+
+[source,xml]
+----
+<security-constraint>
+  <web-resource-collection>
+    <web-resource-name>REST endpoints</web-resource-name>
+    <url-pattern>/*</url-pattern>
+  </web-resource-collection>
+
+  <auth-constraint>
+    <role-name>*</role-name>
+  </auth-constraint>
+</security-constraint>
+
+<login-config>
+  <auth-method>KEYCLOAK</auth-method>
+  <realm-name>hawkular</realm-name>
+</login-config>
+----
+
+Optionally, and recommended, is the inclusion of a `jboss-web.xml` and `jboss-ejb3.xml` to your project, with the
+following content:
+
+`jboss-web.xml`:
+[source,xml]
+----
+<jboss-web xmlns="http://www.jboss.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.jboss.com/xml/ns/javaee http://www.jboss.org/j2ee/schema/jboss-web_5_1.xsd">
+  <security-domain>keycloak</security-domain>
+</jboss-web>
+----
+
+`jboss-ejb3.xml`:
+[source,xml]
+----
+<jboss:jboss
+    xmlns="http://java.sun.com/xml/ns/javaee"
+    xmlns:jboss="http://www.jboss.com/xml/ns/javaee"
+    xmlns:s="urn:security:1.1"
+    version="3.1" impl-version="2.0">
+
+  <assembly-descriptor>
+    <s:security>
+      <ejb-name>*</ejb-name>
+      <s:security-domain>keycloak</s:security-domain>
+    </s:security>
+  </assembly-descriptor>
+</jboss:jboss>
+----
+
+Currently, it's not possible to fully take advantage of Keycloak's JAAS provider due to our multi tenancy setup. So, the
+secured components should add a `@PermitAll` annotation, to bypass JAAS' permission checking.
+
+After those steps, your backend will start requiring the requests to be authenticated. Requests coming from the UI
+will include a token that is used by the Keycloak Wildfly Adapter and verified by contacting a Keycloak Server.
+
+After this is setup, you can inject Hawkular Accounts services directly into your managed beans. You can check the
+`samples` module from the Hawkular Accounts project. The source below is taken from there, and shows how a REST
+endpoint might consume Hawkular Accounts main services.
+
+[source,java]
+----
+@Path("/samples")
+@PermitAll // we bypass JAAS' protections, as we want to perform the checks inside the methods
+@Stateless
+public class SampleEndpoint {
+
+    @Inject @HawkularAccountsSample
+    EntityManager em;
+
+    @Inject
+    Persona currentPersona;
+
+    /**
+     * A managed instance of the {@link PermissionChecker}, ready to be used.
+     */
+    @Inject
+    PermissionChecker permissionChecker;
+
+    /**
+     * We need the {@link ResourceService} as we need to tell Hawkular Accounts about who created "what". A resource
+     * is this "what".
+     */
+    @Inject
+    ResourceService resourceService;
+
+    /**
+     * For this example, we have four operations. We get an instance of each of them injected and qualified by its name.
+     */
+    @Inject
+    @NamedOperation("sample-create")
+    Operation operationCreate;
+
+    @Inject
+    @NamedOperation("sample-read")
+    Operation operationRead;
+
+    @Inject
+    @NamedOperation("sample-update")
+    Operation operationUpdate;
+
+    @Inject
+    @NamedOperation("sample-delete")
+    Operation operationDelete;
+
+    @GET
+    public Response getAllSamples() {
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<Sample> query = builder.createQuery(Sample.class);
+        Root<Sample> root = query.from(Sample.class);
+        query.select(root);
+        query.where(builder.equal(root.get(Sample_.ownerId), currentPersona.getId()));
+
+        return Response.ok().entity(em.createQuery(query).getResultList()).build();
+    }
+
+    @GET
+    @Path("{sampleId}")
+    public Response getSample(@PathParam("sampleId") String sampleId) {
+        Sample sample = em.find(Sample.class, sampleId);
+
+        // before returning, we check if the current persona has permissions to access this.
+        if (permissionChecker.isAllowedTo(operationRead, sample.getId())) {
+            return Response.ok().entity(sample).build();
+        }
+
+        // the current persona is not allowed, so, return a 404.
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    @POST
+    public Response createSample(SampleRequest request) {
+        // for this example, we allow everybody to create a sample, but there might be situations where an user can
+        // only create resources if they are allowed access to some other resource.
+        Sample sample = new Sample(UUID.randomUUID().toString(), currentPersona.getId());
+        resourceService.create(sample.getId(), currentPersona);
+        sample.setName(request.getName());
+
+        em.persist(sample);
+        return Response.ok().entity(sample).build();
+    }
+
+    @DELETE
+    @Path("{sampleId}")
+    public Response removeSample(@PathParam("sampleId") String sampleId) {
+        Sample sample = em.find(Sample.class, sampleId);
+        Resource resource = resourceService.get(sampleId);
+
+        // check if the current user can perform this operation
+        if (permissionChecker.isAllowedTo(operationDelete, resource)) {
+            em.remove(sample);
+            return Response.noContent().build();
+        }
+        return Response.status(Response.Status.NOT_FOUND).build();
+    }
+}
+----
+
+=== Frontend
+
+The frontend is done in a seamless way and other components don't need to know about the existence of Hawkular
+Accounts at all. When the application is loaded, the Hawkular Accounts frontend plugin interacts with hawt.io's OAuth
+plugin, which in turn interacts with Keycloak's JavaScript adapter.
+
+Hawt.io's OAuth plugin adds the authentication token (formally: "bearer token") to the requests going to the backend
+via an AngularJS interceptor, so, your frontend plugin doesn't need to do anything.
+
+Hawkular Accounts handles the context switcher for personas, and you might want to register listeners for a couple of
+events that are emitted from it: `CurrentPersonaLoaded` and `SwitchedPersona`. As their names suggest, those events
+are emitted as soon as Hawkular Accounts detects which persona is the current one (`CurrentPersonaLoaded`) and as
+soon as the user has changed the current persona using the "Persona Switcher" (`SwitchedPersona`).
+
+image::/img/dev-docs/persona-switcher.png[Persona Switcher at the UI]
+
+While in development mode, you might want to adapt your `index.html` to include the required UI elements and
+JavaScript components. On the `ui/console` build from the main `hawkular` maven module, this is already done.
+
+In particular, you'll need to:
+
+* Add the hawkular-accounts JavaScript and CSS to your index.html
+* Add some UI elements, such the account switcher and the countdown notification.
+
+`index.html`:
+[source,html]
+----
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="../../dist/hawkular-ui-components-accounts.css"/>
+    <script src="../../dist/hawkular-ui-components-accounts.js"></script>
+</head>
+
+<body>
+<div data-idle-countdown="countdown" data-ng-init="countdown=30" id="idle">
+    <strong>You'll be logged out in {{countdown}} second(s).</strong>.
+</div>
+
+<nav class="navbar navbar-default navbar-pf" role="navigation">
+    <ul class="nav navbar-nav navbar-primary" hawtio-main-nav></ul>
+    <ul class="nav navbar-nav" hawtio-sub-tabs></ul>
+    <ul class="nav navbar-nav navbar-utility pull-right">
+        <li class="dropdown" data-ng-controller="HawkularAccounts.PersonaController">
+            <a href="#" dropdown-toggle>
+                <span class="pficon pficon-user"></span>
+                {{currentPersona.name}} <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu" id="personaSwitcher">
+                <li data-ng-repeat="persona in personas">
+                    <a href="#" data-ng-click="switchPersona(persona)">{{persona.name}}</a>
+                </li>
+                <li class="divider"></li>
+                <li>
+                    <a href="#" data-ng-click="userDetails.logout()">Log Out</a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</nav>
+</body>
+</html>
+----
+
+Please, refer to the `index.html` from the `accounts` plugin at `hawkular-ui-components` for an example of what's
+required.
+
+== CLI access
+
+Requests coming from the CLI need to pass the authentication data for an user via CLI:
+
+[source,bash]
+----
+curl -v http://user:pass@localhost:8080/context/endpoint
+----
+
+If this user is impersonating an organization, the organization's ID should be passed via the `X-Hawkular-Persona`
+HTTP header:
+
+[source,bash]
+----
+curl -v -H 'X-Hawkular-Persona: uuid' http://user:pass@localhost:8080/context/endpoint
+----
+
+A list of possible personas for a given user can be obtained via:
+[source,bash]
+----
+curl -v http://user:pass@localhost:8080/hawkular-accounts/personas
+----
