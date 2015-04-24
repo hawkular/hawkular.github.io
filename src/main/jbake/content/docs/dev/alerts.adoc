@@ -1,19 +1,28 @@
+= Hawkular Alerts for Developers
+Jay Shaughnessy
+2015-04-24
+:description: Hawkular Alerts Developer Guide
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
 
-= Hawkular Alerts
+toc::[]
 
-Version 0.0.1 +
-April 24, 2015
+== Introduction
 
 Hawkular Alerts is a component of the http://hawkular.org[Hawkular] management and monitoring project. It's goal is to provide flexible and scalable alerting services in an easily consumable way.
 
 The Hawkular Alerts project lives on http://github.com/hawkular/hawkular-alerts[GitHub].
 
 
-=== Triggers
+== Triggers
 
 A Trigger defines the conditions that when satisfied will cause the trigger to fire an Alert.  Triggers can have one or more conditions and can optionally fire when ANY or ALL of the conditions are met.
 
-==== Conditions
+
+=== Conditions
 
 There are several different kinds of conditions but they all have one thing in common, each requires some piece of data against which the condition is evaluated.  Here are the different kinds of conditions:
 
@@ -31,7 +40,7 @@ There are several different kinds of conditions but they all have one thing in c
 Most conditions deal with numeric data.  But String and Availability data is also supported.  A trigger can combine conditions dealing with data of different types and from different sources.
 
 
-==== Actions
+=== Actions
 
 The whole purpose of alerting is to be able to immediately respond to a developing or active problem.  Hawkular Alerts provides several plugins to take action when alerts are generated.  Custom action plugins can be defined as well. The list of provided action plugins keeps growing, Here is a sample:
 
@@ -41,7 +50,7 @@ The whole purpose of alerting is to be able to immediately respond to a developi
 * Pager Duty integration 
 
 
-==== Trigger Dampening
+=== Trigger Dampening
 
 It's often the case that you don't want a trigger to fire every time a condition set is met.  Instead, you want to ensure that the issue is not a spike of activity, or that you don't flood an on-call engineer with alerts.  Hawkular Alerts provides several way of ensuring triggers fire only as desired. We call this "_Trigger Dampening_".  An example is useful for understanding dampening.  
 
@@ -51,47 +60,47 @@ It is important to understand how thre rporting interval plays into alerting, an
 
 Here are the different trigger dampening types:
 
-* *Strict*
-** N consecutive true evaluations
-** Useful for ignoring spikes in activity or waiting for a prolonged event
+==== Strict
+* N consecutive true evaluations
+* Useful for ignoring spikes in activity or waiting for a prolonged event
 
 In our example this could be, "Fire the trigger only if responseTime > 1s for 6 consecutive evaluations".  So, given a 15s reporting interval this means response time would likely have been high for about 90s.  But note that if the reporting interval changes the firing time will change.  This is used more when the number of evaluations is more important than the time it takes to fire.
 
 Note that default dampening for triggers is Strict(1).  Which just means that by default a trigger fires every time it's condition set evaluates to true.
 
-* *Relaxed Count*
-** N true evaluations out of M total evaluations
-** Useful for ignoring short spikes in activity but catching frequently spiking activity
+==== Relaxed Count
+* N true evaluations out of M total evaluations
+* Useful for ignoring short spikes in activity but catching frequently spiking activity
 
 In our example this could be, "Fire the trigger only if responseTime > 1s for 4 of 8 evaluations".  This means the trigger will fire if roughly half the time we are exceeding a 1s response time.  Given a 15s reporting interval this means the trigger could fire in 1 to 2 minutes of accumulated evaluations. But note that if the reporting interval changes the firing time will change.  This is used more when the number of evaluations is more important than the time it takes to fire.
 
-* *Relaxed Time*
-** N true evaluations in T time
-** Useful for ignoring short spikes in activity but catching frequently spiking activity
+==== Relaxed Time
+* N true evaluations in T time
+* Useful for ignoring short spikes in activity but catching frequently spiking activity
 
 In our example this could be, "Fire the trigger only if responseTime > 1s 4 times in 5 minutes".  This means the trigger will fire if we exceed 1s response time multiple times in a 5 minute period. Given a 15s reporting interval this means the trigger could fire in 1 to 5 minutes of accumulated evaluations. But note that if the reporting interval changes the firing time will change. And also note that the trigger will never fire if we don't receive at least 4 reports in the specified 5 minute period. This is used when you don't want to exceed a certain period of time before firing.
 
-* *Strict Time*
-** Only true evaluations for at least T time
-** Useful for reporting a continued aberration
+==== Strict Time
+* Only true evaluations for at least T time
+* Useful for reporting a continued aberration
 
 In our example this could be, "Fire the trigger only if responseTime > 1s for at least 5 minutes".  This means the trigger will fire if we exceed 1s response time on every report for a 5 minute period. Given a 15s reporting interval this means the trigger will fire after roughly 20 consecutive true evaluations. Note that if the reporting interval changes the firing time will remain roughly the same.  It is important to understand that at least 2 evaluations are required.  The first true evaluation starts the clock. Any false evaluation stops the clock. Assuming only true evaluations, the trigger fires on the first true evaluation at or after the specified period.  The shorter the reporting interval the closer the firing time will be to the specified period, T.
 
-* *Strict Timeout*
-** Only true evaluations for T time
-** Useful for reporting a continued aberration with a more guaranteed firing time
+==== Strict Timeout
+* Only true evaluations for T time
+* Useful for reporting a continued aberration with a more guaranteed firing time
 
 In our example this could be, "Fire the trigger only if responseTime > 1s for 5 minutes".  This means the trigger will fire if we exceed 1s response time on every report for a 5 minute period. Given a 15s reporting interval this means the trigger will fire after roughly 20 consecutive true evaluations. Note that if the reporting interval changes the firing time will remain the same.  It is important to understand that only 1 evaluation is required.  The first true evaluation starts the clock. Assuming only true evaluations, the trigger fires at T, when a timer expires and fires the trigger. Any false evaluation stops the clock and cancels the timer. This type of dampening has more processing overhead because the trigger evaluation requires an external timer.
 
-==== AutoDisable
+=== AutoDisable
 
 A trigger can be set for AutoDisable.  Whereas dampening can limit the firing rate of a trigger, disabling a trigger completely stops the trigger from firing (or being evaluated).  A trigger can be manually enabled and disabled, via the REST API, but it can also be disabeled automatically. If the trigger has the autoDisable option set to true then after it fires it id disabled, preventing any subsequent alerts until manually re-enabled.  The default is false.
 
-=== Alert Lifecycle
+== Alert Lifecycle
 
 Hawkular Alerts can integrate with other systems to handle Alert Lifecycle, but alerts can also be managed directly within the tool.  Hawkular Alerts supports a typical move through a simple lifecycle.  An alert starts in OPEN status, optionally moves to ACKNOWLEDGED to indicate the alert has been seen and the issue is being resolved, and is finally set to RESOLVED to indicate the problem has been fixed.
 
-==== AutoResolve
+=== AutoResolve
 
 Triggers require firing conditions and always start in _Firing_ mode.  But the trigger can optionally supply autoResolve conditions. If _autoResolve=true_ then after a trigger fires it switches to _AutoResolve_ mode.  In AutoResolve mode the trigger no longer looks for problem conditions, but instead looks for evidence that the problem is resolved.  A simple example would be a trigger that has a firing condition of Availability DOWN, and an autoResolve condition of Availability UP.  This mechanism ensures that only one alert is generated for a problem, and that when the problem has been resolved, the trigger automatically returns to firing mode.
 
@@ -100,8 +109,7 @@ Moreover, if _autoResolveAlerts=true_ then when the AutoResolve conditions are s
 Like Firing mode, AutoResolveMode can optionally define its own dampening setting.
 
 
-
-=== REST API
+== REST API
 
 Hawkular Alerts supports a robust REST API for managing Triggers and Alerts.  For more on how to generate API documentation, see the README.adoc at http://github.com/hawkular/hawkular-alerts[Hawkular-Alerts @ *GitHub*].
 
