@@ -4,54 +4,7 @@
 #`http://localhost:8080/hawkular/alerts`#
 
 == REST APIs
-=== Hawkular-Alerts REST API for Alert Handling
-
-
-
-==============================================
-*Endpoint* `/`
-
-
-NOTE: *Get alerts with optional filtering* +
-      _Pagination is not yet implemented._
-
-*Method*
-****
-*GET* `/`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
-    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
-    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
-    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
-    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
-    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
-|=======================
-
-*Response* +
-Collection&lt;Alert&gt;[org.hawkular.alerts.api.model.condition.Alert]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts found and returned | -
-| 204    | Success, no Alerts found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
+=== Alert Handling
 
 
 
@@ -213,7 +166,94 @@ void
 
 {empty} +
 
-=== Hawkular-Alerts REST API for Action Handling
+
+
+==============================================
+*Endpoint* `/data`
+
+
+NOTE: *Send data for alert processing/condition evaluation.* 
+
+*Method*
+****
+*POST* `/data`
+****
+
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|data to be processed by alerting|<<MixedData,MixedData>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, data added. | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/`
+
+
+NOTE: *Get alerts with optional filtering* +
+      _Pagination is not yet implemented._
+
+*Method*
+****
+*GET* `/`
+****
+
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
+    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
+    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
+    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
+    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
+    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
+|=======================
+
+*Response* +
+Collection&lt;Alert&gt;[org.hawkular.alerts.api.model.condition.Alert]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Alerts found and returned | -
+| 204    | Success, no Alerts found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Action Handling
 
 
 
@@ -259,31 +299,6 @@ No codes specified
 *Endpoint* `/actions/`
 
 
-NOTE: *Find all action ids* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/actions/`
-****
-
-
-*Response* +
-Collection[string]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Actions Found | -
-| 204    | Success, No Actions Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
 NOTE: *Create a new action* +
       _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
 
@@ -315,31 +330,14 @@ Map&lt;String, String&gt;[java.lang.String]
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/plugin/{actionPlugin}`
-
-
-NOTE: *Find all action ids of an specific action plugin* +
+NOTE: *Find all action ids* +
       _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/actions/plugin/{actionPlugin}`
+*GET* `/actions/`
 ****
 
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to filter query for action ids|string
-|=======================
 
 *Response* +
 Collection[string]
@@ -473,31 +471,40 @@ void
 
 {empty} +
 
-=== Query operations for action plugins
-
 
 
 ==============================================
-*Endpoint* `/plugins/`
+*Endpoint* `/actions/plugin/{actionPlugin}`
 
 
-NOTE: *Find all action plugins* +
+NOTE: *Find all action ids of an specific action plugin* +
       _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/plugins/`
+*GET* `/actions/plugin/{actionPlugin}`
 ****
 
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin to filter query for action ids|string
+|=======================
 
 *Response* +
-Collection&lt;String&gt;[java.lang.String]
+Collection[string]
 
 *Status codes*
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-No codes specified
+| 200    | Success, Actions Found | -
+| 204    | Success, No Actions Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
 |=======================
 
 {empty} +
@@ -505,6 +512,8 @@ No codes specified
 ==============================================
 
 {empty} +
+
+=== Query operations for action plugins
 
 
 
@@ -544,7 +553,38 @@ No codes specified
 
 {empty} +
 
-=== Hawkular-Alerts REST API for Trigger Handling
+
+
+==============================================
+*Endpoint* `/plugins/`
+
+
+NOTE: *Find all action plugins* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/plugins/`
+****
+
+
+*Response* +
+Collection&lt;String&gt;[java.lang.String]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+No codes specified
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Trigger Handling
 
 
 
@@ -590,22 +630,48 @@ Tag
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}`
+*Endpoint* `/triggers/`
 
 
-NOTE: *Get an existing trigger definition* 
+NOTE: *Find all Trigger definitions* +
+      _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/triggers/{triggerId}`
+*GET* `/triggers/`
 ****
 
-*path parameters*
+
+*Response* +
+Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Triggers Found | -
+| 204    | Success, No Triggers Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
+      _Returns Trigger created if operation finished correctly_
+
+*Method*
+****
+*POST* `/triggers/`
+****
+
+*body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
+    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
 |=======================
 
 *Response* +
@@ -615,156 +681,7 @@ Trigger
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Trigger Found | -
-| 404    | Success, No Trigger Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Update an existing trigger definition* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be updated|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated trigger definition|<<Trigger,Trigger>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Updated | -
-| 404    | No Trigger Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Delete an existing trigger definition* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Deleted | -
-| 404    | No Trigger Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings`
-
-
-NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-*Response* +
-Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampenings Found | -
-| 204    | Success, No Dampenings Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new dampening* +
-      _Returns Dampening created if operation finished correctly_
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/dampenings`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id attached to dampening|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
-|=======================
-
-*Response* +
-Dampening
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Created | -
+| 200    | Success, Trigger Created | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
 
@@ -921,6 +838,282 @@ void
 | Status Code | Reason      | Response Model
 | 200    | Success, Dampening Deleted | -
 | 404    | No Dampening Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/dampenings`
+
+
+NOTE: *Create a new dampening* +
+      _Returns Dampening created if operation finished correctly_
+
+*Method*
+****
+*POST* `/triggers/{triggerId}/dampenings`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id attached to dampening|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
+|=======================
+
+*Response* +
+Dampening
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+*Response* +
+Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampenings Found | -
+| 204    | Success, No Dampenings Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}`
+
+
+NOTE: *Get an existing trigger definition* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+*Response* +
+Trigger
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Found | -
+| 404    | Success, No Trigger Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Update an existing trigger definition* 
+
+*Method*
+****
+*PUT* `/triggers/{triggerId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be updated|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Updated trigger definition|<<Trigger,Trigger>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Updated | -
+| 404    | No Trigger Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Delete an existing trigger definition* 
+
+*Method*
+****
+*DELETE* `/triggers/{triggerId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be deleted|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Deleted | -
+| 404    | No Trigger Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/tags`
+
+
+NOTE: *Get tags for a trigger.* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/tags`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger id for the retrieved Tags|string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |category|false|Category of tags to be retrieved|string
+|=======================
+
+*Response* +
+Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Tags Found | -
+| 204    | Success, No Tags Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Delete existing Tags from a Trigger* 
+
+*Method*
+****
+*POST* `/triggers/{triggerId}/tags`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger id of tags to be deleted|string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |category|false|Category of tags to be deleted|string
+    |name|false|Name of tags to be deleted|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Tags Deleted | -
+| 404    | No Trigger Found | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
 
@@ -1124,159 +1317,6 @@ Collection&lt;Condition&gt;[org.hawkular.alerts.api.model.condition.Condition]
 {empty} +
 
 
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/tags`
-
-
-NOTE: *Delete existing Tags from a Trigger* 
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/tags`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger id of tags to be deleted|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |category|false|Category of tags to be deleted|string
-    |name|false|Name of tags to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Tags Deleted | -
-| 404    | No Trigger Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Get tags for a trigger.* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/tags`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger id for the retrieved Tags|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |category|false|Category of tags to be retrieved|string
-|=======================
-
-*Response* +
-Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Tags Found | -
-| 204    | Success, No Tags Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/`
-
-
-NOTE: *Find all Trigger definitions* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/`
-****
-
-
-*Response* +
-Collection&lt;Trigger&gt;[org.hawkular.alerts.api.model.trigger.Trigger]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Triggers Found | -
-| 204    | Success, No Triggers Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
-      _Returns Trigger created if operation finished correctly_
-
-*Method*
-****
-*POST* `/triggers/`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
-|=======================
-
-*Response* +
-Trigger
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
 == Data Types
 
 {empty} +
@@ -1316,6 +1356,17 @@ Trigger
 |triggerMode|Mode|optional|-|FIRING, AUTORESOLVE
 |triggerId|string|optional|-|-
 |evalTotalSetting|int|optional|Number of allowed evaluation attempts for RELAXED_COUNT|> evalTrueSetting
+|=======================
+
+
+[[MixedData]]
+=== MixedData
+[options="header"]
+|=======================
+| Name | Type | Required | Description | Allowable Values
+|stringData|java.util.Collection&lt;org.hawkular.alerts.api.model.data.StringData&gt;|optional|-|-
+|availability|java.util.Collection&lt;org.hawkular.alerts.api.model.data.Availability&gt;|optional|-|-
+|numericData|java.util.Collection&lt;org.hawkular.alerts.api.model.data.NumericData&gt;|optional|-|-
 |=======================
 
 
