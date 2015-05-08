@@ -518,17 +518,24 @@ void
 
 
 ==============================================
-*Endpoint* `/plugins/`
+*Endpoint* `/plugins/{actionPlugin}`
 
 
-NOTE: *Find all action plugins* +
-      _Pagination is not yet implemented_
+NOTE: *Find list of properties to fill for a specific action plugin* +
+      _Each action plugin can have a different and variable number of properties. This method should be invoked before of a creation of a new action._
 
 *Method*
 ****
-*GET* `/plugins/`
+*GET* `/plugins/{actionPlugin}`
 ****
 
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin to query|string
+|=======================
 
 *Response* +
 Collection&lt;String&gt;[java.lang.String]
@@ -549,24 +556,17 @@ No codes specified
 
 
 ==============================================
-*Endpoint* `/plugins/{actionPlugin}`
+*Endpoint* `/plugins/`
 
 
-NOTE: *Find list of properties to fill for a specific action plugin* +
-      _Each action plugin can have a different and variable number of properties. This method should be invoked before of a creation of a new action._
+NOTE: *Find all action plugins* +
+      _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/plugins/{actionPlugin}`
+*GET* `/plugins/`
 ****
 
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to query|string
-|=======================
 
 *Response* +
 Collection&lt;String&gt;[java.lang.String]
@@ -830,6 +830,319 @@ Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
 
 
 ==============================================
+*Endpoint* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
+
+
+NOTE: *Get a dampening using triggerId and triggerMode* +
+      _Similar as getDampening(dampeningId)_
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
+|=======================
+
+*Response* +
+Dampening
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Found | -
+| 204    | Success, No Dampening Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/dampenings/{dampeningId}`
+
+
+NOTE: *Get an existing dampening* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings/{dampeningId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |dampeningId|true|Dampening id|string
+|=======================
+
+*Response* +
+Dampening
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Found | -
+| 404    | No Dampening Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Update an existing dampening definition. Note that the trigger mode can not be changed.* 
+
+*Method*
+****
+*PUT* `/triggers/{triggerId}/dampenings/{dampeningId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |dampeningId|true|Dampening id|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Updated dampening definition|<<Dampening,Dampening>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Updated | -
+| 404    | No Dampening Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Delete an existing dampening definition* 
+
+*Method*
+****
+*DELETE* `/triggers/{triggerId}/dampenings/{dampeningId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |dampeningId|true|Dampening id for dampening definition to be deleted|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Deleted | -
+| 404    | No Dampening Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/dampenings`
+
+
+NOTE: *Create a new dampening* +
+      _Returns Dampening created if operation finished correctly_
+
+*Method*
+****
+*POST* `/triggers/{triggerId}/dampenings`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id attached to dampening|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
+|=======================
+
+*Response* +
+Dampening
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+*Response* +
+Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampenings Found | -
+| 204    | Success, No Dampenings Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/conditions`
+
+
+NOTE: *Get a map with all conditions for a specific trigger.* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/conditions`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+*Response* +
+Collection&lt;Condition&gt;[org.hawkular.alerts.api.model.condition.Condition]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Conditions Found | -
+| 204    | Success, No Conditions Found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Create a new condition for a specific trigger* 
+
+*Method*
+****
+*POST* `/triggers/{triggerId}/conditions`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|Json representation of a condition. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
+|=======================
+
+*Response* +
+Collection[Condition]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Condition Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
 *Endpoint* `/triggers/`
 
 
@@ -1004,319 +1317,6 @@ void
 {empty} +
 
 
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings`
-
-
-NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-*Response* +
-Collection&lt;Dampening&gt;[org.hawkular.alerts.api.model.dampening.Dampening]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampenings Found | -
-| 204    | Success, No Dampenings Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new dampening* +
-      _Returns Dampening created if operation finished correctly_
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/dampenings`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id attached to dampening|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
-|=======================
-
-*Response* +
-Dampening
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-
-
-NOTE: *Get a dampening using triggerId and triggerMode* +
-      _Similar as getDampening(dampeningId)_
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
-|=======================
-
-*Response* +
-Dampening
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Found | -
-| 204    | Success, No Dampening Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings/{dampeningId}`
-
-
-NOTE: *Get an existing dampening* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
-|=======================
-
-*Response* +
-Dampening
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Found | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Update an existing dampening definition. Note that the trigger mode can not be changed.* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated dampening definition|<<Dampening,Dampening>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Updated | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Delete an existing dampening definition* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id for dampening definition to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Deleted | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/conditions`
-
-
-NOTE: *Get a map with all conditions for a specific trigger.* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/conditions`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-*Response* +
-Collection&lt;Condition&gt;[org.hawkular.alerts.api.model.condition.Condition]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Conditions Found | -
-| 204    | Success, No Conditions Found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new condition for a specific trigger* 
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/conditions`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
-|=======================
-
-*Response* +
-Collection[Condition]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
 == Data Types
 
 {empty} +
@@ -1336,8 +1336,8 @@ Collection[Condition]
 [options="header"]
 |=======================
 | Name | Type | Required | Description | Allowable Values
-|type|Type|optional|-|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE
 |conditionId|string|optional|-|-
+|type|Type|optional|-|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE
 |triggerMode|Mode|optional|-|FIRING, AUTORESOLVE
 |triggerId|string|optional|-|-
 |dataId|string|optional|-|-
