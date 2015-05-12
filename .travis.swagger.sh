@@ -55,6 +55,13 @@ downloadAndProcess() {
 
   mkdir -p $DOC_PATH
   FILES=`curl -Ls https://api.github.com/repos/$REPO/contents/?ref=$BRANCH | grep "download_url.*adoc" | cut -d '"' -f4`
+
+  # travis has sometimes issue with the call above, so make sure it's not empty
+  [[ "x" == "x$FILES" ]] && FILES="https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts.adoc \
+https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-btm.adoc \
+https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-inventory.adoc \
+https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-metrics.adoc"
+
   for file in $FILES; do
     wget -P $DOC_PATH $file
   done
