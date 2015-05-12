@@ -20,7 +20,8 @@ addHeaders() {
   dir_path=$1
 
   for file in $(find $dir_path -maxdepth 1 -mindepth 1); do
-    [[ -s $file ]] || continue;
+    # if the documentation is empty, ignore it
+    [[ -s $file ]] || rm $file && continue;
 
     # it assumes the filenames to be in "rest-${component}.adoc" form
     title=`echo $(basename $file) | cut -d'.' -f1 | cut -d'-' -f2`
