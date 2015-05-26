@@ -1,38 +1,38 @@
 
 
 == Base Path
-#`http://localhost:8080/hawkular-metrics/`#
+#`http://localhost:8080/hawkular/metrics/`#
 
 == REST APIs
-=== Metrics related REST interface
+=== Gauge metrics interface
 
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/numeric`
+*Endpoint* `/gauges/`
 
 
-NOTE: *Create numeric metric definition.* +
+NOTE: *Create gauge metric definition.* +
       _Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention._
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/numeric`
+*POST* `/gauges/`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |Hawkular-Tenant|false||string
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<NumericMetric,NumericMetric>>
+    |body|true||<<Gauge,Gauge>>
 |=======================
 
 *Response* +
@@ -44,56 +44,46 @@ void
 | Status Code | Reason      | Response Model
 | 201    | Metric definition created successfully | -
 | 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
-| 409    | Numeric metric with given id already exists | [ApiError](#<<ApiError>>)
+| 409    | Gauge metric with given id already exists | [ApiError](#<<ApiError>>)
 | 500    | Metric definition creation failed due to an unexpected error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/metrics/availability`
-
-
-NOTE: *Create availability metric definition. Same notes as creating numeric metric apply.* 
+NOTE: *Find gauge metrics data by their tags.* 
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/availability`
+*GET* `/gauges/`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |Hawkular-Tenant|false||string
 |=======================
-*body parameters*
+*query parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<AvailabilityMetric,AvailabilityMetric>>
+    |tags|true|Tag list|<<Tags,Tags>>
 |=======================
 
 *Response* +
-void
+List[Map]
 
 *Status codes*
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Metric definition created successfully | -
-| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
-| 409    | Numeric metric with given id already exists | [ApiError](#<<ApiError>>)
-| 500    | Metric definition creation failed due to an unexpected error | [ApiError](#<<ApiError>>)
+| 200    | Successfully fetched data. | -
+| 204    | No matching data found. | -
+| 400    | Missing or invalid tags query | [ApiError](#<<ApiError>>)
+| 500    | Any error in the query. | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -106,22 +96,28 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/{id}/tags`
+*Endpoint* `/gauges/{id}`
 
 
-NOTE: *Retrieve tags associated with the metric definition.* 
+NOTE: *Retrieve single metric definition.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics/numeric/{id}/tags`
+*GET* `/gauges/{id}`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 
@@ -132,46 +128,9 @@ Metric
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Metric&#39;s tags were successfully retrieved. | -
-| 204    | Query was successful, but no metrics were found. | -
-| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Update tags associated with the metric definition.* 
-
-*Method*
-****
-*PUT* `/{tenantId}/metrics/numeric/{id}/tags`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Metric&#39;s tags were successfully updated. | -
-| 500    | Unexpected error occurred while updating metric&#39;s tags. | [ApiError](#<<ApiError>>)
+| 200    | Metric&#39;s definition was successfully retrieved. | -
+| 204    | Query was successful, but no metrics definition is set. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s definition. | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -184,69 +143,33 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/{id}/tags/{tags}`
-
-
-NOTE: *Delete tags associated with the metric definition.* 
-
-*Method*
-****
-*DELETE* `/{tenantId}/metrics/numeric/{id}/tags/{tags}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-    |tags|true|Tag list|<<Tags,Tags>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Metric&#39;s tags were successfully deleted. | -
-| 400    | Invalid tags | [ApiError](#<<ApiError>>)
-| 500    | Unexpected error occurred while trying to delete metric&#39;s tags. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/metrics/availability/{id}/tags`
+*Endpoint* `/gauges/{id}/tags`
 
 
 NOTE: *Retrieve tags associated with the metric definition.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics/availability/{id}/tags`
+*GET* `/gauges/{id}/tags`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 
 *Response* +
-Map
+Map[string]
 
 *Status codes*
 [options="header"]
@@ -264,15 +187,21 @@ NOTE: *Update tags associated with the metric definition.*
 
 *Method*
 ****
-*PUT* `/{tenantId}/metrics/availability/{id}/tags`
+*PUT* `/gauges/{id}/tags`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 *body parameters*
@@ -304,22 +233,28 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/availability/{id}/tags/{tags}`
+*Endpoint* `/gauges/{id}/tags/{tags}`
 
 
 NOTE: *Delete tags associated with the metric definition.* 
 
 *Method*
 ****
-*DELETE* `/{tenantId}/metrics/availability/{id}/tags/{tags}`
+*DELETE* `/gauges/{id}/tags/{tags}`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
     |tags|true|Tag list|<<Tags,Tags>>
 |=======================
@@ -346,22 +281,28 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/{id}/data`
+*Endpoint* `/gauges/{id}/data`
 
 
-NOTE: *Add data for a single numeric metric.* 
+NOTE: *Add data for a single gauge metric.* 
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/numeric/{id}/data`
+*POST* `/gauges/{id}/data`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 *body parameters*
@@ -369,7 +310,7 @@ NOTE: *Add data for a single numeric metric.*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of datapoints containing timestamp and value|<<NumericData,List[NumericData]>>
+    |body|true|List of datapoints containing timestamp and value|<<GaugeData,List[GaugeData]>>
 |=======================
 
 *Response* +
@@ -387,19 +328,25 @@ void
 
 {empty} +
 
-NOTE: *Retrieve numeric data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket.* 
+NOTE: *Retrieve gauge data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics/numeric/{id}/data`
+*GET* `/gauges/{id}/data`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 *query parameters*
@@ -420,10 +367,10 @@ List
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Successfully fetched numeric data. | -
-| 204    | No numeric data was found. | -
+| 200    | Successfully fetched metric data. | -
+| 204    | No metric data was found. | -
 | 400    | buckets or bucketDuration parameter is invalid, or both are used. | [ApiError](#<<ApiError>>)
-| 500    | Unexpected error occurred while fetching numeric data. | [ApiError](#<<ApiError>>)
+| 500    | Unexpected error occurred while fetching metric data. | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -436,22 +383,179 @@ List
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/availability/{id}/data`
+*Endpoint* `/gauges/data`
 
 
-NOTE: *Add data for a single availability metric.* 
+NOTE: *Add data for multiple gauge metrics in a single call.* 
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/availability/{id}/data`
+*POST* `/gauges/data`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of metrics|<<Gauge,List[Gauge]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/gauges/{id}/periods`
+
+
+NOTE: *Retrieve periods for which the condition holds true for each consecutive data point.* 
+
+*Method*
+****
+*GET* `/gauges/{id}/periods`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |id|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |start|false|Defaults to now - 8 hours|long
+    |end|false|Defaults to now|long
+    |threshold|true|A threshold against which values are compared|double
+    |op|true|A comparison operation to perform between values and the threshold. Supported operations include ge, gte, lt, lte, and eq|string
+|=======================
+
+*Response* +
+List
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully fetched periods. | -
+| 204    | No data was found. | -
+| 400    | Missing or invalid query parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/gauges/tags/{tags}`
+
+
+NOTE: *Find metric data with given tags.* 
+
+*Method*
+****
+*GET* `/gauges/tags/{tags}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tags|true|Tag list|<<Tags,Tags>>
+|=======================
+
+*Response* +
+List[Map]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Me values fetched successfully | -
+| 204    | No matching data found. | -
+| 400    | Invalid tags | [ApiError](#<<ApiError>>)
+| 500    | Any error while fetching data. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/gauges/{id}/tag`
+
+
+NOTE: *Add or update gauge metric&#39;s tags.* 
+
+*Method*
+****
+*POST* `/gauges/{id}/tag`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
     |id|true||string
 |=======================
 *body parameters*
@@ -459,7 +563,61 @@ NOTE: *Add data for a single availability metric.*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of availability datapoints|<<Availability,List[Availability]>>
+    |body|true||<<TagRequest,TagRequest>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tags were modified successfully. | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Availability metrics interface
+
+
+
+==============================================
+*Endpoint* `/availability/{id}/data`
+
+
+NOTE: *Add data for a single availability metric.* 
+
+*Method*
+****
+*POST* `/availability/{id}/data`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of availability datapoints|<<AvailabilityData,List[AvailabilityData]>>
 |=======================
 
 *Response* +
@@ -481,15 +639,21 @@ NOTE: *Retrieve availability data. When buckets or bucketDuration query paramete
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics/availability/{id}/data`
+*GET* `/availability/{id}/data`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 *query parameters*
@@ -527,75 +691,29 @@ List
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/data`
-
-
-NOTE: *Add metric data for multiple numeric metrics in a single call.* 
-
-*Method*
-****
-*POST* `/{tenantId}/metrics/numeric/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|List of metrics|<<NumericMetric,List[NumericMetric]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Adding data succeeded. | -
-| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/metrics/availability/data`
+*Endpoint* `/availability/data`
 
 
 NOTE: *Add metric data for multiple availability metrics in a single call.* 
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/availability/data`
+*POST* `/availability/data`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |Hawkular-Tenant|false||string
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|List of availability metrics|<<AvailabilityMetric,List[AvailabilityMetric]>>
+    |body|true|List of availability metrics|<<Availability,List[Availability]>>
 |=======================
 
 *Response* +
@@ -619,70 +737,22 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/numeric`
-
-
-NOTE: *Find numeric metrics data by their tags.* 
-
-*Method*
-****
-*GET* `/{tenantId}/numeric`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tags|true|Tag list|<<Tags,Tags>>
-|=======================
-
-*Response* +
-List[Map]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully fetched data. | -
-| 204    | No matching data found. | -
-| 400    | Missing or invalid tags query | [ApiError](#<<ApiError>>)
-| 500    | Any error in the query. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/availability`
+*Endpoint* `/availability/`
 
 
 NOTE: *Find availabilities metrics data by their tags.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/availability`
+*GET* `/availability/`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |Hawkular-Tenant|false||string
 |=======================
 *query parameters*
 
@@ -708,88 +778,26 @@ List[Map]
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/{id}/periods`
-
-
-NOTE: *Retrieve periods for which the condition holds true for each consecutive data point.* 
+NOTE: *Create availability metric definition. Same notes as creating gauge metric apply.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics/numeric/{id}/periods`
+*POST* `/availability/`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |start|false|Defaults to now - 8 hours|long
-    |end|false|Defaults to now|long
-    |threshold|true|A threshold against which values are compared|double
-    |op|true|A comparison operation to perform between values and the threshold. Supported operations include ge, gte, lt, lte, and eq|string
-|=======================
-
-*Response* +
-List
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully fetched periods. | -
-| 204    | No numeric data was found. | -
-| 400    | Missing or invalid query parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/metrics/numeric/{id}/tag`
-
-
-NOTE: *Add or update numeric metric&#39;s tags.* 
-
-*Method*
-****
-*POST* `/{tenantId}/metrics/numeric/{id}/tag`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |id|true||string
+    |Hawkular-Tenant|false||string
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<TagRequest,TagRequest>>
+    |body|true||<<Availability,Availability>>
 |=======================
 
 *Response* +
@@ -799,7 +807,10 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Tags were modified successfully. | -
+| 201    | Metric definition created successfully | -
+| 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
+| 409    | Availability metric with given id already exists | [ApiError](#<<ApiError>>)
+| 500    | Metric definition creation failed due to an unexpected error | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -812,22 +823,28 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics/availability/{id}/tag`
+*Endpoint* `/availability/{id}/tag`
 
 
 NOTE: *Add or update availability metric&#39;s tags.* 
 
 *Method*
 ****
-*POST* `/{tenantId}/metrics/availability/{id}/tag`
+*POST* `/availability/{id}/tag`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |id|true||string
 |=======================
 *body parameters*
@@ -858,64 +875,28 @@ void
 
 
 ==============================================
-*Endpoint* `/{tenantId}/tags/numeric/{tags}`
-
-
-NOTE: *Find numeric metric data with given tags.* 
-
-*Method*
-****
-*GET* `/{tenantId}/tags/numeric/{tags}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|true||string
-    |tags|true|Tag list|<<Tags,Tags>>
-|=======================
-
-*Response* +
-List[Map]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Numeric values fetched successfully | -
-| 204    | No matching data found. | -
-| 400    | Invalid tags | [ApiError](#<<ApiError>>)
-| 500    | Any error while fetching data. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{tenantId}/tags/availability/{tags}`
+*Endpoint* `/availability/tags/{tags}`
 
 
 NOTE: *Find availability metric data with given tags.* 
 
 *Method*
 ****
-*GET* `/{tenantId}/tags/availability/{tags}`
+*GET* `/availability/tags/{tags}`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
 *path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
     |tags|true|Tag list|<<Tags,Tags>>
 |=======================
 
@@ -942,7 +923,194 @@ List[Map]
 
 
 ==============================================
-*Endpoint* `/{tenantId}/metrics`
+*Endpoint* `/availability/{id}`
+
+
+NOTE: *Retrieve single metric definition.* 
+
+*Method*
+****
+*GET* `/availability/{id}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+|=======================
+
+*Response* +
+Metric
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s definition was successfully retrieved. | -
+| 204    | Query was successful, but no metrics definition is set. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s definition. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/availability/{id}/tags`
+
+
+NOTE: *Retrieve tags associated with the metric definition.* 
+
+*Method*
+****
+*GET* `/availability/{id}/tags`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+|=======================
+
+*Response* +
+Map[string]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully retrieved. | -
+| 204    | Query was successful, but no metrics were found. | -
+| 500    | Unexpected error occurred while fetching metric&#39;s tags. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Update tags associated with the metric definition.* 
+
+*Method*
+****
+*PUT* `/availability/{id}/tags`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully updated. | -
+| 500    | Unexpected error occurred while updating metric&#39;s tags. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/availability/{id}/tags/{tags}`
+
+
+NOTE: *Delete tags associated with the metric definition.* 
+
+*Method*
+****
+*DELETE* `/availability/{id}/tags/{tags}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+    |tags|true|Tag list|<<Tags,Tags>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Metric&#39;s tags were successfully deleted. | -
+| 400    | Invalid tags | [ApiError](#<<ApiError>>)
+| 500    | Unexpected error occurred while trying to delete metric&#39;s tags. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Metrics related REST interface
+
+
+
+==============================================
+*Endpoint* `/metrics/`
 
 
 NOTE: *Find tenant&#39;s metric definitions.* +
@@ -950,15 +1118,15 @@ NOTE: *Find tenant&#39;s metric definitions.* +
 
 *Method*
 ****
-*GET* `/{tenantId}/metrics`
+*GET* `/metrics/`
 ****
 
-*path parameters*
+*header parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |tenantId|true||string
+    |Hawkular-Tenant|false||string
 |=======================
 *query parameters*
 
@@ -988,21 +1156,33 @@ List[List]
 
 {empty} +
 
-=== Tenants related REST interface
-
 
 
 ==============================================
-*Endpoint* `/tenants`
+*Endpoint* `/metrics/data`
 
 
-NOTE: *Returns a list of tenants.* 
+NOTE: *Add data for multiple metrics in a single call.* 
 
 *Method*
 ****
-*GET* `/tenants`
+*POST* `/metrics/data`
 ****
 
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of metrics|<<MixedMetricsRequest,MixedMetricsRequest>>
+|=======================
 
 *Response* +
 void
@@ -1011,13 +1191,24 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Returned a list of tenants successfully. | -
-| 204    | No tenants were found. | -
-| 500    | Unexpected error occurred while fetching tenants. | [ApiError](#<<ApiError>>)
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
+
+==============================================
+
+{empty} +
+
+=== Tenants related REST interface
+
+
+
+==============================================
+*Endpoint* `/tenants`
+
 
 NOTE: *Create a new tenant. * +
       _Clients are not required to create explicitly create a tenant before starting to store metric data. It is recommended to do so however to ensure that there are no tenant id naming collisions and to provide default data retention settings. _
@@ -1051,6 +1242,29 @@ void
 
 {empty} +
 
+NOTE: *Returns a list of tenants.* 
+
+*Method*
+****
+*GET* `/tenants`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Returned a list of tenants successfully. | -
+| 204    | No tenants were found. | -
+| 500    | Unexpected error occurred while fetching tenants. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
 ==============================================
 
 {empty} +
@@ -1065,7 +1279,7 @@ void
 [options="header"]
 |=======================
 | Name | Type | Required | Description | Allowable Values
-|type|MetricType|optional|-|numeric, availability, log event
+|type|MetricType|optional|-|gauge, availability
 |interval|Interval|optional|-|-
 |functions|Set|optional|-|-
 |=======================
@@ -1085,24 +1299,24 @@ void
 [options="header"]
 |=======================
 | Name | Type | Required | Description | Allowable Values
+|type|MetricType|optional|-|gauge, availability
+|data|Array[T]|optional|-|-
+|tenantId|string|optional|-|-
+|dataRetention|int|optional|-|-
+|tags|Map[string,string]|optional|-|-
+|id|MetricId|optional|-|-
+|=======================
+
+
+[[AvailabilityData]]
+=== AvailabilityData
+[options="header"]
+|=======================
+| Name | Type | Required | Description | Allowable Values
 |tTL|int|optional|-|-
 |value|AvailabilityType|optional|-|AvailabilityType{code=0, text=up}, AvailabilityType{code=1, text=down}, AvailabilityType{code=2, text=unknown}
 |timestamp|long|optional|-|-
 |writeTime|long|optional|-|-
-|tags|Map[string,string]|optional|-|-
-|=======================
-
-
-[[AvailabilityMetric]]
-=== AvailabilityMetric
-[options="header"]
-|=======================
-| Name | Type | Required | Description | Allowable Values
-|type|MetricType|optional|-|numeric, availability, log event
-|data|Array[T]|optional|-|-
-|tenantId|string|optional|-|-
-|id|MetricId|optional|-|-
-|dataRetention|int|optional|-|-
 |tags|Map[string,string]|optional|-|-
 |=======================
 
@@ -1113,6 +1327,34 @@ void
 |=======================
 | Name | Type | Required | Description | Allowable Values
 |value|string|optional|A time duration.|-
+|=======================
+
+
+[[Gauge]]
+=== Gauge
+[options="header"]
+|=======================
+| Name | Type | Required | Description | Allowable Values
+|type|MetricType|optional|-|gauge, availability
+|data|Array[T]|optional|-|-
+|tenantId|string|optional|-|-
+|dataRetention|int|optional|-|-
+|tags|Map[string,string]|optional|-|-
+|id|MetricId|optional|-|-
+|=======================
+
+
+[[GaugeData]]
+=== GaugeData
+[options="header"]
+|=======================
+| Name | Type | Required | Description | Allowable Values
+|aggregatedValues|Set|optional|-|-
+|tTL|int|optional|-|-
+|value|double|optional|-|-
+|timestamp|long|optional|-|-
+|writeTime|long|optional|-|-
+|tags|Map[string,string]|optional|-|-
 |=======================
 
 
@@ -1158,31 +1400,13 @@ void
 |=======================
 
 
-[[NumericData]]
-=== NumericData
+[[MixedMetricsRequest]]
+=== MixedMetricsRequest
 [options="header"]
 |=======================
 | Name | Type | Required | Description | Allowable Values
-|aggregatedValues|Set|optional|-|-
-|tTL|int|optional|-|-
-|value|double|optional|-|-
-|timestamp|long|optional|-|-
-|writeTime|long|optional|-|-
-|tags|Map[string,string]|optional|-|-
-|=======================
-
-
-[[NumericMetric]]
-=== NumericMetric
-[options="header"]
-|=======================
-| Name | Type | Required | Description | Allowable Values
-|type|MetricType|optional|-|numeric, availability, log event
-|data|Array[T]|optional|-|-
-|tenantId|string|optional|-|-
-|id|MetricId|optional|-|-
-|dataRetention|int|optional|-|-
-|tags|Map[string,string]|optional|-|-
+|gaugeMetrics|Array[Gauge]|optional|-|-
+|availabilityMetrics|Array[Availability]|optional|-|-
 |=======================
 
 
