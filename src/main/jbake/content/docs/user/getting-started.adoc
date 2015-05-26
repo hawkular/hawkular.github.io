@@ -81,10 +81,39 @@ Status: Image is up to date for hawkular/hawkular:latest #<2>
 <1> We ask for the latest build
 <2> In this case the local one was already the latest, so we are good here.
 
-
 === Working on Hawkular source
 
 If you are interested in hacking on Hawkular, or building it from source, then check out
 link:/docs/dev/development.html[Development resources]
 
+== Install a Wildfly monitoring agent
 
+If you wish to monitor a WildFly instance,  you can do so with the following steps:
+
+. Download the WildFly module from http://download.jboss.org/hawkular/wildfly-monitor/0.0.2/hawkular-monitor-0.0.2-module.zip[here].
+. Unzip the file inside the `modules` directory of  your WildFly 8.2 instance
+. Add the following subsystem declaration in the `standalone/configuration/standalone.xml` file of your WildFly instance, the `url` of the storage adapter should be the URL of your Hawkular server.
+
+[source,xml]
+----
+ <subsystem enabled="true" apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedulerThreads="3" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0">
+            <storage-adapter type="HAWKULAR" url="http://localhost:8080" context="/hawkular-bus/message/" restContext="/hawkular-metrics/"/>
+            <diagnostics enabled="true" reportTo="LOG" interval="5" timeUnits="minutes"/>
+            <metric-set-dmr name="platform" enabled="true">
+                <metric-dmr name="heap.used" interval="30" timeUnits="seconds" resource="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
+                <metric-dmr name="heap.committed" interval="1" timeUnits="minutes" resource="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/>
+                <metric-dmr name="non-heap.used" interval="30" timeUnits="seconds" resource="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/>
+                <metric-dmr name="non-heap.committed" interval="1" timeUnits="minutes" resource="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed"/>
+                <metric-dmr name="thread-count" interval="2" timeUnits="minutes" resource="/core-service=platform-mbean/type=threading" attribute="thread-count"/>
+            </metric-set-dmr>
+            <avail-set-dmr name="server-availabilities" enabled="true">
+                <avail-dmr name="app-server" interval="30" timeUnits="seconds" resource="/" attribute="server-state" upRegex="run.*"/>
+                <avail-dmr name="hawkular-bus-broker" interval="1" timeUnits="minutes" resource="/subsystem=hawkular-bus-broker"/>
+            </avail-set-dmr>
+            <managed-servers>
+                <local-dmr enabled="true" metricSets="platform" availSets="server-availabilities"/>
+            </managed-servers>
+        </subsystem>
+----
+
+WARNING: It is known that this only works with WildFly 8.2 at the moment and not with WildFly 9.
