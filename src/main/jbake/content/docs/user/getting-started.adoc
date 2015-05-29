@@ -27,6 +27,45 @@ bin/standalone.sh  # use standalone.bat on Windows
 
 You can then navigate your browser to http://localhost:8080/
 
+=== Cassandra Integration
+Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
+single-node cluster. You do not have to worry about setting up and configuring
+Cassandra before getting started with Hawkular.
+
+==== Embedded Cassandra Configuration
+[options="header"]
+|===========================
+| Setting | Value | Description
+| Cassandra version | 2.1.1 |
+| CQL Port | 9042 | The port on which Cassandra listens for client requests
+| Data directory | `jboss.server.data.dir`/hawkular-metrics | The location of Cassandra data files. Currently this is only used by Hawkular Metrics.
+| Keyspace | hawkular_metrics | The default keyspace. This is currently only used by Hawkular Metrics.
+|===========================
+
+TIP: The embedded instance only listens for requests on localhost.
+
+==== Using an external Cassandra Cluster
+Beyond basic usage and development, you will likely want to configure Hawkular
+to use an external Cassandra cluster. Fortunately, this only requires setting
+a few system properties.
+
+From the command line::
+[source,shell]
+----
+bin/standalone.sh -Dhawkular-metrics.cassandra-nodes="node_1_address,node_2_address,node_n_address" -Dhawkular-metrics.backend=remote
+----
+
+From standalone.xml::
+[source,xml]
+----
+<system-properties>
+  <property name="hawkular-metrics.cassandra-nodes" value="node_1_address,node_2_address,node_n_address"/>
+  <property name="hawkular-metrics.backend" value="remote"/>
+</system-properties>
+----
+
+TIP: You can change the keyspace used by setting the `cassandra.keyspace` system property.
+
 === Try via Docker
 
 Hawkular is publishing builds to https://registry.hub.docker.com/u/hawkular/hawkular/[Docker Hub] that you can try
@@ -86,5 +125,3 @@ Status: Image is up to date for hawkular/hawkular:latest #<2>
 
 If you are interested in hacking on Hawkular, or building it from source, then check out
 link:/docs/dev/development.html[Development resources]
-
-
