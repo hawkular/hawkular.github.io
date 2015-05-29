@@ -138,6 +138,7 @@
 <ul class="sectlevel1">
 <li><a href="#_getting_started_with_hawkular">Getting Started with Hawkular.</a>
 <ul class="sectlevel2">
+<li><a href="#_cassandra_integration">Cassandra Integration</a></li>
 <li><a href="#_try_via_docker">Try via Docker</a></li>
 <li><a href="#_working_on_hawkular_source">Working on Hawkular source</a></li>
 </ul>
@@ -166,6 +167,127 @@ bin/standalone.sh  # use standalone.bat on Windows</code></pre>
 </div>
 <div class="paragraph">
 <p>You can then navigate your browser to <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a></p>
+</div>
+<div class="sect2">
+<h3 id="_cassandra_integration">Cassandra Integration</h3>
+<div class="paragraph">
+<p>Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
+single-node cluster. You do not have to worry about setting up and configuring
+Cassandra before getting started with Hawkular.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The embedded instance is not intended for production use
+</td>
+</tr>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_embedded_cassandra_configuration">Embedded Cassandra Configuration</h4>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Setting</th>
+<th class="tableblock halign-left valign-top">Value</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Cassandra version</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2.1.1</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">CQL Port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">9042</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The port on which Cassandra listens for client requests</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data directory</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>jboss.server.data.dir</code>/hawkular-metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The location of Cassandra data files. Currently this is only used by Hawkular Metrics.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Keyspace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular_metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The default keyspace. This is currently only used by Hawkular Metrics.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+The embedded instance only listens for requests on localhost.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_using_an_external_cassandra_cluster">Using an external Cassandra Cluster</h4>
+<div class="paragraph">
+<p>Beyond basic usage and development, you will likely want to configure Hawkular
+to use an external Cassandra cluster. Fortunately, this only requires setting
+a few system properties.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">From the command line</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">bin/standalone.sh -Dhawkular-metrics.cassandra-nodes="node_1_address,node_2_address,node_n_address" -Dhawkular-metrics.backend=remote</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>hawkular-metrics.cassandra-nodes</code> property should be a comma-delimited list
+of Cassandra node endpoint addresses. The value for each address should match the
+value of the <code>rpc_address</code> in the cassandra.yaml configuration file. You do not
+actually have to specify the address of every Cassandra node. As long as Hawkular
+is able to connect to one node, it will discover all of the other cluster nodes.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">From standalone.xml</dt>
+</dl>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;system-properties&gt;
+  &lt;property name="hawkular-metrics.cassandra-nodes" value="node_1_address,node_2_address,node_n_address"/&gt;
+  &lt;property name="hawkular-metrics.backend" value="remote"/&gt;
+&lt;/system-properties&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+You can change the keyspace used by setting the <code>cassandra.keyspace</code> system property.
+</td>
+</tr>
+</table>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_try_via_docker">Try via Docker</h3>
