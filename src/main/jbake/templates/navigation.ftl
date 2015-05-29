@@ -31,6 +31,9 @@
               <li>
                 <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Documentation</a>
               </li>
+              <li>
+                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/terms.html">Used Terms</a>
+              </li>
               <li class="menu-item dropdown dropdown-submenu">
                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
                 <ul class="dropdown-menu">
