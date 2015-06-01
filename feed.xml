@@ -6,9 +6,229 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Mon, 1 Jun 2015 13:30:47 +0000</pubDate>
-    <lastBuildDate>Mon, 1 Jun 2015 13:30:47 +0000</lastBuildDate>
+    <pubDate>Mon, 1 Jun 2015 13:48:33 +0000</pubDate>
+    <lastBuildDate>Mon, 1 Jun 2015 13:48:33 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular-Metrics 0.3.4 release and the way beyond</title>
+      <link>http://www.hawkular.org/blog/2015/06/01/hawkular-metrics-0-3-4-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Mon, 1 Jun 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/06/01/hawkular-metrics-0-3-4-released.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I am happy to announce release 0.3.4 of Hawkular Metrics. The release is anchored by stability improvements and Docker + Kubernetes work.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h1 id=&quot;_here_are_the_release_highlights&quot; class=&quot;sect0&quot;&gt;Here are the release highlights:&lt;/h1&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;InfluxDB Compatibility Layer&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;pretty printing of query results with the &apos;pretty&apos; query parameter&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;absolute moment operands in queries (ex: select * from test where time &amp;gt; 1501560s and time &amp;lt; 4560546h)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;various fixes which allow to integrate nicely with Grafana (declaring Hawkular Metrics as an InfluxDB 0.8 datasource)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RxJavaMigration&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;big refactoring to use RxJava instead of Guava&amp;#8217;s ListenableFuture&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RxJava provides a much richer API for building asynchronous programs&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Server Start-up&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;the server no longer requires Cassandra to be started first&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;any client requests will get back a 503 response code if the server has not fully initialized due to Cassandra
+being down at start up time&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Docker and Kubernetes&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;all project docker images are now available in Docker Hub! Get them here:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://registry.hub.docker.com/u/hawkular/hawkular-metrics/&quot; class=&quot;bare&quot;&gt;https://registry.hub.docker.com/u/hawkular/hawkular-metrics/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/&quot; class=&quot;bare&quot;&gt;https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;improved replication controller support now means that both the Hawkular-Metrics and Cassandra images can be scaled
+up or down&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;various other smaller improvements, including better support for when containers startup&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;REST API (IMPORTANT!)&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;tenantId&lt;/code&gt; header was renamed to &lt;code&gt;Hawkular-Tenant&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;tenantId&lt;/code&gt; header fallback was removed&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;GET {id}/tags&lt;/code&gt; only returns the tags, not the whole definition anymore&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;GET {id}&lt;/code&gt; returns the metric definition (see &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-110&quot;&gt;HWKMETRICS-110&lt;/a&gt; for
+known issue)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;UI Explorer&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;was removed from the project&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;discussions are underway to find a new home for the functionality and code (probably hawkular-ui-components)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;npm is no longer required to compile the project&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Task Queue&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;a generic task queue was designed and developed as part of this release&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;provides functionality for scheduling and executing background tasks or jobs&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;task execution is&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;scalable - automatically distributed among Hawkular Metrics servers&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;durable - Tasks are persisted&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;fault tolerant - Tasks are rescheduled for future execution when there is a failure&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;it will serve as the foundation for&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;computing/storing aggregated metrics (i.e., rollups)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;deleting metrics&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;changing data retention&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;this functionality will be basis for any background task based design for the project&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;h1 id=&quot;_release_links&quot; class=&quot;sect0&quot;&gt;Release links&lt;/h1&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Github Release:
+&lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;JBoss Nexus Maven artifacts:
+&lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot; class=&quot;bare&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jira release tracker:
+&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/&quot; class=&quot;bare&quot;&gt;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;h1 id=&quot;_hawkular_metrics_0_3_5_and_beyond&quot; class=&quot;sect0&quot;&gt;Hawkular Metrics 0.3.5 and Beyond&lt;/h1&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Gauge Aggregates - Long-term storage of numeric metrics at the expense of losing some fidelity. With task queue
+released in 0.3.4, the expectation is to start the actual implementation 0.3.5.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Update REST testing - while the current set of tests is a good gauge for regressions, the overall coverage is still
+low. The plan for 0.3.5 is to increase coverage.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Improved Docker and Kubernetes support - this is a long term goal for the project&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;RXJava - the initial transition from Guava was done in 0.3.4. Future releases will build upon this foundation.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;h1 id=&quot;_thanks&quot; class=&quot;sect0&quot;&gt;Thanks&lt;/h1&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A big &quot;Thank  you&quot; goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project
+contributions. Special mentions go to Jeeva Kandasamy and Jirka Kremser for their project help.&lt;/p&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Introducing the latest Hawkular component</title>
       <link>http://www.hawkular.org/blog/2015/04/30/introducing-btm.html</link>

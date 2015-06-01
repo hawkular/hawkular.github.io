@@ -130,6 +130,222 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/06/01/hawkular-metrics-0-3-4-released.html"><h1>Hawkular-Metrics 0.3.4 release and the way beyond</h1></a>
+            <p>01 June 2015, by Stefan Negrea</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>I am happy to announce release 0.3.4 of Hawkular Metrics. The release is anchored by stability improvements and Docker + Kubernetes work.</p>
+</div>
+</div>
+</div>
+<h1 id="_here_are_the_release_highlights" class="sect0">Here are the release highlights:</h1>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>InfluxDB Compatibility Layer</p>
+<div class="ulist">
+<ul>
+<li>
+<p>pretty printing of query results with the 'pretty' query parameter</p>
+</li>
+<li>
+<p>absolute moment operands in queries (ex: select * from test where time &gt; 1501560s and time &lt; 4560546h)</p>
+</li>
+<li>
+<p>various fixes which allow to integrate nicely with Grafana (declaring Hawkular Metrics as an InfluxDB 0.8 datasource)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>RxJavaMigration</p>
+<div class="ulist">
+<ul>
+<li>
+<p>big refactoring to use RxJava instead of Guava&#8217;s ListenableFuture</p>
+</li>
+<li>
+<p>RxJava provides a much richer API for building asynchronous programs</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Server Start-up</p>
+<div class="ulist">
+<ul>
+<li>
+<p>the server no longer requires Cassandra to be started first</p>
+</li>
+<li>
+<p>any client requests will get back a 503 response code if the server has not fully initialized due to Cassandra
+being down at start up time</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Docker and Kubernetes</p>
+<div class="ulist">
+<ul>
+<li>
+<p>all project docker images are now available in Docker Hub! Get them here:</p>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="https://registry.hub.docker.com/u/hawkular/hawkular-metrics/" class="bare">https://registry.hub.docker.com/u/hawkular/hawkular-metrics/</a></p>
+</li>
+<li>
+<p><a href="https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/" class="bare">https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/</a></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>improved replication controller support now means that both the Hawkular-Metrics and Cassandra images can be scaled
+up or down</p>
+</li>
+<li>
+<p>various other smaller improvements, including better support for when containers startup</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>REST API (IMPORTANT!)</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>tenantId</code> header was renamed to <code>Hawkular-Tenant</code></p>
+</li>
+<li>
+<p><code>tenantId</code> header fallback was removed</p>
+</li>
+<li>
+<p><code>GET {id}/tags</code> only returns the tags, not the whole definition anymore</p>
+</li>
+<li>
+<p><code>GET {id}</code> returns the metric definition (see <a href="https://issues.jboss.org/browse/HWKMETRICS-110">HWKMETRICS-110</a> for
+known issue)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>UI Explorer</p>
+<div class="ulist">
+<ul>
+<li>
+<p>was removed from the project</p>
+<div class="ulist">
+<ul>
+<li>
+<p>discussions are underway to find a new home for the functionality and code (probably hawkular-ui-components)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>npm is no longer required to compile the project</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>Task Queue</p>
+<div class="ulist">
+<ul>
+<li>
+<p>a generic task queue was designed and developed as part of this release</p>
+</li>
+<li>
+<p>provides functionality for scheduling and executing background tasks or jobs</p>
+</li>
+<li>
+<p>task execution is</p>
+<div class="ulist">
+<ul>
+<li>
+<p>scalable - automatically distributed among Hawkular Metrics servers</p>
+</li>
+<li>
+<p>durable - Tasks are persisted</p>
+</li>
+<li>
+<p>fault tolerant - Tasks are rescheduled for future execution when there is a failure</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>it will serve as the foundation for</p>
+<div class="ulist">
+<ul>
+<li>
+<p>computing/storing aggregated metrics (i.e., rollups)</p>
+</li>
+<li>
+<p>deleting metrics</p>
+</li>
+<li>
+<p>changing data retention</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>this functionality will be basis for any background task based design for the project</p>
+</li>
+</ul>
+</div>
+</li>
+</ol>
+</div>
+<h1 id="_release_links" class="sect0">Release links</h1>
+<div class="ulist">
+<ul>
+<li>
+<p>Github Release:
+<a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4" class="bare">https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4</a></p>
+</li>
+<li>
+<p>JBoss Nexus Maven artifacts:
+<a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/" class="bare">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></p>
+</li>
+<li>
+<p>Jira release tracker:
+<a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/" class="bare">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/</a></p>
+</li>
+</ul>
+</div>
+<h1 id="_hawkular_metrics_0_3_5_and_beyond" class="sect0">Hawkular Metrics 0.3.5 and Beyond</h1>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Gauge Aggregates - Long-term storage of numeric metrics at the expense of losing some fidelity. With task queue
+released in 0.3.4, the expectation is to start the actual implementation 0.3.5.</p>
+</li>
+<li>
+<p>Update REST testing - while the current set of tests is a good gauge for regressions, the overall coverage is still
+low. The plan for 0.3.5 is to increase coverage.</p>
+</li>
+<li>
+<p>Improved Docker and Kubernetes support - this is a long term goal for the project</p>
+</li>
+<li>
+<p>RXJava - the initial transition from Guava was done in 0.3.4. Future releases will build upon this foundation.</p>
+</li>
+</ol>
+</div>
+<h1 id="_thanks" class="sect0">Thanks</h1>
+<div class="paragraph">
+<p>A big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project
+contributions. Special mentions go to Jeeva Kandasamy and Jirka Kremser for their project help.</p>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/04/30/introducing-btm.html"><h1>Introducing the latest Hawkular component</h1></a>
             <p>30 April 2015, by Gary Brown</p>
             <p><div class="paragraph">
@@ -443,156 +659,13 @@ which can be used to manipulate datasources.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/04/09/alert-notifiers-for-mobile-devices.html"><h1>Alert notifiers for mobile devices</h1></a>
-            <p>09 April 2015, by Thomas Segismont</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerts has new notifications senders which target mobile devices. Let&#8217;s start with a brief explanation of
-notification sending.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="how_notification_senders_work">How notification senders work?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>When the alert engine detects a problem, it sends an action message to the configured sender(s) for this type of issue.
-The action message has all the details:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>which problem triggered the alert</p>
-</li>
-<li>
-<p>who are the configured recipients</p>
-</li>
-</ul>
-</div>
-<div id="img-action-plugins" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2015/alert-action-plugins.png" alt="Action plugins overview" width="600">
-</div>
-<div class="title">Figure 1. Action plugins overview</div>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>The alert engine inspects notification data to determine which action messages should be sent to the Hawkular bus.</p>
-</li>
-<li>
-<p>Then it sends a message for each configured notification (email/SMS/push).</p>
-</li>
-<li>
-<p>Action plugins pick up their messages and build the notification with the details given in the notification message.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Makes sense? Now which new plugins do we have?</p>
-</div>
-<div class="sect2">
-<h3 id="unified_push_notifications">Unified Push Notifications</h3>
-<div class="paragraph">
-<p>Hawkular Alert&#8217;s <code>aerogear</code> plugin is able to send notification messages to
-<a href="https://www.jboss.org/unifiedpush/">Aerogear&#8217;s Unified Push Server</a>. Which means that you can send alerts as native push
-messages to an Android, iOS, Windows or Firefox OS application.</p>
-</div>
-<div class="paragraph">
-<p>At the time of writing, Hawkular doesn&#8217;t have a mobile application for any of these platforms (an Android application
-might come soon with the help of a Google Summer of Code student). So for demonstration purposes we&#8217;ve built a sample
-application, <code>Hawkugear</code> and ran it with the Android Emulator.</p>
-</div>
-<div id="img-action-plugins" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2015/hawkugear-android-app.png" alt="Hawkugear Android application" width="350">
-</div>
-<div class="title">Figure 2. Hawkugear Android application</div>
-</div>
-<div class="paragraph">
-<p>The application lacks proper formatting of course, but you can see on this screenshot that the notification message
-landed properly on the mobile device after travelling through the Hawkular Bus, the Aerogear Unified Push Server and
-Google Cloud&#8217;s Messaging platform.</p>
-</div>
-<div class="paragraph">
-<p>To configure the <code>aerogear</code> sender plugin, add these system property definitions (with your own values) into your
-Wildfly <code>standalone.xml</code> file:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;system-properties&gt;
-    &lt;property name="org.hawkular.actions.aerogear.root.server.url" value="http://localhost:9191/ag-push/"/&gt;
-    &lt;property name="org.hawkular.actions.aerogear.application.id" value="as304-6019-8a256afkbc-935b274-16247"/&gt;
-    &lt;property name="org.hawkular.actions.aerogear.master.secret" value="94b2-qc156s-719725j6-4k04d566-bs0a340"/&gt;
-&lt;/system-properties&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Or using the CLI:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">/system-property=org.hawkular.actions.aerogear.root.server.url:add(value="http://localhost:9191/ag-push/")
-/system-property=org.hawkular.actions.aerogear.application.id:add(value="as304-6019-8a256afkbc-935b274-16247")
-/system-property=org.hawkular.actions.aerogear.master.secret:add(value="94b2-qc156s-719725j6-4k04d566-bs0a340")</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="short_message_service">Short Message Service</h3>
-<div class="paragraph">
-<p>There&#8217;s also an <code>sms</code> plugin which is built on <a href="https://www.twilio.com/sms">Twilio&#8217;s SMS services</a>. No mobile application
-required here, all you need to do is to create a Twilio account and configure the plugin with your application <code>sid</code>,
-authorization <code>token</code>, and <code>from</code> number.</p>
-</div>
-<div class="paragraph">
-<p>As for the <code>aerogear</code> plugin, add these system property definitions (with your own values) into your Wildfly
-<code>standalone.xml</code> file:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;system-properties&gt;
-    &lt;property name="org.hawkular.actions.sms.sid" value="ACdc5f132a3c49700934481addd5ce1659"/&gt;
-    &lt;property name="org.hawkular.actions.sms.token" value="3036d49cAf5Cd019c81de12354d57ac49a"/&gt;
-    &lt;property name="org.hawkular.actions.sms.from" value="+14158141829"/&gt;
-&lt;/system-properties&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Or using the CLI:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">/system-property=org.hawkular.actions.sms.sid:add(value="ACdc5f132a3c49700934481addd5ce1659")
-/system-property=org.hawkular.actions.sms.token:add(value="3036d49cAf5Cd019c81de12354d57ac49a")
-/system-property=org.hawkular.actions.sms.from:add(value="+14158141829")</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="more_to_come">More to come&#8230;&#8203;</h3>
-<div class="paragraph">
-<p>We have planned to integrate with <a href="http://www.pagerduty.com/">PagerDuty</a>. In the beginning, each notification message
-will be sent with a new indentifier. As a consequence, PagerDuty will see recurrent notifications of the same problem
-as different incidents. The Hawkular Alerts team is working on an incident worflow and we should be able to solve this
-problem in the near future.</p>
-</div>
-<div class="paragraph">
-<p>That&#8217;s it! Questions? Comments? Feel free to ask here or <a href="irc://irc.freenode.net/#hawkular">join us on Freenode</a>!</p>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>09 April 2015 - <a href="blog/2015/04/09/alert-notifiers-for-mobile-devices.html">Alert notifiers for mobile devices</a></li>
           <li>08 April 2015 - <a href="blog/2015/2015-04-08-1.html">Testing collectd integration</a></li>
           <li>07 April 2015 - <a href="blog/2015/2015-04-07-1.html">Hawkular-Metrics 0.3.1 release</a></li>
           <li>01 April 2015 - <a href="blog/2015/2015-04-01-1.html">Hawkular Discontinued</a></li>
