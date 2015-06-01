@@ -1,0 +1,91 @@
+= Hawkular-Metrics 0.3.4 release and the way beyond
+Stefan Negrea
+2015-06-01
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, release
+
+
+I am happy to announce release 0.3.4 of Hawkular Metrics. The release is anchored by stability improvements and Docker + Kubernetes work.
+
+= Here are the release highlights:
+
+. InfluxDB Compatibility Layer
+* pretty printing of query results with the 'pretty' query parameter
+* absolute moment operands in queries (ex: select * from test where time > 1501560s and time < 4560546h)
+* various fixes which allow to integrate nicely with Grafana (declaring Hawkular Metrics as an InfluxDB 0.8 datasource)
+
+. RxJavaMigration
+
+* big refactoring to use RxJava instead of Guava's ListenableFuture
+* RxJava provides a much richer API for building asynchronous programs
+
+. Server Start-up
+
+* the server no longer requires Cassandra to be started first
+* any client requests will get back a 503 response code if the server has not fully initialized due to Cassandra
+being down at start up time
+
+. Docker and Kubernetes
+
+* all project docker images are now available in Docker Hub! Get them here:
+** https://registry.hub.docker.com/u/hawkular/hawkular-metrics/
+** https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/
+* improved replication controller support now means that both the Hawkular-Metrics and Cassandra images can be scaled
+ up or down
+* various other smaller improvements, including better support for when containers startup
+
+. REST API (IMPORTANT!)
+
+* `tenantId` header was renamed to `Hawkular-Tenant`
+* `tenantId` header fallback was removed
+* `GET {id}/tags` only returns the tags, not the whole definition anymore
+* `GET {id}` returns the metric definition (see https://issues.jboss.org/browse/HWKMETRICS-110[HWKMETRICS-110] for
+known issue)
+
+. UI Explorer
+
+* was removed from the project
+** discussions are underway to find a new home for the functionality and code (probably hawkular-ui-components)
+* npm is no longer required to compile the project
+
+. Task Queue
+
+* a generic task queue was designed and developed as part of this release
+* provides functionality for scheduling and executing background tasks or jobs
+* task execution is
+** scalable - automatically distributed among Hawkular Metrics servers
+** durable - Tasks are persisted
+** fault tolerant - Tasks are rescheduled for future execution when there is a failure
+* it will serve as the foundation for
+** computing/storing aggregated metrics (i.e., rollups)
+** deleting metrics
+** changing data retention
+* this functionality will be basis for any background task based design for the project
+
+= Release links
+
+* Github Release:
+https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4
+
+* JBoss Nexus Maven artifacts:
+http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/
+
+* Jira release tracker:
+https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/
+
+
+= Hawkular Metrics 0.3.5 and Beyond
+
+. Gauge Aggregates - Long-term storage of numeric metrics at the expense of losing some fidelity. With task queue
+released in 0.3.4, the expectation is to start the actual implementation 0.3.5.
+. Update REST testing - while the current set of tests is a good gauge for regressions, the overall coverage is still
+ low. The plan for 0.3.5 is to increase coverage.
+. Improved Docker and Kubernetes support - this is a long term goal for the project
+. RXJava - the initial transition from Guava was done in 0.3.4. Future releases will build upon this foundation.
+
+
+= Thanks
+
+A big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project
+contributions. Special mentions go to Jeeva Kandasamy and Jirka Kremser for their project help.
