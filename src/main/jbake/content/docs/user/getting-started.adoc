@@ -138,3 +138,52 @@ Status: Image is up to date for hawkular/hawkular:latest #<2>
 
 If you are interested in hacking on Hawkular, or building it from source, then check out
 link:/docs/dev/development.html[Development resources]
+
+== Install a Wildfly Monitoring Agent
+
+If you wish to monitor a WildFly instance,  you can do so with the following steps:
+
+* Download the WildFly module from http://download.jboss.org/hawkular/wildfly-monitor/0.0.9/hawkular-monitor-0.0.9-module.zip[here].
+* Unzip the file inside the `modules` directory of  your WildFly 8.2 instance
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent extension in the <extensions> section:
+[source,xml]
+----
+<extension module="org.hawkular.agent.monitor"/>
+----
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent subsystem declaration in the <profile> section. Note that you must set your Hawkular credentials in the username and password attributes (in other words, replace SET_ME with their true values for your Hawkular system):
+[source,xml]
+----
+<subsystem apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedulerThreads="3" enabled="true" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0">
+  <diagnostics enabled="true" reportTo="LOG" interval="5" timeUnits="minutes"/>
+  <storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" serverOutboundSocketBindingRef="hawkular" />
+  <metric-set-dmr name="WildFly Memory Metrics" enabled="true">
+    <metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
+    <metric-dmr name="Heap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/>
+    <metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/>
+    <metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed"/>
+  </metric-set-dmr>
+  <metric-set-dmr name="WildFly Threading Metrics" enabled="true">
+    <metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none" path="/core-service=platform-mbean/type=threading" attribute="thread-count"/>
+  </metric-set-dmr>
+  <avail-set-dmr name="Server Availability" enabled="true">
+    <avail-dmr name="App Server" interval="30" timeUnits="seconds" path="/" attribute="server-state" upRegex="run.*"/>
+  </avail-set-dmr>
+  <resource-type-set-dmr name="Main" enabled="true">
+    <resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server" path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics" availSets="Server Availability"/>
+  </resource-type-set-dmr>
+  <managed-servers>
+    <local-dmr name="Local Server" enabled="true" resourceTypeSets="Main"/>
+  </managed-servers>
+</subsystem>
+----
+WARNING: It is known that this only works with WildFly 8.2 at the moment and not with WildFly 9 or above.
+
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add an outbound socket binding to your WildFly instance's <socket-binding-group> that points to your running Hawkular server instance:
+[source,xml]
+----
+<outbound-socket-binding name="hawkular">
+  <remote-destination host="your-hawkular-server-hostname" port="8080" />
+</outbound-socket-binding>
+----
+
+NOTE: In early versions of Hawkular (1.0.0.Alpha1), both the server and monitored will spit out some errors which are ok to ignore.
