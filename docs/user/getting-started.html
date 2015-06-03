@@ -143,6 +143,7 @@
 <li><a href="#_working_on_hawkular_source">Working on Hawkular source</a></li>
 </ul>
 </li>
+<li><a href="#_install_a_wildfly_monitoring_agent">Install a Wildfly Monitoring Agent</a></li>
 </ul>
 </div>
 </div>
@@ -414,6 +415,103 @@ Status: Image is up to date for hawkular/hawkular:latest <i class="conum" data-v
 <p>If you are interested in hacking on Hawkular, or building it from source, then check out
 <a href="/docs/dev/development.html">Development resources</a></p>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_install_a_wildfly_monitoring_agent">Install a Wildfly Monitoring Agent</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>If you wish to monitor a WildFly instance,  you can do so with the following steps:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Download the WildFly module from <a href="http://download.jboss.org/hawkular/wildfly-monitor/0.0.9/hawkular-monitor-0.0.9-module.zip">here</a>.</p>
+</li>
+<li>
+<p>Unzip the file inside the <code>modules</code> directory of  your WildFly 8.2 instance</p>
+</li>
+<li>
+<p>In the <code>standalone/configuration/standalone.xml</code> file of your WildFly instance, add the Hawkular Monitor Agent extension in the &lt;extensions&gt; section:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&lt;extension module="org.hawkular.agent.monitor"/&gt;</pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In the <code>standalone/configuration/standalone.xml</code> file of your WildFly instance, add the Hawkular Monitor Agent subsystem declaration in the &lt;profile&gt; section. Note that you must set your Hawkular credentials in the username and password attributes (in other words, replace SET_ME with their true values for your Hawkular system):</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&lt;subsystem apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedulerThreads="3" enabled="true" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0"&gt;
+  &lt;diagnostics enabled="true" reportTo="LOG" interval="5" timeUnits="minutes"/&gt;
+  &lt;storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" serverOutboundSocketBindingRef="hawkular" /&gt;
+  &lt;metric-set-dmr name="WildFly Memory Metrics" enabled="true"&gt;
+    &lt;metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/&gt;
+    &lt;metric-dmr name="Heap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/&gt;
+    &lt;metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/&gt;
+    &lt;metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed"/&gt;
+  &lt;/metric-set-dmr&gt;
+  &lt;metric-set-dmr name="WildFly Threading Metrics" enabled="true"&gt;
+    &lt;metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none" path="/core-service=platform-mbean/type=threading" attribute="thread-count"/&gt;
+  &lt;/metric-set-dmr&gt;
+  &lt;avail-set-dmr name="Server Availability" enabled="true"&gt;
+    &lt;avail-dmr name="App Server" interval="30" timeUnits="seconds" path="/" attribute="server-state" upRegex="run.*"/&gt;
+  &lt;/avail-set-dmr&gt;
+  &lt;resource-type-set-dmr name="Main" enabled="true"&gt;
+    &lt;resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server" path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics" availSets="Server Availability"/&gt;
+  &lt;/resource-type-set-dmr&gt;
+  &lt;managed-servers&gt;
+    &lt;local-dmr name="Local Server" enabled="true" resourceTypeSets="Main"/&gt;
+  &lt;/managed-servers&gt;
+&lt;/subsystem&gt;</pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+It is known that this only works with WildFly 8.2 at the moment and not with WildFly 9 or above.
+</td>
+</tr>
+</table>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In the <code>standalone/configuration/standalone.xml</code> file of your WildFly instance, add an outbound socket binding to your WildFly instance&#8217;s &lt;socket-binding-group&gt; that points to your running Hawkular server instance:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>&lt;outbound-socket-binding name="hawkular"&gt;
+  &lt;remote-destination host="your-hawkular-server-hostname" port="8080" /&gt;
+&lt;/outbound-socket-binding&gt;</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In early versions of Hawkular (1.0.0.Alpha1), both the server and monitored will spit out some errors which are ok to ignore.
+</td>
+</tr>
+</table>
 </div>
 </div>
 </div>
