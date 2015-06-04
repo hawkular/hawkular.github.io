@@ -24,7 +24,7 @@ image::/img/dev-docs/hawkular-ui.png[Hawkular UI Architecture]
 * ui/console - directory for various Hawkular plugin UIs
 
 
-The general idea here being hawt.io UIs which are composed of plugins (that can swapped around like legos between the various UIs)
+The general idea here being hawt.io UIs which are composed of plugins (that can swapped around like legos between the various hawt.io UIs)
 
 === Maven Install
 
@@ -34,7 +34,8 @@ The easiest way to build the console is to use maven (inside the `ui/console` di
 
 _No system http://nodejs.org/[Node.js] dependencies are needed._
 http://nodejs.org/[Node.js] and its related modules are managed by the https://github.com/eirslett/frontend-maven-plugin[frontend-maven-plugin].
-This maven plugin abstracts away all of the node and bower dependencies by downloading them locally and running build from a local directory (no need to install or pollute your java environment with the unsavory characters of node.js and bower).
+This maven plugin abstracts away all of the node and bower dependencies by downloading them locally and running build from a local
+directory (no need to install or pollute your java environment with the unsavory characters of node.js and bower).
 They are downloaded to the build target (./console/target) directory, where the actual http://gulpjs.com/[Gulp] based build process
 (triggered by the maven plugin) happens.
 
@@ -45,97 +46,67 @@ directory, please use the `cache` profile:
 `mvn clean -Pcache`
 
 In that case, the http://nodejs.org/[Node.js] is not deleted and doesn't have to be downloaded again, together with
-npm modules and bower packages. Be aware, this causes the libraries not being updated.
+npm modules and bower packages. Be aware, this causes the libraries not being updated, so there could be issues if a library changes..
 
-After the console is built, you can access it by traversing to the the build target (./console/target/gulp-build) directory:
 
-`cd ui/console/target/gulp-build`
 
-and running the appropriate gulp (default) target:
+=== Hawkular UI Dev Install (using javascript tooling)
 
-`gulp build`
+_Dev Installs allow for live previewing changes as development occurs. Its an interactive environment that allows one to
+prototype quickly, seeing their changes instantly when they save since the browser refreshes with the changes._
+ Maven is *not* used for this process. Instead, http://gulpjs.com/[Gulp] build tool is used to build all the typescript/javascript files.
+ For agile development, we're using the watch feature of the gulp tool. Gulp can watch for changes in source files
+ and update the compiled console accordingly.
+ The advantage of this approach is, that is scans for file changes in the source directory and apply them directly
+ into the target directory (`$HAWKULAR_ROOT/dist/target/hawkular-x.y.x-SNAPSHOT/wildfly-x.y.z.Final/`), which is suitable for console
+ developing since it doesn't require the whole maven build to see the actual changes in the console UI.
 
-After those steps, the console is available on http://localhost:8080/[http://localhost:8080/], but be aware that
-it's only a front-end and you need the server running for console to work properly. The advantage of this approach is,
-that is scans for file changes in the source directory and apply them directly into the target directory, which is
-suitable for console developing since it doesn't require the whole maven build to see the actual changes in the console UI.
-
-=== Dev Install
-
-You can still re-build the console using only java-script based tools. Please do that only after maven build and
-only within the build target (./console/target/gulp-build) directory. These steps are rarely used and if you're not
-an hawkular console developer you most probably won't need it.
-
-Assuming the node.js is already installed:
+Assuming that https://nodejs.org/[node.js] is already installed (can also be installed via rpm or homebrew on mac):
 
 `npm install -g bower gulp typescript`
 
-Install the cli commands globally
+You can re-build the console using java-script based Gulp tools. There are only three things to remember for this dev build:
 
-`cd ui/console/target`
+. This is done after the maven build and with a running Hawkular server
+.. *Build* Hawkular: `mvn clean install -Pdev,link`
+.. *Run* Hawkular: `cd dist/target/cd ui/console/target/gulp-build/wildfly-8.2.0.Final/bin/` then `./standlone.sh`
+. Run gulp commands within gulp-build directory
+.. *Goto* gulp-build directory: `cd ui/console/target/gulp-build/`
+.. *Run* the gulp watcher: `gulp watch-server`
+. *Edit* your source code at: _ui/console/src/main/scripts_
+. *Refresh* your browser to see the changes! http://localhost:8080/[http://localhost:8080/]
+.. _Hint:_ when you build with the -Pdev profile a default user is created with credentials: jdoe/password.
+
+__The editing of source in one directory and running of gulp commands in another can often be a source of confusion for people using the first time.
+(this is done to keep the build artifacts out of the source tree)__
+
+
+Optionally:
+
+The http://bower.io/docs/api/[bower modules] (lib) and node modules https://docs.npmjs.com/[npm](node_modules) should already be built but if you need to change or add more,
+you can optionally run:
 
 `npm install`
 
-Install the local npm packages
-
 `bower install`
-
-
-
-=== Bower Component
-
-This git repository is published as bower component and consumed by the https://github.com/hawkular/hawkular/ui/console/README.adoc[Hawkular Console]. Assets such as html/css/images/javascript can be published.
 
 === Directory Structure
 
-*dist* - directory for  artifacts that need to published via bower package.
-
-*plugins* - directory containing Hawt.io 2 plugins for  Hawkular console. Multiple plugins can be packaged into a single bower component by adding the artefacts to the 'main' section of the bower.json file.
+* dist - directory for  artifacts that need to published via bower package.
+* plugins  - directory containing Hawt.io 2 plugins for  Hawkular console. Multiple plugins can be packaged into a single bower component by adding the artifacts to the 'main' section of the bower.json file.
+** metrics - metrics is one plugin there are others
+*** ts - the typescript source (angular controllers, directives and services mostly)
+*** html - the html views (using angular directives)
+*** less - the css LESS files
 
 The general idea here being that Hawt.io UIs which are composed of plugins (that can swapped around like legos between the various other Hawt.io UIs)
 
-=== Dev Install
-_Dev Installs allow for live previewing changes as development occurs. Its an interactive environment that allows one to prototype quickly, seeing their changes instantly when they save since the browser refreshes with the changes._
+=== Other Bower Packages development
 
-Assuming http://nodejs.org/[node.js/npm] is already installed:
-
-....
-sudo npm install -g bower gulp typescript
-npm install
-bower install
-gulp
-....
-
-=== Hawkular-ui Development
-
-For the ease of development we're using the watch feature of the gulp tool. Gulp can watch for changes in source files
-and update the compiled console accordingly. To use this feature, you must start Hawkular from the
-`$HAWKULAR_ROOT/dist/target/hawkular-x.y.x-SNAPSHOT/wildfly-x.x.z.Final/` directory. Once the server is up and running you have to
-start the actual gulp task responsible for watching the changes. To achieve this, traverse to the
-`$HAWKULAR_ROOT/ui/console/target/gulp-build/` directory and run:
-
-`gulp watch-server`
-
-The advantage of this approach is, that is scans for file changes in the source directory and apply them directly
-into the target directory (`$HAWKULAR_ROOT/dist/target/hawkular-x.y.x-SNAPSHOT/wildfly-x.y.z.Final/`), which is suitable for console
-developing since it doesn't require the whole maven build to see the actual changes in the console UI.
-
-If you want to use your local version of hawkular-ui-components, you can use the `link` profile and the
-https://oncletom.io/2013/live-development-bower-component/[bower link functionality]. In the hawkular-ui-components,
-link your bower package with:
-
-`bower link`
-
-and then build Hawkular with:
-
-`mvn clean install -Plink`
-
-=== Other packages development
-
-The `link` profile links the hawkular-ui-components as a default package to link. But you can use it for any other package
-as well. Just set the `bower.link.package` parameter, i.e.:
+The `link` profile links other bower packages to hawkular. For example, hawkular-ui-services or hawkular-charts or any other bower package.
+This is very useful when developing or debugging other bower packages with hawkular. To enable this just set the `bower.link.package` parameter, i.e.:
 
 `mvn clean install -Pdev,link -Dbower.link.package=hawkular-charts`
 
-Please, be aware, that you can combine the `link` profile with other profiles, like the `dev` profile. Don't forget to
-run `bower link` in the package you're about to link before running maven `link` profile.
+Please, be aware, that you can combine the `link` profile with other profiles, like the `dev` profile. _Don't forget to
+run `bower link` in the package you're about to link before running maven `link` profile._
