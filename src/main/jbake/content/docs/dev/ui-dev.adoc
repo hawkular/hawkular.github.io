@@ -12,7 +12,7 @@ toc::[]
 
 == Hawkular Console
 
-*Hawkular UI Components* is the home of UI Components that comprise the Hawkular console for https://github.com/hawkular/hawkular[Hawkular].  This console is based on https://github.com/hawtio/hawtio/blob/master/docs/Overview2dotX.md[Hawt.io 2], which a javascript based client-side framework.  Being Hawt.io 2 compatible gives us interopability with other hawt.io consoles such as OpenShift Origin (v3) and Fabric8.
+The https://github.com/hawkular/hawkular[Hawkular Console] is based on https://github.com/hawtio/hawtio/blob/master/docs/Overview2dotX.md[Hawt.io 2], which a javascript based client-side framework.  Being Hawt.io 2 compatible gives us interopability with other hawt.io consoles such as OpenShift Origin (v3) and Fabric8.
 The various directories underneath console directory are Hawt.io 2 plugins and the various plugins eventually compose a Hawkular console.
 The modular approach to creating hawt.io console plugins allows us to create individual plugins that comprise a console or can easily  be plugged into other Hawtio based consoles. The plugin system makes it easy to add/remove functionality (even dynamically).
 
@@ -21,15 +21,14 @@ image::/img/dev-docs/hawkular-ui.png[Hawkular UI Architecture]
 
 === UI Directory Structure
 
-* ui - directory for various Hawkular UIs (currently only one)
+* ui/console - directory for various Hawkular plugin UIs
 
-** ui/console - The Hawkular UI console - which consumes bower components from https://github.com/hawkular/hawkular-ui-components[hawkular-ui-components]
 
 The general idea here being hawt.io UIs which are composed of plugins (that can swapped around like legos between the various UIs)
 
 === Maven Install
 
-The easiest way to build the console is to use maven (inside the `console` directory):
+The easiest way to build the console is to use maven (inside the `ui/console` directory):
 
 `mvn install`
 
@@ -50,30 +49,16 @@ npm modules and bower packages. Be aware, this causes the libraries not being up
 
 After the console is built, you can access it by traversing to the the build target (./console/target/gulp-build) directory:
 
-`cd console/target/gulp-build`
+`cd ui/console/target/gulp-build`
 
 and running the appropriate gulp (default) target:
 
-`gulp`
+`gulp build`
 
-After those steps, the console is available on http://localhost:2772/[http://localhost:2772/], but be aware that
+After those steps, the console is available on http://localhost:8080/[http://localhost:8080/], but be aware that
 it's only a front-end and you need the server running for console to work properly. The advantage of this approach is,
 that is scans for file changes in the source directory and apply them directly into the target directory, which is
 suitable for console developing since it doesn't require the whole maven build to see the actual changes in the console UI.
-
-=== Linking Git Repos via Bower
-
-If you want to use your local version of hawkular-ui-components, you can use the `link` profile and the
-https://oncletom.io/2013/live-development-bower-component/[bower link functionality]. In the hawkular-ui-components,
-link your bower package with:
-
-`bower link`
-
-and then build with:
-
-`mvn clean install -Plink`
-
-This shows immediate feedback to changes made in the _hawkular-ui-components_ repo from within the _Hawkular_ repo and is very useful in creating an agile workflow between the two different repos.
 
 === Dev Install
 
@@ -87,7 +72,7 @@ Assuming the node.js is already installed:
 
 Install the cli commands globally
 
-`cd console/target`
+`cd ui/console/target`
 
 `npm install`
 
@@ -95,25 +80,6 @@ Install the local npm packages
 
 `bower install`
 
-Install the local bower packages for the application
-
-`gulp connect-metrics`
-
-Run the application and 'watch' the source tree for any changes refreshing the browser if any changes
-
-In browser: Navigate to http://localhost:2772/
-
-For further detail the hawt.io plugin structure is described https://github.com/hawtio/hawtio/blob/master/docs/Overview2dotX.md[here].
-
-
-
-
-== Hawkular UI Components
-
-https://github.com/hawkular/hawkular-ui-components[*Hawkular UI Components*] git repository is the home of UI Components that comprise the Hawkular console for https://github.com/hawkular/hawkular[Hawkular].
-This console is based on https://github.com/hawtio/hawtio/blob/master/docs/Overview2dotX.md[Hawt.io 2], which a javascript based client-side framework. The various directories underneath console directory are Hawt.io 2 plugins and the various plugins eventually compose a Hawkular console.
-This modular approach to creating hawtio console plugins allows us to create individual plugins that comprise a console or can easily  be plugged into other Hawtio based consoles such as OpenShift (v3) and Fabric8.
-The plugin system makes it easy to add/remove functionality (even dynamically).
 
 
 === Bower Component
@@ -140,21 +106,36 @@ bower install
 gulp
 ....
 
-If you want to build a single component use the suffix -[name_of_the_component] (names are based on the names of
-directories in the plugins directory) to the build task, like:
+=== Hawkular-ui Development
 
-....
-gulp build-metrics
-....
+For the ease of development we're using the watch feature of the gulp tool. Gulp can watch for changes in source files
+and update the compiled console accordingly. To use this feature, you must start Hawkular from the
+`$HAWKULAR_ROOT/dist/target/hawkular-x.y.x-SNAPSHOT/wildfly-x.x.z.Final/` directory. Once the server is up and running you have to
+start the actual gulp task responsible for watching the changes. To achieve this, traverse to the
+`$HAWKULAR_ROOT/ui/console/target/gulp-build/` directory and run:
 
-This allows us to maintain one set up build scripts for all of the plugin-modules. Functionality added to the single script can be used on all plugins and maintains build consistency across the plugins
+`gulp watch-server`
 
-To test your component in browser, use the respective connect task, i.e.:
+The advantage of this approach is, that is scans for file changes in the source directory and apply them directly
+into the target directory (`$HAWKULAR_ROOT/dist/target/hawkular-x.y.x-SNAPSHOT/wildfly-x.y.z.Final/`), which is suitable for console
+developing since it doesn't require the whole maven build to see the actual changes in the console UI.
 
-....
-gulp connect-metrics
-....
+If you want to use your local version of hawkular-ui-components, you can use the `link` profile and the
+https://oncletom.io/2013/live-development-bower-component/[bower link functionality]. In the hawkular-ui-components,
+link your bower package with:
 
-If you see `Error: watch ENOSPC` on Fedora, increase the limit of files that can be 'watched' by typing `echo 524288 | sudo tee -a /proc/sys/fs/inotify/max_user_watches`
+`bower link`
 
-For further detail the Hawt.io plugin structure is described https://github.com/hawtio/hawtio/blob/master/docs/Overview2dotX.md[here].
+and then build Hawkular with:
+
+`mvn clean install -Plink`
+
+=== Other packages development
+
+The `link` profile links the hawkular-ui-components as a default package to link. But you can use it for any other package
+as well. Just set the `bower.link.package` parameter, i.e.:
+
+`mvn clean install -Pdev,link -Dbower.link.package=hawkular-charts`
+
+Please, be aware, that you can combine the `link` profile with other profiles, like the `dev` profile. Don't forget to
+run `bower link` in the package you're about to link before running maven `link` profile.
