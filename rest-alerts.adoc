@@ -9,48 +9,6 @@
 
 
 ==============================================
-*Endpoint* `/ack`
-
-
-NOTE: *Set one or more alerts Acknowledged* 
-
-*Method*
-****
-*PUT* `/ack`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to Ack|string
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/reload`
 
 
@@ -226,6 +184,7 @@ NOTE: *Get alerts with optional filtering* +
     |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
     |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
     |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
+    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
     |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
     |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
 |=======================
@@ -240,6 +199,48 @@ void
 | 200    | Success. Alerts found. | -
 | 204    | Success. Not alerts found. | -
 | 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/ack`
+
+
+NOTE: *Set one or more alerts Acknowledged* 
+
+*Method*
+****
+*PUT* `/ack`
+****
+
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |alertIds|true|comma separated list of alertIds to Ack|string
+    |ackBy|false|user acknowledging the alerts|string
+    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Alerts Acknowledged invoked successfully | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
 
 |=======================
 
@@ -296,38 +297,6 @@ void
 ==============================================
 *Endpoint* `/actions/{actionPlugin}/{actionId}`
 
-
-NOTE: *Get an existing action* +
-      _Action is represented as a map of properties._
-
-*Method*
-****
-*GET* `/actions/{actionPlugin}/{actionId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be retrieved|string
-|=======================
-
-*Response* +
-Map&lt;String, String&gt;[java.lang.String]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Found | -
-| 404    | No Action Found | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
 
 NOTE: *Update an existing action* +
       _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
@@ -394,6 +363,38 @@ void
 | 200    | Success, Action Deleted | -
 | 500    | Internal server error | -
 | 404    | ActionId not found for delete | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Get an existing action* +
+      _Action is represented as a map of properties._
+
+*Method*
+****
+*GET* `/actions/{actionPlugin}/{actionId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin|string
+    |actionId|true|Action id to be retrieved|string
+|=======================
+
+*Response* +
+Map&lt;String, String&gt;[java.lang.String]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Found | -
+| 404    | No Action Found | -
+| 500    | Internal server error | -
 
 |=======================
 
@@ -1373,6 +1374,7 @@ Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
 |autoResolveMatch|Match|optional|-|ALL, ANY
 |actions|Map[string,Set[string]]|optional|-|-
 |description|string|optional|-|-
+|severity|Severity|optional|-|LOW, MEDIUM, HIGH, CRITICAL
 |name|string|optional|-|-
 |autoResolve|boolean|optional|-|-
 |autoDisable|boolean|optional|-|-
