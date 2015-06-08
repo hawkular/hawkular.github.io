@@ -1,6 +1,6 @@
 = Getting Started
 Heiko Rupp
-2015-02-25
+2015-06-08
 :description: How to get started with Hawkular
 :jbake-type: page
 :jbake-status: published
@@ -12,20 +12,22 @@ toc::[]
 
 == Getting Started with Hawkular.
 
-NOTE
-Right now there is no Hawkular distribution to download and go. We are working on it.
+Download
+http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha1/hawkular-dist-1.0.0.Alpha1.zip[Hawkular 1.0.0.Alpha1 (zip)]
+and then unzip and start the server as shown below. You can find links to releases and release notes on the
+link:/downloads.html[Downloads] page.
 
-Once we have a distribution available, you can unzip and start the server
-
+.Unzip and start the server
 [source,shell]
 ----
-unzip hawkular.zip
-cd hawkular
+unzip hawkular.zip #<1>
 cd wildfly-8.2.0.Final
 bin/standalone.sh  # use standalone.bat on Windows
 ----
+<1> Adjust the filename to the downloaded one.
 
-You can then navigate your browser to http://localhost:8080/
+You can then navigate your browser to http://localhost:8080/. When you see the login screen,
+you have to register as a user and will then be redirected to the main Hawkular page.
 
 === Cassandra Integration
 Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
@@ -79,7 +81,7 @@ From standalone.xml::
 
 TIP: You can change the keyspace used by setting the `cassandra.keyspace` system property.
 
-=== Try via Docker
+== Try via Docker
 
 Hawkular is publishing builds to https://registry.hub.docker.com/u/hawkular/hawkular/[Docker Hub] that you can try
 and download from Docker.
@@ -134,7 +136,7 @@ Status: Image is up to date for hawkular/hawkular:latest #<2>
 <2> In this case the local one was already the latest, so we are good here.
 
 
-=== Working on Hawkular source
+== Working on Hawkular source
 
 If you are interested in hacking on Hawkular, or building it from source, then check out
 link:/docs/dev/development.html[Development resources]
@@ -145,45 +147,68 @@ If you wish to monitor a WildFly instance,  you can do so with the following ste
 
 * Download the WildFly module from http://download.jboss.org/hawkular/wildfly-monitor/0.0.9/hawkular-monitor-0.0.9-module.zip[here].
 * Unzip the file inside the `modules` directory of  your WildFly 8.2 instance
-* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent extension in the <extensions> section:
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent
+extension in the `<extensions>` section:
+
 [source,xml]
 ----
 <extension module="org.hawkular.agent.monitor"/>
 ----
-* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent subsystem declaration in the <profile> section. Note that you must set your Hawkular credentials in the username and password attributes (in other words, replace SET_ME with their true values for your Hawkular system):
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add the Hawkular Monitor Agent subsystem declaration
+in the `profile>` section. Note that you must set your Hawkular credentials in the username and password attributes
+(in other words, replace SET_ME with their true values for your Hawkular system):
+
 [source,xml]
 ----
-<subsystem apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedulerThreads="3" enabled="true" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0">
+<subsystem apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3"
+           numAvailSchedulerThreads="3" enabled="true" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0">
   <diagnostics enabled="true" reportTo="LOG" interval="5" timeUnits="minutes"/>
-  <storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" serverOutboundSocketBindingRef="hawkular" />
+  <storage-adapter type="HAWKULAR"
+      username="SET_ME" password="SET_ME"  <!--1-->
+      serverOutboundSocketBindingRef="hawkular" />
   <metric-set-dmr name="WildFly Memory Metrics" enabled="true">
-    <metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
-    <metric-dmr name="Heap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/>
-    <metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/>
-    <metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed"/>
+    <metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes"
+                path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
+    <metric-dmr name="Heap Committed" interval="1" timeUnits="minutes"
+                path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/>
+    <metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds"
+                path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/>
+    <metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes"
+                path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed"/>
   </metric-set-dmr>
   <metric-set-dmr name="WildFly Threading Metrics" enabled="true">
-    <metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none" path="/core-service=platform-mbean/type=threading" attribute="thread-count"/>
+    <metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none"
+                path="/core-service=platform-mbean/type=threading" attribute="thread-count"/>
   </metric-set-dmr>
   <avail-set-dmr name="Server Availability" enabled="true">
-    <avail-dmr name="App Server" interval="30" timeUnits="seconds" path="/" attribute="server-state" upRegex="run.*"/>
+    <avail-dmr name="App Server" interval="30" timeUnits="seconds"
+               path="/" attribute="server-state" upRegex="run.*"/>
   </avail-set-dmr>
   <resource-type-set-dmr name="Main" enabled="true">
-    <resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server" path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics" availSets="Server Availability"/>
+    <resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server"
+                       path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics"
+                       availSets="Server Availability"/>
   </resource-type-set-dmr>
   <managed-servers>
     <local-dmr name="Local Server" enabled="true" resourceTypeSets="Main"/>
   </managed-servers>
 </subsystem>
 ----
+<1> You need to provide username/password for one Hawkular user. The app server will only show for this user.
+
 WARNING: It is known that this only works with WildFly 8.2 at the moment and not with WildFly 9 or above.
 
-* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add an outbound socket binding to your WildFly instance's <socket-binding-group> that points to your running Hawkular server instance:
+* In the `standalone/configuration/standalone.xml` file of your WildFly instance, add an outbound socket binding
+to your WildFly instance's `<socket-binding-group>` that points to your running Hawkular server instance:
+
 [source,xml]
 ----
 <outbound-socket-binding name="hawkular">
-  <remote-destination host="your-hawkular-server-hostname" port="8080" />
+  <remote-destination
+     host="your-hawkular-server-hostname"   <--1-->
+     port="8080" />
 </outbound-socket-binding>
 ----
+<1> Adjust this value
 
 NOTE: In early versions of Hawkular (1.0.0.Alpha1), both the server and monitored will spit out some errors which are ok to ignore.
