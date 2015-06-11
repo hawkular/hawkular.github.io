@@ -1,10 +1,13 @@
 		</div>
 		<div id="push"></div>
     </div>
-    
+
     <div id="footer">
       <div class="container">
-        
+          <a href="http://www.ej-technologies.com/products/jprofiler/overview.html">Built using JProfiler Java profiler
+              <br/>
+            <img src="http://www.ej-technologies.com/images/product_banners/jprofiler_small.png" alt="JProfiler logo"/>
+           </a>
       </div>
     </div>
 
@@ -23,7 +26,7 @@
     </span></p>
       </div>
     </section>
-    
+
     <#include "javascripts.ftl">
 
   </body>
