@@ -1,0 +1,72 @@
+= Configuration Guide
+Thomas Segismont
+2015-06-16
+:description: Hawkular Metrics standalone server configuration
+:icons: font
+:jbake-type: page
+:jbake-status: published
+
+This guide explains the configuration options of a Hawkular Metrics standalone server.
+
+== Configuration sources
+
+Hawkular Metrics can read configuration from different sources, listed below in order of precedence:
+
+. System property (i.e. `-Dhawkular-metrics.cassandra-nodes=127.0.0.1`)
+. Environment variable (i.e `CASSANDRA_NODES=127.0.0.1`)
+. External file, in the form of a Java Properties file (i.e `hawkular-metrics.cassandra-nodes=127.0.0.1`)
+
+== External configuration file
+
+The configuration file path can be set with the `metrics.conf` system property.
+
+* If it is set and the file does not exists or is not readable, Wildfly will fail to deploy the application.
+* If it is not set, the application will use the `<user.home>/.metrics.conf` file, if it exists.
+
+== Parameters and flags
+
+The table below lists the parameters and flags supported.
+
+* The `Name` column is the string form when the option is set in the configuration file or as a system property.
+* When the option can be set with an environment variable, the variable name is listed in the `Env` column.
+* The `Flag` column indicates if the sole presence of the option is important, not its value.
+
+[cols="5,4,4,1,6", options="header"]
+|===
+|Name
+|Env
+|Default
+|Flag
+|Description
+
+|hawkular-metrics.cassandra-nodes
+|CASSANDRA_NODES
+|127.0.0.1
+|No
+|The list of cluster nodes provided to the Cassandra driver, comma-separated
+
+|hawkular-metrics.cassandra-cql-port
+|CASSANDRA_CQL_PORT
+|9042
+|No
+|The CQL port provided to the Cassandra driver
+
+|cassandra.keyspace
+|-
+|hawkular_metrics
+|No
+|The keyspace where the data will be stored
+
+|cassandra.resetdb
+|-
+|-
+|Yes
+|If set, reset the keyspace on startup
+
+
+|hawkular.metrics.waitForService
+|-
+|-
+|Yes
+|If set, wait for the service to be setup before allowing Wildfly to accept requests
+|===
