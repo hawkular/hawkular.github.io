@@ -51,6 +51,14 @@
                   </li>
                 </ul>
               </li>
+              <li class="menu-item dropdown dropdown-submenu">
+                <a href="#" class="dropdown-toggle" data-toggle="dropdown">Sub-projects</a>
+                <ul class="dropdown-menu">
+                  <li class="menu-item ">
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/metrics/index.html">Metrics</a>
+                  </li>
+                </ul>
+              </li>
             </ul>
             <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
               Community
