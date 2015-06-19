@@ -4,6 +4,103 @@
 #`http://localhost:8080/hawkular/metrics/`#
 
 == REST APIs
+=== Metrics related REST interface
+
+
+
+==============================================
+*Endpoint* `/metrics/`
+
+
+NOTE: *Find tenant&#39;s metric definitions.* +
+      _Does not include any metric values. _
+
+*Method*
+****
+*GET* `/metrics/`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |type|true|Queried metric type|string
+|=======================
+
+*Response* +
+List[List]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Successfully retrieved at least one metric definition. | -
+| 204    | No metrics found. | -
+| 400    | Given type is not a valid type. | [ApiError](#<<ApiError>>)
+| 500    | Failed to retrieve metrics due to unexpected error. | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/metrics/data`
+
+
+NOTE: *Add data for multiple metrics in a single call.* 
+
+*Method*
+****
+*POST* `/metrics/data`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|List of metrics|<<MixedMetricsRequest,MixedMetricsRequest>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding data succeeded. | -
+| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
 === Gauge metrics interface
 
 
@@ -585,103 +682,6 @@ void
 
 {empty} +
 
-=== Metrics related REST interface
-
-
-
-==============================================
-*Endpoint* `/metrics/`
-
-
-NOTE: *Find tenant&#39;s metric definitions.* +
-      _Does not include any metric values. _
-
-*Method*
-****
-*GET* `/metrics/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |type|true|Queried metric type|string
-|=======================
-
-*Response* +
-List[List]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Successfully retrieved at least one metric definition. | -
-| 204    | No metrics found. | -
-| 400    | Given type is not a valid type. | [ApiError](#<<ApiError>>)
-| 500    | Failed to retrieve metrics due to unexpected error. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/metrics/data`
-
-
-NOTE: *Add data for multiple metrics in a single call.* 
-
-*Method*
-****
-*POST* `/metrics/data`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|List of metrics|<<MixedMetricsRequest,MixedMetricsRequest>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Adding data succeeded. | -
-| 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
 === Availability metrics interface
 
 
@@ -911,106 +911,6 @@ void
 
 
 ==============================================
-*Endpoint* `/availability/{id}/tag`
-
-
-NOTE: *Add or update availability metric&#39;s tags.* 
-
-*Method*
-****
-*POST* `/availability/{id}/tag`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |id|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<TagRequest,TagRequest>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Tags were modified successfully. | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/availability/tags/{tags}`
-
-
-NOTE: *Find availability metric data with given tags.* 
-
-*Method*
-****
-*GET* `/availability/tags/{tags}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |tags|true|Tag list|<<Tags,Tags>>
-|=======================
-
-*Response* +
-List[Map]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Availability values fetched successfully | -
-| 204    | No matching data found. | -
-| 400    | Invalid tags | [ApiError](#<<ApiError>>)
-| 500    | Any error while fetching data. | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/availability/{id}/tags/{tags}`
 
 
@@ -1197,6 +1097,106 @@ void
 | 200    | Adding data succeeded. | -
 | 400    | Missing or invalid payload | [ApiError](#<<ApiError>>)
 | 500    | Unexpected error happened while storing the data | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/availability/{id}/tag`
+
+
+NOTE: *Add or update availability metric&#39;s tags.* 
+
+*Method*
+****
+*POST* `/availability/{id}/tag`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |id|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<TagRequest,TagRequest>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Tags were modified successfully. | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/availability/tags/{tags}`
+
+
+NOTE: *Find availability metric data with given tags.* 
+
+*Method*
+****
+*GET* `/availability/tags/{tags}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |tags|true|Tag list|<<Tags,Tags>>
+|=======================
+
+*Response* +
+List[Map]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Availability values fetched successfully | -
+| 204    | No matching data found. | -
+| 400    | Invalid tags | [ApiError](#<<ApiError>>)
+| 500    | Any error while fetching data. | [ApiError](#<<ApiError>>)
 
 |=======================
 
