@@ -1,0 +1,92 @@
+= Hawkular-Metrics 0.4.0 release and the way beyond
+Stefan Negrea
+2015-06-22
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, release
+
+
+I am happy to announce release 0.4.0 of Hawkular Metrics. The release is anchored by new Counter metric
+implementation, various stability enhancements, and Grafana integration updates.
+
+
+== Release Updates
+
+There was an email thread on Hawkular Devel List about 1 week ago that announced some minor changes to the
+release process for Hawkular Metrics. This release is the first to apply the plan. Going forward, the project
+will follow https://developer.jboss.org/wiki/JBossProjectVersioning[JBoss Project Versioning] guidelines.
+
+To avoid confusion here is an explanation of the release version number. The current release 0.4.0.Final
+contains the code that was initially planned under 0.3.5. The version bump was required to align the
+release version with the release mechanics. But there are no surprising commits or changes in functionality
+that were not expected to be released.
+
+
+
+== Here is a list of major changes in this release:
+
+. Documentation
+ * Added a new, Metrics specific, documentation section on the Hawkular  website
+ * Installation, configuration and Grafana integration are covered
+ * Link: http://www.hawkular.org/docs/components/metrics/index.html
+
+. External Integration
+ * The Grafana graph panel editor is now able to autocomplete the metric name
+ * Documentation regrading the Grafana integration is now covered by the official Hawkular Metrics documentation (see above)
+ * Heapster versions 0.14.0 and up can use Hawkular-Metrics as their time series data storage.
+
+. Updates to core API (https://issues.jboss.org/browse/HWKMETRICS-113[HWKMETRICS-113])
+ * Metric is now a concrete type. GaugeMetric and AvailabilityMetric classes have been removed.
+ * The new DataPoint class replaces the former GaugeDataPoint and AvailabilityDataPoint classes.
+ * All of the new model classes are immutable. We will continue refactoring to make model classes immutable.
+ * Swagger and Jackson dependencies have been removed from core
+
+. Cassandra
+ * Cassandra Java driver upgraded to version 2.1.6 (https://issues.jboss.org/browse/HWKMETRICS-109[HWKMETRICS-109])
+ * Embedded Cassandra is no longer part of the Hawkular Metrics
+ * Cassandra is now an integral part of Hawkular Project
+ * Embedded Cassandra has been moved to https://github.com/hawkular/hawkular-commons[Hawkular Commons] repository
+ * For now, will keep including the compatible embedded jar distribution as part of the release downloads
+ * NOTE: the embedded Cassandra should only be used for testing, debugging, or developing Hawkular Metrics. In production
+ environments please use a full Cassandra deployment.
+
+. Updated Counter Metric (https://issues.jboss.org/browse/HWKMETRICS-53[HWKMETRICS-53],
+https://issues.jboss.org/browse/HWKMETRICS-59[HWKMETRICS-59])
+ * Core and REST APIs support reading/writing counters
+ * Core API supports generating and reading rates
+ * REST API for rates will come in next release
+
+. Developer tools
+ * Gatling load testing scenario added
+ * Source code: https://github.com/hawkular/hawkular-metrics/tree/master/load-tests
+ * This is part of the on-going effort for testing and performance profiling
+
+
+== Release links
+
+* Github Release:
+https://github.com/hawkular/hawkular-metrics/releases/tag/0.4.0
+
+* JBoss Nexus Maven artifacts:
+http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/
+
+* Jira release tracker:
+https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327451/
+
+
+
+== Hawkular Metrics 0.5.0 & Beyond
+
+. Gauge Aggregates - Long-term storage of numeric metrics at the expense  of losing some fidelity. With task queue
+released in 0.3.4, the expectation is to start the actual implementation 0.5.0.
+. Update REST testing - while the current set of tests is a good gauge for regressions, the overall coverage is
+still low.
+. Improved docker and kubernetes support - this is a long term goal for the project
+. The counters will received improved REST API support
+. Initial support in the Python & Golang clients for counters
+
+== Thanks
+
+A  big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Jirka Kremser, and Heiko Rupp for their  project  contributions.
+
+
