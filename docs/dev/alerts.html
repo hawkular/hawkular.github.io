@@ -164,6 +164,11 @@
 </ul>
 </li>
 <li><a href="#_rest_api">REST API</a></li>
+<li><a href="#_external_alert_integration">External Alert Integration</a>
+<ul class="sectlevel2">
+<li><a href="#_external_conditions">External Conditions</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -429,6 +434,26 @@
 <div class="sectionbody">
 <div class="paragraph">
 <p>Hawkular Alerts supports a robust REST API for managing Triggers and Alerts.  For more on how to generate API documentation, see the README.adoc at <a href="http://github.com/hawkular/hawkular-alerts">Hawkular-Alerts @ <strong>GitHub</strong></a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_external_alert_integration">External Alert Integration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are times when an external system will already be looking for and detecting potential issues in its environment.  It is possible for these detection-only systems to leverage the power of Hawkular Alerts' trigger and action infrastructure.  For example, let&#8217;s say there is already a sensor in place looking for overheating situations.  When it detects something overheating it can take some action.  In this case we are not sending a stream of heat readings to alerting and having it evaluate against a threshold set on a trigger condition.  Instead, the threshold and evaluation are all built into the sensor.  To integrate with Hawkular Alerts we can use an "External Condition".</p>
+</div>
+<div class="sect2">
+<h3 id="_external_conditions">External Conditions</h3>
+<div class="paragraph">
+<p>External integration begins with standard triggers.  In this way we immediately get everything that triggers offer: actions, dampening, lifecycle, auto-resolve, etc.  The difference is that instead of the typical condition types: Threshold, Availability, etc.., we can use an ExternalCondition. An external condition is like other conditions in that it has a 'dataId' with which it matches data sent into Hawkular Alerts.  It also has 'systemId' and 'expression' fields. The systemId is used to identify the external system for which the condition is relevant. In our example, perhaps "HeatSensors".  The expression field is used as needed.  In our example it may not be needed or it could be a description like, "sensor detected high temperature".  In other examples it could be used to store a complex expression that will be evaluated by the external system.</p>
+</div>
+<div class="paragraph">
+<p>The main thing about external conditions is that they always evaluate to true.  It is assumed that when a datum comes in with a dataId assigned to an external condition that that condition immediately evaluates to true.  A trigger with a single external condition (and default dampening) would fire on every datum sent in for it&#8217;s condition.  This is because it is assumed the external system already did the work of determining there was an issue.</p>
+</div>
+<div class="paragraph">
+<p>Note that external conditions use StringData for their datatype.  And the value is any string that the external system wants it to be.  In our example it may  be a sensorId and temperature, like "Sensor 5368, temperature 212F".</p>
+</div>
 </div>
 </div>
 </div>
