@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+set -x
+
 addHeaders() {
   dir_path=$1
 
@@ -48,6 +50,14 @@ toc::[]\n\
   done
 }
 
+setHawkularVersion() {
+  HAWKULAR_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_VERSION=`[[ "x$HAWKULAR_VERSION" == "x" ]] && echo 1.0.0.Alpha1`
+  sed -i.bak "s;@HAWKULAR-VERSION@;$HAWKULAR_VERSION;" pom.xml
+  rm -f pom.xml.bak
+}
+
 downloadAndProcess() {
   REPO="hawkular/hawkular.github.io"
   BRANCH="swagger"
@@ -69,4 +79,5 @@ https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-metri
   rm -f $DOC_PATH/*.bak
 }
 
+setHawkularVersion
 downloadAndProcess

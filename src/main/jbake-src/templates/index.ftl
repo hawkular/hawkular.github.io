@@ -12,7 +12,7 @@
             <a class="btn btn-primary btn-lg" href="/downloads.html">Download Hawkular</a>
             <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
           </div>
-          <p class="version fade-in three"><i class="fa fa-list-ul"></i>1.0.0.Alpha01 - June 4th 2015
+          <p class="version fade-in three"><i class="fa fa-list-ul"></i>${hawkular.version} - June 4th 2015
           </p>
         </div>
       </section>

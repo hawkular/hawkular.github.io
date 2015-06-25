@@ -49,6 +49,7 @@
   </licenses>
 
   <properties>
+    <hawkular.version>@HAWKULAR.VERSION@</hawkular.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <github.global.server>github</github.global.server>
     <asciidoctorj.version>1.5.2</asciidoctorj.version>
@@ -63,6 +64,43 @@
     <finalName>website</finalName>
 
     <plugins>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>src/main/jbake</outputDirectory>
+              <!-- copy these files without filtering -->
+              <resources>
+                <resource>
+                  <directory>src/main/jbake-src</directory>
+                  <excludes>
+                    <exclude>**/*.adoc</exclude>
+                    <exclude>**/*.ftl</exclude>
+                  </excludes>
+                </resource>
+                <!-- .. and filter these -->
+                <resource>
+                  <directory>src/main/jbake-src</directory>
+                  <includes>
+                    <include>**/*.adoc</include>
+                    <include>**/*.ftl</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <plugin>
         <groupId>br.com.ingenieux</groupId>
         <artifactId>jbake-maven-plugin</artifactId>
