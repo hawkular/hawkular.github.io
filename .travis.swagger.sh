@@ -16,6 +16,8 @@
 # limitations under the License.
 #
 
+set -x
+
 addHeaders() {
   dir_path=$1
 
@@ -48,6 +50,31 @@ toc::[]\n\
   done
 }
 
+setHawkularReleasedVersion() {
+  HAWKULAR_RELEASED_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_RELEASED_VERSION=`[[ "x$HAWKULAR_RELEASED_VERSION" == "x" ]] && echo x.y.z`
+  sed -i.bak "s;@HAWKULAR.RELEASED.VERSION@;$HAWKULAR_RELEASED_VERSION;" pom.xml
+  rm -f pom.xml.bak
+}
+
+setHawkularReleasedDateVersion() {
+  HAWKULAR_RELEASED_DATE_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "published_at" | head -1 | cut -d '"' -f4`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_RELEASED_DATE_VERSION=`[[ "x$HAWKULAR_RELEASED_DATE_VERSION" == "x" ]] && echo x.y.z`
+  sed -i.bak "s;@HAWKULAR.RELEASED.DATE_VERSION@;$HAWKULAR_RELEASED_DATE_VERSION;" pom.xml
+  rm -f pom.xml.bak
+}
+
+
+setHawkularMasterVersion() {
+  HAWKULAR_MASTER_VERSION=`curl https://raw.githubusercontent.com/hawkular/hawkular/master/pom.xml | grep "^  <version>" | sed -e "s;  <version>\([0-9a-zA-Z\.\-]*\)</version>;\1;"`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_MASTER_VERSION=`[[ "x$HAWKULAR_MASTER_VERSION" == "x" ]] && echo x.y.z-SNAPSHOT`
+  sed -i.bak "s;@HAWKULAR.MASTER.VERSION@;$HAWKULAR_MASTER_VERSION;" pom.xml
+  rm -f pom.xml.bak
+}
+
 downloadAndProcess() {
   REPO="hawkular/hawkular.github.io"
   BRANCH="swagger"
@@ -69,4 +96,7 @@ https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-metri
   rm -f $DOC_PATH/*.bak
 }
 
+setHawkularReleasedVersion
+setHawkularReleasedDateVersion
+setHawkularMasterVersion
 downloadAndProcess

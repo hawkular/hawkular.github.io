@@ -49,6 +49,9 @@
   </licenses>
 
   <properties>
+    <hawkular.released.version>@HAWKULAR.RELEASED.VERSION@</hawkular.released.version>
+    <hawkular.released.date.version>@HAWKULAR.RELEASED.DATE.VERSION@</hawkular.released.date.version>
+    <hawkular.master.version>@HAWKULAR.MASTER.VERSION@</hawkular.master.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <github.global.server>github</github.global.server>
     <asciidoctorj.version>1.5.2</asciidoctorj.version>
@@ -61,48 +64,111 @@
 
   <build>
     <finalName>website</finalName>
+    <defaultGoal>clean generate-resources</defaultGoal>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>br.com.ingenieux</groupId>
+          <artifactId>jbake-maven-plugin</artifactId>
+          <version>${jbake-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>default-generate</id>
+              <phase>generate-resources</phase>
+              <goals>
+                <goal>generate</goal>
+              </goals>
+            </execution>
+          </executions>
+          <!-- dependencies -->
+          <dependencies>
+            <!-- optional : a jbake version -->
+            <dependency>
+              <groupId>org.jbake</groupId>
+              <artifactId>jbake-core</artifactId>
+              <version>${jbake-core.version}</version>
+            </dependency>
+            <!-- for asciidoc templates (.adoc) -->
+            <dependency>
+              <groupId>org.asciidoctor</groupId>
+              <artifactId>asciidoctorj</artifactId>
+              <version>${asciidoctorj.version}</version>
+            </dependency>
+            <!-- for freemarker templates (.ftl) -->
+            <dependency>
+              <groupId>org.freemarker</groupId>
+              <artifactId>freemarker</artifactId>
+              <version>${freemarker.version}</version>
+            </dependency>
+            <!-- for markdown parsing (.md) -->
+            <dependency>
+              <groupId>org.pegdown</groupId>
+              <artifactId>pegdown</artifactId>
+              <version>${pegdown.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
 
     <plugins>
+
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.7</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>src/main/jbake</outputDirectory>
+              <!-- copy these files without filtering -->
+              <resources>
+                <resource>
+                  <directory>src/main/jbake-src</directory>
+                  <excludes>
+                    <exclude>**/*.adoc</exclude>
+                    <exclude>**/*.ftl</exclude>
+                  </excludes>
+                </resource>
+                <!-- .. and filter these -->
+                <resource>
+                  <directory>src/main/jbake-src</directory>
+                  <includes>
+                    <include>**/*.adoc</include>
+                    <include>**/*.ftl</include>
+                  </includes>
+                  <filtering>true</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>2.6.1</version>
+        <configuration>
+          <filesets>
+            <fileset>
+              <directory>src/main/</directory>
+              <includes>
+                <include>jbake</include>
+              </includes>
+              <followSymlinks>false</followSymlinks>
+            </fileset>
+          </filesets>
+        </configuration>
+       </plugin>
+
       <plugin>
         <groupId>br.com.ingenieux</groupId>
         <artifactId>jbake-maven-plugin</artifactId>
-        <version>${jbake-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>default-generate</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-        <!-- dependencies -->
-        <dependencies>
-          <!-- optional : a jbake version -->
-          <dependency>
-            <groupId>org.jbake</groupId>
-            <artifactId>jbake-core</artifactId>
-            <version>${jbake-core.version}</version>
-          </dependency>
-          <!-- for asciidoc templates (.adoc) -->
-          <dependency>
-            <groupId>org.asciidoctor</groupId>
-            <artifactId>asciidoctorj</artifactId>
-            <version>${asciidoctorj.version}</version>
-          </dependency>
-          <!-- for freemarker templates (.ftl) -->
-          <dependency>
-            <groupId>org.freemarker</groupId>
-            <artifactId>freemarker</artifactId>
-            <version>${freemarker.version}</version>
-          </dependency>
-          <!-- for markdown parsing (.md) -->
-          <dependency>
-            <groupId>org.pegdown</groupId>
-            <artifactId>pegdown</artifactId>
-            <version>${pegdown.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
@@ -142,4 +208,47 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>inline</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>br.com.ingenieux</groupId>
+            <artifactId>jbake-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>inline-generate</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>inline</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>watch</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>br.com.ingenieux</groupId>
+            <artifactId>jbake-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>watch-generate</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>watch</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
