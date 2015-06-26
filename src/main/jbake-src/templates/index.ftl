@@ -1,5 +1,6 @@
 <#include "header.ftl">
 <#include "navigation.ftl">
+<script type="text/javascript">document.write(moment("2015-06-03T18:59:38Z").fromNow())</script>
 
 <div class="homepage">
     <section class="main-banner">
@@ -12,8 +13,7 @@
             <a class="btn btn-primary btn-lg" href="/downloads.html">Download Hawkular</a>
             <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
           </div>
-          <p class="version fade-in three"><i class="fa fa-list-ul"></i>${hawkular.version} - June 4th 2015
-          </p>
+          <p class="version fade-in three"><i class="fa fa-list-ul"></i>${hawkular.released.version} - <script type="text/javascript">document.write(moment("${hawkular.released.date.version}").fromNow())</script></p>
         </div>
       </section>
       <section class="boxes">
