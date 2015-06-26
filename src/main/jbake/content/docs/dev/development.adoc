@@ -185,3 +185,50 @@ Documentation such as these pages, but also all the README files are written in 
 
 Jax-RS Rest-Interfaces are to be commented / annotated via Swagger Annotations, that allow for automatic creation of
 API documentation from the annotations and the Java elements they are applied to.
+
+== Release Process
+=== Step 1 - Tagging / building
+
+[source,shell]
+----
+# git clone git@github.com:hawkular/hawkular.git
+# cd hawkular
+# mvn release:prepare -Prelease
+# mvn release:perform
+----
+
+=== Step 2 - Uploading to download.jboss.org
+[source,shell]
+----
+# sftp hawkular@filemgmt.jboss.org
+> cd downloads_htdocs/hawkular/hawkular
+> mkdir 1.0.0.Alpha2
+> cd 1.0.0.Alpha2
+> mput hawkular-dist-1.0.0.Alpha2.*
+> chmod 666 *
+----
+
+=== Step 3 - Update JBoss.org Hawkkular images
+[source,shell]
+----
+# git clone git@github.com:jboss-dockerfiles/hawkular.git
+# vi hawkular/hawkular-aio/Dockerfile
+// Replace version number, check the WF version number as well
+// Test locally "docker build hawkular/hawkular-aio
+# git commit -m "Upgrade to Hawkular 1.0.0.Alpha2"
+# git push
+# git tag 1.0.0.Alpha2
+# git push --tags
+----
+
+=== Step 4 - Close JIRA release
+
+=== Step 5 - Update hawkular.org + blog
+[source, shell]
+----
+
+----
+
+=== Step 6 - Tweet/G+
+
+
