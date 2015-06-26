@@ -50,14 +50,32 @@ toc::[]\n\
   done
 }
 
-setHawkularVersion() {
-  HAWKULAR_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
+setHawkularReleasedVersion() {
+  HAWKULAR_RELEASED_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
   #fallback mechanism, if github/internet/anything is down
-  HAWKULAR_VERSION=`[[ "x$HAWKULAR_VERSION" == "x" ]] && echo 1.0.0.Alpha1`
-  _JBAKE_PROPERTIES="src/main/jbake/jbake.properties"
-  sed -i.bak "s;@HAWKULAR_VERSION@;$HAWKULAR_VERSION;" $_JBAKE_PROPERTIES
-  rm -f $_JBAKE_PROPERTIES.bak
+  HAWKULAR_RELEASED_VERSION=`[[ "x$HAWKULAR_RELEASED_VERSION" == "x" ]] && echo x.y.z`
+  JBAKE_PROPERTIES="src/main/jbake/jbake.properties"
+  sed -i.bak "s;@HAWKULAR_RELEASED_VERSION@;$HAWKULAR_RELEASED_VERSION;" $JBAKE_PROPERTIES
+  rm -f $JBAKE_PROPERTIES.bak
 }
+
+setHawkularReleasedDate() {
+  HAWKULAR_RELEASED_DATE=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "published_at" | head -1 | cut -d '"' -f4`
+  #HAWKULAR_RELEASED_DATE=`date -d $HAWKULAR_RELEASED_DATE +'%B %-m %Y'`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_RELEASED_DATE=`[[ "x$HAWKULAR_RELEASED_DATE" == "x" ]] && echo x.y.z`
+  sed -i.bak "s;@HAWKULAR_RELEASED_DATE@;$HAWKULAR_RELEASED_DATE;" $JBAKE_PROPERTIES
+  rm -f $JBAKE_PROPERTIES.bak
+}
+
+setHawkularMasterVersion() {
+  HAWKULAR_MASTER_VERSION=`curl -Ls https://raw.githubusercontent.com/hawkular/hawkular/master/pom.xml | grep "^  <version>" | sed -e "s;  <version>\([0-9a-zA-Z\.\-]*\)</version>;\1;"`
+  #fallback mechanism, if github/internet/anything is down
+  HAWKULAR_MASTER_VERSION=`[[ "x$HAWKULAR_MASTER_VERSION" == "x" ]] && echo x.y.z-SNAPSHOT`
+  sed -i.bak "s;@HAWKULAR_MASTER_VERSION@;$HAWKULAR_MASTER_VERSION;" $JBAKE_PROPERTIES
+  rm -f $JBAKE_PROPERTIES.bak
+}
+
 
 downloadAndProcess() {
   REPO="hawkular/hawkular.github.io"
@@ -80,5 +98,11 @@ https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-metri
   rm -f $DOC_PATH/*.bak
 }
 
-setHawkularVersion
-downloadAndProcess
+main() {
+  setHawkularReleasedVersion
+  setHawkularReleasedDate
+  setHawkularMasterVersion
+  downloadAndProcess
+}
+
+main
