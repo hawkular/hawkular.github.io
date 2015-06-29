@@ -52,30 +52,29 @@ toc::[]\n\
 
 setHawkularReleasedVersion() {
   HAWKULAR_RELEASED_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
-  #fallback mechanism, if github/internet/anything is down
-  HAWKULAR_RELEASED_VERSION=`[[ "x$HAWKULAR_RELEASED_VERSION" == "x" ]] && echo x.y.z`
-  JBAKE_PROPERTIES="src/main/jbake/jbake.properties"
-  sed -i.bak "s;@HAWKULAR_RELEASED_VERSION@;$HAWKULAR_RELEASED_VERSION;" $JBAKE_PROPERTIES
-  rm -f $JBAKE_PROPERTIES.bak
+  safelyReplaceUsingFallback "HAWKULAR_RELEASED_VERSION" "x.y.z"
 }
 
 setHawkularReleasedDate() {
   HAWKULAR_RELEASED_DATE=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "published_at" | head -1 | cut -d '"' -f4`
   #HAWKULAR_RELEASED_DATE=`date -d $HAWKULAR_RELEASED_DATE +'%B %-m %Y'`
-  #fallback mechanism, if github/internet/anything is down
-  HAWKULAR_RELEASED_DATE=`[[ "x$HAWKULAR_RELEASED_DATE" == "x" ]] && echo x.y.z`
-  sed -i.bak "s;@HAWKULAR_RELEASED_DATE@;$HAWKULAR_RELEASED_DATE;" $JBAKE_PROPERTIES
-  rm -f $JBAKE_PROPERTIES.bak
+  safelyReplaceUsingFallback "HAWKULAR_RELEASED_DATE" "month day year"
 }
 
 setHawkularMasterVersion() {
   HAWKULAR_MASTER_VERSION=`curl -Ls https://raw.githubusercontent.com/hawkular/hawkular/master/pom.xml | grep "^  <version>" | sed -e "s;  <version>\([0-9a-zA-Z\.\-]*\)</version>;\1;"`
-  #fallback mechanism, if github/internet/anything is down
-  HAWKULAR_MASTER_VERSION=`[[ "x$HAWKULAR_MASTER_VERSION" == "x" ]] && echo x.y.z-SNAPSHOT`
-  sed -i.bak "s;@HAWKULAR_MASTER_VERSION@;$HAWKULAR_MASTER_VERSION;" $JBAKE_PROPERTIES
-  rm -f $JBAKE_PROPERTIES.bak
+  safelyReplaceUsingFallback "HAWKULAR_MASTER_VERSION" "x.y.z-SNAPSHOT"
 }
 
+safelyReplaceUsingFallback() {
+  _VAR_NAME=$1
+  _DEFAULT=$2
+  _JBAKE_PROPERTIES="src/main/jbake/jbake.properties"
+  #fallback mechanism, if github/internet/anything is down
+  [[ "x${!_VAR_NAME}" == "x" ]] && export $_VAR_NAME=$_DEFAULT
+  sed -i.bak "s;@$_VAR_NAME@;${!_VAR_NAME};" $_JBAKE_PROPERTIES
+  rm -f $_JBAKE_PROPERTIES.bak
+}
 
 downloadAndProcess() {
   REPO="hawkular/hawkular.github.io"
