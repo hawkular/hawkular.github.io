@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - The Kettle starts boiling</title>
+    <title>Hawkular - How to release Hawkular</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -42,7 +42,7 @@
             }, false);
         </script>
       </div>
-	
+
 	<!-- Fixed navbar -->
     <nav class="navbar navbar-fixed-top" role="navigation">
       <div class="container">
@@ -129,57 +129,86 @@
       </div>
     </nav>
 
-    <section class="main-banner blog-mainbanner">
+      <section class="main-banner">
         <div class="container">
-            <h1>The Kettle starts boiling</h1>
-            <p>blog post</p>
+          <h1>How to release Hawkular</h1>
+          <p>Releasing Hawkular</p>
         </div>
-    </section>
+      </section>
 
-    <div class="blog-container">
-        <br/><br/>
-    	<p><div class="paragraph">
-<p>We have been working hard the last weeks to integrate the individual pieces of hawkular into some <em>good old
-distribution</em>, basically a thingy you can check out, unzip and run. And here it is, the <em>Kettle</em></p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/Kettle.png" alt="Kettle">
-</div>
-</div>
-<div class="paragraph">
-<p>To build the Kettle you basically checkout the Hawkular main repository and run <code>mvn install</code></p>
-</div>
+	<!--<p><em>26 June 2015</em></p>-->
+
+	<section>
+      <div class="container">
+        <div class="sect1">
+<h2 id="_step_1_tagging_building">Step 1 - Tagging / building</h2>
+<div class="sectionbody">
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">git clone https://github.com/hawkular/hawkular.git
-cd hawkular
-mvn install -Pdev -Dlicense.skip
-cd kettle/target
-cd wildfly-8.2.0.Final
-bin/standalone.sh</code></pre>
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># git clone git@github.com:hawkular/hawkular.git
+# cd hawkular
+# mvn release:prepare -Prelease
+# mvn release:perform</code></pre>
 </div>
 </div>
-<div class="paragraph">
-<p>You can then point your web browser at <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a> and use Hawkular.</p>
-</div></p>
-    	<hr /><br /><br />
-        <p><em>Published by Heiko W. Rupp on  24 February 2015</em></p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_2_uploading_to_download_jboss_org">Step 2 - Uploading to download.jboss.org</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># sftp hawkular@filemgmt.jboss.org
+&gt; cd downloads_htdocs/hawkular/hawkular
+&gt; mkdir ++
+&gt; cd ++
+&gt; mput hawkular-dist-++.*
+&gt; chmod 666 *</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_3_update_jboss_org_hawkkular_images">Step 3 - Update JBoss.org Hawkkular images</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># git clone git@github.com:jboss-dockerfiles/hawkular.git
+# vi hawkular/hawkular-aio/Dockerfile
+// Replace version number, check the WF version number as well
+// Test locally "docker build hawkular/hawkular-aio
+# git commit -m "Upgrade to Hawkular ++"
+# git push
+# git tag ++
+# git push --tags</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_4_close_jira_release">Step 4 - Close JIRA release</h2>
+<div class="sectionbody">
 
-    <div id="disqus_thread"></div>
-        <script type="text/javascript">
-        /* * * CONFIGURATION VARIABLES * * */
-        var disqus_shortname = 'hawkular';
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_5_update_hawkular_org_blog">Step 5 - Update hawkular.org + blog</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"></code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_6_tweet_g">Step 6 - Tweet/G+</h2>
+<div class="sectionbody">
 
-        /* * * DON'T EDIT BELOW THIS LINE * * */
-        (function() {
-            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-        })();
-        </script>
-        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
-    </div>
+</div>
+</div>
+      </div>
+    </section>
 
 		</div>
 		<div id="push"></div>
