@@ -54,55 +54,66 @@
     <asciidoctorj.version>1.5.2</asciidoctorj.version>
     <jbake-maven-plugin.version>0.0.9</jbake-maven-plugin.version>
     <site-maven-plugin.version>0.10</site-maven-plugin.version>
-    <jbake-core.version>2.3.2</jbake-core.version>
-    <freemarker.version>2.3.20</freemarker.version>
+    <jbake-core.version>2.4.0</jbake-core.version>
+    <freemarker.version>2.3.22</freemarker.version>
     <pegdown.version>1.4.2</pegdown.version>
   </properties>
 
   <build>
     <finalName>website</finalName>
+    <defaultGoal>clean install</defaultGoal>
+
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>br.com.ingenieux</groupId>
+          <artifactId>jbake-maven-plugin</artifactId>
+          <version>${jbake-maven-plugin.version}</version>
+          <executions>
+            <execution>
+              <id>default-generate</id>
+              <phase>process-resources</phase>
+              <goals>
+                <goal>generate</goal>
+              </goals>
+            </execution>
+          </executions>
+          <!-- dependencies -->
+          <dependencies>
+            <!-- optional : a jbake version -->
+            <dependency>
+              <groupId>org.jbake</groupId>
+              <artifactId>jbake-core</artifactId>
+              <version>${jbake-core.version}</version>
+            </dependency>
+            <!-- for asciidoc templates (.adoc) -->
+            <dependency>
+              <groupId>org.asciidoctor</groupId>
+              <artifactId>asciidoctorj</artifactId>
+              <version>${asciidoctorj.version}</version>
+            </dependency>
+            <!-- for freemarker templates (.ftl) -->
+            <dependency>
+              <groupId>org.freemarker</groupId>
+              <artifactId>freemarker</artifactId>
+              <version>${freemarker.version}</version>
+            </dependency>
+            <!-- for markdown parsing (.md) -->
+            <dependency>
+              <groupId>org.pegdown</groupId>
+              <artifactId>pegdown</artifactId>
+              <version>${pegdown.version}</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
 
     <plugins>
+
       <plugin>
         <groupId>br.com.ingenieux</groupId>
         <artifactId>jbake-maven-plugin</artifactId>
-        <version>${jbake-maven-plugin.version}</version>
-        <executions>
-          <execution>
-            <id>default-generate</id>
-            <phase>generate-resources</phase>
-            <goals>
-              <goal>generate</goal>
-            </goals>
-          </execution>
-        </executions>
-        <!-- dependencies -->
-        <dependencies>
-          <!-- optional : a jbake version -->
-          <dependency>
-            <groupId>org.jbake</groupId>
-            <artifactId>jbake-core</artifactId>
-            <version>${jbake-core.version}</version>
-          </dependency>
-          <!-- for asciidoc templates (.adoc) -->
-          <dependency>
-            <groupId>org.asciidoctor</groupId>
-            <artifactId>asciidoctorj</artifactId>
-            <version>${asciidoctorj.version}</version>
-          </dependency>
-          <!-- for freemarker templates (.ftl) -->
-          <dependency>
-            <groupId>org.freemarker</groupId>
-            <artifactId>freemarker</artifactId>
-            <version>${freemarker.version}</version>
-          </dependency>
-          <!-- for markdown parsing (.md) -->
-          <dependency>
-            <groupId>org.pegdown</groupId>
-            <artifactId>pegdown</artifactId>
-            <version>${pegdown.version}</version>
-          </dependency>
-        </dependencies>
       </plugin>
 
       <plugin>
@@ -110,7 +121,6 @@
         <artifactId>maven-war-plugin</artifactId>
         <version>2.6</version>
         <configuration>
-          <!-- web.xml is not mandatory since JavaEE 5 -->
           <failOnMissingWebXml>false</failOnMissingWebXml>
         </configuration>
       </plugin>
@@ -142,4 +152,49 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>inline</id>
+      <build>
+        <defaultGoal>clean generate-resources</defaultGoal>
+        <plugins>
+          <plugin>
+            <groupId>br.com.ingenieux</groupId>
+            <artifactId>jbake-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>inline-generate</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>inline</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>watch</id>
+      <build>
+        <defaultGoal>clean generate-resources</defaultGoal>
+        <plugins>
+          <plugin>
+            <groupId>br.com.ingenieux</groupId>
+            <artifactId>jbake-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>watch-generate</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>watch</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>
