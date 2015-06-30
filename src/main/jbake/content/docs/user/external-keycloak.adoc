@@ -1,0 +1,281 @@
+= External Keycloak
+Juraci Paixão Kröhling
+2015-06-26
+:description: How to use an external Keycloak with Hawkular
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+Hawkular ships with a ready to use instance of Keycloak. In some situations, however, it is desirable to split Hawkular
+from Keycloak. This document outlines this process. This document is valid from Hawkular 1.0.0.Alpha3 and later.
+
+== Preparing the environments
+
+For the purposes of this document, both Keycloak and Hawkular will be running on the same machine, but on different
+Wildfly instances. Keycloak will be running on a port-offset of 100, while Hawkular will be running on the default
+set of Wildfly ports.
+
+=== Preparing Keycloak
+
+Before starting Keycloak, we need to copy the event listeners and the themes, deployed as JBoss Modules to it:
+
+[source,bash]
+----
+cd $KEYCLOAK_HOME
+mkdir -p modules/org/hawkular/
+cp -r $HAWKULAR_HOME/modules/org/hawkular/keycloak modules/org/hawkular/
+----
+
+Now, change the `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json` to add the listeners:
+
+Original `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json`:
+[source,json]
+----
+{
+    "providers": [
+        "classpath:${jboss.server.config.dir}/providers/*"
+    ],
+
+    "admin": {
+        "realm": "master"
+    },
+
+    ...
+}
+----
+
+New `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json`:
+[source,json]
+----
+{
+    "providers": [
+        "classpath:${jboss.server.config.dir}/providers/*",
+        "module:org.hawkular.keycloak.events.rest",
+        "module:org.hawkular.keycloak.events.jms"
+    ],
+
+    "eventsListener": {
+        "hawkular-rest": {
+            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
+        },
+        "hawkular-jms": {
+            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
+        }
+    },
+
+    "admin": {
+        "realm": "master"
+    },
+    ...
+}
+----
+
+Additionally, the Hawkular UI theme should also be activated on this file:
+
+Original `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json`:
+[source,json]
+----
+    "theme": {
+        "default": "keycloak",
+        "staticMaxAge": 2592000,
+        "cacheTemplates": true,
+        "cacheThemes": true,
+        "folder": {
+          "dir": "${jboss.server.config.dir}/themes"
+        }
+    },
+----
+
+New `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json`:
+[source,json]
+----
+    "theme": {
+        "default": "keycloak",
+        "staticMaxAge": 2592000,
+        "cacheTemplates": true,
+        "cacheThemes": true,
+        "folder": {
+          "dir": "${jboss.server.config.dir}/themes"
+        },
+        "module": {
+            "modules": [ "org.hawkular.keycloak.theme" ]
+        }
+    },
+----
+
+For our REST listener, we need a system property on the Keycloak server, which we can add to the `standalone.xml`:
+
+Add to `$KEYCLOAK_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<extensions>
+...
+</extensions>
+
+<system-properties>
+    <property name="hawkular.events.listener.rest.endpoint" value="http://localhost:8080/hawkular-accounts-events-backend/events"/>
+</system-properties>
+----
+
+=== Importing the realm
+
+The Hawkular realm for Keycloak can either be imported via the `-Dkeycloak.import=/path/to/hawkular-realm.json` or
+via the UI once the Keycloak server boots.
+
+Before importing, change the event listener from JMS to REST on the
+`$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json` file:
+
+Before `$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json`:
+[source,json]
+----
+{
+  "id" : "hawkular-realm",
+  ...
+  "eventsListeners" : [ "hawkular-jms", "jboss-logging" ],
+  ...
+}
+----
+
+After `$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json`:
+[source,json]
+----
+{
+  "id" : "hawkular-realm",
+  ...
+  "eventsListeners" : [ "hawkular-rest", "jboss-logging" ],
+  ...
+}
+----
+
+And add the Hawkular URL to the allowed redirect URIs:
+[source,json]
+----
+ "applications" : [
+    {
+      "name": "hawkular-accounts-backend",
+      "redirectUris": ["/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"],
+      ...
+    },
+    {
+      "name": "hawkular-ui",
+      "redirectUris": ["/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"],
+      ...
+    }
+  ]
+----
+
+When using the system property `keycloak.import` to load the Hawkular realm, make sure that it gets properly imported
+by checking this log entry from Wildfly:
+
+[source,json]
+----
+11:19:50,670 INFO  [org.keycloak.services.resources.KeycloakApplication] (ServerService Thread Pool -- 62) Imported
+realm hawkular from file /path/to/hawkular-realm.json
+----
+
+=== Starting Keycloak
+
+For our purposes, we'll start Keycloak with a port offset of 100, meaning that the Keycloak UI console will be
+available on the port 8180, as we want Hawkular to run on port 8080.
+
+[source,bash]
+----
+$KEYCLOAK_HOME/bin/standalone.sh -Djboss.socket.binding.port-offset=100
+-Dkeycloak.import=$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json
+----
+
+=== Removing Keycloak from Hawkular
+
+To remove the Keycloak server from Hawkular, remove the server extension and subsystem from the `standalone.xml`:
+
+Remove from `$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<extension module="org.keycloak.keycloak-server-subsystem"/>
+----
+
+WARNING: Make sure to remove the *server* subsystem, and not the *adapter*.
+
+Remove from `$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<subsystem xmlns="urn:jboss:domain:keycloak-server:1.1">
+    <web-context>auth</web-context>
+</subsystem>
+----
+
+Additionally, you might want to remove the `KeycloakDS` data source, the `keycloak.import` and the
+`hawkular.events.listener.rest.endpoint` system properties:
+
+Remove from `$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<datasource jndi-name="java:jboss/datasources/KeycloakDS" pool-name="KeycloakDS" enabled="true" use-java-context="true">
+    <connection-url>jdbc:h2:${jboss.server.data.dir}${/}h2${/}keycloak;AUTO_SERVER=TRUE</connection-url>
+    <driver>h2</driver>
+    <security>
+        <user-name>sa</user-name>
+        <password>sa</password>
+    </security>
+</datasource>
+----
+
+Remove from `$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<property name="keycloak.import" value="${jboss.home.dir}/standalone/configuration/hawkular-realm-for-dev.json"/>
+<property name="hawkular.events.listener.rest.endpoint" value="http://localhost:8080/hawkular-accounts-events-backend/events"/>
+----
+
+Now, tell the Keycloak Wildfly Adapter what is the URL for the Keycloak Server:
+
+`$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+[source,xml]
+----
+<realm name="hawkular">
+    <auth-server-url>http://localhost:8180/auth</auth-server-url>
+    <auth-server-url-for-backend-requests>http://localhost:8180/auth</auth-server-url-for-backend-requests>
+    <ssl-required>none</ssl-required>
+</realm>
+----
+
+And the same thing for the Keycloak JavaScript Adapter.
+`$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json`:
+[source,json]
+----
+{
+  "realm": "hawkular",
+  "auth-server-url": "http://localhost:8180/auth",
+  "ssl-required": "none",
+  "resource": "hawkular-ui",
+  "public-client": true
+}
+----
+
+And finally, remove the JBoss modules for the listeners and Keycloak UI theme:
+[source,bash]
+----
+rm -rf $HAWKULAR_HOME/modules/org/hawkular/keycloak
+----
+
+=== Starting Hawkular
+
+Once Keycloak has been fully removed from Hawkular, it can be started normally:
+
+[source,bash]
+----
+$HAWKULAR_HOME/bin/standalone.sh
+----
+
+
+Once it finishes booting, it's accessible via http://localhost:8080 . After opening this URL, the browser is
+redirected to Keycloak for logging in. To confirm that the external Keycloak is being used, check that the URL starts
+with http://localhost:8180/auth .

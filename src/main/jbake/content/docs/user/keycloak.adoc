@@ -1,0 +1,95 @@
+= Keycloak integration
+Juraci Paixão Kröhling
+2015-06-26
+:description: How Keycloak is integrated with Hawkular
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+http://keycloak.org[Keycloak] is an SSO solution for web apps, mobile and RESTful web services. Hawkular bundles its
+own Keycloak server instance, pre-configured with a realm, UI theme and event listeners. From the very beginning,
+this integration has been thought of as a key part of authentication for Hawkular, without leaving out the fact that
+Keycloak would possibly already exist in some environments, so, Hawkular allows Keycloak to be on an external Wildfly
+instance. This document outlines all aspects of Hawkular's integration with Keycloak.
+
+== Hawkular Accounts
+
+The integration between Keycloak and Hawkular is done via the component Hawkular Accounts. This component is
+responsible for managing the personas, organizations and other Hawkular particularities. Hawkular Accounts should
+always live with the main Hawkular instance, while Keycloak might be
+link:external-keycloak.html[deployed on an external server].
+
+== Master password
+
+Although Hawkular itself doesn't have a "super admin" or "root" user, Keycloak ships with one. To be consistent with
+the official Keycloak distribution, the admin account is unchanged. In other words: once you have your Hawkular
+server available in a public server, the admin's password should be changed.
+
+To do so, simply access http://<your-hawkular-instance>:8080/auth/admin , login as "admin" with the password "admin".
+After that, Keycloak will request a password change for this user.
+
+== Hawkular realm
+
+Hawkular ships with a Keycloak realm under `$WILDFLY_HOME/standalone/configuration/hawkular-realm.json`. On developer
+builds, the realm template `$WILDFLY_HOME/standalone/configuration/hawkular-realm-for-dev.json` is used instead. To
+control which realm is imported, the system property `keycloak.import` can be tweaked, either via `-D` when booting
+Wildfly or by changing it on the `$WILDFLY_HOME/standalone/configuration/standalone.xml`. Note, however, that this
+import happens only during the first boot, as Keycloak won't import a realm that exists already. If changes are
+required for the realm on an existing Hawkular instance, it should be done via the Keycloak admin interface.
+
+The two template realm files should be identical in features, except for:
+
+* The production build has a strict password policy, which matches the password policy for Wildfly.
+* The developer build has a pre-registered user, with the login "jdoe" and password "password".
+
+== Event Listeners
+
+Keycloak allows the installation event listeners, so that applications can be notified when something of interest
+happens regarding user or admin activities. Hawkular uses this feature to get notified when some events are
+triggered and ships with two event listeners for Keycloak. As the role of those publishers is mainly to re-publish the
+events to Hawkular, only one of the listeners should be *active* at any given point in time, even though both are
+deployed and available by default.
+
+To switch listeners, login to Keycloak's admin interface, select the realm 'Hawkular' and add/remove the listener via
+the "Events" / "Configuration" screen:
+
+image::/img/docs/event-configuration-keycloak.png[Event configuration at Keycloak]
+
+For automated deployments, this can be changed before the first boot on the realm template file
+`$WILDFLY_HOME/standalone/configuration/hawkular-realm.json`, under the `eventsListeners` entry:
+
+`hawkular-realm.json`:
+[source,json]
+----
+{
+  "id" : "hawkular-realm",
+  "realm" : "hawkular",
+  "enabled" : true,
+  ...
+  "eventsListeners" : [ "hawkular-jms", "jboss-logging" ],
+  ...
+}
+----
+
+=== Event publisher - JMS
+
+This event listener receives the events from Keycloak and publishes them to Hawkular via JMS. This is the default
+event listener and should be used when Keycloak and Hawkular are running on the same Wildfly instance. The name on
+the configuration for this listener is "hawkular-jms".
+
+=== Event publisher - REST
+
+This event listener receives the events from Keycloak and publishes them to Hawkular via the REST endpoint
+`http://<hawkular-server-instance>:8080/hawkular-accounts-events-backend/events`. The actual URL for the endpoint should
+be configured on the `standalone.xml` from the Keycloak server via the system property
+`hawkular.events.listener.rest.endpoint`. The name on the configuration for this listener is "hawkular-rest".
+
+WARNING: This endpoint is *not* protected. Make sure to properly secure it via Wildfly or, if available, an HTTP
+server that runs in front of it. Ideally, only the Keycloak server should have access to this endpoint.
+
