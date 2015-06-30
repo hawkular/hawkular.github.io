@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - How to release Hawkular</title>
+    <title>Hawkular - Keycloak integration</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -131,8 +131,8 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>How to release Hawkular</h1>
-          <p>Releasing Hawkular</p>
+          <h1>Keycloak integration</h1>
+          <p>How Keycloak is integrated with Hawkular</p>
         </div>
       </section>
 
@@ -140,71 +140,156 @@
 
 	<section>
       <div class="container">
-        <div class="sect1">
-<h2 id="_step_1_tagging_building">Step 1 - Tagging / building</h2>
+        <div id="preamble">
 <div class="sectionbody">
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#_introduction">Introduction</a></li>
+<li><a href="#_hawkular_accounts">Hawkular Accounts</a></li>
+<li><a href="#_master_password">Master password</a></li>
+<li><a href="#_hawkular_realm">Hawkular realm</a></li>
+<li><a href="#_event_listeners">Event Listeners</a>
+<ul class="sectlevel2">
+<li><a href="#_event_publisher_jms">Event publisher - JMS</a></li>
+<li><a href="#_event_publisher_rest">Event publisher - REST</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_introduction">Introduction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="http://keycloak.org">Keycloak</a> is an SSO solution for web apps, mobile and RESTful web services. Hawkular bundles its
+own Keycloak server instance, pre-configured with a realm, UI theme and event listeners. From the very beginning,
+this integration has been thought of as a key part of authentication for Hawkular, without leaving out the fact that
+Keycloak would possibly already exist in some environments, so, Hawkular allows Keycloak to be on an external Wildfly
+instance. This document outlines all aspects of Hawkular&#8217;s integration with Keycloak.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_accounts">Hawkular Accounts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The integration between Keycloak and Hawkular is done via the component Hawkular Accounts. This component is
+responsible for managing the personas, organizations and other Hawkular particularities. Hawkular Accounts should
+always live with the main Hawkular instance, while Keycloak might be
+<a href="external-keycloak.html">deployed on an external server</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_master_password">Master password</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Although Hawkular itself doesn&#8217;t have a "super admin" or "root" user, Keycloak ships with one. To be consistent with
+the official Keycloak distribution, the admin account is unchanged. In other words: once you have your Hawkular
+server available in a public server, the admin&#8217;s password should be changed.</p>
+</div>
+<div class="paragraph">
+<p>To do so, simply access <a href="http://&lt;your-hawkular-instance&gt;:8080/auth/admin" class="bare">http://&lt;your-hawkular-instance&gt;:8080/auth/admin</a> , login as "admin" with the password "admin".
+After that, Keycloak will request a password change for this user.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_realm">Hawkular realm</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular ships with a Keycloak realm under <code>$WILDFLY_HOME/standalone/configuration/hawkular-realm.json</code>. On developer
+builds, the realm template <code>$WILDFLY_HOME/standalone/configuration/hawkular-realm-for-dev.json</code> is used instead. To
+control which realm is imported, the system property <code>keycloak.import</code> can be tweaked, either via <code>-D</code> when booting
+Wildfly or by changing it on the <code>$WILDFLY_HOME/standalone/configuration/standalone.xml</code>. Note, however, that this
+import happens only during the first boot, as Keycloak won&#8217;t import a realm that exists already. If changes are
+required for the realm on an existing Hawkular instance, it should be done via the Keycloak admin interface.</p>
+</div>
+<div class="paragraph">
+<p>The two template realm files should be identical in features, except for:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The production build has a strict password policy, which matches the password policy for Wildfly.</p>
+</li>
+<li>
+<p>The developer build has a pre-registered user, with the login "jdoe" and password "password".</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_event_listeners">Event Listeners</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Keycloak allows the installation event listeners, so that applications can be notified when something of interest
+happens regarding user or admin activities. Hawkular uses this feature to get notified when some events are
+triggered and ships with two event listeners for Keycloak. As the role of those publishers is mainly to re-publish the
+events to Hawkular, only one of the listeners should be <strong>active</strong> at any given point in time, even though both are
+deployed and available by default.</p>
+</div>
+<div class="paragraph">
+<p>To switch listeners, login to Keycloak&#8217;s admin interface, select the realm 'Hawkular' and add/remove the listener via
+the "Events" / "Configuration" screen:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/docs/event-configuration-keycloak.png" alt="Event configuration at Keycloak">
+</div>
+</div>
+<div class="paragraph">
+<p>For automated deployments, this can be changed before the first boot on the realm template file
+<code>$WILDFLY_HOME/standalone/configuration/hawkular-realm.json</code>, under the <code>eventsListeners</code> entry:</p>
+</div>
+<div class="paragraph">
+<p><code>hawkular-realm.json</code>:</p>
+</div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># git clone git@github.com:hawkular/hawkular.git
-# cd hawkular
-# mvn release:prepare -Prelease
-# mvn release:perform</code></pre>
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "id" : "hawkular-realm",
+  "realm" : "hawkular",
+  "enabled" : true,
+  ...
+  "eventsListeners" : [ "hawkular-jms", "jboss-logging" ],
+  ...
+}</code></pre>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_event_publisher_jms">Event publisher - JMS</h3>
+<div class="paragraph">
+<p>This event listener receives the events from Keycloak and publishes them to Hawkular via JMS. This is the default
+event listener and should be used when Keycloak and Hawkular are running on the same Wildfly instance. The name on
+the configuration for this listener is "hawkular-jms".</p>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_step_2_uploading_to_download_jboss_org">Step 2 - Uploading to download.jboss.org</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># sftp hawkular@filemgmt.jboss.org
-&gt; cd downloads_htdocs/hawkular/hawkular
-&gt; mkdir ++x.y.z
-&gt; cd ++x.y.z
-&gt; mput hawkular-dist-++x.y.z.*
-&gt; chmod 666 *</code></pre>
+<div class="sect2">
+<h3 id="_event_publisher_rest">Event publisher - REST</h3>
+<div class="paragraph">
+<p>This event listener receives the events from Keycloak and publishes them to Hawkular via the REST endpoint
+<code><a href="http://&lt;hawkular-server-instance&gt;:8080/hawkular-accounts-events-backend/events" class="bare">http://&lt;hawkular-server-instance&gt;:8080/hawkular-accounts-events-backend/events</a></code>. The actual URL for the endpoint should
+be configured on the <code>standalone.xml</code> from the Keycloak server via the system property
+<code>hawkular.events.listener.rest.endpoint</code>. The name on the configuration for this listener is "hawkular-rest".</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This endpoint is <strong>not</strong> protected. Make sure to properly secure it via Wildfly or, if available, an HTTP
+server that runs in front of it. Ideally, only the Keycloak server should have access to this endpoint.
+</td>
+</tr>
+</table>
 </div>
 </div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_step_3_update_jboss_org_hawkkular_images">Step 3 - Update JBoss.org Hawkkular images</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"># git clone git@github.com:jboss-dockerfiles/hawkular.git
-# vi hawkular/hawkular-aio/Dockerfile
-// Replace version number, check the WF version number as well
-// Test locally "docker build hawkular/hawkular-aio
-# git commit -m "Upgrade to Hawkular ++x.y.z"
-# git push
-# git tag ++x.y.z
-# git push --tags</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_step_4_close_jira_release">Step 4 - Close JIRA release</h2>
-<div class="sectionbody">
-
-</div>
-</div>
-<div class="sect1">
-<h2 id="_step_5_update_hawkular_org_blog">Step 5 - Update hawkular.org + blog</h2>
-<div class="sectionbody">
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell"></code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_step_6_tweet_g">Step 6 - Tweet/G+</h2>
-<div class="sectionbody">
-
 </div>
 </div>
       </div>
