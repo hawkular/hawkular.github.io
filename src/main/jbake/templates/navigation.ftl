@@ -57,6 +57,9 @@
                   <li class="menu-item ">
                     <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/metrics/index.html">Metrics</a>
                   </li>
+                  <li class="menu-item ">
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/btm/index.html">Business Transaction Management</a>
+                  </li>
                 </ul>
               </li>
             </ul>
