@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Grafana Integration Guide</title>
+    <title>Hawkular - Client Configuration Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -135,97 +135,74 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Grafana Integration Guide</h1>
-          <p></p>
+          <h1>Client Configuration Guide</h1>
+          <p>Hawkular Business Transaction Management</p>
         </div>
       </section>
 
-	<!--<p><em>15 June 2015</em></p>-->
+	<!--<p><em>30 June 2015</em></p>-->
 
 	<section>
       <div class="container">
         <div id="preamble">
 <div class="sectionbody">
-<div class="paragraph">
-<p>This guide will help you to configure <a href="http://grafana.org">Grafana</a> so that you can build awesome dashboards with
-the data stored in Hawkular Metrics.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-We assume you&#8217;ve already installed and started a Hawkular Metrics server.
-</td>
-</tr>
-</table>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#_configuring_a_client_environment">Configuring a Client Environment</a>
+<ul class="sectlevel2">
+<li><a href="#_properties">Properties</a></li>
+<li><a href="#_container_specific_configuration">Container Specific Configuration</a></li>
+</ul>
+</li>
+<li><a href="#_instrumented_technologies">Instrumented Technologies</a></li>
+</ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_installing_grafana">Installing Grafana</h2>
+<h2 id="_configuring_a_client_environment">Configuring a Client Environment</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p><a href="http://docs.grafana.org/">Grafana&#8217;s documentation</a> has a comprehensive list of installation options.
-Pick the one which is most approriate for you.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-If you just want to give Grafana a try, then running it with Docker is probably the most straightforward option.
-</td>
-</tr>
-</table>
+<p>This section will help you to configure a JVM based client environment to instrument a business application and send business transaction fragment (trace) data to the BTM server.</p>
 </div>
 <div class="paragraph">
-<p>To start Grafana with Docker, execute <code>docker run -i -p 3000:3000 grafana/grafana</code> in a Terminal.
-After setup, browse to <code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code>. You can login with the default user, <code>admin</code>, with the <code>admin</code> password.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_creating_the_hawkular_data_source">Creating the Hawkular Data Source</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>At the time of writing, Grafana doesn&#8217;t have a plugin to integrate with Hawkular Metrics natively. But it is able to
-work with InfluxDB servers and Hawkular Metrics has an InfluxDB v0.8 API compatibility layer.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Hawkular Metrics <strong>does not embed</strong> InfluxDB. Our REST API simply exposes an InfluxDB v0.8 compatible endpoint:
-<code>/hawkular/metrics/db/&lt;tenant&gt;/series</code>.
-</td>
-</tr>
-</table>
+<p>First step is to obtain the BTM distribution. If you have not already done so, then see the instructions on the <a href="serverinstall.html">Server Installation</a> page.</p>
 </div>
 <div class="paragraph">
-<p>Click on the Grafana logo at the top left corner to open the menu. Then click on the <em>Data Sources</em> link.
-In the <em>Data sources</em> page, click on <em>Add new</em> at the top of the page.</p>
+<p>Once the BTM distribution zip has been unpacked, you will find a folder called <strong><em>btm</em></strong>. This folder contains the necessary environment script, jar and instrumentation configuration files to configure a client JVM environment.</p>
 </div>
-<div id="img-add-new-data-source" class="imageblock" style="text-align: center">
+<div class="paragraph">
+<p>This section will explain how to use the supplied environment script, to setup the necessary client configuration, before starting the JVM. However if you would prefer to integrate this environment into your application/container configuration, then simply copy the entries from the contained <strong><em>env.sh</em></strong> script, moving the jar and configuration files into appropriate locations.</p>
+</div>
+<div class="paragraph">
+<p>First step is to setup the <strong><em>BTM_HOME</em></strong> environment variable to point to the <strong><em>btm</em></strong> folder in the unpacked BTM distribution.</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/add_new_data_source.png" alt="Add new Grafana Data Source">
+<pre class="prettyprint highlight"><code>export BTM_HOME=&lt;btm-distribution-location&gt;/btm</code></pre>
 </div>
-<div class="title">Figure 1. Add new Grafana Data Source</div>
 </div>
 <div class="paragraph">
-<p>Fill-in the datasource creation form.</p>
+<p>Once that is done, then simply run the <strong><em>env.sh</em></strong> script:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>. $BTM_HOME/client/env.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This sets the <em>JAVA_OPTS</em> environment variable with the appropriate arguments to instrument any technology for which instrumentation rules have been defined.</p>
+</div>
+<div class="sect2">
+<h3 id="_properties">Properties</h3>
+<div class="paragraph">
+<p>The properties that can be supplied to the client collector mechanism are:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
-<col style="width: 11%;">
-<col style="width: 88%;">
+<col style="width: 50%;">
+<col style="width: 50%;">
 </colgroup>
 <thead>
 <tr>
@@ -235,106 +212,99 @@ In the <em>Data sources</em> page, click on <em>Add new</em> at the top of the p
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Your data source name. <code>HawkularDS</code> in this guide.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.config</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This property is used to locate either a configuration file, or a directory containing multiple configuration files. These files are a JSON representation of the client configuration, containing instrumentation rules. The default value is the <em>client/config</em> directory within the BTM distribution.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Check to use <code>HawkularDS</code> by default in new graphs.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.base-uri</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The URI for the BTM server. The default value is <em><a href="http://localhost:8180/hawkular/btm" class="bare">http://localhost:8180/hawkular/btm</a></em>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Select <code>InfluxDB 0.8.x</code>.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.username</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The username to use with the REST client when communicating with the BTM server. The default is <em>jdoe</em>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Url</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics base url. <code><a href="http://localhost:8080/hawkular/metrics" class="bare">http://localhost:8080/hawkular/metrics</a></code> in this guide.
-Change the scheme, host and port as needed.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.password</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The password to use with the REST client when communicating with the BTM server. The default is <em>password</em>.</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Access</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set to <code>direct</code> if the Hawkular Metrics server is not reachable from the Grafana backend.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Database</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The tenant name.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Password</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.log.level</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The logging level to use when reporting client collector information to the console (uses Java Util Logging levels. The default is <em>INFO</em>.</p></td>
 </tr>
 </tbody>
 </table>
-<div id="img-data-source-details" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/data_source_details.png" alt="Data source creation form">
 </div>
-<div class="title">Figure 2. Data source creation form</div>
+<div class="sect2">
+<h3 id="_container_specific_configuration">Container Specific Configuration</h3>
+<div class="paragraph">
+<p>Although the steps above will work in many situations (e.g. Java standalone, Apache Tomcat), some environments have tighter control over the classpath made available to the business applications. Therefore some additional container specific configuration will be required.</p>
+</div>
+<div class="sect3">
+<h4 id="_wildfly">Wildfly</h4>
+<div class="paragraph">
+<p>Wildfly requires any 'system packages', that need to be generally accessible by any application, to be defined in a system property called <strong><em>jboss.modules.system.pkgs</em></strong>.</p>
 </div>
 <div class="paragraph">
-<p>Then click the <code>Add</code> button. The new data source should be listed.</p>
+<p>This property has been preconfigured in the <strong><em>env.sh</em></strong> script so no additional actions are required. However it has been described to highlight the additional step that was required.</p>
 </div>
-<div id="img-data-source-added" class="imageblock" style="text-align: center">
+</div>
+<div class="sect3">
+<h4 id="_karaf">Karaf</h4>
+<div class="paragraph">
+<p>Edit the <strong><em>etc/config.properties</em></strong> file, within the Karaf installation, and append the following to the <em>org.osgi.framework.bootdelegation</em> property:</p>
+</div>
+<div class="listingblock">
 <div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/data_source_added.png" alt="Data source added">
+<pre class="prettyprint highlight"><code>org.osgi.framework.bootdelegation=...,org.jboss.byteman.*</code></pre>
 </div>
-<div class="title">Figure 3. Data source added</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_adding_a_new_graph">Adding a new graph</h2>
+<h2 id="_instrumented_technologies">Instrumented Technologies</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Create a new dashboard or open an existing one. Then click on the small green bar at the top to open the contextual menu.</p>
+<p>This section lists the technologies that have instrumentation rules defined:</p>
 </div>
-<div id="img-add-new-data-graph" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/add_new_graph.png" alt="Add new graph">
+<div class="ulist">
+<ul>
+<li>
+<p>Apache Camel (core only, but this provides details of various components that are called)</p>
+</li>
+<li>
+<p>HTTP clients</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Java HttpURLConnection</p>
+</li>
+<li>
+<p>Apache httpclient</p>
+</li>
+<li>
+<p>RESTEasy JAX-RS client</p>
+</li>
+</ul>
 </div>
-<div class="title">Figure 4. Add new graph</div>
-</div>
-<div class="paragraph">
-<p>After the new graph shows up in the dashboard, click on the title to open the contextual menu then on <code>edit</code>.</p>
-</div>
-<div id="img-edit-new-data-graph" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/edit_new_graph.png" alt="Edit new graph">
-</div>
-<div class="title">Figure 5. Edit new graph</div>
-</div>
-<div class="paragraph">
-<p>Open the <code>Metrics</code> tab. Make sure <code>HawkularDS</code> is the selected data source. Type your metric name or part of it in the
-<code>series</code> field. A list of matching metric names will show up.</p>
-</div>
-<div id="img-graph-details" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/graph_details.png" alt="Graph edition form">
-</div>
-<div class="title">Figure 6. Graph edition form</div>
-</div>
-<div class="paragraph">
-<p>When you have selected a metric, click on <code>Back to dashboard</code>, then click on the save icon.</p>
-</div>
-<div id="img-save-dashboard" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/save_dashboard.png" alt="Save dashboard">
-</div>
-<div class="title">Figure 7. Save dashboard</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Now you know all that&#8217;s required to integrate Grafana with Hawkular Metrics. If you&#8217;re not familiar with the product,
-take the time to read the <a href="http://docs.grafana.org/">Grafana doc pages</a>. And build awesome dashboards with Grafana and
-Hawkular Metrics!</p>
+</li>
+<li>
+<p>JMS</p>
+</li>
+<li>
+<p>Servlet</p>
+</li>
+<li>
+<p>Restlet</p>
+</li>
+<li>
+<p>JDBC</p>
+</li>
+<li>
+<p>SwitchYard</p>
+</li>
+</ul>
 </div>
 </div>
 </div>

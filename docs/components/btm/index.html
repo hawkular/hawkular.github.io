@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Grafana Integration Guide</title>
+    <title>Hawkular - Business Transaction Management Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -135,207 +135,141 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Grafana Integration Guide</h1>
+          <h1>Business Transaction Management Documentation</h1>
           <p></p>
         </div>
       </section>
 
-	<!--<p><em>15 June 2015</em></p>-->
+	<!--<p><em>30 June 2015</em></p>-->
 
 	<section>
       <div class="container">
         <div id="preamble">
 <div class="sectionbody">
-<div class="paragraph">
-<p>This guide will help you to configure <a href="http://grafana.org">Grafana</a> so that you can build awesome dashboards with
-the data stored in Hawkular Metrics.</p>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#_what_is">What is &#8230;&#8203;?</a></li>
+<li><a href="#_overview">Overview</a>
+<ul class="sectlevel2">
+<li><a href="#_the_clients">The Clients</a></li>
+<li><a href="#_the_btm_server">The BTM Server</a></li>
+</ul>
+</li>
+<li><a href="#_useful_links">Useful Links</a>
+<ul class="sectlevel3">
+<li><a href="#__a_href_serverinstall_html_server_installation_a"><a href="serverinstall.html">Server Installation</a></a></li>
+<li><a href="#__a_href_clientconfig_html_client_configuration_a"><a href="clientconfig.html">Client Configuration</a></a></li>
+</ul>
+</li>
+</ul>
 </div>
-<div class="admonitionblock note">
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_is">What is &#8230;&#8203;?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Firstly let us start with what is a <strong>Business Transaction</strong> - according to one website <span class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</span>, <em>"The accounting definition of a business transaction, according to the online Business Dictionary, is "an economic event that initiates the accounting process of recording it in a company&#8217;s accounting system." This is the official definition. However, selling an item at a garage sale where no accounting system is in place also can be a business transaction"</em>.</p>
+</div>
+<div class="paragraph">
+<p>I would be even more general, and say that a Business Transaction can be any interactions within a business, or between a business and its customers/partners, to achieve some necessary business objective.</p>
+</div>
+<div class="paragraph">
+<p>Once we have a definition for a Business Transaction, the next thing to understand is a <strong>Business Transaction Instance</strong>. This is a single occurrance of what is understood to be a Business Transaction. So for example, a person buying a item (e.g. a computer), on a particular day and time, would result in a Business Transaction Instance.</p>
+</div>
+<div class="paragraph">
+<p><strong>Business Transaction Management</strong> (BTM), also known as <strong>Application Performance Management</strong>, is the monitoring and analysis of the Business Transaction Instances. By recording the individual transaction instances that occur, users are able to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>visualise any particular instance to understand which path it took through the Business Transaction,</p>
+</li>
+<li>
+<p>analyse the response and latency times associated with the individual transaction instance, which may be necessary to determine if specific Service Level Agreements (SLAs) have been violated</p>
+</li>
+<li>
+<p>aggregate a set of instances, based on various criteria, to understand how the Business Transaction operates in different situations, thus helping to make the Business Transaction more efficient</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_overview">Overview</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The architecture of the Business Transaction Management (BTM) solution is very simple. It comprises of clients that are being monitored, reporting information to a server for analysis, where the results are then presented to users via a User Interface.</p>
+</div>
+<div class="sect2">
+<h3 id="_the_clients">The Clients</h3>
+<div class="paragraph">
+<p>Execution environments (clients), that are responsible for executing business applications, are instrumented to allow a trace of those business transaction instances to be recorded to the Business Transaction Management Server.</p>
+</div>
+<div class="paragraph">
+<p>Our BTM solution uses the fantastic <a href="http://byteman.jboss.org">ByteMan</a> project to instrument any JVM based application to obtain the information required, <strong>without any changes to the application being monitored</strong>.</p>
+</div>
+<div class="paragraph">
+<p>Typically a business application will involve more than one server, executing different parts of the application - and therefore a single business transaction instance may be comprised of multiple trace fragments collected from different locations. It is the responsibility of the client instrumentation to describe both the structure of the business transaction instance fragment executing in a particular server, and also capture information that will enable the transaction instance to be traced across servers.</p>
+</div>
+<div class="paragraph">
+<p>Currently tested client environments include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Standalone JVM (e.g. micro services running outside traditional containers)</p>
+</li>
+<li>
+<p>Wildfly JEE server</p>
+</li>
+<li>
+<p>Apache Tomcat</p>
+</li>
+<li>
+<p>Apache Karaf OSGI container</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_btm_server">The BTM Server</h3>
+<div class="paragraph">
+<p>The Business Transaction Management (BTM) Server can be clustered to enable reporting and analysis of the business transaction data to be load balanced across multiple servers.</p>
+</div>
+<div class="admonitionblock caution">
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-note" title="Note"></i>
+<i class="fa icon-caution" title="Caution"></i>
 </td>
 <td class="content">
-We assume you&#8217;ve already installed and started a Hawkular Metrics server.
+The standalone server does not currently supporting a clustered configuration.
 </td>
 </tr>
 </table>
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_installing_grafana">Installing Grafana</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p><a href="http://docs.grafana.org/">Grafana&#8217;s documentation</a> has a comprehensive list of installation options.
-Pick the one which is most approriate for you.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-If you just want to give Grafana a try, then running it with Docker is probably the most straightforward option.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>To start Grafana with Docker, execute <code>docker run -i -p 3000:3000 grafana/grafana</code> in a Terminal.
-After setup, browse to <code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code>. You can login with the default user, <code>admin</code>, with the <code>admin</code> password.</p>
-</div>
-</div>
 </div>
 <div class="sect1">
-<h2 id="_creating_the_hawkular_data_source">Creating the Hawkular Data Source</h2>
+<h2 id="_useful_links">Useful Links</h2>
 <div class="sectionbody">
-<div class="paragraph">
-<p>At the time of writing, Grafana doesn&#8217;t have a plugin to integrate with Hawkular Metrics natively. But it is able to
-work with InfluxDB servers and Hawkular Metrics has an InfluxDB v0.8 API compatibility layer.</p>
+<div class="sect3">
+<h4 id="__a_href_serverinstall_html_server_installation_a"><a href="serverinstall.html">Server Installation</a></h4>
+
 </div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Hawkular Metrics <strong>does not embed</strong> InfluxDB. Our REST API simply exposes an InfluxDB v0.8 compatible endpoint:
-<code>/hawkular/metrics/db/&lt;tenant&gt;/series</code>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Click on the Grafana logo at the top left corner to open the menu. Then click on the <em>Data Sources</em> link.
-In the <em>Data sources</em> page, click on <em>Add new</em> at the top of the page.</p>
-</div>
-<div id="img-add-new-data-source" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/add_new_data_source.png" alt="Add new Grafana Data Source">
-</div>
-<div class="title">Figure 1. Add new Grafana Data Source</div>
-</div>
-<div class="paragraph">
-<p>Fill-in the datasource creation form.</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 11%;">
-<col style="width: 88%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Name</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Your data source name. <code>HawkularDS</code> in this guide.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Default</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Check to use <code>HawkularDS</code> by default in new graphs.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Select <code>InfluxDB 0.8.x</code>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Url</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics base url. <code><a href="http://localhost:8080/hawkular/metrics" class="bare">http://localhost:8080/hawkular/metrics</a></code> in this guide.
-Change the scheme, host and port as needed.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Access</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set to <code>direct</code> if the Hawkular Metrics server is not reachable from the Grafana backend.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Database</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The tenant name.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">User</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Password</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.</p></td>
-</tr>
-</tbody>
-</table>
-<div id="img-data-source-details" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/data_source_details.png" alt="Data source creation form">
-</div>
-<div class="title">Figure 2. Data source creation form</div>
-</div>
-<div class="paragraph">
-<p>Then click the <code>Add</code> button. The new data source should be listed.</p>
-</div>
-<div id="img-data-source-added" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/data_source_added.png" alt="Data source added">
-</div>
-<div class="title">Figure 3. Data source added</div>
+<div class="sect3">
+<h4 id="__a_href_clientconfig_html_client_configuration_a"><a href="clientconfig.html">Client Configuration</a></h4>
+
 </div>
 </div>
 </div>
-<div class="sect1">
-<h2 id="_adding_a_new_graph">Adding a new graph</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Create a new dashboard or open an existing one. Then click on the small green bar at the top to open the contextual menu.</p>
-</div>
-<div id="img-add-new-data-graph" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/add_new_graph.png" alt="Add new graph">
-</div>
-<div class="title">Figure 4. Add new graph</div>
-</div>
-<div class="paragraph">
-<p>After the new graph shows up in the dashboard, click on the title to open the contextual menu then on <code>edit</code>.</p>
-</div>
-<div id="img-edit-new-data-graph" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/edit_new_graph.png" alt="Edit new graph">
-</div>
-<div class="title">Figure 5. Edit new graph</div>
-</div>
-<div class="paragraph">
-<p>Open the <code>Metrics</code> tab. Make sure <code>HawkularDS</code> is the selected data source. Type your metric name or part of it in the
-<code>series</code> field. A list of matching metric names will show up.</p>
-</div>
-<div id="img-graph-details" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/graph_details.png" alt="Graph edition form">
-</div>
-<div class="title">Figure 6. Graph edition form</div>
-</div>
-<div class="paragraph">
-<p>When you have selected a metric, click on <code>Back to dashboard</code>, then click on the save icon.</p>
-</div>
-<div id="img-save-dashboard" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/docs/components/metrics/grafana_integration/save_dashboard.png" alt="Save dashboard">
-</div>
-<div class="title">Figure 7. Save dashboard</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Now you know all that&#8217;s required to integrate Grafana with Hawkular Metrics. If you&#8217;re not familiar with the product,
-take the time to read the <a href="http://docs.grafana.org/">Grafana doc pages</a>. And build awesome dashboards with Grafana and
-Hawkular Metrics!</p>
-</div>
+<div id="footnotes">
+<hr>
+<div class="footnote" id="_footnote_1">
+<a href="#_footnoteref_1">1</a> <a href="http://smallbusiness.chron.com/business-transaction-definition-examples-25244.html" class="bare">http://smallbusiness.chron.com/business-transaction-definition-examples-25244.html</a>
 </div>
 </div>
       </div>
