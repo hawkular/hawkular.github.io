@@ -1,0 +1,180 @@
+= Monitoring a SwitchYard Application using Hawkular BTM 0.1.0.Final
+Gary Brown
+2015-07-01
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, btm, demo
+
+
+Hawkular BTM 0.1.0.Final is the first release of the Hawkular Business Management project, and therefore currently only provides a minimal level of functionality. However despite the early stage of the project, this post will show how a business transaction implemented using SwitchYard can be monitored across two separate applications using JMS and Web Services.
+
+This post assumes that the Hawkular BTM 0.1.0.Final distribution has been downloaded and unzipped, and the *_BTM_HOME_* environment variable setup, as described in the http://www.hawkular.org/docs/components/btm/index.html[user documentation]. The environment being monitored is *SwitchYard 2.0.0.Final* installed in *Wildfly 8.1.0.Final*.
+
+For this post, we will be deploying the SwitchYard _quickstarts/demos/multiApp_ example. Once SwitchYard has been installed in Wildfly, follow the instructions in the _multiApp/README.md_ to deploy the application into Wildfly. Once deployed, stop the Wildfly server.
+
+From a command window in the Wildfly _bin_ folder, run the following commands:
+
+[source,shell]
+----
+. $BTM_HOME/client/env.sh
+./standalone.sh -c standalone-full.xml
+----
+
+Simple as that! Now the Wildfly server, running the SwitchYard application, has been instrumented to capture some information relevant for Business Transaction Management. However before performing any transactions we need to startup the Business Transaction Management Server. Go to the BTM distribution's root folder and run:
+
+[source,shell]
+----
+bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json -Djboss.socket.binding.port-offset=100
+----
+
+The _keycloak.import_ argument is only required when starting the server for the first time, and initialises Hawkular Accounts (including setting up a default user *jdoe* with password *password*).
+
+Now we are ready to perform a business transaction instance. Open a command window in the SwitchYard _quickstarts/demos/multiApp_ folder and run:
+
+[source,shell]
+----
+mvn exec:java -Pwildfly --settings ../../settings.xml
+----
+
+That should return with a XML document indicating that the order has been accepted.
+
+Now issue the following command, to request a list of business transaction fragments from the Business Transaction Management Server:
+
+[source,shell]
+----
+curl -X GET -u jdoe:password http://localhost:8180/hawkular/btm/transactions | python -m json.tool
+----
+
+This will generate two business transaction fragments, the first for the OrderService web service, and the second for the JMS application that receives the order and then invokes the OrderService web service. See the link:data/blog/2015/btm/hawkular-btm-0.1.0-demo.json[full JSON here].
+
+The condensed and annotated version of the first fragment is:
+
+[source,json]
+----
+    {
+        "id": "9d037fcc-d3fc-4b51-a273-ae05d762ad32", // <1>
+        "nodes": [
+            {
+                "correlationIds": [
+                    {
+                        "scope": "Interaction",
+                        "value": "d9c727d6-9688-4206-8db5-226fe73abb79" // <2>
+                    }
+                ],
+                "details": {
+                    "btm_source": "javax-servlet", // <3>
+                    "remoteAddr": "127.0.0.1",
+                    "remoteHost": "127.0.0.1"
+                },
+                "startTime": 1435758196356,
+                "type": "Consumer",
+                "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService",
+                "duration": 391,
+                "endpointType": "HTTP",
+                "nodes": [
+                    {
+                        "details": {
+                            "btm_source": "switchyard"
+                        },
+                        "operation": "submitOrder", <4>
+                        "startTime": 1435758196555,
+                        "type": "Service",
+                        "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService",
+                        "duration": 96,
+                        "nodes": [
+                            {
+                                "details": {
+                                    "btm_source": "switchyard"
+                                },
+                                "duration": 17,
+                                "nodes": [],
+                                "operation": "lookupItem", <4>
+                                "startTime": 1435758196565,
+                                "type": "Service",
+                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService/InventoryService"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+----
+<1> Each business transaction fragment has a unique id
+<2> This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment
+<3> Each node can provide additional details, which includes the _btm_source_ used to identify the technology that generated the node
+<4> This fragment shows one SwitchYard Service (OrderService) calling another SwitchYard Service (OrderService/InventoryService)
+
+
+The condensed and annotated version of the second fragment is:
+
+[source,json]
+----
+    {
+        "id": "bc832ed0-787d-47f0-993d-f37c1ca58b95",
+        "nodes": [
+            {
+                "details": {
+                    "btm_source": "javax-jms"
+                },
+                "startTime": 1435758194986,
+                "type": "Consumer",
+                "uri": "HornetQQueue[OrderRequestQueue]", // <1>
+                "duration": 1904,
+                "endpointType": "JMS",
+                "nodes": [
+                    .... (removed nodes associated with camel components)
+                        "nodes": [
+                            {
+                                "details": {
+                                    "btm_source": "switchyard"
+                                },
+                                "operation": "submitOrder", // <2>
+                                "startTime": 1435758195245,
+                                "type": "Service",
+                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInput",
+                                "duration": 1524,
+                                "nodes": [
+                                     .... (removed nodes associated with camel components)
+                                        "nodes": [
+                                            {
+                                                "details": {
+                                                    "btm_source": "switchyard"
+                                                },
+                                                "operation": "submitOrder", // <3>
+                                                "startTime": 1435758195310,
+                                                "type": "Service",
+                                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInputComponent/OrderWebService",
+                                                "duration": 1454,
+                                                "nodes": [
+                                                    {
+                                                        "correlationIds": [
+                                                            {
+                                                                "scope": "Interaction",
+                                                                "value": "d9c727d6-9688-4206-8db5-226fe73abb79" // <4>
+                                                            }
+                                                        ],
+                                                        "details": {
+                                                            "btm_source": "java-httpurlconnection",
+                                                            "http_method": "POST"
+                                                        },
+                                                        "duration": 35,
+                                                        "endpointType": "HTTP",
+                                                        "startTime": 1435758196129,
+                                                        "type": "Producer",
+                                                        "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService"
+                                                    }
+                    ....
+    }
+----
+<1> The business transaction is initiated by a message being received on a JMS queue
+<2> A SwitchYard Service is called which then invokes a SwitchYard Reference with a web service binding
+<3> The SwitchYard Reference is currently recorded as a separate Service node
+<4> HTTP invocation with the matching interaction correlation id, linking this Producer node with the Consumer node in the first business transaction fragment
+
+These two business transaction fragments show how a business transaction instance can be traced across JMS, Apache Camel, SwitchYard and HTTP (Web Service), with the two fragments being correlated based on an ID shared between the HTTP Producer and Consumer nodes.
+
+Feel free to try out the release for yourself on your own applications. If you have any questions or comments, please contact us on link:community/join.html[these channels].
+
+If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the https://issues.jboss.org/browse/HWKBTM[project jira].
+
