@@ -1,0 +1,58 @@
+= Business Transaction Management Documentation
+Gary Brown
+2015-06-30
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== What is ...?
+
+Firstly let us start with what is a *Business Transaction* - according to one website footnote:[http://smallbusiness.chron.com/business-transaction-definition-examples-25244.html], _"The accounting definition of a business transaction, according to the online Business Dictionary, is "an economic event that initiates the accounting process of recording it in a company's accounting system." This is the official definition. However, selling an item at a garage sale where no accounting system is in place also can be a business transaction"_.
+
+I would be even more general, and say that a Business Transaction can be any interactions within a business, or between a business and its customers/partners, to achieve some necessary business objective.
+
+Once we have a definition for a Business Transaction, the next thing to understand is a *Business Transaction Instance*. This is a single occurrance of what is understood to be a Business Transaction. So for example, a person buying a item (e.g. a computer), on a particular day and time, would result in a Business Transaction Instance.
+
+*Business Transaction Management* (BTM), also known as *Application Performance Management*, is the monitoring and analysis of the Business Transaction Instances. By recording the individual transaction instances that occur, users are able to:
+
+- visualise any particular instance to understand which path it took through the Business Transaction,
+- analyse the response and latency times associated with the individual transaction instance, which may be necessary to determine if specific Service Level Agreements (SLAs) have been violated
+- aggregate a set of instances, based on various criteria, to understand how the Business Transaction operates in different situations, thus helping to make the Business Transaction more efficient
+ 
+
+== Overview
+
+The architecture of the Business Transaction Management (BTM) solution is very simple. It comprises of clients that are being monitored, reporting information to a server for analysis, where the results are then presented to users via a User Interface.
+
+=== The Clients
+
+Execution environments (clients), that are responsible for executing business applications, are instrumented to allow a trace of those business transaction instances to be recorded to the Business Transaction Management Server.
+
+Our BTM solution uses the fantastic http://byteman.jboss.org[ByteMan] project to instrument any JVM based application to obtain the information required, *without any changes to the application being monitored*.
+
+Typically a business application will involve more than one server, executing different parts of the application - and therefore a single business transaction instance may be comprised of multiple trace fragments collected from different locations. It is the responsibility of the client instrumentation to describe both the structure of the business transaction instance fragment executing in a particular server, and also capture information that will enable the transaction instance to be traced across servers.
+
+Currently tested client environments include:
+
+* Standalone JVM (e.g. micro services running outside traditional containers)
+* Wildfly JEE server
+* Apache Tomcat
+* Apache Karaf OSGI container
+
+=== The BTM Server
+
+The Business Transaction Management (BTM) Server can be clustered to enable reporting and analysis of the business transaction data to be load balanced across multiple servers.
+
+CAUTION: The standalone server does not currently supporting a clustered configuration.
+
+
+== Useful Links
+
+==== link:serverinstall.html[Server Installation]
+
+==== link:clientconfig.html[Client Configuration]
+
