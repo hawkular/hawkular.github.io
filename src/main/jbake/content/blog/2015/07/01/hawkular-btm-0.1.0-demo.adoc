@@ -24,7 +24,8 @@ Simple as that! Now the Wildfly server, running the SwitchYard application, has 
 
 [source,shell]
 ----
-bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json -Djboss.socket.binding.port-offset=100
+bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json \
+                             -Djboss.socket.binding.port-offset=100
 ----
 
 The _keycloak.import_ argument is only required when starting the server for the first time, and initialises Hawkular Accounts (including setting up a default user *jdoe* with password *password*).
@@ -50,6 +51,7 @@ This will generate two business transaction fragments, the first for the OrderSe
 The condensed and annotated version of the first fragment is:
 
 [source,json]
+.First business transaction fragment
 ----
     {
         "id": "9d037fcc-d3fc-4b51-a273-ae05d762ad32", // <1>
@@ -101,7 +103,7 @@ The condensed and annotated version of the first fragment is:
     }
 ----
 <1> Each business transaction fragment has a unique id
-<2> This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment
+<2> This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment below
 <3> Each node can provide additional details, which includes the _btm_source_ used to identify the technology that generated the node
 <4> This fragment shows one SwitchYard Service (OrderService) calling another SwitchYard Service (OrderService/InventoryService)
 
@@ -109,6 +111,7 @@ The condensed and annotated version of the first fragment is:
 The condensed and annotated version of the second fragment is:
 
 [source,json]
+.Second business transaction fragment
 ----
     {
         "id": "bc832ed0-787d-47f0-993d-f37c1ca58b95",
@@ -171,6 +174,8 @@ The condensed and annotated version of the second fragment is:
 <2> A SwitchYard Service is called which then invokes a SwitchYard Reference with a web service binding
 <3> The SwitchYard Reference is currently recorded as a separate Service node
 <4> HTTP invocation with the matching interaction correlation id, linking this Producer node with the Consumer node in the first business transaction fragment
+
+==== Summary
 
 These two business transaction fragments show how a business transaction instance can be traced across JMS, Apache Camel, SwitchYard and HTTP (Web Service), with the two fragments being correlated based on an ID shared between the HTTP Producer and Consumer nodes.
 
