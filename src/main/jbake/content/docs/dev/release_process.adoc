@@ -18,18 +18,24 @@ Thomas Heute
 # mvn release:perform
 ----
 
-== Step 2 - Uploading to download.jboss.org
+== Step 2 - Uploading hawkular and agent to download.jboss.org
+# Prepare the directories with the files to upload:
+1.0.0.Alpha2/
+├── hawkular-dist-1.0.0.Alpha2.tar.gz
+├── hawkular-dist-1.0.0.Alpha2.tar.gz.md5
+├── hawkular-dist-1.0.0.Alpha2.tar.gz.sha1
+├── hawkular-dist-1.0.0.Alpha2.zip
+├── hawkular-dist-1.0.0.Alpha2.zip.md5
+└── hawkular-dist-1.0.0.Alpha2.zip.sha1
 [source,shell,subs="+attributes"]
 ----
-# sftp hawkular@filemgmt.jboss.org
-> cd downloads_htdocs/hawkular/hawkular
-> mkdir ++{hawkular_released_version}
-> cd ++{hawkular_released_version}
-> mput hawkular-dist-++{hawkular_released_version}.*
-> chmod 666 *
+rsync -rv --protocol=28 0.3.0 hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/wildfly-monitor
+rsync -rv --protocol=28 1.0.0.Alpha2 hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/hawkular
 ----
+# It's safer to check the file permissions after the upload
 
-== Step 3 - Update JBoss.org Hawkkular images
+
+== Step 3 - Update JBoss.org Hawkular images
 [source,shell,subs="+attributes"]
 ----
 # git clone git@github.com:jboss-dockerfiles/hawkular.git
@@ -43,6 +49,7 @@ Thomas Heute
 ----
 
 == Step 4 - Close JIRA release
+Go to: https://issues.jboss.org/plugins/servlet/project-config/HAWKULAR/versions
 
 == Step 5 - Update hawkular.org + blog
 [source, shell]
@@ -50,11 +57,12 @@ Thomas Heute
 # write the blog entry in hawkular.github.io git repo
 # update properties.json (this will update the download page)
 # update index.html
+# Extract release notes from JIRA, take 1.0.0.Alpha2 release as example
 # do a PR
 # wait for review
 # merge
 ----
 
 == Step 6 - Tweet/G+
-
+Use Hootsuite (/ask Thomas)
 

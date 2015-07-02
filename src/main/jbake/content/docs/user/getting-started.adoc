@@ -175,6 +175,8 @@ in the `profile>` section. Note that you must set your Hawkular credentials in t
                 path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
     <metric-dmr name="Heap Committed" interval="1" timeUnits="minutes"
                 path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed"/>
+    <metric-dmr name="Heap Max" interval="10" timeUnits="seconds"
+                path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#max"/>
     <metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds"
                 path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used"/>
     <metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes"
@@ -184,6 +186,31 @@ in the `profile>` section. Note that you must set your Hawkular credentials in t
     <metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none"
                 path="/core-service=platform-mbean/type=threading" attribute="thread-count"/>
   </metric-set-dmr>
+  <metric-set-dmr name="Datasource Pool Metrics">
+    <metric-dmr name="Active Count" path="/statistics=pool" attribute="ActiveCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Available Count" path="/statistics=pool" attribute="AvailableCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Average Blocking Time" path="/statistics=pool" attribute="AverageBlockingTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Average Creation Time" path="/statistics=pool" attribute="AverageCreationTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Average Get Time" path="/statistics=pool" attribute="AverageGetTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Blocking Failure Count" path="/statistics=pool" attribute="BlockingFailureCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Created Count" path="/statistics=pool" attribute="CreatedCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Destroyed Count" path="/statistics=pool" attribute="DestroyedCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Idle Count" path="/statistics=pool" attribute="IdleCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="In Use Count" path="/statistics=pool" attribute="InUseCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Max Creation Time" path="/statistics=pool" attribute="MaxCreationTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Max Get Time" path="/statistics=pool" attribute="MaxGetTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Max Used Count" path="/statistics=pool" attribute="MaxUsedCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Max Wait Count" path="/statistics=pool" attribute="MaxWaitCount" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Max Wait Time" path="/statistics=pool" attribute="MaxWaitTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Timed Out" path="/statistics=pool" attribute="TimedOut" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Total Blocking Time" path="/statistics=pool" attribute="TotalBlockingTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Total Creation Time" path="/statistics=pool" attribute="TotalCreationTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Total Get Time" path="/statistics=pool" attribute="TotalGetTime" interval="10" timeUnits="seconds"/>
+    <metric-dmr name="Wait Count" path="/statistics=pool" attribute="WaitCount" interval="10" timeUnits="seconds"/>
+  </metric-set-dmr>
+  <avail-set-dmr name="Deployment Status">
+    <avail-dmr name="Deployment Status" path="/" attribute="status" upRegex="OK" interval="10" timeUnits="seconds"/>
+  </avail-set-dmr>
   <avail-set-dmr name="Server Availability" enabled="true">
     <avail-dmr name="App Server" interval="30" timeUnits="seconds"
                path="/" attribute="server-state" upRegex="run.*"/>
@@ -193,9 +220,16 @@ in the `profile>` section. Note that you must set your Hawkular credentials in t
                        path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics"
                        availSets="Server Availability"/>
   </resource-type-set-dmr>
+  <resource-type-set-dmr name="Deployment">
+    <resource-type-dmr name="Deployment" resourceNameTemplate="Deployment [%2]" path="/deployment=*" parents="WildFly Server" metricSets="Undertow Metrics" availSets="Deployment Status"/>
+    <resource-type-dmr name="SubDeployment" resourceNameTemplate="SubDeployment [%-]" path="/subdeployment=*" parents="Deployment" metricSets="Undertow Metrics"/>
+  </resource-type-set-dmr>
+  <resource-type-set-dmr name="Datasource">
+    <resource-type-dmr name="Datasource" resourceNameTemplate="Datasource [%-]" path="/subsystem=datasources/data-source=*" parents="WildFly Server" metricSets="Datasource Pool Metrics,Datasource JDBC Metrics"/>
+  </resource-type-set-dmr>
   <managed-servers>
     <local-dmr name="Local Server" <!--2-->
-               enabled="true" resourceTypeSets="Main"/>
+               enabled="true" resourceTypeSets="Main,Deployment,Datasource"/>
   </managed-servers>
 </subsystem>
 ----
@@ -216,4 +250,4 @@ in the `profile>` section. Note that you must set your Hawkular credentials in t
 ----
 <1> Adjust this value
 
-NOTE: In early versions of Hawkular (1.0.0.Alpha1), both the server and monitored will spit out some errors which are ok to ignore.
+NOTE: In early versions of Hawkular (1.0.0.Alpha2 and before), both the server and monitored will spit out some errors which are ok to ignore.
