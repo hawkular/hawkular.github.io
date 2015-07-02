@@ -6,8 +6,8 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Thu, 2 Jul 2015 09:52:26 +0000</pubDate>
-    <lastBuildDate>Thu, 2 Jul 2015 09:52:26 +0000</lastBuildDate>
+    <pubDate>Thu, 2 Jul 2015 16:25:16 +0000</pubDate>
+    <lastBuildDate>Thu, 2 Jul 2015 16:25:16 +0000</lastBuildDate>
 
     <item>
       <title>Hawkular-BTM 0.1.0 released</title>
@@ -112,6 +112,235 @@
 &lt;div class=&quot;paragraph&quot;&gt;
 &lt;p&gt;Thanks to Juraci Paixão Kröhling for his help on integrating with Hawkular Accounts and Peter Palaga for his help with the release.&lt;/p&gt;
 &lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
+    <item>
+      <title>Monitoring a SwitchYard Application using Hawkular BTM 0.1.0.Final</title>
+      <link>http://www.hawkular.org/blog/2015/07/01/hawkular-btm-0.1.0-demo.html</link>
+      <author>noreply@hawkular.org (Gary Brown)</author>
+      <pubDate>Wed, 1 Jul 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/07/01/hawkular-btm-0.1.0-demo.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular BTM 0.1.0.Final is the first release of the Hawkular Business Management project, and therefore currently only provides a minimal level of functionality. However despite the early stage of the project, this post will show how a business transaction implemented using SwitchYard can be monitored across two separate applications using JMS and Web Services.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This post assumes that the Hawkular BTM 0.1.0.Final distribution has been downloaded and unzipped, and the &lt;strong&gt;&lt;em&gt;BTM_HOME&lt;/em&gt;&lt;/strong&gt; environment variable setup, as described in the &lt;a href=&quot;http://www.hawkular.org/docs/components/btm/index.html&quot;&gt;user documentation&lt;/a&gt;. The environment being monitored is &lt;strong&gt;SwitchYard 2.0.0.Final&lt;/strong&gt; installed in &lt;strong&gt;Wildfly 8.1.0.Final&lt;/strong&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For this post, we will be deploying the SwitchYard &lt;em&gt;quickstarts/demos/multiApp&lt;/em&gt; example. Once SwitchYard has been installed in Wildfly, follow the instructions in the &lt;em&gt;multiApp/README.md&lt;/em&gt; to deploy the application into Wildfly. Once deployed, stop the Wildfly server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From a command window in the Wildfly &lt;em&gt;bin&lt;/em&gt; folder, run the following commands:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;. $BTM_HOME/client/env.sh
+./standalone.sh -c standalone-full.xml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Simple as that! Now the Wildfly server, running the SwitchYard application, has been instrumented (using &lt;a href=&quot;http://byteman.jboss.org/&quot;&gt;ByteMan&lt;/a&gt;) to capture some information relevant for Business Transaction Management. However before performing any transactions we need to startup the Business Transaction Management Server. Go to the BTM distribution&amp;#8217;s root folder and run:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json \
+                             -Djboss.socket.binding.port-offset=100&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;em&gt;keycloak.import&lt;/em&gt; argument is only required when starting the server for the first time, and initialises Hawkular Accounts (including setting up a default user &lt;strong&gt;jdoe&lt;/strong&gt; with password &lt;strong&gt;password&lt;/strong&gt;).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we are ready to perform a business transaction instance. Open a command window in the SwitchYard &lt;em&gt;quickstarts/demos/multiApp&lt;/em&gt; folder and run:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;mvn exec:java -Pwildfly --settings ../../settings.xml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That should return with a XML document indicating that the order has been accepted.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now issue the following command, to request a list of business transaction fragments from the Business Transaction Management Server:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;curl -X GET -u jdoe:password http://localhost:8180/hawkular/btm/transactions | python -m json.tool&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This will generate two business transaction fragments, the first for the OrderService web service, and the second for the JMS application that receives the order and then invokes the OrderService web service. See the &lt;a href=&quot;data/blog/2015/btm/hawkular-btm-0.1.0-demo.json&quot;&gt;full JSON here&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The condensed and annotated version of the first fragment is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;First business transaction fragment&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    {
+        &quot;id&quot;: &quot;9d037fcc-d3fc-4b51-a273-ae05d762ad32&quot;, &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+        &quot;nodes&quot;: [
+            {
+                &quot;correlationIds&quot;: [
+                    {
+                        &quot;scope&quot;: &quot;Interaction&quot;,
+                        &quot;value&quot;: &quot;d9c727d6-9688-4206-8db5-226fe73abb79&quot; &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+                    }
+                ],
+                &quot;details&quot;: {
+                    &quot;btm_source&quot;: &quot;javax-servlet&quot;, &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+                    &quot;remoteAddr&quot;: &quot;127.0.0.1&quot;,
+                    &quot;remoteHost&quot;: &quot;127.0.0.1&quot;
+                },
+                &quot;startTime&quot;: 1435758196356,
+                &quot;type&quot;: &quot;Consumer&quot;,
+                &quot;uri&quot;: &quot;http://localhost:8080/quickstart-demo-multiapp/OrderService&quot;,
+                &quot;duration&quot;: 391,
+                &quot;endpointType&quot;: &quot;HTTP&quot;,
+                &quot;nodes&quot;: [
+                    {
+                        &quot;details&quot;: {
+                            &quot;btm_source&quot;: &quot;switchyard&quot;
+                        },
+                        &quot;operation&quot;: &quot;submitOrder&quot;, &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+                        &quot;startTime&quot;: 1435758196555,
+                        &quot;type&quot;: &quot;Service&quot;,
+                        &quot;uri&quot;: &quot;{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService&quot;,
+                        &quot;duration&quot;: 96,
+                        &quot;nodes&quot;: [
+                            {
+                                &quot;details&quot;: {
+                                    &quot;btm_source&quot;: &quot;switchyard&quot;
+                                },
+                                &quot;duration&quot;: 17,
+                                &quot;nodes&quot;: [],
+                                &quot;operation&quot;: &quot;lookupItem&quot;, &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+                                &quot;startTime&quot;: 1435758196565,
+                                &quot;type&quot;: &quot;Service&quot;,
+                                &quot;uri&quot;: &quot;{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService/InventoryService&quot;
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Each business transaction fragment has a unique id&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment below&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Each node can provide additional details, which includes the &lt;em&gt;btm_source&lt;/em&gt; used to identify the technology that generated the node&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;This fragment shows one SwitchYard Service (OrderService) calling another SwitchYard Service (OrderService/InventoryService)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The condensed and annotated version of the second fragment is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Second business transaction fragment&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    {
+        &quot;id&quot;: &quot;bc832ed0-787d-47f0-993d-f37c1ca58b95&quot;,
+        &quot;nodes&quot;: [
+            {
+                &quot;details&quot;: {
+                    &quot;btm_source&quot;: &quot;javax-jms&quot;
+                },
+                &quot;startTime&quot;: 1435758194986,
+                &quot;type&quot;: &quot;Consumer&quot;,
+                &quot;uri&quot;: &quot;HornetQQueue[OrderRequestQueue]&quot;, &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+                &quot;duration&quot;: 1904,
+                &quot;endpointType&quot;: &quot;JMS&quot;,
+                &quot;nodes&quot;: [
+                    .... (removed nodes associated with camel components)
+                        &quot;nodes&quot;: [
+                            {
+                                &quot;details&quot;: {
+                                    &quot;btm_source&quot;: &quot;switchyard&quot;
+                                },
+                                &quot;operation&quot;: &quot;submitOrder&quot;, &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+                                &quot;startTime&quot;: 1435758195245,
+                                &quot;type&quot;: &quot;Service&quot;,
+                                &quot;uri&quot;: &quot;{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInput&quot;,
+                                &quot;duration&quot;: 1524,
+                                &quot;nodes&quot;: [
+                                     .... (removed nodes associated with camel components)
+                                        &quot;nodes&quot;: [
+                                            {
+                                                &quot;details&quot;: {
+                                                    &quot;btm_source&quot;: &quot;switchyard&quot;
+                                                },
+                                                &quot;operation&quot;: &quot;submitOrder&quot;, &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+                                                &quot;startTime&quot;: 1435758195310,
+                                                &quot;type&quot;: &quot;Service&quot;,
+                                                &quot;uri&quot;: &quot;{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInputComponent/OrderWebService&quot;,
+                                                &quot;duration&quot;: 1454,
+                                                &quot;nodes&quot;: [
+                                                    {
+                                                        &quot;correlationIds&quot;: [
+                                                            {
+                                                                &quot;scope&quot;: &quot;Interaction&quot;,
+                                                                &quot;value&quot;: &quot;d9c727d6-9688-4206-8db5-226fe73abb79&quot; &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+                                                            }
+                                                        ],
+                                                        &quot;details&quot;: {
+                                                            &quot;btm_source&quot;: &quot;java-httpurlconnection&quot;,
+                                                            &quot;http_method&quot;: &quot;POST&quot;
+                                                        },
+                                                        &quot;duration&quot;: 35,
+                                                        &quot;endpointType&quot;: &quot;HTTP&quot;,
+                                                        &quot;startTime&quot;: 1435758196129,
+                                                        &quot;type&quot;: &quot;Producer&quot;,
+                                                        &quot;uri&quot;: &quot;http://localhost:8080/quickstart-demo-multiapp/OrderService&quot;
+                                                    }
+                    ....
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;The business transaction is initiated by a message being received on a JMS queue&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;A SwitchYard Service is called which then invokes a SwitchYard Reference with a web service binding&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The SwitchYard Reference is currently recorded as a separate Service node&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;HTTP invocation with the matching interaction correlation id, linking this Producer node with the Consumer node in the first business transaction fragment&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect3&quot;&gt;
+&lt;h4 id=&quot;_summary&quot;&gt;Summary&lt;/h4&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These two business transaction fragments show how a business transaction instance can be traced across JMS, Apache Camel, SwitchYard and HTTP (Web Service), with the two fragments being correlated based on an ID shared between the HTTP Producer and Consumer nodes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Feel free to try out the release for yourself on your own applications. If you have any questions or comments, please contact us on &lt;a href=&quot;community/join.html&quot;&gt;these channels&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the &lt;a href=&quot;https://issues.jboss.org/browse/HWKBTM&quot;&gt;project jira&lt;/a&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 	</description>

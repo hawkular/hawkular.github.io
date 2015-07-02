@@ -246,6 +246,231 @@
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2015/07/01/hawkular-btm-0.1.0-demo.html"><h1>Monitoring a SwitchYard Application using Hawkular BTM 0.1.0.Final</h1></a>
+            <p>01 July 2015, by Gary Brown</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular BTM 0.1.0.Final is the first release of the Hawkular Business Management project, and therefore currently only provides a minimal level of functionality. However despite the early stage of the project, this post will show how a business transaction implemented using SwitchYard can be monitored across two separate applications using JMS and Web Services.</p>
+</div>
+<div class="paragraph">
+<p>This post assumes that the Hawkular BTM 0.1.0.Final distribution has been downloaded and unzipped, and the <strong><em>BTM_HOME</em></strong> environment variable setup, as described in the <a href="http://www.hawkular.org/docs/components/btm/index.html">user documentation</a>. The environment being monitored is <strong>SwitchYard 2.0.0.Final</strong> installed in <strong>Wildfly 8.1.0.Final</strong>.</p>
+</div>
+<div class="paragraph">
+<p>For this post, we will be deploying the SwitchYard <em>quickstarts/demos/multiApp</em> example. Once SwitchYard has been installed in Wildfly, follow the instructions in the <em>multiApp/README.md</em> to deploy the application into Wildfly. Once deployed, stop the Wildfly server.</p>
+</div>
+<div class="paragraph">
+<p>From a command window in the Wildfly <em>bin</em> folder, run the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">. $BTM_HOME/client/env.sh
+./standalone.sh -c standalone-full.xml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Simple as that! Now the Wildfly server, running the SwitchYard application, has been instrumented (using <a href="http://byteman.jboss.org/">ByteMan</a>) to capture some information relevant for Business Transaction Management. However before performing any transactions we need to startup the Business Transaction Management Server. Go to the BTM distribution&#8217;s root folder and run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json \
+                             -Djboss.socket.binding.port-offset=100</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <em>keycloak.import</em> argument is only required when starting the server for the first time, and initialises Hawkular Accounts (including setting up a default user <strong>jdoe</strong> with password <strong>password</strong>).</p>
+</div>
+<div class="paragraph">
+<p>Now we are ready to perform a business transaction instance. Open a command window in the SwitchYard <em>quickstarts/demos/multiApp</em> folder and run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">mvn exec:java -Pwildfly --settings ../../settings.xml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That should return with a XML document indicating that the order has been accepted.</p>
+</div>
+<div class="paragraph">
+<p>Now issue the following command, to request a list of business transaction fragments from the Business Transaction Management Server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET -u jdoe:password http://localhost:8180/hawkular/btm/transactions | python -m json.tool</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will generate two business transaction fragments, the first for the OrderService web service, and the second for the JMS application that receives the order and then invokes the OrderService web service. See the <a href="data/blog/2015/btm/hawkular-btm-0.1.0-demo.json">full JSON here</a>.</p>
+</div>
+<div class="paragraph">
+<p>The condensed and annotated version of the first fragment is:</p>
+</div>
+<div class="listingblock">
+<div class="title">First business transaction fragment</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    {
+        "id": "9d037fcc-d3fc-4b51-a273-ae05d762ad32", <b class="conum">(1)</b>
+        "nodes": [
+            {
+                "correlationIds": [
+                    {
+                        "scope": "Interaction",
+                        "value": "d9c727d6-9688-4206-8db5-226fe73abb79" <b class="conum">(2)</b>
+                    }
+                ],
+                "details": {
+                    "btm_source": "javax-servlet", <b class="conum">(3)</b>
+                    "remoteAddr": "127.0.0.1",
+                    "remoteHost": "127.0.0.1"
+                },
+                "startTime": 1435758196356,
+                "type": "Consumer",
+                "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService",
+                "duration": 391,
+                "endpointType": "HTTP",
+                "nodes": [
+                    {
+                        "details": {
+                            "btm_source": "switchyard"
+                        },
+                        "operation": "submitOrder", <b class="conum">(4)</b>
+                        "startTime": 1435758196555,
+                        "type": "Service",
+                        "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService",
+                        "duration": 96,
+                        "nodes": [
+                            {
+                                "details": {
+                                    "btm_source": "switchyard"
+                                },
+                                "duration": 17,
+                                "nodes": [],
+                                "operation": "lookupItem", <b class="conum">(4)</b>
+                                "startTime": 1435758196565,
+                                "type": "Service",
+                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService/InventoryService"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Each business transaction fragment has a unique id</p>
+</li>
+<li>
+<p>This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment below</p>
+</li>
+<li>
+<p>Each node can provide additional details, which includes the <em>btm_source</em> used to identify the technology that generated the node</p>
+</li>
+<li>
+<p>This fragment shows one SwitchYard Service (OrderService) calling another SwitchYard Service (OrderService/InventoryService)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>The condensed and annotated version of the second fragment is:</p>
+</div>
+<div class="listingblock">
+<div class="title">Second business transaction fragment</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    {
+        "id": "bc832ed0-787d-47f0-993d-f37c1ca58b95",
+        "nodes": [
+            {
+                "details": {
+                    "btm_source": "javax-jms"
+                },
+                "startTime": 1435758194986,
+                "type": "Consumer",
+                "uri": "HornetQQueue[OrderRequestQueue]", <b class="conum">(1)</b>
+                "duration": 1904,
+                "endpointType": "JMS",
+                "nodes": [
+                    .... (removed nodes associated with camel components)
+                        "nodes": [
+                            {
+                                "details": {
+                                    "btm_source": "switchyard"
+                                },
+                                "operation": "submitOrder", <b class="conum">(2)</b>
+                                "startTime": 1435758195245,
+                                "type": "Service",
+                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInput",
+                                "duration": 1524,
+                                "nodes": [
+                                     .... (removed nodes associated with camel components)
+                                        "nodes": [
+                                            {
+                                                "details": {
+                                                    "btm_source": "switchyard"
+                                                },
+                                                "operation": "submitOrder", <b class="conum">(3)</b>
+                                                "startTime": 1435758195310,
+                                                "type": "Service",
+                                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInputComponent/OrderWebService",
+                                                "duration": 1454,
+                                                "nodes": [
+                                                    {
+                                                        "correlationIds": [
+                                                            {
+                                                                "scope": "Interaction",
+                                                                "value": "d9c727d6-9688-4206-8db5-226fe73abb79" <b class="conum">(4)</b>
+                                                            }
+                                                        ],
+                                                        "details": {
+                                                            "btm_source": "java-httpurlconnection",
+                                                            "http_method": "POST"
+                                                        },
+                                                        "duration": 35,
+                                                        "endpointType": "HTTP",
+                                                        "startTime": 1435758196129,
+                                                        "type": "Producer",
+                                                        "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService"
+                                                    }
+                    ....
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>The business transaction is initiated by a message being received on a JMS queue</p>
+</li>
+<li>
+<p>A SwitchYard Service is called which then invokes a SwitchYard Reference with a web service binding</p>
+</li>
+<li>
+<p>The SwitchYard Reference is currently recorded as a separate Service node</p>
+</li>
+<li>
+<p>HTTP invocation with the matching interaction correlation id, linking this Producer node with the Consumer node in the first business transaction fragment</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_summary">Summary</h4>
+<div class="paragraph">
+<p>These two business transaction fragments show how a business transaction instance can be traced across JMS, Apache Camel, SwitchYard and HTTP (Web Service), with the two fragments being correlated based on an ID shared between the HTTP Producer and Consumer nodes.</p>
+</div>
+<div class="paragraph">
+<p>Feel free to try out the release for yourself on your own applications. If you have any questions or comments, please contact us on <a href="community/join.html">these channels</a>.</p>
+</div>
+<div class="paragraph">
+<p>If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the <a href="https://issues.jboss.org/browse/HWKBTM">project jira</a>.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/06/23/hawkular-metrics-0-4-0-released.html"><h1>Hawkular-Metrics 0.4.0 release and the way beyond</h1></a>
             <p>22 June 2015, by Stefan Negrea</p>
             <p><div id="preamble">
@@ -665,244 +890,13 @@ This is an important milestone for us, one of many more to come.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/06/01/hawkular-metrics-0-3-4-released.html"><h1>Hawkular-Metrics 0.3.4 release and the way beyond</h1></a>
-            <p>01 June 2015, by Stefan Negrea</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>I am happy to announce release 0.3.4 of Hawkular Metrics. The release is anchored by stability improvements and Docker + Kubernetes work.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_here_are_the_release_highlights">Here are the release highlights:</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>InfluxDB Compatibility Layer</p>
-<div class="ulist">
-<ul>
-<li>
-<p>pretty printing of query results with the 'pretty' query parameter</p>
-</li>
-<li>
-<p>absolute moment operands in queries (ex: select * from test where time &gt; 1501560s and time &lt; 4560546h)</p>
-</li>
-<li>
-<p>various fixes which allow to integrate nicely with Grafana (declaring Hawkular Metrics as an InfluxDB 0.8 datasource)</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>RxJavaMigration</p>
-<div class="ulist">
-<ul>
-<li>
-<p>big refactoring to use RxJava instead of Guava&#8217;s ListenableFuture</p>
-</li>
-<li>
-<p>RxJava provides a much richer API for building asynchronous programs</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Server Start-up</p>
-<div class="ulist">
-<ul>
-<li>
-<p>the server no longer requires Cassandra to be started first</p>
-</li>
-<li>
-<p>any client requests will get back a 503 response code if the server has not fully initialized due to Cassandra
-being down at start up time</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Docker and Kubernetes</p>
-<div class="ulist">
-<ul>
-<li>
-<p>all project docker images are now available in Docker Hub! Get them here:</p>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="https://registry.hub.docker.com/u/hawkular/hawkular-metrics/" class="bare">https://registry.hub.docker.com/u/hawkular/hawkular-metrics/</a></p>
-</li>
-<li>
-<p><a href="https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/" class="bare">https://registry.hub.docker.com/u/hawkular/hawkular-cassandra/</a></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>improved replication controller support now means that both the Hawkular-Metrics and Cassandra images can be scaled
-up or down</p>
-</li>
-<li>
-<p>various other smaller improvements, including better support for when containers startup</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>REST API (IMPORTANT!)</p>
-<div class="ulist">
-<ul>
-<li>
-<p><code>tenantId</code> header was renamed to <code>Hawkular-Tenant</code></p>
-</li>
-<li>
-<p><code>tenantId</code> header fallback was removed</p>
-</li>
-<li>
-<p><code>GET {id}/tags</code> only returns the tags, not the whole definition anymore</p>
-</li>
-<li>
-<p><code>GET {id}</code> returns the metric definition (see <a href="https://issues.jboss.org/browse/HWKMETRICS-110">HWKMETRICS-110</a> for
-known issue)</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>UI Explorer</p>
-<div class="ulist">
-<ul>
-<li>
-<p>was removed from the project</p>
-<div class="ulist">
-<ul>
-<li>
-<p>discussions are underway to find a new home for the functionality and code (probably hawkular-ui-components)</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>npm is no longer required to compile the project</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Task Queue</p>
-<div class="ulist">
-<ul>
-<li>
-<p>a generic task queue was designed and developed as part of this release</p>
-</li>
-<li>
-<p>provides functionality for scheduling and executing background tasks or jobs</p>
-</li>
-<li>
-<p>task execution is</p>
-<div class="ulist">
-<ul>
-<li>
-<p>scalable - automatically distributed among Hawkular Metrics servers</p>
-</li>
-<li>
-<p>durable - Tasks are persisted</p>
-</li>
-<li>
-<p>fault tolerant - Tasks are rescheduled for future execution when there is a failure</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>it will serve as the foundation for</p>
-<div class="ulist">
-<ul>
-<li>
-<p>computing/storing aggregated metrics (i.e., rollups)</p>
-</li>
-<li>
-<p>deleting metrics</p>
-</li>
-<li>
-<p>changing data retention</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>this functionality will be basis for any background task based design for the project</p>
-</li>
-</ul>
-</div>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_release_links">Release links</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Github Release:
-<a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4" class="bare">https://github.com/hawkular/hawkular-metrics/releases/tag/0.3.4</a></p>
-</li>
-<li>
-<p>JBoss Nexus Maven artifacts:
-<a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/" class="bare">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></p>
-</li>
-<li>
-<p>Jira release tracker:
-<a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/" class="bare">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12327259/</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hawkular_metrics_0_3_5_and_beyond">Hawkular Metrics 0.3.5 and Beyond</h2>
-<div class="sectionbody">
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Gauge Aggregates - Long-term storage of numeric metrics at the expense of losing some fidelity. With task queue
-released in 0.3.4, the expectation is to start the actual implementation 0.3.5.</p>
-</li>
-<li>
-<p>Update REST testing - while the current set of tests is a good gauge for regressions, the overall coverage is still
-low. The plan for 0.3.5 is to increase coverage.</p>
-</li>
-<li>
-<p>Improved Docker and Kubernetes support - this is a long term goal for the project</p>
-</li>
-<li>
-<p>RXJava - the initial transition from Guava was done in 0.3.4. Future releases will build upon this foundation.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_thanks">Thanks</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>A big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project
-contributions. Special mentions go to Jeeva Kandasamy and Jirka Kremser for their project help.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>01 June 2015 - <a href="blog/2015/06/01/hawkular-metrics-0-3-4-released.html">Hawkular-Metrics 0.3.4 release and the way beyond</a></li>
           <li>30 April 2015 - <a href="blog/2015/04/30/introducing-btm.html">Introducing the latest Hawkular component: Business Transaction Management</a></li>
           <li>29 April 2015 - <a href="blog/2015/04/29/hello-to-gsoc-students.html">Hello GSoC Students</a></li>
           <li>17 April 2015 - <a href="blog/2015/04/14/intro-to-hawkular.html">Intro to Hawkular, a middleware open-source management solution</a></li>
