@@ -9,48 +9,6 @@
 
 
 ==============================================
-*Endpoint* `/ack`
-
-
-NOTE: *Set one or more alerts Acknowledged* 
-
-*Method*
-****
-*PUT* `/ack`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to Ack|string
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/`
 
 
@@ -87,6 +45,48 @@ void
 | 200    | Success. Alerts found. | -
 | 204    | Success. Not alerts found. | -
 | 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/ack`
+
+
+NOTE: *Set one or more alerts Acknowledged* 
+
+*Method*
+****
+*PUT* `/ack`
+****
+
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |alertIds|true|comma separated list of alertIds to Ack|string
+    |ackBy|false|user acknowledging the alerts|string
+    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Alerts Acknowledged invoked successfully | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
 
 |=======================
 
@@ -255,6 +255,118 @@ void
 
 
 ==============================================
+*Endpoint* `/actions/{actionPlugin}/{actionId}`
+
+
+NOTE: *Update an existing action* +
+      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
+
+*Method*
+****
+*PUT* `/actions/{actionPlugin}/{actionId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin|string
+    |actionId|true|action id to be updated|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Updated | -
+| 500    | Internal server error | -
+| 404    | Action not found for update | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Delete an existing action* 
+
+*Method*
+****
+*DELETE* `/actions/{actionPlugin}/{actionId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin|string
+    |actionId|true|Action id to be deleted|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Deleted | -
+| 500    | Internal server error | -
+| 404    | ActionId not found for delete | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Get an existing action* +
+      _Action is represented as a map of properties._
+
+*Method*
+****
+*GET* `/actions/{actionPlugin}/{actionId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin|string
+    |actionId|true|Action id to be retrieved|string
+|=======================
+
+*Response* +
+Map&lt;String, String&gt;[java.lang.String]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Found | -
+| 404    | No Action Found | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
 *Endpoint* `/actions/`
 
 
@@ -358,119 +470,41 @@ void
 
 {empty} +
 
-
-
-==============================================
-*Endpoint* `/actions/{actionPlugin}/{actionId}`
-
-
-NOTE: *Get an existing action* +
-      _Action is represented as a map of properties._
-
-*Method*
-****
-*GET* `/actions/{actionPlugin}/{actionId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be retrieved|string
-|=======================
-
-*Response* +
-Map&lt;String, String&gt;[java.lang.String]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Found | -
-| 404    | No Action Found | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Update an existing action* +
-      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
-
-*Method*
-****
-*PUT* `/actions/{actionPlugin}/{actionId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|action id to be updated|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Updated | -
-| 500    | Internal server error | -
-| 404    | Action not found for update | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Delete an existing action* 
-
-*Method*
-****
-*DELETE* `/actions/{actionPlugin}/{actionId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Deleted | -
-| 500    | Internal server error | -
-| 404    | ActionId not found for delete | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
 === Query operations for action plugins
+
+
+
+==============================================
+*Endpoint* `/plugins/`
+
+
+NOTE: *Find all action plugins* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/plugins/`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success. Plugins found. | -
+| 204    | Success. No plugins found. | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
 
 
 
@@ -513,40 +547,6 @@ void
 
 {empty} +
 
-
-
-==============================================
-*Endpoint* `/plugins/`
-
-
-NOTE: *Find all action plugins* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/plugins/`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success. Plugins found. | -
-| 204    | Success. No plugins found. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
 === Trigger Handling
 
 
@@ -579,71 +579,6 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | Success, Tag created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/`
-
-
-NOTE: *Find all Trigger definitions* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Triggers list found. | -
-| 204    | Success, Triggers not found. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
-      _Returns Trigger created if operation finished correctly_
-
-*Method*
-****
-*POST* `/triggers/`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
-|=======================
-
-*Response* +
-Trigger
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Created | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
 
@@ -768,6 +703,36 @@ void
 *Endpoint* `/triggers/{triggerId}/dampenings`
 
 
+NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampenings found | -
+| 204    | No Dampenings found for trigger. | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
 NOTE: *Create a new dampening* +
       _Returns Dampening created if operation finishes correctly_
 
@@ -806,11 +771,86 @@ void
 
 {empty} +
 
-NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/`
+
+
+NOTE: *Find all Trigger definitions* +
+      _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/triggers/{triggerId}/dampenings`
+*GET* `/triggers/`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Triggers list found. | -
+| 204    | Success, Triggers not found. | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
+      _Returns Trigger created if operation finished correctly_
+
+*Method*
+****
+*POST* `/triggers/`
+****
+
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
+|=======================
+
+*Response* +
+Trigger
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
+
+
+NOTE: *Get a dampening using triggerId and triggerMode* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
 ****
 
 *path parameters*
@@ -819,6 +859,7 @@ NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).*
 |=======================
 |Parameter|Required|Description|Data Type
     |triggerId|true|Trigger definition id to be retrieved|string
+    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
 |=======================
 
 *Response* +
@@ -828,8 +869,8 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Dampenings found | -
-| 204    | No Dampenings found for trigger. | -
+| 200    | Success, Dampening found | -
+| 204    | No Dampening found for triggerId/triggerMode | -
 | 500    | Internal server error | -
 
 |=======================
@@ -845,6 +886,37 @@ void
 ==============================================
 *Endpoint* `/triggers/{triggerId}/dampenings/{dampeningId}`
 
+
+NOTE: *Get an existing dampening* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/dampenings/{dampeningId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |dampeningId|true|Dampening id|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Dampening Found | -
+| 404    | No Dampening Found | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
 
 NOTE: *Update an existing dampening definition. Note that the trigger mode can not be changed.* 
 
@@ -909,37 +981,6 @@ void
 | Status Code | Reason      | Response Model
 | 200    | Success, Dampening deleted | -
 | 404    | No Dampening found | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Get an existing dampening* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Found | -
-| 404    | No Dampening Found | -
 | 500    | Internal server error | -
 
 |=======================
@@ -1218,47 +1259,6 @@ Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
 | 204    | No Tags found | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-
-
-NOTE: *Get a dampening using triggerId and triggerMode* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Trigger$Mode,org.hawkular.alerts.api.model.trigger.Trigger$Mode>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening found | -
-| 204    | No Dampening found for triggerId/triggerMode | -
-| 500    | Internal server error | -
 
 |=======================
 
