@@ -323,3 +323,93 @@ A list of possible personas for a given user can be obtained via:
 ----
 curl -v http://user:pass@localhost:8080/hawkular-accounts/personas
 ----
+
+== Events
+
+Hawkular Accounts publishes a series of events, both in the frontend and in the backend. Interested parties would
+need only to register for those events accordingly.
+
+=== Frontend events
+
+On the Hawkular Console, the Accounts plugin publishes the following AngularJS events:
+
+* `CurrentPersonaLoaded` : called once a persona is loaded. For instance, when the user has logged in and Accounts
+have recognized the persona, or when the user has switched from the main persona into an organization. The persona is
+ passed along with the event.
+* `SwitchedPersona` : called only when the user has switched personas. Example: from the main account to an
+organization or vice-versa. The new persona is passed along with the event.
+* `OrganizationCreated` : called when the user has created an organization. No object is passed along with the event.
+* `OrganizationRemoved` : called when the user has removed an organization. No object is passed along with the event.
+
+=== Backend events
+
+For modules or components that are deployed as a web application on Hawkular, the Keycloak events are made available
+via Accounts and can be consumed as both CDI events or JMS messages. Note that one should *not* register for both CDI
+events and JMS messages, as it would cause a duplicate processing of the event.
+
+Almost all events from Keycloak are made available for Hawkular components, except:
+
+* REFRESH_TOKEN
+* CODE_TO_TOKEN
+* LOGIN
+
+If your component need to be informed when one of those are triggered, refer to the `keycloak-server.json` on the
+Hawkular distribution and change the entry `eventsListener` accordingly.
+
+==== Consuming events via CDI
+
+Events are published primarily via JMS. To consume it via CDI, add a dependency on the module
+`org.hawkular.accounts:hawkular-accounts-event-listener` and register a managed bean that has a method observing the
+ event `org.hawkular.accounts.events.listener.AccountsEvent`:
+
+[source,java]
+----
+@ApplicationScoped
+public class AccountsEventListener {
+    private final MsgLogger logger = MsgLogger.LOGGER;
+
+    public void accountsEvent(@Observes AccountsEvent event) {
+        logger.cdiEventReceived(event.getAction(), event.getEventId(), event.getPersona().getId());
+    }
+
+}
+----
+
+==== Consuming events via JMS
+
+If you prefer to consume directly via JMS, you can listen the destination `topic/HawkularAccountsEvents`. On a MDB,
+the configuration would look like the following:
+
+[source,java]
+----
+@MessageDriven(activationConfig = {
+        @ActivationConfigProperty(
+                propertyName = "destinationLookup",
+                propertyValue = "topic/HawkularAccountsEvents"
+        ),
+
+        @ActivationConfigProperty(
+                propertyName = "destination",
+                propertyValue = "HawkularAccountsEvents"
+        ),
+
+        @ActivationConfigProperty(
+                propertyName = "destinationType",
+                propertyValue = "javax.jms.Topic"
+        ),
+
+        @ActivationConfigProperty(
+                propertyName = "connectionFactoryJndiName",
+                propertyValue = "java:/HawkularBusConnectionFactory"
+        )
+})
+@PermitAll
+public class AccountsMessageListener implements MessageListener {
+    private final MsgLogger logger = MsgLogger.LOGGER;
+
+    @Override
+    public void onMessage(Message message) {
+        logger.eventReceived();
+    }
+}
+----
