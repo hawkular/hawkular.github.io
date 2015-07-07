@@ -5,7 +5,7 @@
     <section class="main-banner">
         <div class="container">
           <h1 class="fade-in-up one">
-            Open Source
+            The Open Source
             <span>Monitoring and Management Platform</span>
           </h1>
           <div class="buttons fade-in two">
@@ -21,7 +21,6 @@
             <div class="server-side box col-sm-4">
                 <div class="content">
                     <h3>React on various events</h3>
-
                     <p>Setup alerts and do your own stuff</p>
                 </div>
             </div>
