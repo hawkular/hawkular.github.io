@@ -1,0 +1,104 @@
+["plantuml", "inventory-entity-diagram", "png"]
+-------------
+top to bottom direction
+
+class Tenant
+class Environment
+class Feed
+class MetricType
+class ResourceType
+class Resource
+class Metric
+
+Tenant "1" --> "0..*" Environment: contains >
+note right on link
+    Contains is an existential relationship.
+    Deleting the source of the relationship will cause
+    all the contained entities to be deleted, too.
+
+    Contains relationships (between any type of entities)
+    cannot form loops or diamonds.
+end note
+
+Environment "1" --> "0..*" Resource: contains >
+note right on link
+    Resources can exist at 2 places. Either directly under
+    an environment, which is the place where custom
+    user-defined resources would live.
+
+    Resources also can live under feeds, where they are
+    placed by the feeds when they report what they have
+    discovered.
+end note
+
+Environment "1" --> "0..*" Metric: contains >
+note right on link
+    As resource, metrics, too can live under environments
+    or feeds.
+end note
+
+Tenant "1" --> "0..*" ResourceType: contains >
+note right on link
+    Resource types live under tenant, so that they can be
+    shared across environments and feeds. While feeds
+    define the resource (and metric) types they do so on
+    a common ground directly under the tenant they report to.
+
+    Note that this is likely to change in the future.
+end note
+
+Tenant "1" --> "0..*" MetricType: contains >
+
+Environment "1" --> "0..*" Feed: contains >
+note right on link
+   Feeds represent "things" that report data and metadata
+   Because these things live in the monitored infrastructure, they
+   are logically part of the environments that partition that
+   infrastructure.
+end note
+
+Feed "1" --> "0..*" Resource: contains >
+
+Feed "1" --> "0..*" Metric: contains >
+
+Resource "0..*" --> "0..*" Metric: incorporates >
+note right on link
+    This relationship is many to many. 1 resource can incorporate
+    many metrics and also many resources can incorporate a single
+    metric.
+end note
+
+ResourceType "0..*" --> "0..*" MetricType: incorporates >
+note right on link
+    Using this relationship, one can define what metrics
+    a resource can contain.
+end note
+
+ResourceType "1" --> "0..*" Resource: defines >
+note right on link
+    Using this relationship one prescribes that a resource has
+    given type. Note that this relationship is created
+    implicitly.
+end note
+
+MetricType "1" --> "0..*" Metric: defines >
+
+Resource "1" --> "0..*" Resource: contains >
+note right on link
+    Resources create hierarchies. 1 such hierarchy is
+    "existential". I.e. deleting a parent resource
+    will cause deletion of child resources.
+end note
+
+Resource "0..*" --> "0..*" Resource: isParentOf >
+note right on link
+    In addition to the existential hierarchy modelled using
+    the "contains" relationship between resources, resources
+    can also form other hierarchies modelled using this
+    "isParentOf" relationship.
+
+    "isParentOf" relationship cannot form loops but can form
+    diamonds (as opposed to "contains").
+end note
+
+-------------
