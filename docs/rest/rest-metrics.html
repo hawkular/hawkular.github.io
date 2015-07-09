@@ -140,7 +140,7 @@
         </div>
       </section>
 
-	<!--<p><em>07 July 2015</em></p>-->
+	<!--<p><em>09 July 2015</em></p>-->
 
 	<section>
       <div class="container">
@@ -154,8 +154,8 @@
 <ul class="sectlevel2">
 <li><a href="#_counter_metrics_interface_a_counter_is_a_metric_whose_value_are_monotonically_increasing_or_decreasing">Counter metrics interface. A counter is a metric whose value are monotonically increasing or decreasing.</a></li>
 <li><a href="#_availability_metrics_interface">Availability metrics interface</a></li>
-<li><a href="#_gauge_metrics_interface">Gauge metrics interface</a></li>
 <li><a href="#_metrics_related_rest_interface">Metrics related REST interface</a></li>
+<li><a href="#_gauge_metrics_interface">Gauge metrics interface</a></li>
 <li><a href="#_tenants_related_rest_interface">Tenants related REST interface</a></li>
 </ul>
 </li>
@@ -197,7 +197,7 @@
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>Endpoint</strong> <code>/counters/</code></p>
+<p><strong>Endpoint</strong> <code>/counters/{id}/data</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -206,8 +206,7 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Create counter metric definition. This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted.</strong><br>
-      <em>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
+<strong>Retrieve counter data points.</strong>
 </td>
 </tr>
 </table>
@@ -218,7 +217,7 @@
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>POST</strong> <code>/counters/</code></p>
+<p><strong>GET</strong> <code>/counters/{id}/data</code></p>
 </div>
 </div>
 </div>
@@ -250,6 +249,188 @@
 </tbody>
 </table>
 <div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+List</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No metric data was found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start or end parameter is invalid.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Add data for a single counter</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>POST</strong> <code>/counters/{id}/data</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
 <p><strong>body parameters</strong></p>
 </div>
 <table class="tableblock frame-all grid-all spread">
@@ -271,8 +452,8 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricDefinition">MetricDefinition</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of data points containing timestamp and value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#CounterDataPoint">List[CounterDataPoint]</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -298,8 +479,8 @@ void</p>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -308,13 +489,174 @@ void</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Counter metric with given id already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/counters/{id}/rate</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Retrieve counter rate data points which are automatically generated on the server side.</strong><br>
+      <em>Rate data points are only generated for counters that are explicitly created.</em>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/counters/{id}/rate</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+List</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No metric data was found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">start or end parameter is invalid.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric data.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -584,7 +926,7 @@ void</p>
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>Endpoint</strong> <code>/counters/{id}/data</code></p>
+<p><strong>Endpoint</strong> <code>/counters/</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -593,7 +935,8 @@ void</p>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Add data for a single counter</strong>
+<strong>Create counter metric definition. This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted.</strong><br>
+      <em>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
 </td>
 </tr>
 </table>
@@ -604,7 +947,142 @@ void</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>POST</strong> <code>/counters/{id}/data</code></p>
+<p><strong>POST</strong> <code>/counters/</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>body parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricDefinition">MetricDefinition</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Counter metric with given id already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_availability_metrics_interface">Availability metrics interface</h3>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/availability/{id}/tags</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Update tags associated with the metric definition.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>PUT</strong> <code>/availability/{id}/tags</code></p>
 </div>
 </div>
 </div>
@@ -684,8 +1162,407 @@ void</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of data points containing timestamp and value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#CounterDataPoint">List[CounterDataPoint]</a></p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[string]">UNKNOWN[string]</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully updated.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while updating metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Retrieve tags associated with the metric definition.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/availability/{id}/tags</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+Map[string]</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully retrieved.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics were found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/availability/{id}/tags/{tags}</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Delete tags associated with the metric definition.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>DELETE</strong> <code>/availability/{id}/tags/{tags}</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/availability/{id}/data</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Add data for a single availability metric.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>POST</strong> <code>/availability/{id}/data</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>body parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability datapoints</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#AvailabilityDataPoint">List[AvailabilityDataPoint]</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -737,7 +1614,7 @@ void</p>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Retrieve counter data points.</strong>
+<strong>Retrieve availability data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and availability statistics will be computed for each bucket.</strong>
 </td>
 </tr>
 </table>
@@ -748,7 +1625,7 @@ void</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>GET</strong> <code>/counters/{id}/data</code></p>
+<p><strong>GET</strong> <code>/availability/{id}/data</code></p>
 </div>
 </div>
 </div>
@@ -837,6 +1714,24 @@ void</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">buckets</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of buckets</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">bucketDuration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Duration">Duration</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">distinct</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set to true to return only distinct, contiguous values</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -862,22 +1757,22 @@ List</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched availability data.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No metric data was found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No availability data was found.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start or end parameter is invalid.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">buckets or bucketDuration parameter is invalid, or both are used.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching availability data.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -893,7 +1788,7 @@ List</p>
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>Endpoint</strong> <code>/counters/{id}/rate</code></p>
+<p><strong>Endpoint</strong> <code>/availability/data</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -902,8 +1797,7 @@ List</p>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Retrieve counter rate data points which are automatically generated on the server side.</strong><br>
-      <em>Rate data points are only generated for counters that are explicitly created.</em>
+<strong>Add metric data for multiple availability metrics in a single call.</strong>
 </td>
 </tr>
 </table>
@@ -914,7 +1808,7 @@ List</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>GET</strong> <code>/counters/{id}/rate</code></p>
+<p><strong>POST</strong> <code>/availability/data</code></p>
 </div>
 </div>
 </div>
@@ -946,7 +1840,7 @@ List</p>
 </tbody>
 </table>
 <div class="paragraph">
-<p><strong>path parameters</strong></p>
+<p><strong>body parameters</strong></p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
@@ -965,49 +1859,16 @@ List</p>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>query parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Availability">List[Availability]</a></p></td>
 </tr>
 </tbody>
 </table>
 <div class="paragraph">
 <p><strong>Response</strong><br>
-List</p>
+void</p>
 </div>
 <div class="paragraph">
 <p><strong>Status codes</strong></p>
@@ -1028,22 +1889,17 @@ List</p>
 <tbody>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched metric data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No metric data was found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start or end parameter is invalid.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -1056,9 +1912,6 @@ List</p>
 <div class="paragraph">
 <p><br></p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_availability_metrics_interface">Availability metrics interface</h3>
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
@@ -1301,333 +2154,6 @@ void</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/availability/{id}/data</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Retrieve availability data. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and availability statistics will be computed for each bucket.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/availability/{id}/data</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>query parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">start</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now - 8 hours</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">end</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Defaults to now</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">long</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Total number of buckets</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">int</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">bucketDuration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Duration">Duration</a></p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">distinct</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Set to true to return only distinct, contiguous values</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-List</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched availability data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No availability data was found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">buckets or bucketDuration parameter is invalid, or both are used.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching availability data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Add data for a single availability metric.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>POST</strong> <code>/availability/{id}/data</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>body parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability datapoints</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#AvailabilityDataPoint">List[AvailabilityDataPoint]</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -2049,10 +2575,658 @@ MetricDefinition</p>
 <div class="paragraph">
 <p><br></p>
 </div>
+</div>
+<div class="sect2">
+<h3 id="_metrics_related_rest_interface">Metrics related REST interface</h3>
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>Endpoint</strong> <code>/availability/{id}/tags</code></p>
+<p><strong>Endpoint</strong> <code>/metrics/</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Find tenant&#39;s metric definitions.</strong><br>
+      _Does not include any metric values. _
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/metrics/</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Queried metric type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#org.hawkular.metrics.core.api.MetricType">org.hawkular.metrics.core.api.MetricType</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+List[List]</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully retrieved at least one metric definition.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No metrics found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid type parameter type.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Failed to retrieve metrics due to unexpected error.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/metrics/data</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Add data for multiple metrics in a single call.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>POST</strong> <code>/metrics/data</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>body parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MixedMetricsRequest">MixedMetricsRequest</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_gauge_metrics_interface">Gauge metrics interface</h3>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/gauges/</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Create gauge metric definition.</strong><br>
+      <em>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>POST</strong> <code>/gauges/</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>body parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricDefinition">MetricDefinition</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gauge metric with given id already exists</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Find gauge metrics data by their tags.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/gauges/</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+List[Map]</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched data.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No matching data found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid tags query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Any error in the query.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/gauges/{id}</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Retrieve single metric definition.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/gauges/{id}</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>path parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+MetricDefinition</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s definition was successfully retrieved.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics definition is set.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s definition.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/gauges/{id}/tags</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -2072,7 +3246,7 @@ MetricDefinition</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>GET</strong> <code>/availability/{id}/tags</code></p>
+<p><strong>GET</strong> <code>/gauges/{id}/tags</code></p>
 </div>
 </div>
 </div>
@@ -2189,7 +3363,7 @@ Map[string]</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>PUT</strong> <code>/availability/{id}/tags</code></p>
+<p><strong>PUT</strong> <code>/gauges/{id}/tags</code></p>
 </div>
 </div>
 </div>
@@ -2318,7 +3492,7 @@ void</p>
 <div class="exampleblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>Endpoint</strong> <code>/availability/{id}/tags/{tags}</code></p>
+<p><strong>Endpoint</strong> <code>/gauges/{id}/data</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -2327,7 +3501,7 @@ void</p>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Delete tags associated with the metric definition.</strong>
+<strong>Add data for a single gauge metric.</strong>
 </td>
 </tr>
 </table>
@@ -2338,7 +3512,7 @@ void</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>DELETE</strong> <code>/availability/{id}/tags/{tags}</code></p>
+<p><strong>POST</strong> <code>/gauges/{id}/data</code></p>
 </div>
 </div>
 </div>
@@ -2394,112 +3568,6 @@ void</p>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/availability/data</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Add metric data for multiple availability metrics in a single call.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>POST</strong> <code>/availability/data</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -2524,8 +3592,8 @@ void</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of availability metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Availability">List[Availability]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of datapoints containing timestamp and value</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#GaugeDataPoint">List[GaugeDataPoint]</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -2569,401 +3637,6 @@ void</p>
 </table>
 <div class="paragraph">
 <p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_gauge_metrics_interface">Gauge metrics interface</h3>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/data</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Add data for multiple gauge metrics in a single call.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>POST</strong> <code>/gauges/data</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>body parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Gauge">List[Gauge]</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Find gauge metrics data by their tags.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/gauges/</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>query parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-List[Map]</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched data.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No matching data found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid tags query</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Any error in the query.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Create gauge metric definition.</strong><br>
-      <em>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>POST</strong> <code>/gauges/</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>body parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MetricDefinition">MetricDefinition</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">201</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition created successfully</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid payload</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">409</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Gauge metric with given id already exists</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric definition creation failed due to an unexpected error</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/{id}/data</code></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -3132,6 +3805,16 @@ List</p>
 <div class="paragraph">
 <p><br></p>
 </div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/gauges/{id}/tags/{tags}</code></p>
+</div>
 <div class="admonitionblock note">
 <table>
 <tr>
@@ -3139,7 +3822,7 @@ List</p>
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Add data for a single gauge metric.</strong>
+<strong>Delete tags associated with the metric definition.</strong>
 </td>
 </tr>
 </table>
@@ -3150,7 +3833,7 @@ List</p>
 <div class="sidebarblock">
 <div class="content">
 <div class="paragraph">
-<p><strong>POST</strong> <code>/gauges/{id}/data</code></p>
+<p><strong>DELETE</strong> <code>/gauges/{id}/tags/{tags}</code></p>
 </div>
 </div>
 </div>
@@ -3206,6 +3889,112 @@ List</p>
 <td class="tableblock halign-left valign-top"></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid tags</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>Endpoint</strong> <code>/gauges/data</code></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Add data for multiple gauge metrics in a single call.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>POST</strong> <code>/gauges/data</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>header parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -3230,8 +4019,8 @@ List</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of datapoints containing timestamp and value</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#GaugeDataPoint">List[GaugeDataPoint]</a></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">List of metrics</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Gauge">List[Gauge]</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -3734,790 +4523,6 @@ void</p>
 <div class="paragraph">
 <p><br></p>
 </div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/{id}</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Retrieve single metric definition.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/gauges/{id}</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-MetricDefinition</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s definition was successfully retrieved.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics definition is set.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s definition.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/{id}/tags</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Retrieve tags associated with the metric definition.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/gauges/{id}/tags</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-Map[string]</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully retrieved.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Query was successful, but no metrics were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching metric&#39;s tags.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Update tags associated with the metric definition.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>PUT</strong> <code>/gauges/{id}/tags</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>body parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#UNKNOWN[string]">UNKNOWN[string]</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully updated.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while updating metric&#39;s tags.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/gauges/{id}/tags/{tags}</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Delete tags associated with the metric definition.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>DELETE</strong> <code>/gauges/{id}/tags/{tags}</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>path parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Tags">Tags</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Metric&#39;s tags were successfully deleted.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Invalid tags</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while trying to delete metric&#39;s tags.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_metrics_related_rest_interface">Metrics related REST interface</h3>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/metrics/</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Find tenant&#39;s metric definitions.</strong><br>
-      _Does not include any metric values. _
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/metrics/</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>query parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Queried metric type</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#org.hawkular.metrics.core.api.MetricType">org.hawkular.metrics.core.api.MetricType</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-List[List]</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully retrieved at least one metric definition.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No metrics found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">400</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Missing or invalid type parameter type.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Failed to retrieve metrics due to unexpected error.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
-<div class="exampleblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>Endpoint</strong> <code>/metrics/data</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Add data for multiple metrics in a single call.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>POST</strong> <code>/metrics/data</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>header parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Hawkular-Tenant</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
-<td class="tableblock halign-left valign-top"></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>body parameters</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-<col style="width: 25%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Parameter</th>
-<th class="tableblock halign-left valign-top">Required</th>
-<th class="tableblock halign-left valign-top">Description</th>
-<th class="tableblock halign-left valign-top">Data Type</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">true</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">List of metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#MixedMetricsRequest">MixedMetricsRequest</a></p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Adding data succeeded.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error happened while storing the data</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><br></p>
-</div>
 </div>
 <div class="sect2">
 <h3 id="_tenants_related_rest_interface">Tenants related REST interface</h3>
@@ -4525,69 +4530,6 @@ void</p>
 <div class="content">
 <div class="paragraph">
 <p><strong>Endpoint</strong> <code>/tenants</code></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<strong>Returns a list of tenants.</strong>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p><strong>Method</strong></p>
-</div>
-<div class="sidebarblock">
-<div class="content">
-<div class="paragraph">
-<p><strong>GET</strong> <code>/tenants</code></p>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p><strong>Response</strong><br>
-void</p>
-</div>
-<div class="paragraph">
-<p><strong>Status codes</strong></p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 33%;">
-<col style="width: 33%;">
-<col style="width: 33%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Status Code</th>
-<th class="tableblock halign-left valign-top">Reason</th>
-<th class="tableblock halign-left valign-top">Response Model</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Returned a list of tenants successfully.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No tenants were found.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching tenants.</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
-</tr>
-</tbody>
-</table>
-<div class="paragraph">
-<p><br></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -4678,6 +4620,69 @@ void</p>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">An unexpected error occured while trying to create a tenant.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<strong>Returns a list of tenants.</strong>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p><strong>Method</strong></p>
+</div>
+<div class="sidebarblock">
+<div class="content">
+<div class="paragraph">
+<p><strong>GET</strong> <code>/tenants</code></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Response</strong><br>
+void</p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Returned a list of tenants successfully.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">No tenants were found.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unexpected error occurred while fetching tenants.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">[ApiError](#<a href="#ApiError">ApiError</a>)</p></td>
 </tr>
 </tbody>
@@ -5252,23 +5257,14 @@ void</p>
 		<div id="push"></div>
     </div>
 
-    <div id="footer">
+    <section class="redhat clearfix">
       <div class="container">
-          <a href="http://www.ej-technologies.com/products/jprofiler/overview.html">Built using JProfiler Java profiler
-              <br/>
-            <img src="http://www.ej-technologies.com/images/product_banners/jprofiler_small.png" alt="JProfiler logo"/>
-           </a>
-      </div>
-    </div>
-
-    <section class="redhat">
-      <div class="container">
-        <p class="text-center">
+        <p class="pull-left">
           <a href="http://www.redhat.com/">
             <img alt="redhatlogo-white" src="../..//img/redhatlogo-white.png" width="130">
           </a>
         </p>
-        <p class="muted credit">&copy; 2015 | Baked with <a href="http://jbake.org">JBake v2.4.0</a></p>
+        <p class="muted credit pull-right">&copy; 2015 | Baked with <a href="http://jbake.org">JBake v2.4.0</a></p>
     <p id="forkongithubp"><span id="forkongithub">
       <a href="https://github.com/hawkular" class="bg-grey">
         Fork me on GitHub
