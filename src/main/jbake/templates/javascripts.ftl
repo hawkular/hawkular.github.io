@@ -5,6 +5,7 @@
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/jbossorg-tabzilla.js"></script>
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/behavior.js"></script>
     <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js/prettify.js"></script>
+    <script src="<#if (content.rootpath)??>${content.rootpath}<#else></#if>js//ekko-lightbox.min.js"></script>
 
     <#include "disqusCounter.ftl">
     <#include "analytics.ftl">

@@ -8,6 +8,9 @@ Thomas Heute
 :toc: macro
 :toc-title:
 
+toc::[]
+
+
 == Step 1 - Tagging / building
 
 [source,shell]
@@ -19,20 +22,23 @@ Thomas Heute
 ----
 
 == Step 2 - Uploading hawkular and agent to download.jboss.org
-# Prepare the directories with the files to upload:
-1.0.0.Alpha2/
-├── hawkular-dist-1.0.0.Alpha2.tar.gz
-├── hawkular-dist-1.0.0.Alpha2.tar.gz.md5
-├── hawkular-dist-1.0.0.Alpha2.tar.gz.sha1
-├── hawkular-dist-1.0.0.Alpha2.zip
-├── hawkular-dist-1.0.0.Alpha2.zip.md5
-└── hawkular-dist-1.0.0.Alpha2.zip.sha1
+1 - Prepare the directories with the files to upload:
+[source,shell,subs="+attributes"]
+----
+{hawkular_released_version}/
+├── hawkular-dist-{hawkular_released_version}.tar.gz
+├── hawkular-dist-{hawkular_released_version}.tar.gz.md5
+├── hawkular-dist-{hawkular_released_version}.tar.gz.sha1
+├── hawkular-dist-{hawkular_released_version}.zip
+├── hawkular-dist-{hawkular_released_version}.zip.md5
+└── hawkular-dist-{hawkular_released_version}.zip.sha1
+----
 [source,shell,subs="+attributes"]
 ----
 rsync -rv --protocol=28 0.3.0 hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/wildfly-monitor
-rsync -rv --protocol=28 1.0.0.Alpha2 hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/hawkular
+rsync -rv --protocol=28 {hawkular_released_version} hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/hawkular
 ----
-# It's safer to check the file permissions after the upload
+2 - It's safer to check the file permissions after the upload
 
 
 == Step 3 - Update JBoss.org Hawkular images
@@ -42,9 +48,9 @@ rsync -rv --protocol=28 1.0.0.Alpha2 hawkular@filemgmt.jboss.org:/downloads_htdo
 # vi hawkular/hawkular-aio/Dockerfile
 // Replace version number, check the WF version number as well
 // Test locally "docker build hawkular/hawkular-aio
-# git commit -m "Upgrade to Hawkular ++{hawkular_released_version}"
+# git commit -m "Upgrade to Hawkular {hawkular_released_version}"
 # git push
-# git tag ++{hawkular_released_version}
+# git tag {hawkular_released_version}
 # git push --tags
 ----
 
@@ -52,12 +58,12 @@ rsync -rv --protocol=28 1.0.0.Alpha2 hawkular@filemgmt.jboss.org:/downloads_htdo
 Go to: https://issues.jboss.org/plugins/servlet/project-config/HAWKULAR/versions
 
 == Step 5 - Update hawkular.org + blog
-[source, shell]
+[source,shell,subs="+attributes]
 ----
 # write the blog entry in hawkular.github.io git repo
 # update properties.json (this will update the download page)
 # update index.html
-# Extract release notes from JIRA, take 1.0.0.Alpha2 release as example
+# Extract release notes from JIRA, take {hawkular_released_version} release as example
 # do a PR
 # wait for review
 # merge

@@ -15,8 +15,8 @@
           <p class="version fade-in three"><i class="fa fa-list-ul"></i><span class="latestVersion"/>
           </p>
         </div>
-      </section>
-      <section class="boxes">
+    </section>
+    <section class="boxes">
         <div class="row">
             <div class="server-side box col-sm-4">
                 <div class="content">
@@ -84,7 +84,6 @@
                         <i class="fa fa-sitemap"></i>
                         <h4>
                             Inventory
-                            <span>(coming soon)</span>
                         </h4>
 
                         <p>Keep track of the monitored topology and all the monitored resource metadata.</p>
@@ -141,7 +140,6 @@
                         <i class="fa fa-lock"></i>
                         <h4>
                             Security
-                            <span>(coming soon)</span>
                         </h4>
 
                         <p>Out of the box Single Sign On (SSO) and Identity Management (IDM) with Keycloak.</p>
