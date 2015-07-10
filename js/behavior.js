@@ -6,35 +6,27 @@ $(document).ready(function(){
       var windowTop = $(window).scrollTop();
 
       if (stickyTop < windowTop) {
-//         $('#toc').css({ position: 'fixed', top: topOffset + 0 });
         $('#toc').addClass('sticky');
       } else {
-//         $('#toc').css('position','static');
         $('#toc').removeClass('sticky');
       }
     });
+
   }
 
-  /* adjusting the ToC (parent selectors cannot be done in plain CSS3) */
-/*
-  $('#preamble:has(.sectionbody:has(#toc)) ~ div')
-    .css('float', 'right')
-    .css('width', '940px');
-*/
-  /* http://stackoverflow.com/a/11842865/1594980 */
-/*
-  $('#preamble:has(.sectionbody:has(#toc)) ~ div h1,h2,h3,h4,h5,h6')
-    .css('padding-top', '70px', 'important')
-    .css('margin-top', '-70px', 'important');
-*/
+  /* clicking on an item with sub-menu arrow doesn't close the navigation menu */
+  $('.dropdown-submenu').click(function(e){
+    return e.toElement.className !== "dropdown-toggle";
+  });
 
-/*
-  $('#preamble:has(.sectionbody:has(#toc))')
-    .css('float', 'left')
-    .css('padding-top', '40px')
-    .css('float', 'left')
-    .css('margin-right', '5px');
-*/
+  /* turning the images that points to img/{docs|blog|dev-docs} into clickable links utilizing the lightbox */
+  $(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
+    event.preventDefault();
+    $(this).ekkoLightbox();
+  }); 
+  $("img[src*='/img/docs/'], img[src*='/img/blog/'], img[src*='/img/dev-docs/']").each(function(){
+    $(this).wrap("<a href='" + $(this).attr('src') + "' data-toggle='lightbox' data-gallery='foo'></a>");
+  })
 
   /* adding the nav class to ToC for scrollspy */
   $('#toc > ul:first-of-type').addClass('nav');
