@@ -9,53 +9,6 @@
 
 
 ==============================================
-*Endpoint* `/`
-
-
-NOTE: *Get alerts with optional filtering* +
-      _Pagination is not yet implemented._
-
-*Method*
-****
-*GET* `/`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
-    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
-    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
-    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
-    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
-    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
-    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
-    |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/ack/{alertId}`
 
 
@@ -345,13 +298,156 @@ void
 
 {empty} +
 
+
+
+==============================================
+*Endpoint* `/`
+
+
+NOTE: *Get alerts with optional filtering* +
+      _Pagination is not yet implemented._
+
+*Method*
+****
+*GET* `/`
+****
+
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
+    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
+    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
+    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
+    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
+    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
+    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
+    |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
 === Action Handling
+
+
+
+==============================================
+*Endpoint* `/actions/`
+
+
+NOTE: *Create a new action* +
+      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
+
+*Method*
+****
+*POST* `/actions/`
+****
+
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Created | -
+| 500    | Internal server error | -
+| 400    | Existing action/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Find all action ids grouped by plugin* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/actions/`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success. | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
 
 
 
 ==============================================
 *Endpoint* `/actions/{actionPlugin}/{actionId}`
 
+
+NOTE: *Get an existing action* +
+      _Action is represented as a map of properties._
+
+*Method*
+****
+*GET* `/actions/{actionPlugin}/{actionId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |actionPlugin|true|Action plugin|string
+    |actionId|true|Action id to be retrieved|string
+|=======================
+
+*Response* +
+Map&lt;String, String&gt;[java.lang.String]
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Action Found | -
+| 404    | No Action Found | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
 
 NOTE: *Update an existing action* +
       _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
@@ -418,102 +514,6 @@ void
 | 200    | Success, Action Deleted | -
 | 500    | Internal server error | -
 | 404    | ActionId not found for delete | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Get an existing action* +
-      _Action is represented as a map of properties._
-
-*Method*
-****
-*GET* `/actions/{actionPlugin}/{actionId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be retrieved|string
-|=======================
-
-*Response* +
-Map&lt;String, String&gt;[java.lang.String]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Found | -
-| 404    | No Action Found | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/`
-
-
-NOTE: *Find all action ids grouped by plugin* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/actions/`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new action* +
-      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
-
-*Method*
-****
-*POST* `/actions/`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Created | -
-| 500    | Internal server error | -
-| 400    | Existing action/Invalid Parameters | -
 
 |=======================
 
@@ -792,6 +792,70 @@ void
 
 
 ==============================================
+*Endpoint* `/triggers/`
+
+
+NOTE: *Find all Trigger definitions* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/triggers/`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
+      _Returns Trigger created if operation finished correctly_
+
+*Method*
+****
+*POST* `/triggers/`
+****
+
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
+|=======================
+
+*Response* +
+Trigger
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
 *Endpoint* `/triggers/{triggerId}/dampenings`
 
 
@@ -897,70 +961,6 @@ void
 | Status Code | Reason      | Response Model
 | 200    | Success | -
 | 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/`
-
-
-NOTE: *Find all Trigger definitions* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new trigger definitions. If trigger ID is null, a (likely) unique ID will be generated* +
-      _Returns Trigger created if operation finished correctly_
-
-*Method*
-****
-*POST* `/triggers/`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
-|=======================
-
-*Response* +
-Trigger
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
 
 |=======================
 
@@ -1160,47 +1160,6 @@ void
 
 
 ==============================================
-*Endpoint* `/triggers/tag`
-
-
-NOTE: *Find all Trigger definitions for the specified tag. At least one of category and name is required* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/tag`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |category|false|The tag category. If not supplied or empty only tag name is used|string
-    |name|false|The tag name. If not supplied or empty only tag category is used|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Triggers list found. Can be empty. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/triggers/{triggerId}/conditions/{conditionId}`
 
 
@@ -1387,6 +1346,47 @@ Collection&lt;Tag&gt;[org.hawkular.alerts.api.model.trigger.Tag]
 | 200    | Success | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/tag`
+
+
+NOTE: *Find all Trigger definitions for the specified tag. At least one of category and name is required* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/triggers/tag`
+****
+
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |category|false|The tag category. If not supplied or empty only tag name is used|string
+    |name|false|The tag name. If not supplied or empty only tag category is used|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Triggers list found. Can be empty. | -
+| 500    | Internal server error | -
 
 |=======================
 
