@@ -1,157 +1,1048 @@
 
 
-== Base Path
-#`http://localhost:8080/hawkular/btm`#
 
-== REST APIs
-=== Report & Query Business Transactions
+The REST API for the Hawkular Business Transaction Management server
 
 
+== Base path
 
-==============================================
-*Endpoint* `/transactions`
+#`/hawkular/btm`#
+
+== Operations
 
 
-NOTE: *Add a list of business transactions* 
+### /admin/config
 
-*Method*
-****
-*POST* `/transactions`
-****
 
-*header parameters*
+#### GET
+
+
+
+Retrieve the collector configuration for the optionally specified host and server
+
+
+
+
+
+##### Request
+
+
+**Content-Type: ** application/json
+
 
 [options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |tenantId|false||string
-|=======================
-*body parameters*
+|Parameter|Located in|Required|Description|Default|Schema
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|List of business transactions|<<BusinessTransaction,List[BusinessTransaction]>>
-|=======================
 
-*Response* +
-void
 
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Adding business transactions succeeded. | -
-| 500    | Unexpected error happened while storing the business transactions | -
 
-|=======================
 
-{empty} +
 
-NOTE: *Query business transaction fragments associated with criteria* 
 
-*Method*
-****
-*GET* `/transactions`
-****
 
-*query parameters*
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|retrieve business transactions after this time, millisecond since epoch|long
-    |endTime|false|retrieve business transactions before this time, millisecond since epoch|long
-    |properties|false|retrieve business transactions with these properties, defined as a comma separated list of name|value pairs|string
-    |correlations|false|retrieve business transactions with these correlation identifiers, defined as a comma separated list of scope|value pairs|string
-|=======================
 
-*Response* +
-BusinessTransaction
+ |tenantId|header|no|
+ | - |
 
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+    
+            string 
+    
+
+
+
+
+
+
+
+ |host|query|no|optional host name
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
+
+
+ |server|query|no|optional server name
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
 
 |=======================
 
-{empty} +
-
-==============================================
-
-{empty} +
 
 
+##### Response
 
-==============================================
-*Endpoint* `/transactions/{id}`
+**Content-Type: ** application/json
 
-
-NOTE: *Retrieve business transaction fragment for specified id* 
-
-*Method*
-****
-*GET* `/transactions/{id}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |id|true|id of required business transaction|string
-|=======================
-
-*Response* +
-BusinessTransaction
-
-*Status codes*
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, business transaction found and returned | -
-| 500    | Internal server error | -
-| 404    | Unknown business transaction id | -
+| 200    | Success | <<CollectorConfiguration,CollectorConfiguration>>
+| 500    | Internal server error |  - 
 
 |=======================
 
 {empty} +
 
-==============================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### /transactions
+
+
+#### GET
+
+
+
+Query business transaction fragments associated with criteria
+
+
+
+
+
+##### Request
+
+
+**Content-Type: ** application/json
+
+
+[options="header"]
+|=======================
+|Parameter|Located in|Required|Description|Default|Schema
+
+
+
+
+
+
+
+
+
+
+ |startTime|query|no|retrieve business transactions after this time, millisecond since epoch
+ |0|
+
+    
+            integer (int64)
+    
+
+
+
+
+
+
+
+ |endTime|query|no|retrieve business transactions before this time, millisecond since epoch
+ |0|
+
+    
+            integer (int64)
+    
+
+
+
+
+
+
+
+ |properties|query|no|retrieve business transactions with these properties, defined as a comma separated list of name|value pairs
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
+
+
+ |correlations|query|no|retrieve business transactions with these correlation identifiers, defined as a comma separated list of scope|value pairs
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
+
+|=======================
+
+
+
+##### Response
+
+**Content-Type: ** application/json
+
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success | <<BusinessTransaction,BusinessTransaction>>
+| 500    | Internal server error |  - 
+
+|=======================
 
 {empty} +
+
+
+
+
+
+
+
+
+#### POST
+
+
+
+
+Add a list of business transactions
+
+
+
+
+
+##### Request
+
+
+**Content-Type: ** application/json
+
+
+[options="header"]
+|=======================
+|Parameter|Located in|Required|Description|Default|Schema
+
+
+
+
+
+
+
+
+
+
+ |tenantId|header|no|
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
+
+
+ |body|body|yes|List of business transactions
+ | - |
+
+    Array[<<BusinessTransaction,BusinessTransaction>>]
+    
+
+
+
+
+
+
+|=======================
+
+
+
+##### Response
+
+**Content-Type: ** application/json
+
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Adding business transactions succeeded. |  - 
+| 500    | Unexpected error happened while storing the business transactions |  - 
+
+|=======================
+
+{empty} +
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### /transactions/{id}
+
+
+#### GET
+
+
+
+Retrieve business transaction fragment for specified id
+
+
+
+
+
+##### Request
+
+
+**Content-Type: ** application/json
+
+
+[options="header"]
+|=======================
+|Parameter|Located in|Required|Description|Default|Schema
+
+
+
+
+
+
+
+
+
+
+ |id|path|yes|id of required business transaction
+ | - |
+
+    
+            string 
+    
+
+
+
+
+
+
+|=======================
+
+
+
+##### Response
+
+**Content-Type: ** application/json
+
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, business transaction found and returned | <<BusinessTransaction,BusinessTransaction>>
+| 404    | Unknown business transaction id |  - 
+| 500    | Internal server error |  - 
+
+|=======================
+
+{empty} +
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 == Data Types
 
 {empty} +
 
+
+
+
+
+
+
+
 [[BusinessTransaction]]
 === BusinessTransaction
+
+
 [options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|nodes|Array[Node]|optional|-|-
-|properties|Map[string,string]|optional|-|-
-|name|string|optional|-|-
-|id|string|optional|-|-
+| Name | Type | Required | Description
+
+|id|
+                    
+                    string
+                |
+optional|-
+
+|name|
+                    
+                    string
+                |
+optional|-
+
+|nodes|
+                
+                    array[<<Node,Node>>]
+                
+                
+                |
+optional|-
+
+|properties|
+                    
+                    object
+                |
+optional|-
+
 |=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[BusinessTxnConfig]]
+=== BusinessTxnConfig
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|description|
+                    
+                    string
+                |
+optional|-
+
+|filter|
+                    <<Filter,Filter>>
+                    
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[CollectorConfiguration]]
+=== CollectorConfiguration
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|properties|
+                    
+                    object
+                |
+optional|-
+
+|instrumentation|
+                    
+                    object
+                |
+optional|-
+
+|businessTransactions|
+                    
+                    object
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Component]]
+=== Component
+(_Derived from_ <<ContainerNode,ContainerNode>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Consumer]]
+=== Consumer
+(_Derived from_ <<InteractionNode,InteractionNode>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[ContainerNode]]
+=== ContainerNode
+(_Derived from_ <<Node,Node>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[CorrelationIdentifier]]
+=== CorrelationIdentifier
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|value|
+                    
+                    string
+                |
+optional|-
+
+|scope|
+                    
+                    string
+                |
+optional|-
+
+|duration|
+                    
+                    integer (int32)
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Filter]]
+=== Filter
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|inclusions|
+                
+                array[string]
+                |
+optional|-
+
+|exclusions|
+                
+                array[string]
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[FreeFormAction]]
+=== FreeFormAction
+(_Derived from_ <<InstrumentAction,InstrumentAction>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentAction]]
+=== InstrumentAction
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentBind]]
+=== InstrumentBind
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|name|
+                    
+                    string
+                |
+optional|-
+
+|type|
+                    
+                    string
+                |
+optional|-
+
+|expression|
+                    
+                    string
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentComponent]]
+=== InstrumentComponent
+(_Derived from_ <<InstrumentAction,InstrumentAction>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentConsumer]]
+=== InstrumentConsumer
+(_Derived from_ <<InstrumentAction,InstrumentAction>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentProducer]]
+=== InstrumentProducer
+(_Derived from_ <<InstrumentAction,InstrumentAction>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentRule]]
+=== InstrumentRule
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|ruleName|
+                    
+                    string
+                |
+optional|-
+
+|className|
+                    
+                    string
+                |
+optional|-
+
+|interfaceName|
+                    
+                    string
+                |
+optional|-
+
+|methodName|
+                    
+                    string
+                |
+optional|-
+
+|parameterTypes|
+                
+                array[string]
+                |
+optional|-
+
+|helper|
+                    
+                    string
+                |
+optional|-
+
+|location|
+                    
+                    string
+                |
+optional|-
+
+|binds|
+                
+                    array[<<InstrumentBind,InstrumentBind>>]
+                
+                
+                |
+optional|-
+
+|condition|
+                    
+                    string
+                |
+optional|-
+
+|actions|
+                
+                    array[<<InstrumentAction,InstrumentAction>>]
+                
+                
+                |
+optional|-
+
+|fromVersion|
+                    
+                    string
+                |
+optional|-
+
+|toVersion|
+                    
+                    string
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InstrumentService]]
+=== InstrumentService
+(_Derived from_ <<InstrumentAction,InstrumentAction>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Instrumentation]]
+=== Instrumentation
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|description|
+                    
+                    string
+                |
+optional|-
+
+|rules|
+                
+                    array[<<InstrumentRule,InstrumentRule>>]
+                
+                
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[InteractionNode]]
+=== InteractionNode
+(_Derived from_ <<ContainerNode,ContainerNode>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Message]]
+=== Message
+
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|id|
+                    
+                    string
+                |
+optional|-
+
+|headers|
+                    
+                    object
+                |
+optional|-
+
+|parameters|
+                
+                array[string]
+                |
+optional|-
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
 
 
 [[Node]]
 === Node
+
+
 [options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|uri|string|optional|-|-
-|details|Map[string,string]|optional|-|-
-|correlationIds|Set|optional|-|-
-|startTime|long|optional|-|-
-|duration|long|optional|-|-
+| Name | Type | Required | Description
+
+|uri|
+                    
+                    string
+                |
+optional|-
+
+|startTime|
+                    
+                    integer (int64)
+                |
+optional|-
+
+|duration|
+                    
+                    integer (int64)
+                |
+optional|-
+
+|details|
+                    
+                    object
+                |
+optional|-
+
+|correlationIds|
+                
+                    array[<<CorrelationIdentifier,CorrelationIdentifier>>]
+                
+                
+                |
+optional|-
+
 |=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Producer]]
+=== Producer
+(_Derived from_ <<InteractionNode,InteractionNode>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
+
+
+
+[[Service]]
+=== Service
+(_Derived from_ <<InteractionNode,InteractionNode>>)
+
+[options="header"]
+|=======================
+| Name | Type | Required | Description
+
+|=======================
+
+{empty} +
+{empty} +
+
+
+
 
 
 {empty} +
