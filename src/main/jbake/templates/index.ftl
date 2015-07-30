@@ -153,7 +153,7 @@
 <script>
    $.getJSON( "properties.json", function( data ) {
       var latestRelease = data.releases[0];
-      $('.latestVersion').html(latestRelease.version + " - " + moment(latestRelease.date).fromNow());
+      $('.latestVersion').html(latestRelease.version + " - " + moment(latestRelease.date, "MM-DD-YYYY").fromNow());
   });
 </script>
 
