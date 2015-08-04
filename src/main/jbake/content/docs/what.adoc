@@ -47,7 +47,13 @@ Running an application and keeping it running in an optimal fashion is the main 
 puts the application at the center of its efforts. Applications are of course composed from individual connected
 parts, that Hawkular deals with as well.
 
-image::img/mission/app-view.png[alt=Example App]
+[[img-url-detail]]
+ifndef::env-github[]
+image::/img/mission/app-view.png[alt=Example App]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/mission/app-view.png[alt=Example App]
+endif::[]
 
 In the above example, the app consists of 3 individual deployments that access a shared database and that are linked
 together via a load-balancer. The little plus sign at the right of the database shows that there are other
@@ -60,9 +66,12 @@ and research. Longer term goals are listed below.
 
 ==== Specific UI
 
-Monitoring for resources like WildFly servers or URLs will only contain elements that are key for those resources.
-Distractions will be kept away. To set up alerts (see next section), only valid options will be displayed to allow
-for an intuitive workflow.
+The design of the user interface will allow a new Hawkular user to quickly get going. Screens for monitoring of
+resources like WildFly servers or URLs will only contain elements that are key for those resources.
+Distractions will be kept away. As an example: set up alerts (see next section), only potentially valid options will be
+displayed to allow for an intuitive workflow.
+
+The interface will allow more experienced users to enable more functionality that goes beyond the common use cases.
 
 
 ==== Powerful Alerting
@@ -72,13 +81,16 @@ learn about them and can thus start counter measures.
 In order for notifications to happen a powerful way of expressing rules needs to be available (but in the same time
 keeping a simple and easy to use user interface).
 
-A rule could be
-
+.Rule example
 --
   alert me if
      one of my three machines in the cluster fail, but not when it is the middle of the night
      more than one of my three machines fail
      do not alert me if maintenance mode is on
+  when fired alert is not acknowledged within 5 minutes escalate
+  notify me
+     via telephone call at night
+     via email during business hours
 --
 
 Some parts of this are:
@@ -86,7 +98,7 @@ Some parts of this are:
 * Lifecycle: It must be possible to (bulk) acknowledge and close fired alerts. Alerts can be assigned to other users
 in the system to indicate that they own the resolution process.
 * Comparing Apples with Pears: Rules will allow to pull in data from various parts of the system and of various data
-types
+types and mix and match them together as seen in above rule example.
 * Escalation handling: When an alert is not acknowledged within a certain time, a notification is sent to another
 predefined user.
 * Suppression of dependent alerts: Hawkular will not send alerts for resources that depend on other resources that
@@ -99,6 +111,8 @@ been alerted as down. Here, the non-availability of the datasource will not be r
  like ticketing systems.
 * Externally driven notification targets: Some parameters for alert handling - especially the on-duty and escalation
 rules can be supplied externally e.g. via Spreadsheet.
+* Execution of (user defined) operations on a target resource. This can for example be used to automatically restart
+an application server when a memory leak is detected.
 
 
 ==== Single Sign On (SSO) with managed Servers
@@ -126,8 +140,13 @@ find others with a common error pattern or with previous fault states. See also 
 ==== Forecasting of potential bad states
 
 To introduce this have a look at this image from Android 5 battery stats screen:
-
-image::img/mission/android_forecast.png[]
+[[img-url-detail]]
+ifndef::env-github[]
+image::/img/mission/android_forecast.png[alt=Forecasting]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/mission/android_forecast.png[alt=Forecasting]
+endif::[]
 
 On the upper half it does not only show how much battery has been used so far, but also makes a (very simple)
 forecast on how long the battery will last with the same usage pattern.
