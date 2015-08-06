@@ -180,6 +180,7 @@ and then unzip and start the server as shown below. You can find links to releas
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">unzip hawkular-dist-1.0.0.Alpha3.zip
 cd hawkular-1.0.0.Alpha3
+# See the ulimit section below if you use the embedded Cassandra
 bin/standalone.sh  # use standalone.bat on Windows</code></pre>
 </div>
 </div>
@@ -255,6 +256,26 @@ The embedded instance only listens for requests on localhost.
 </td>
 </tr>
 </table>
+</div>
+<div class="sect4">
+<h5 id="_increase_code_ulimit_code">Increase <code>ulimit</code></h5>
+<div class="paragraph">
+<p>Cassandra requres <code>ulimit</code> settings that are higher than usual on common *nix distributions. First check your present limits with <code>ulimit -a</code> and eventually increase open files to 65535 and max user processes to 4096 as appropriate on your system.</p>
+</div>
+<div class="paragraph">
+<p>On RHEL, CentOS and Fedora the settings can be made persistent in <code>/etc/security/limits.conf</code> like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>[your_username]          hard    nofile          65535
+[your_username]          soft    nofile          65535
+[your_username]          hard    nproc           4096
+[your_username]          soft    nproc           4096</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>where <code>[your_username]</code> needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.</p>
+</div>
 </div>
 </div>
 <div class="sect3">
