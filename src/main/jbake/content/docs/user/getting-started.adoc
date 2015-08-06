@@ -22,6 +22,7 @@ link:/downloads.html[Downloads] page.
 ----
 unzip hawkular-dist-{hawkular_released_version}.zip
 cd hawkular-{hawkular_released_version}
+# See the ulimit section below if you use the embedded Cassandra
 bin/standalone.sh  # use standalone.bat on Windows
 ----
 
@@ -46,6 +47,20 @@ NOTE: The embedded instance is not intended for production use
 |===========================
 
 TIP: The embedded instance only listens for requests on localhost.
+
+===== Increase `ulimit` 
+
+Cassandra requres `ulimit` settings that are higher than usual on common *nix distributions. First check your present limits with `ulimit -a` and eventually increase open files to 65535 and max user processes to 4096 as appropriate on your system. 
+
+On RHEL, CentOS and Fedora the settings can be made persistent in `/etc/security/limits.conf` like this:
+----
+[your_username]          hard    nofile          65535
+[your_username]          soft    nofile          65535
+[your_username]          hard    nproc           4096
+[your_username]          soft    nproc           4096
+----
+
+where `[your_username]` needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.
 
 ==== Using an external Cassandra Cluster
 Beyond basic usage and development, you will likely want to configure Hawkular
