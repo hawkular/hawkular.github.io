@@ -1,0 +1,95 @@
+= BTM/RTGov Integration
+Gary Brown
+2015-08-14
+:description: Hawkular Business Transaction Management
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+
+The Hawkular BTM (Business Transaction Management) project is designed to capture the structure of a business transaction instance as it executes across a series of distributed applications/services, potentially hosted on-promises and/or cloud.
+
+The RTGov (Runtime Governance) project was designed to apply governance policies to the execution of business transactions in realtime - this was achieved based on the collection of signicant events which were used to trigger policies locally (within the execution environment) or on the RTGov activity server.
+
+Although they have many similarities, the information collected by BTM is far more structured and designed to make it easy to analyse an end-to-end business transaction instance more efficiently in realtime.
+
+RTGov does provide the ability to view a business transaction instance as a 'call trace', but this is _reverse engineered_ from the raw activity events after the fact, and on-demand (i.e. not in realtime).
+
+RTGov requires explicit interceptors to be introduced into the execution environment, whereas BTM is completely non-invasive, offering greater opportunity to instrument a wider range of execution technologies based on the JVM.
+
+What BTM currently lacks is server side support for visualising captured information - which is an area that RTGov can provide. Due to the similarity of the information they are collecting, it makes it possible for BTM data to be translated into RTGov Activity Units and processed by the RTGov server.
+
+This section will explain how to setup a BTM collector and the RTGov server, to enable the BTM information to be reported to RTGov.
+
+
+
+
+== Installation
+
+IMPORTANT: Before trying out BTM on a server configured with either RTGov client or server, it is necessary to disable collection of activity events by RTGov. This can be achieved by setting the _ActivityCollector.enabled_ property to false, in the  _standalone/configuration/overlord-rtgov.properties_ or _standalone/configuration/standalone-full.xml_ file.
+
+
+=== Wildfly
+
+As of RTGov version 2.2.0.Alpha1, the BTM to RTGov gateway and necessary scripts and configuration files are included as part of the distribution.
+
+NOTE: You may need to edit the environment script _bin/btm-client-env.sh_ to change the location of the BTM (i.e. BTM/RTGov gateway), and also the username and password.
+
+=== EAP
+
+WARNING: The gateway has only been tested with the latest version of RTGov running in EAP 6.4.
+
+Then install the following:
+
+* Download the latest stable version of https://repository.jboss.org/nexus/index.html#nexus-search;quick~hawkular-btm-client-rest[hawkular-btm-client-rest.jar] into _standalone/lib_
+
+* Download the latest stable version of https://repository.jboss.org/nexus/index.html#nexus-search;quick~rtgov-btm-eap[rtgov-btm-eap.war] into _standalone/deployments_
+
+* Download and unpack the latest stable version of https://repository.jboss.org/nexus/index.html#nexus-search;quick~hawkular-btm-btxn-instrumentation[hawkular-btm-btxn-instrumentation.jar] into _standalone/data/btmconfig_
+
+The final step is to create the environment script in the _bin_ folder, in a file called _btm-client-env.sh_:
+
+[source,shell]
+----
+# Environment script for setting up the JAVA_OPTS property for client instrumentation
+
+export BTM_CLIENT_JAR_PATH=$JBOSS_HOME/standalone/lib/hawkular-btm-client-rest.jar
+
+export JAVA_OPTS="-Dorg.jboss.byteman.transform.all \
+    -javaagent:$BTM_CLIENT_JAR_PATH=manager:org.hawkular.btm.client.manager.ClientManager,boot:$BTM_CLIENT_JAR_PATH \
+    -Dorg.jboss.byteman.compileToBytecode \
+    -Dhawkular-btm.config=$JBOSS_HOME/standalone/data/btmconfig \
+    -Dhawkular-btm.base-uri=http://localhost:8080/hawkular/btm \
+    -Dhawkular-btm.username=admin \
+    -Dhawkular-btm.password=admin"
+
+# Wildfly specific
+export JAVA_OPTS="$JAVA_OPTS -Djboss.modules.system.pkgs=org.jboss.byteman,org.hawkular.btm.client.manager,org.hawkular.btm.client.api"
+----
+
+NOTE: You may need to edit the environment script to change the location of the BTM (i.e. BTM/RTGov gateway), and also the username and password.
+
+
+
+== Instrumenting the Execution Environment
+
+From a command window, that will be used to run the execution environment to be instrumented, run:
+
+[source,shell]
+----
+export JBOSS_HOME=<RTGov server directory>
+
+. $JBOSS_HOME/bin/btm-client-env.sh
+----
+
+
+
+
+
+
+
