@@ -147,6 +147,41 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/08/14/hawkular-btm-0.3.0-demo.html"><h1>Visualising Business Transaction Information using Hawkular BTM 0.3.0.Final with RTGov Integration</h1></a>
+            <p>14 August 2015, by Gary Brown</p>
+            <p><div class="paragraph">
+<p>The Hawkular Business Transaction Management (BTM) project has released version <a href="https://github.com/hawkular/hawkular-btm/releases/tag/0.3.0.Final">0.3.0.Final</a>. Some of the new features within this release:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Extract correlation ids, properties/details and message content from business transaction instances. This enables the generic information captured by instrumenting the underlying technologies to be enhanced with business specific information that can be useful for later analysis and to help correlate different parts of an overall business transaction instance.</p>
+</li>
+<li>
+<p>BTM to RTGov gateway, to enable the business transaction instance data collected by BTM to be reported and visualised using RTGov (Runtime Governance) tooling.</p>
+</li>
+<li>
+<p>Fault path handling for switchyard services.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To demonstrate the use of Hawkular BTM, to extract business transaction specific data and report the information to RTGov, we have created a <a href="https://youtu.be/bxeRJAsAu_8">short screencast</a>.</p>
+</div>
+<div class="videoblock">
+<div class="content">
+<iframe src="//www.youtube.com/embed/bxeRJAsAu_8?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+</div>
+<div class="paragraph">
+<p>Feel free to try out the latest release for yourself on your own applications. If you have any questions or comments, please contact us on <a href="/community/join.html">these channels</a>.</p>
+</div>
+<div class="paragraph">
+<p>If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the <a href="https://issues.jboss.org/browse/HWKBTM">project jira</a>.</p>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/07/30/hawkular-1.0.0.Alpha3-released.html"><h1>Hawkular, all good things make three!</h1></a>
             <p>30 July 2015, by Heiko Rupp</p>
             <p><div id="preamble">
@@ -585,233 +620,13 @@ Arthur Dryomov. Here is the current version of its metrics screen</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/07/01/hawkular-btm-0.1.0-demo.html"><h1>Monitoring a SwitchYard Application using Hawkular BTM 0.1.0.Final</h1></a>
-            <p>01 July 2015, by Gary Brown</p>
-            <p><div class="paragraph">
-<p>Hawkular BTM 0.1.0.Final is the first release of the Hawkular Business Management project, and therefore currently only provides a minimal level of functionality. However despite the early stage of the project, this post will show how a business transaction implemented using SwitchYard can be monitored across two separate applications using JMS and Web Services.</p>
-</div>
-<div class="paragraph">
-<p>This post assumes that the Hawkular BTM 0.1.0.Final distribution has been downloaded and unzipped, and the <strong><em>BTM_HOME</em></strong> environment variable setup, as described in the <a href="http://www.hawkular.org/docs/components/btm/index.html">user documentation</a>. The environment being monitored is <strong>SwitchYard 2.0.0.Final</strong> installed in <strong>Wildfly 8.1.0.Final</strong>.</p>
-</div>
-<div class="paragraph">
-<p>For this post, we will be deploying the SwitchYard <em>quickstarts/demos/multiApp</em> example. Once SwitchYard has been installed in Wildfly, follow the instructions in the <em>multiApp/README.md</em> to deploy the application into Wildfly. Once deployed, stop the Wildfly server.</p>
-</div>
-<div class="paragraph">
-<p>From a command window in the Wildfly <em>bin</em> folder, run the following commands:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">. $BTM_HOME/client/env.sh
-./standalone.sh -c standalone-full.xml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Simple as that! Now the Wildfly server, running the SwitchYard application, has been instrumented (using <a href="http://byteman.jboss.org/">ByteMan</a>) to capture some information relevant for Business Transaction Management. However before performing any transactions we need to startup the Business Transaction Management Server. Go to the BTM distribution&#8217;s root folder and run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">bin/standalone.sh -Dkeycloak.import=standalone/configuration/hawkular-realm.json \
-                             -Djboss.socket.binding.port-offset=100</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <em>keycloak.import</em> argument is only required when starting the server for the first time, and initialises Hawkular Accounts (including setting up a default user <strong>jdoe</strong> with password <strong>password</strong>).</p>
-</div>
-<div class="paragraph">
-<p>Now we are ready to perform a business transaction instance. Open a command window in the SwitchYard <em>quickstarts/demos/multiApp</em> folder and run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">mvn exec:java -Pwildfly --settings ../../settings.xml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>That should return with a XML document indicating that the order has been accepted.</p>
-</div>
-<div class="paragraph">
-<p>Now issue the following command, to request a list of business transaction fragments from the Business Transaction Management Server:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET -u jdoe:password http://localhost:8180/hawkular/btm/transactions | python -m json.tool</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This will generate two business transaction fragments, the first for the OrderService web service, and the second for the JMS application that receives the order and then invokes the OrderService web service. See the <a href="data/blog/2015/btm/hawkular-btm-0.1.0-demo.json">full JSON here</a>.</p>
-</div>
-<div class="paragraph">
-<p>The condensed and annotated version of the first fragment is:</p>
-</div>
-<div class="listingblock">
-<div class="title">First business transaction fragment</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    {
-        "id": "9d037fcc-d3fc-4b51-a273-ae05d762ad32", <b class="conum">(1)</b>
-        "nodes": [
-            {
-                "correlationIds": [
-                    {
-                        "scope": "Interaction",
-                        "value": "d9c727d6-9688-4206-8db5-226fe73abb79" <b class="conum">(2)</b>
-                    }
-                ],
-                "details": {
-                    "btm_source": "javax-servlet", <b class="conum">(3)</b>
-                    "remoteAddr": "127.0.0.1",
-                    "remoteHost": "127.0.0.1"
-                },
-                "startTime": 1435758196356,
-                "type": "Consumer",
-                "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService",
-                "duration": 391,
-                "endpointType": "HTTP",
-                "nodes": [
-                    {
-                        "details": {
-                            "btm_source": "switchyard"
-                        },
-                        "operation": "submitOrder", <b class="conum">(4)</b>
-                        "startTime": 1435758196555,
-                        "type": "Service",
-                        "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService",
-                        "duration": 96,
-                        "nodes": [
-                            {
-                                "details": {
-                                    "btm_source": "switchyard"
-                                },
-                                "duration": 17,
-                                "nodes": [],
-                                "operation": "lookupItem", <b class="conum">(4)</b>
-                                "startTime": 1435758196565,
-                                "type": "Service",
-                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderService/InventoryService"
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Each business transaction fragment has a unique id</p>
-</li>
-<li>
-<p>This interaction based correlation id will link this business transaction fragment with the web service invocation in the second fragment below</p>
-</li>
-<li>
-<p>Each node can provide additional details, which includes the <em>btm_source</em> used to identify the technology that generated the node</p>
-</li>
-<li>
-<p>This fragment shows one SwitchYard Service (OrderService) calling another SwitchYard Service (OrderService/InventoryService)</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>The condensed and annotated version of the second fragment is:</p>
-</div>
-<div class="listingblock">
-<div class="title">Second business transaction fragment</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    {
-        "id": "bc832ed0-787d-47f0-993d-f37c1ca58b95",
-        "nodes": [
-            {
-                "details": {
-                    "btm_source": "javax-jms"
-                },
-                "startTime": 1435758194986,
-                "type": "Consumer",
-                "uri": "HornetQQueue[OrderRequestQueue]", <b class="conum">(1)</b>
-                "duration": 1904,
-                "endpointType": "JMS",
-                "nodes": [
-                    .... (removed nodes associated with camel components)
-                        "nodes": [
-                            {
-                                "details": {
-                                    "btm_source": "switchyard"
-                                },
-                                "operation": "submitOrder", <b class="conum">(2)</b>
-                                "startTime": 1435758195245,
-                                "type": "Service",
-                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInput",
-                                "duration": 1524,
-                                "nodes": [
-                                     .... (removed nodes associated with camel components)
-                                        "nodes": [
-                                            {
-                                                "details": {
-                                                    "btm_source": "switchyard"
-                                                },
-                                                "operation": "submitOrder", <b class="conum">(3)</b>
-                                                "startTime": 1435758195310,
-                                                "type": "Service",
-                                                "uri": "{urn:switchyard-quickstart-demo:multiapp:0.1.0}OrderInputComponent/OrderWebService",
-                                                "duration": 1454,
-                                                "nodes": [
-                                                    {
-                                                        "correlationIds": [
-                                                            {
-                                                                "scope": "Interaction",
-                                                                "value": "d9c727d6-9688-4206-8db5-226fe73abb79" <b class="conum">(4)</b>
-                                                            }
-                                                        ],
-                                                        "details": {
-                                                            "btm_source": "java-httpurlconnection",
-                                                            "http_method": "POST"
-                                                        },
-                                                        "duration": 35,
-                                                        "endpointType": "HTTP",
-                                                        "startTime": 1435758196129,
-                                                        "type": "Producer",
-                                                        "uri": "http://localhost:8080/quickstart-demo-multiapp/OrderService"
-                                                    }
-                    ....
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>The business transaction is initiated by a message being received on a JMS queue</p>
-</li>
-<li>
-<p>A SwitchYard Service is called which then invokes a SwitchYard Reference with a web service binding</p>
-</li>
-<li>
-<p>The SwitchYard Reference is currently recorded as a separate Service node</p>
-</li>
-<li>
-<p>HTTP invocation with the matching interaction correlation id, linking this Producer node with the Consumer node in the first business transaction fragment</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p><strong>Summary</strong></p>
-</div>
-<div class="paragraph">
-<p>These two business transaction fragments show how a business transaction instance can be traced across JMS, Apache Camel, SwitchYard and HTTP (Web Service), with the two fragments being correlated based on an ID shared between the HTTP Producer and Consumer nodes.</p>
-</div>
-<div class="paragraph">
-<p>Feel free to try out the release for yourself on your own applications. If you have any questions or comments, please contact us on <a href="/community/join.html">these channels</a>.</p>
-</div>
-<div class="paragraph">
-<p>If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the <a href="https://issues.jboss.org/browse/HWKBTM">project jira</a>.</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>01 July 2015 - <a href="blog/2015/07/01/hawkular-btm-0.1.0-demo.html">Monitoring a SwitchYard Application using Hawkular BTM 0.1.0.Final</a></li>
           <li>22 June 2015 - <a href="blog/2015/06/23/hawkular-metrics-0-4-0-released.html">Hawkular-Metrics 0.4.0 release and the way beyond</a></li>
           <li>17 June 2015 - <a href="blog/2015/06/17/marsjug-and-rivieradev-retrospective.html">MarsJUG and RivieraDEV retrospective</a></li>
           <li>04 June 2015 - <a href="blog/2015/06/04/hawkular-1.0.0.Alpha1-released.html">Hawkular, the first release!</a></li>
