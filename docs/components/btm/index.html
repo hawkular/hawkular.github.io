@@ -160,6 +160,12 @@
 <li><a href="#_the_btm_server">The BTM Server</a></li>
 </ul>
 </li>
+<li><a href="#_business_transaction_configuration">Business Transaction Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_mvel_expression_variables">MVEL Expression Variables</a></li>
+<li><a href="#_action_helper_classes">Action Helper Classes</a></li>
+</ul>
+</li>
 <li><a href="#_useful_links">Useful Links</a></li>
 </ul>
 </div>
@@ -253,6 +259,224 @@ The standalone server does not currently supporting a clustered configuration.
 </div>
 </div>
 <div class="sect1">
+<h2 id="_business_transaction_configuration">Business Transaction Configuration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.</p>
+</div>
+<div class="paragraph">
+<p>However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In future releases, UI tools will be provided to help capture this configuration information. However, until then, the details will need to be defined in JSON files. These files are located within the BTM server, under the <strong><em>standalone/data/btmconfig</em></strong> folder.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Example business transaction configuration for an Order Management example included within the RTGov project</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "businessTransactions": {
+    "rtgov_samples_ordermgmt": {  <i class="conum" data-value="1"></i><b>(1)</b>
+      "description": "Order Management example from RTGov",
+      "filter": {
+        "inclusions": [  <i class="conum" data-value="2"></i><b>(2)</b>
+          "^https?://.*/demo-orders/OrderService$",
+          "\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService"
+        ]
+      },
+      "processors": [{  <i class="conum" data-value="3"></i><b>(3)</b>
+        "nodeType": "Service",  <i class="conum" data-value="4"></i><b>(4)</b>
+        "request": "true",  <i class="conum" data-value="5"></i><b>(5)</b>
+        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",  <i class="conum" data-value="6"></i><b>(6)</b>
+        "operation": "submitOrder",  <i class="conum" data-value="7"></i><b>(7)</b>
+        "actions": [{  <i class="conum" data-value="8"></i><b>(8)</b>
+          "actionType": "AddContent",
+          "name": "all",
+          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
+          "expression": "XMLHelper.serialize(values[0])"
+        },{
+          "actionType": "AddCorrelationId",
+          "scope": "Global",  <i class="conum" data-value="14"></i><b>(14)</b>
+          "expression": "XMLHelper.evaluate(\"order/orderId/text()\", values[0])"
+        },{
+          "actionType": "SetProperty",
+          "name": "customer",
+          "expression": "XMLHelper.evaluate(\"order/customer/text()\", values[0])"
+        },{
+          "actionType": "SetProperty",
+          "name": "item",
+          "expression": "XMLHelper.evaluate(\"order/itemId/text()\", values[0])"
+        }]
+      },{
+        "nodeType": "Service",
+        "request": "false",
+        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",
+        "operation": "submitOrder",
+        "actions": [{
+          "actionType": "SetProperty",
+          "name": "total",
+          "expression": "values[0].total"
+        }]
+      }]
+    }
+  },
+  "properties": {  <i class="conum" data-value="9"></i><b>(9)</b>
+    "hawkular-btm.collector.onlynamed": "true"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Each business transaction configuration must be given an unique name</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>Inclusion filters define a regex expression used to match a URI in the captured information. If an inclusion filter matches, then the associated business transaction name will be added to the data reported to the server</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>A list of information processors. Each entry in the list will define the criteria for matching against nodes in the business transaction fragment</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer, Component or Service</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>The 'request' boolean field determines whether the request or response direction should be processed</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>The regex expression used to match against an URI of interest</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td>The optional operation name, only relevant for 'Service' node types</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="8"></i><b>8</b></td>
+<td>A list of actions to be performed by the processor, if the matching criteria are satisfied. The list of supported action types, and their relevant fields, are described below</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="9"></i><b>9</b></td>
+<td>A map of property name and values. These are merged with properties defined in other json files, so in general it is recommended to place all relevant properties into a single json file</td>
+</tr>
+</table>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Actions</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Action Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AddContent</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Include content in the business transaction fragment node. Fields are '<strong><em>name</em></strong>' to distinguish content if multiple entries will be defined, '<strong><em>type</em></strong>' to classify the content type, and '<strong><em>expression</em></strong>' an MVEL expression to translate/extract the relevant content</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">AddCorrelationId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '<strong><em>scope</em></strong>' field can have values Global, Local (only relevant in the current service/app) or Interaction (scoped to the single interaction, i.e. shared between the communicating endpoints). The '<strong><em>expression</em></strong>' field is an MVEL expression used to extract the id.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SetDetail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a node specific value. The '<strong><em>name</em></strong>' field represents the name associated with the detail, and '<strong><em>expression</em></strong>' the MVEL expression used to extract the value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SetFault</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault value. The '<strong><em>expression</em></strong>' field is the MVEL expression used to extract the fault name</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SetProperty</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a named business property. The '<strong><em>name</em></strong>' field names the business property, and '<strong><em>expression</em></strong>' defines the MVEL expression used to extract the value</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect2">
+<h3 id="_mvel_expression_variables">MVEL Expression Variables</h3>
+<div class="paragraph">
+<p>The MVEL expressions are supplied the following variables:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Variable</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">btxn</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The business transaction instance, of type <em>org.hawkular.btm.api.model.btxn.BusinessTransaction</em>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The current business transaction instance node being processed, type is derived from <em>org.hawkular.btm.api.model.btxn.Node</em>, current concrete types are <em>Consumer</em>, <em>Producer</em>, <em>Component</em> and <em>Service</em> (within the same package).</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">headers</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A map of named header values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">values</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An array of values.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_action_helper_classes">Action Helper Classes</h3>
+<div class="paragraph">
+<p>Some helper classes are provided for use within the action expressions.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. XMLHelper class</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Method Signature</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String evaluate(String xpath, Object node)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This method applies an XPath expression to the XML document/fragment supplied in the following formats:  <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String serialize(Object node)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_useful_links">Useful Links</h2>
 <div class="sectionbody">
 <div class="olist arabic">
@@ -262,6 +486,9 @@ The standalone server does not currently supporting a clustered configuration.
 </li>
 <li>
 <p><a href="clientconfig.html">Client Configuration</a></p>
+</li>
+<li>
+<p><a href="btmrtgov.html">BTM/RTGov Integration</a></p>
 </li>
 </ol>
 </div>
