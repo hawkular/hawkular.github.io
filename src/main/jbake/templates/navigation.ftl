@@ -55,6 +55,9 @@
                     <a href="javascript:;" onclick="return false;" class="dropdown-toggle" data-toggle="dropdown">Sub-projects</a>
                     <ul class="dropdown-menu">
                       <li class="menu-item ">
+                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/alerts/index.html">Alerts</a>
+                      </li>
+                      <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/btm/index.html">Business Transaction Management</a>
                       </li>
                       <li class="menu-item ">
