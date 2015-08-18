@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Configuration Guide</title>
+    <title>Hawkular - Alerts Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -142,64 +142,230 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Configuration Guide</h1>
-          <p>Hawkular Metrics standalone server configuration</p>
+          <h1>Alerts Documentation</h1>
+          <p>This guide will help you to install and configure a standalone Alerts component</p>
         </div>
       </section>
 
-	<!--<p><em>16 June 2015</em></p>-->
+	<!--<p><em>18 August 2015</em></p>-->
 
 	<section>
       <div class="container">
         <div id="preamble">
 <div class="sectionbody">
-<div class="paragraph">
-<p>This guide explains the configuration options of a Hawkular Metrics standalone server.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration_sources">Configuration sources</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Metrics can read configuration from different sources, listed below in order of precedence:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>System property (i.e. <code>-Dhawkular-metrics.cassandra-nodes=127.0.0.1</code>)</p>
+<div id="toc" class="toc">
+<div id="toctitle" class="title"></div>
+<ul class="sectlevel1">
+<li><a href="#_prerequisites">Prerequisites</a>
+<ul class="sectlevel2">
+<li><a href="#_java_8">Java 8</a></li>
+<li><a href="#_wildfly_9">Wildfly 9</a></li>
+<li><a href="#_apache_cassandra">Apache Cassandra</a></li>
+</ul>
 </li>
-<li>
-<p>Environment variable (i.e <code>CASSANDRA_NODES=127.0.0.1</code>)</p>
+<li><a href="#_installation">Installation</a>
+<ul class="sectlevel2">
+<li><a href="#_build_the_standalone_distribution">Build the standalone distribution</a></li>
+<li><a href="#_deploy_the_alerts_engine">Deploy the alerts engine</a></li>
+<li><a href="#_deploy_the_alerts_actions_plugins">Deploy the alerts actions plugins</a></li>
+<li><a href="#_deploy_the_embedded_cassandra_optional">Deploy the embedded cassandra (Optional)</a></li>
+<li><a href="#_populate_initial_alerts_definitions_optional">Populate initial alerts definitions (Optional)</a></li>
+<li><a href="#_test_the_installation">Test the installation</a></li>
+</ul>
 </li>
-<li>
-<p>External file, in the form of a Java Properties file (i.e <code>hawkular-metrics.cassandra-nodes=127.0.0.1</code>)</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_external_configuration_file">External configuration file</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The configuration file path can be set with the <code>metrics.conf</code> system property.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>If it is set and the file does not exists or is not readable, Wildfly will fail to deploy the application.</p>
-</li>
-<li>
-<p>If it is not set, the application will use the <code>&lt;user.home&gt;/.metrics.conf</code> file, if it exists.</p>
+<li><a href="#Configuration">Configuration</a>
+<ul class="sectlevel2">
+<li><a href="#_configuration_sources">Configuration sources</a></li>
+<li><a href="#_external_configuration_file">External configuration file</a></li>
+<li><a href="#_parameters_and_flags">Parameters and flags</a></li>
+</ul>
 </li>
 </ul>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_parameters_and_flags">Parameters and flags</h2>
+<h2 id="_prerequisites">Prerequisites</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_java_8">Java 8</h3>
+<div class="paragraph">
+<p>You need a Java Virtual Machine compatible with Java 8.
+Hawkular Alerts runs on the OpenJDK or Oracle runtime environment.</p>
+</div>
+<div class="paragraph">
+<p>Other Java 8 compatible runtime environments <em>should</em> work as well.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_wildfly_9">Wildfly 9</h3>
+<div class="paragraph">
+<p><a href="http://wildfly.org/downloads/">Download a Wildfly 9.0.0.Final</a> archive and expand it somewhere on your disk.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_apache_cassandra">Apache Cassandra</h3>
+<div class="paragraph">
+<p>Hawkular Alerts relies on <a href="https://cassandra.apache.org/">Apache Cassandra</a> for data storage.</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-important" title="Important"></i>
+</td>
+<td class="content">
+Cassandra 2.1.5 or later is required. It is recommended to use the latest 2.1.x release if possible.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>You may download a distribution zip file from the <a href="http://cassandra.apache.org/download/">Apache Cassandra download</a> page.
+You could also use the Datastax community packages for
+<a href="http://docs.datastax.com/en/cassandra/2.1/cassandra/install/installRHEL_t.html">RHEL-based systems</a>
+or
+<a href="http://docs.datastax.com/en/cassandra/2.1/cassandra/install/installDeb_t.html">Debian-based systems</a>.</p>
+</div>
+<div class="paragraph">
+<p>For demo porpuses only you can use a pre-packaged and deployable distribution called embedded-cassandra from
+<a href="https://github.com/hawkular/hawkular-commons">Embedded Cassandra</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_installation">Installation</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_build_the_standalone_distribution">Build the standalone distribution</h3>
+<div class="paragraph">
+<p>Checkout the Hawkular Alerts repo and build the standalone distribution</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">git clone https://github.com/hawkular/hawkular-alerts.git
+cd hawkular-alerts
+mvn clean install -Pstandalone</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploy_the_alerts_engine">Deploy the alerts engine</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">cp hawkular-alerts-rest/target/hawkular-alerts-rest-{alerts-version}.war \
+$WILDFLY_HOME/standalone/deployments/</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploy_the_alerts_actions_plugins">Deploy the alerts actions plugins</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">cd hawkular-alerts-actions-plugins
+cp hawkular-alerts-actions-{plugin}/target/hawkular-alerts-actions-{plugin}.war \
+$WILDFLY_HOME/standalone/deployments/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For example, we can install email and file plugins:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-email/target/hawkular-alerts-actions-email.war \
+$WILDFLY_HOME/standalone/deployments/
+cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-file/target/hawkular-alerts-actions-file.war \
+$WILDFLY_HOME/standalone/deployments/</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploy_the_embedded_cassandra_optional">Deploy the embedded cassandra (Optional)</h3>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">git clone https://github.com/hawkular/hawkular-commons.git
+cd hawkular-commons
+mvn clean install
+cp embedded-embedded-cassandra/embedded-cassandra-ear/target/hawkular-commons-embedded-cassandra.ear \
+$WILDFLY_HOME/standalone/deployments/</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_populate_initial_alerts_definitions_optional">Populate initial alerts definitions (Optional)</h3>
+<div class="paragraph">
+<p>Hawkular Alerts can be initializaded with triggers definitions at start up.
+Init files should be places under <code>$WILDFLY_HOME/standalone/data/hawkular-alerts</code> folder.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular Alerts ships with a set of demo files that can be installed</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">cp -R hawkular-alerts-rest-tests/src/test/wildfly-data/hawkular-alerts  $WILDFLY_HOME/standalone/data</code></pre>
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+The <code>-Pstandalone</code> profile prepares a wildfly 9 server ready for testing under <code>hawkular-alerts-rest-tests/target</code>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_test_the_installation">Test the installation</h3>
+<div class="paragraph">
+<p>Eventually start the server with <code>$WILDFLY_HOME/bin/standalone.sh -Dhawkular.backend=embedded_cassandra</code>.</p>
+</div>
+<div class="paragraph">
+<p>Test your installation with a query of all demo trigger definitions</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET -H "Content-Type: application/json" -H "Hawkular-Tenant: 28026b36-8fe4-4332-84c8-524e173a68bf" \
+http://localhost:8080/hawkular/alerts/triggers</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="Configuration">Configuration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_configuration_sources">Configuration sources</h3>
+<div class="paragraph">
+<p>Hawkular Alerts can read configuration from different sources, listed below in order of precedence:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>System property (i.e. <code>-Dhawkular-alerts.cassandra-nodes=127.0.0.1</code>)</p>
+</li>
+<li>
+<p>Environment variable (i.e <code>CASSANDRA_NODES=127.0.0.1</code>)</p>
+</li>
+<li>
+<p>External file, in the form of a Java Properties file (i.e <code>hawkular-alerts.cassandra-nodes=127.0.0.1</code>)</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_external_configuration_file">External configuration file</h3>
+<div class="paragraph">
+<p>Hawkular Alerts can read configuration file from <code>&lt;user.home&gt;/.hawkular-alerts.properties</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_parameters_and_flags">Parameters and flags</h3>
 <div class="paragraph">
 <p>The table below lists the parameters and flags supported.</p>
 </div>
@@ -211,66 +377,69 @@
 <li>
 <p>When the option can be set with an environment variable, the variable name is listed in the <code>Env</code> column.</p>
 </li>
-<li>
-<p>The <code>Flag</code> column indicates if the sole presence of the option is important, not its value.</p>
-</li>
 </ul>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
-<col style="width: 25%;">
-<col style="width: 20%;">
-<col style="width: 20%;">
-<col style="width: 5%;">
-<col style="width: 30%;">
+<col style="width: 26%;">
+<col style="width: 21%;">
+<col style="width: 21%;">
+<col style="width: 31%;">
 </colgroup>
 <thead>
 <tr>
 <th class="tableblock halign-left valign-top">Name</th>
 <th class="tableblock halign-left valign-top">Env</th>
 <th class="tableblock halign-left valign-top">Default</th>
-<th class="tableblock halign-left valign-top">Flag</th>
 <th class="tableblock halign-left valign-top">Description</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-metrics.cassandra-nodes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.cassandra-nodes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CASSANDRA_NODES</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">127.0.0.1</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The list of cluster nodes provided to the Cassandra driver, comma-separated</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-metrics.cassandra-cql-port</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.cassandra-cql-port</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">CASSANDRA_CQL_PORT</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">9042</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The CQL port provided to the Cassandra driver</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cassandra.keyspace</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.cassandra-keyspace</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular_metrics</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular_alerts</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The keyspace where the data will be stored</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">cassandra.resetdb</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.cassandra-retry-attempts</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If set, reset the keyspace on startup</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The number of attempts to connect to Cassandra cluster before it throws an I/O error</p></td>
 </tr>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular.metrics.waitForService</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.cassandra-retry-timeout</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">3000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The timeout in milliseconds between connection attempt to Cassandra cluster</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.engine-delay</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">If set, wait for the service to be setup before allowing Wildfly to accept requests</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">1000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The delay in milliseconds before the Alerts engine timer starts</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-alerts.engine-period</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">2000</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The period in milliseconds between a new execution of the Alerts engine timer</p></td>
 </tr>
 </tbody>
 </table>
+</div>
 </div>
 </div>
       </div>
