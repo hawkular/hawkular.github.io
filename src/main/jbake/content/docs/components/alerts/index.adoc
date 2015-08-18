@@ -1,13 +1,15 @@
 = Alerts Documentation
 Lucas Ponce
 2015-08-18
+:description: This guide will help you to install and configure a standalone Alerts component
 :icons: font
 :jbake-type: page
 :jbake-status: published
+:toc: macro
+:toc-title:
 
-This guide will help you to install and configure a standalone Alerts component.
+toc::[]
 
-[[Prerequisites]]
 == Prerequisites
 
 === Java 8
@@ -36,8 +38,9 @@ http://docs.datastax.com/en/cassandra/2.1/cassandra/install/installDeb_t.html[De
 For demo porpuses only you can use a pre-packaged and deployable distribution called embedded-cassandra from
 https://github.com/hawkular/hawkular-commons[Embedded Cassandra].
 
-[[Installation]]
 == Installation
+
+=== Build the standalone distribution
 
 Checkout the Hawkular Alerts repo and build the standalone distribution
 
@@ -48,36 +51,45 @@ cd hawkular-alerts
 mvn clean install -Pstandalone
 ----
 
-Install the alerts component
+=== Deploy the alerts engine
 
 [source,shell,subs="+attributes"]
 ----
-cp hawkular-alerts-rest/target/hawkular-alerts-rest-{hawkular_master_version}.war $WILDFLY_HOME/standalone/deployments/
+cp hawkular-alerts-rest/target/hawkular-alerts-rest-{alerts-version}.war \
+$WILDFLY_HOME/standalone/deployments/
 ----
 
-Install alerts actions plugins
+=== Deploy the alerts actions plugins
 
 [source,shell,subs="+attributes"]
 ----
-cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-{plugin}/target/hawkular-alerts-actions-{plugin}.war $WILDFLY_HOME/standalone/deployments/
+cd hawkular-alerts-actions-plugins
+cp hawkular-alerts-actions-{plugin}/target/hawkular-alerts-actions-{plugin}.war \
+$WILDFLY_HOME/standalone/deployments/
+----
 
 For example, we can install email and file plugins:
 
-cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-email/target/hawkular-alerts-actions-email.war $WILDFLY_HOME/standalone/deployments/
-cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-file/target/hawkular-alerts-actions-file.war $WILDFLY_HOME/standalone/deployments/
+[source,shell,subs="+attributes"]
+----
+cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-email/target/hawkular-alerts-actions-email.war \
+$WILDFLY_HOME/standalone/deployments/
+cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-file/target/hawkular-alerts-actions-file.war \
+$WILDFLY_HOME/standalone/deployments/
 ----
 
-[Optional] Install the embedded cassandra
+=== Deploy the embedded cassandra (Optional)
 
 [source,shell,subs="+attributes"]
 ----
 git clone https://github.com/hawkular/hawkular-commons.git
 cd hawkular-commons
 mvn clean install
-cp embedded-embedded-cassandra/embedded-cassandra-ear/target/hawkular-commons-embedded-cassandra.ear $WILDFLY_HOME/standalone/deployments/
+cp embedded-embedded-cassandra/embedded-cassandra-ear/target/hawkular-commons-embedded-cassandra.ear \
+$WILDFLY_HOME/standalone/deployments/
 ----
 
-[Optional] Populate initial alerts definitions
+=== Populate initial alerts definitions (Optional)
 
 Hawkular Alerts can be initializaded with triggers definitions at start up.
 Init files should be places under `$WILDFLY_HOME/standalone/data/hawkular-alerts` folder.
@@ -91,13 +103,16 @@ cp -R hawkular-alerts-rest-tests/src/test/wildfly-data/hawkular-alerts  $WILDFLY
 
 TIP: The `-Pstandalone` profile prepares a wildfly 9 server ready for testing under `hawkular-alerts-rest-tests/target`.
 
+=== Test the installation
+
 Eventually start the server with `$WILDFLY_HOME/bin/standalone.sh -Dhawkular.backend=embedded_cassandra`.
 
 Test your installation with a query of all demo trigger definitions
 
 [source,shell,subs="+attributes"]
 ----
-curl -X GET -H "Content-Type: application/json" -H "Hawkular-Tenant: 28026b36-8fe4-4332-84c8-524e173a68bf" http://localhost:8080/hawkular/alerts/triggers
+curl -X GET -H "Content-Type: application/json" -H "Hawkular-Tenant: 28026b36-8fe4-4332-84c8-524e173a68bf" \
+http://localhost:8080/hawkular/alerts/triggers
 ----
 
 [[Configuration]]
