@@ -6,9 +6,140 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Tue, 18 Aug 2015 15:09:25 +0000</pubDate>
-    <lastBuildDate>Tue, 18 Aug 2015 15:09:25 +0000</lastBuildDate>
+    <pubDate>Wed, 19 Aug 2015 17:19:10 +0000</pubDate>
+    <lastBuildDate>Wed, 19 Aug 2015 17:19:10 +0000</lastBuildDate>
 
+    <item>
+      <title>Using Hawkular Alerts as a standalone engine</title>
+      <link>http://www.hawkular.org/blog/2015/08/19/hawkular-alerts-standalone.html</link>
+      <author>noreply@hawkular.org (Lucas Ponce)</author>
+      <pubDate>Wed, 19 Aug 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/08/19/hawkular-alerts-standalone.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts is a component of the Hawkular project. It&amp;#8217;s goal is to provide flexible and scalable alerting services in a easily consumable way. Some of Hawkular Alerts features are:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Flexible, multi-condition Triggers.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Powerful &quot;Dampening&quot; to control your alert firing rate .&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Simple Alert Life-cycle management.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Automated Trigger disable and enable.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Automated Alert Resolution by detecting the end of your alerting event.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Pluggable Action and Notification capabilities to act on your alerts.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Complete REST API for Definition and Execution.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Optional standalone deployment or get added value with Hawkular Metrics or Hawkular.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Multi-platform deployment as a J2EE WAR file on JBoss WildFly.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_standalone_deployments&quot;&gt;Standalone deployments&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;One of the possibilities of the deployments is to use Alerts as a standalone component.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this scenario, the engine can run on an Wildfly server and we can interact via Java or REST API to create alerts
+definitions or feed data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Details of how to install and configure Hawkular Alerts can be found in the &lt;a href=&quot;http://www.hawkular.org/docs/components/alerts/index.html&quot;&gt;component documentation&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_hello_world&quot;&gt;Hello World&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s start using Hawkular Alerts with a small example.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We are going to create an alert definition like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;TRIGGER trigger-for-poc
+WHEN
+    data-x &amp;lt; 5 AND data-y &amp;gt; 5
+HAPPENS
+    2 consecutive times
+THEN
+    EMAIL to:admin-group@hawkular.org,cc:cc-group@hawkular.org&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;from this script &lt;a href=&quot;https://github.com/lucasponce/hawkular-examples/blob/master/create-definitions.sh&quot;&gt;create-definitions.sh&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the example, we create a trigger with two conditions that is linked with an email action for alert notifications.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that we have the definitions created on the engine, next step will be to send data to evaluate the conditions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For this example we are going to use directly the REST API from a bash script &lt;a href=&quot;https://github.com/lucasponce/hawkular-examples/blob/master/send-data.sh&quot;&gt;send-data.sh&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The example sends random data to the engine, triggering alerts when two consecutive evaluations of the conditions
+happens, then an email notification is sent with the action details.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We have created a &lt;a href=&quot;https://youtu.be/3i64kO0XEjw&quot;&gt;short demo&lt;/a&gt; showing the whole scenario.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;videoblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;iframe src=&quot;http://www.hawkular.org///www.youtube.com/embed/3i64kO0XEjw?rel=0&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This example is quite simple and its goal is to show the flexibility to use the engine.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;More details about Hawkular Alerts features can be found at&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;/docs/dev/alerts.html&quot;&gt;Hawkular Alerts Developer Guide&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;/docs/rest/rest-alerts.html&quot;&gt;Hawkular Alerts REST API&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Feel free to try out the latest release for yourself on your own applications. If you have any questions or comments,
+ please contact us on &lt;a href=&quot;/community/join.html&quot;&gt;these channels&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the &lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS&quot;&gt;project jira&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Visualising Business Transaction Information using Hawkular BTM 0.3.0.Final with RTGov Integration</title>
       <link>http://www.hawkular.org/blog/2015/08/14/hawkular-btm-0.3.0-demo.html</link>
