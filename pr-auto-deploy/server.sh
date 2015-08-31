@@ -58,7 +58,7 @@ handleReq() {
       deployPr $prNo
     }
     #echo -e "</html>"
-  else
+  #else
     #echo -e "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\n\r\n"
     #echo -e "<html><h1>wrong token</h1></html>"
   fi
