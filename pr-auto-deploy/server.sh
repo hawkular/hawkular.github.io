@@ -41,7 +41,7 @@ deployPr() {
   PID=$!
   echo $PID > $_base/pid
   echo "kill -9 $PID" | at now + $[DAYS_AVAILABLE*24] hours
-  curl -i -XPOST -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/hawkular/hawkular.github.io/issues/$prNo/comments -d '{"body":"PR was auto-deployed here: http://'$LOCAL_IP':'$_actual_port' and it will be available for '$DAYS_AVAILABLE' days."}'
+  curl -i -XPOST -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/hawkular/hawkular.github.io/issues/$prNo/comments -d '{"body":"PR was auto-deployed here: http://'$LOCAL_IP':'$_actual_port' and it will be available for '$DAYS_AVAILABLE' days."}' 1>&2
 }
 
 handleReq() {
@@ -68,4 +68,4 @@ typeset -fx handleReq
 typeset -fx deployPr
 
 echo "listening for requests on port $BASE_PORT.."
-nc -k -lp $BASE_PORT -c handleReq
+nc -w4m -lp $BASE_PORT -c handleReq
