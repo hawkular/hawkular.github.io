@@ -18,7 +18,9 @@
 
 set -x
 
-export BASE_PORT=10000
+export BASE_PORT="10000"
+export LOCAL_IP="209.132.178.114"
+export DAYS_AVAILABLE="4"
 
 deployPr() {
   prNo=$1
@@ -34,10 +36,12 @@ deployPr() {
   git checkout pr$prNo && rm $_base/fake-input &> /dev/null
   mkfifo $_base/fake-input
   [[ -s $_base/pid ]] && kill -9 `cat /tmp/pr$prNo/pid`
-  cat $_base/fake-input | mvn -Pinline -Djbake.port=`expr $prNo + $BASE_PORT` -Djbake.listenAddress=0.0.0.0 -Djbake.livereload=false &> /dev/null &
+  _actual_port=`expr $prNo + $BASE_PORT`
+  cat $_base/fake-input | mvn -Pinline -Djbake.port=$_actual_port -Djbake.listenAddress=0.0.0.0 -Djbake.livereload=false &> /dev/null &
   PID=$!
   echo $PID > $_base/pid
-  echo "kill -9 $PID" | at now + 96 hours
+  echo "kill -9 $PID" | at now + $[DAYS_AVAILABLE*24] hours
+  curl -i -XPOST -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/hawkular/hawkular.github.io/issues/$prNo/comments -d '{"body":"PR was auto-deployed here: http://'$LOCAL_IP':'$_actual_port' and it will be available for "'$DAYS_AVAILABLE' days."}'
 }
 
 handleReq() {
