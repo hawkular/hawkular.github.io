@@ -1,0 +1,121 @@
+= Monitoring Rails App using Hawkular Metrics
+Libor Zoubek
+2015-09-03
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, hawkular-metrics, ruby, rails
+
+In this post I am going to show a way to monitor Rails application performance using Hawkular Metrics.
+
+== Setting up Hawkular Metrics ==
+
+There are several ways of setting up Hawkular Metrics standalone server.
+
+1. *Build & deploy* - follow https://github.com/hawkular/hawkular-metrics[Hawkular Metrics Readme]
+2. *Docker image* - start https://hub.docker.com/r/hawkular/hawkular-metrics/[Hawkular Metrics Docker Image]
+3. *Public instance* - use http://livingontheedge.hawkular.org/hawklar/metrics which runs full Hawkular including Metrics. But be sure your data will get lost at some point as this instance gets rebuilt/cleaned up from time to time.
+
+== Hawkular Ruby Client ==
+
+Recently we started to work on a https://github.com/hawkular/hawkular-client-ruby[hawkular-client] in Ruby. So far we have implemented APIs for Hawkular Metrics. In this post we'll use the client to push metric data, but it can also retrieve data for further analysis or reports, for more see http://www.hawkular.org/hawkular-client-ruby/Hawkular/Metrics/Client.html[documentation].
+
+== Monitoring Rails Application ==
+
+There are several ways to monitor your Rails application's performance. The way being shown here is pretty easy to implement, but requires modifications in Rails application. It takes advantage of `around_filter` of main ApplicationController. Within this filter we're going to measure each controller's response time to handle request.
+
+== Rails Demo Application
+
+I've created simple Rails4 application called https://github.com/lzoubek/rails-demo[rails-demo].
+
+I added the dependency on https://rubygems.org/gems/hawkular-client[hawkular-client] gem.
+
+The https://github.com/lzoubek/rails-demo/blob/master/app/controllers/application_controller.rb[Application controller] code is pretty easy
+
+[source,ruby]
+----
+require "hawkularclient"
+
+class ApplicationController < ActionController::Base
+
+  # Prevent CSRF attacks by raising an exception.
+  # For APIs, you may want to use :null_session instead.
+  protect_from_forgery with: :exception
+
+
+  class MetricsReporter
+
+    def initialize
+      tenant_id = "hawkular.org"
+      # create hawkular metrics client <1>
+      @client = Hawkular::Metrics::Client::new("http://localhost:8080/hawkular/metrics","","",{:tenant => tenant_id})
+      # create tenant in case it does not exist
+      if @client.tenants.query.select { |tenant|  tenant.id == tenant_id}.empty?
+      	@client.tenants.create(tenant_id)
+      end
+    end
+
+    def around(controller, &block)
+      # measure measure measure
+      now = Time.now
+      block.call
+      time_spent = Time.now - now
+      # metric ID must be unique within tenant <2>
+      gauge = "App.#{controller.class.name}:#{controller.params[:action]}"
+      # make sure metric definition is created <3>
+      @client.gauges.create({:id => gauge, :tags => {:app => "App"}}) rescue
+      # report time in milliseconds
+      @client.gauges.push_data(gauge ,{:value => time_spent * 1000})
+    end
+
+  end
+
+  # enable filter
+  around_filter MetricsReporter::new
+
+end
+----
+
+<1> We create Hawkular Metrics *@client*. Point it to your instance URL, leave user/pass empty (as this has not been implemented yet) and set *tenant* option.
+<2> We encode our application Name, controller name and controller action into metric ID. So we have different metrics for listing objects and ie. editing an object.
+<3> We need to create metric definition with our tags, so we're able to find all metrics related to rails-demo app later. This line is not required in case you don't want to assign tags to your metric definitions.
+
+
+Let's start Rails dev environment
+
+[source, bash]
+----
+gem install rails
+git clone https://github.com/lzoubek/rails-demo.git
+cd rails-demo
+bundler install
+bin/rake db:migrate RAILS_ENV=development
+rails server
+----
+
+By now, WEBrick should be listening on localhost, open http://localhost:3000/products and in case there is no error displayed congratulations, we are monitoring *rails-demo*! Let's start hitting the UI with some more requests using helper bash script located in `rails-demo` repository
+
+[source, bash]
+----
+./hit.sh
+----
+
+At this time we are simulating traffic on *rails-demo* application and pushing controller's response times to Hawkular Metrics service.
+
+== The Results
+
+Currently Hawkular Metrics (standalone) has no UI. But there is a bunch of useful angular components like https://github.com/hawkular/hawkular-charts[hawkular-charts], so I wrote simple UI which can at least find metric definitions by tags and draw metric data into line chart.
+
+To watch metric data from rails-demo application open http://lzoubek.github.io/hawkular-metrics-ui-demo[Hawkular Metrics UI Demo], fill in *Metrics API URL* (must be reachable from browser), *Tenant ID* and tags.
+
+[[rails-controller-response-times]]
+ifndef::env-github[]
+image::/img/blog/2015/hawkular-metrics-demo-ui.png[Rails Controller response times,800,align="center",link="/img/blog/2015/hawkular-metrics-demo-ui.png"]
+endif::[]
+
+
+== What's next?
+
+As you may have already noticed, Hawkular Metrics server perfomance can have negative impact on rails-demo application performance because we synchronously push the data within around_filter code.  Even the fact, that rails application must be modified in order to be monitored might not be a good thing. In the next blog post I'll write a simple service that is going to parse rails log files and report  data to Hawkular Metrics. In fact, it would be awesome to reuse https://github.com/scoutapp/scout-plugins[scout plugins] and forward their reports into Hawkular Metrics.
+
+Having metrics is only one piece in puzzle. Integration with link:/docs/components/alerts/index.html[Hawkular Alerts] will let you detect performance regressions or unexpected loads.
+
