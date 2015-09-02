@@ -150,6 +150,177 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/09/03/monitoring-rails-using-hawkular-metrics.html"><h1>Monitoring Rails App using Hawkular Metrics</h1></a>
+            <p>03 September 2015, by Libor Zoubek</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this post I am going to show a way to monitor Rails application performance using Hawkular Metrics.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setting_up_hawkular_metrics">Setting up Hawkular Metrics</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are several ways of setting up Hawkular Metrics standalone server.</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><strong>Build &amp; deploy</strong> - follow <a href="https://github.com/hawkular/hawkular-metrics">Hawkular Metrics Readme</a></p>
+</li>
+<li>
+<p><strong>Docker image</strong> - start <a href="https://hub.docker.com/r/hawkular/hawkular-metrics/">Hawkular Metrics Docker Image</a></p>
+</li>
+<li>
+<p><strong>Public instance</strong> - use <a href="http://livingontheedge.hawkular.org/hawklar/metrics" class="bare">http://livingontheedge.hawkular.org/hawklar/metrics</a> which runs full Hawkular including Metrics. But be sure your data will get lost at some point as this instance gets rebuilt/cleaned up from time to time.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_ruby_client">Hawkular Ruby Client</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Recently we started to work on a <a href="https://github.com/hawkular/hawkular-client-ruby">hawkular-client</a> in Ruby. So far we have implemented APIs for Hawkular Metrics. In this post we&#8217;ll use the client to push metric data, but it can also retrieve data for further analysis or reports, for more see <a href="http://www.hawkular.org/hawkular-client-ruby/Hawkular/Metrics/Client.html">documentation</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_monitoring_rails_application">Monitoring Rails Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are several ways to monitor your Rails application&#8217;s performance. The way being shown here is pretty easy to implement, but requires modifications in Rails application. It takes advantage of <code>around_filter</code> of main ApplicationController. Within this filter we&#8217;re going to measure each controller&#8217;s response time to handle request.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_rails_demo_application">Rails Demo Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>I&#8217;ve created simple Rails4 application called <a href="https://github.com/lzoubek/rails-demo">rails-demo</a>.</p>
+</div>
+<div class="paragraph">
+<p>I added the dependency on <a href="https://rubygems.org/gems/hawkular-client">hawkular-client</a> gem.</p>
+</div>
+<div class="paragraph">
+<p>The <a href="https://github.com/lzoubek/rails-demo/blob/master/app/controllers/application_controller.rb">Application controller</a> code is pretty easy</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-ruby" data-lang="ruby">require "hawkularclient"
+
+class ApplicationController &lt; ActionController::Base
+
+  # Prevent CSRF attacks by raising an exception.
+  # For APIs, you may want to use :null_session instead.
+  protect_from_forgery with: :exception
+
+
+  class MetricsReporter
+
+    def initialize
+      tenant_id = "hawkular.org"
+      # create hawkular metrics client <b class="conum">(1)</b>
+      @client = Hawkular::Metrics::Client::new("http://localhost:8080/hawkular/metrics","","",{:tenant =&gt; tenant_id})
+      # create tenant in case it does not exist
+      if @client.tenants.query.select { |tenant|  tenant.id == tenant_id}.empty?
+      	@client.tenants.create(tenant_id)
+      end
+    end
+
+    def around(controller, &amp;block)
+      # measure measure measure
+      now = Time.now
+      block.call
+      time_spent = Time.now - now
+      # metric ID must be unique within tenant <b class="conum">(2)</b>
+      gauge = "App.#{controller.class.name}:#{controller.params[:action]}"
+      # make sure metric definition is created <b class="conum">(3)</b>
+      @client.gauges.create({:id =&gt; gauge, :tags =&gt; {:app =&gt; "App"}}) rescue
+      # report time in milliseconds
+      @client.gauges.push_data(gauge ,{:value =&gt; time_spent * 1000})
+    end
+
+  end
+
+  # enable filter
+  around_filter MetricsReporter::new
+
+end</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>We create Hawkular Metrics <strong>@client</strong>. Point it to your instance URL, leave user/pass empty (as this has not been implemented yet) and set <strong>tenant</strong> option.</p>
+</li>
+<li>
+<p>We encode our application Name, controller name and controller action into metric ID. So we have different metrics for listing objects and ie. editing an object.</p>
+</li>
+<li>
+<p>We need to create metric definition with our tags, so we&#8217;re able to find all metrics related to rails-demo app later. This line is not required in case you don&#8217;t want to assign tags to your metric definitions.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s start Rails dev environment</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">gem install rails
+git clone https://github.com/lzoubek/rails-demo.git
+cd rails-demo
+bundler install
+bin/rake db:migrate RAILS_ENV=development
+rails server</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>By now, WEBrick should be listening on localhost, open <a href="http://localhost:3000/products" class="bare">http://localhost:3000/products</a> and in case there is no error displayed congratulations, we are monitoring <strong>rails-demo</strong>! Let&#8217;s start hitting the UI with some more requests using helper bash script located in <code>rails-demo</code> repository</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">./hit.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this time we are simulating traffic on <strong>rails-demo</strong> application and pushing controller&#8217;s response times to Hawkular Metrics service.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_results">The Results</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Currently Hawkular Metrics (standalone) has no UI. But there is a bunch of useful angular components like <a href="https://github.com/hawkular/hawkular-charts">hawkular-charts</a>, so I wrote simple UI which can at least find metric definitions by tags and draw metric data into line chart.</p>
+</div>
+<div class="paragraph">
+<p>To watch metric data from rails-demo application open <a href="http://lzoubek.github.io/hawkular-metrics-ui-demo">Hawkular Metrics UI Demo</a>, fill in <strong>Metrics API URL</strong> (must be reachable from browser), <strong>Tenant ID</strong> and tags.</p>
+</div>
+<div id="rails-controller-response-times" class="imageblock" style="text-align: center">
+<div class="content">
+<a class="image" href="/img/blog/2015/hawkular-metrics-demo-ui.png"><img src="/img/blog/2015/hawkular-metrics-demo-ui.png" alt="Rails Controller response times" width="800"></a>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_s_next">What&#8217;s next?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As you may have already noticed, Hawkular Metrics server perfomance can have negative impact on rails-demo application performance because we synchronously push the data within around_filter code.  Even the fact, that rails application must be modified in order to be monitored might not be a good thing. In the next blog post I&#8217;ll write a simple service that is going to parse rails log files and report  data to Hawkular Metrics. In fact, it would be awesome to reuse <a href="https://github.com/scoutapp/scout-plugins">scout plugins</a> and forward their reports into Hawkular Metrics.</p>
+</div>
+<div class="paragraph">
+<p>Having metrics is only one piece in puzzle. Integration with <a href="/docs/components/alerts/index.html">Hawkular Alerts</a> will let you detect performance regressions or unexpected loads.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/08/27/hawkular-1.0.0.Alpha4-released.html"><h1>The fourth milestone of Hawkular released</h1></a>
             <p>27 August 2015, by Peter Palaga</p>
             <p><div id="preamble">
@@ -680,165 +851,13 @@ happens, then an email notification is sent with the action details.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/07/30/hawkular-1.0.0.Alpha3-released.html"><h1>Hawkular, all good things make three!</h1></a>
-            <p>30 July 2015, by Heiko Rupp</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>We are very happy to release the third version of Hawkular!
-As with the previous one, this was the most important release of Hawkular so far.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_app_server_support">App server support</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The main focus of this release clearly was the extended monitoring of <a href="http://www.wildfly.org/">WildFly</a> application
-servers.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-For the moment you will need to instrument your server manually following
-<a href="http://www.hawkular.org/docs/user/getting-started.html#_install_a_wildfly_monitoring_agent">these instructions</a>.
-We will make this easier in the future.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Deployments in the monitored server can now be enabled/disabled and redeployed. Deployment of new content
-will come in the next release.</p>
-</div>
-<div id="img-server-deploy-detail" class="imageblock" style="text-align: center">
-<div class="content">
-<a class="image" href="/img/blog/2015/1.0.0.Alpha3_deploy_actions.png"><img src="/img/blog/2015/1.0.0.Alpha3_deploy_actions.png" alt="Hawkular server deployments" width="500"></a>
-</div>
-</div>
-<div class="paragraph">
-<p>We also have a new <em>web</em>-tab that gives statistics about the web subsystem of the managed WildFly</p>
-</div>
-<div id="img-webtab" class="imageblock" style="text-align: center">
-<div class="content">
-<a class="image" href="/img/blog/2015/1.0.0.Alpha3_web_tab.png"><img src="/img/blog/2015/1.0.0.Alpha3_web_tab.png" alt="Wildfly servers web stats" width="500"></a>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_more_details_for_urls">More details for URLs</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular now also collects the current IP address and the server information for the URLs being monitored</p>
-</div>
-<div id="img-url-detail" class="imageblock" style="text-align: center">
-<div class="content">
-<a class="image" href="/img/blog/2015/1.0.0.Alpha3_url_traits.png"><img src="/img/blog/2015/1.0.0.Alpha3_url_traits.png" alt="URL details" width="500"></a>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_notable_changes_in_this_release_were">Notable changes in this release were:</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Implement more app server details as mentioned above</p>
-</li>
-<li>
-<p>Upgrade underlying versions of Hawkular-Metrics and other subsystems</p>
-</li>
-<li>
-<p>More alerting capabilities</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Head over to the <a href="/releasenotes/1.0.0.Alpha3.html">Full release notes</a> for more details.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_demo">Demo</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We have again run a demonstration of the new Hawkular features:</p>
-</div>
-<div class="videoblock">
-<div class="content">
-<iframe width="600" height="400" src="//www.youtube.com/embed/otLyoXYlV-s?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
-</div>
-<div class="paragraph">
-<p>We plan to do a lot more Alpha releases with even more features, the next Alpha is planned for August 26th, and
-<a href="/docs/dev/development.html">you can help us</a> :)</p>
-</div>
-<div class="paragraph">
-<p>Thank you for the contributions!</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_downloads">Downloads</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>You can download the release here:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha3/hawkular-dist-1.0.0.Alpha3.zip">Hawkular 1.0.0.Alpha3 (zip)</a></p>
-</li>
-<li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha3/hawkular-dist-1.0.0.Alpha3.tar.gz">Hawkular 1.0.0.Alpha3
-(tar.gz)</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>During the weeks until the next release and demo we want to address the following:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>More details of the application servers</p>
-</li>
-<li>
-<p>Uploading of new applications into managed servers</p>
-</li>
-<li>
-<p>More alerting related changes</p>
-</li>
-<li>
-<p>An easiert to grasp resource naming schema</p>
-</li>
-<li>
-<p>Hopefully definition of jdbc drivers and data sources</p>
-</li>
-</ul>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>30 July 2015 - <a href="blog/2015/07/30/hawkular-1.0.0.Alpha3-released.html">Hawkular, all good things make three!</a></li>
           <li>22 July 2015 - <a href="blog/2015/07/22/hawkular-btm-0.2.0-demo.html">Monitoring a Vert.x Application using Hawkular BTM 0.2.0.Final</a></li>
           <li>02 July 2015 - <a href="blog/2015/07/02/hawkular-1.0.0.Alpha2-released.html">Hawkular, the second release!</a></li>
           <li>01 July 2015 - <a href="blog/2015/07/01/hawkular-btm-0-1-0-released.html">Hawkular-BTM 0.1.0 released</a></li>
