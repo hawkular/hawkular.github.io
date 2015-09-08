@@ -1,0 +1,48 @@
+= Installation Guide
+Thomas Heute
+2015-09-08
+:description: Installing Hawkular
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Installing the server
+Please follow the instruction in the link:quick-start.html[Quick Start document] for the server itself, followed by the Cassandra instructions below.
+
+== Using an external Cassandra Cluster
+Beyond basic usage and development, you will likely want to configure Hawkular
+to use an external Cassandra cluster.
+
+NOTE: Hawkular requires Cassandra 2.1.5 or later. It is recommended to use the
+latest 2.1.x release if possible.
+
+Fortunately, this only requires setting
+a few system properties.
+
+From the command line::
+[source,shell]
+----
+bin/standalone.sh -Dhawkular-metrics.cassandra-nodes="node_1_address,node_2_address,node_n_address" -Dhawkular-metrics.backend=remote
+----
+
+The `hawkular-metrics.cassandra-nodes` property should be a comma-delimited list
+of Cassandra node endpoint addresses. The value for each address should match the
+value of the `rpc_address` in the cassandra.yaml configuration file. You do not
+actually have to specify the address of every Cassandra node. As long as Hawkular
+is able to connect to one node, it will discover all of the other cluster nodes.
+
+From standalone.xml::
+[source,xml]
+----
+<system-properties>
+  <property name="hawkular-metrics.cassandra-nodes" value="node_1_address,node_2_address,node_n_address"/>
+  <property name="hawkular-metrics.backend" value="remote"/>
+</system-properties>
+----
+
+TIP: You can change the keyspace used by setting the `cassandra.keyspace` system property.
+
