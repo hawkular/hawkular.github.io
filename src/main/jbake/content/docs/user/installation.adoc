@@ -21,28 +21,30 @@ NOTE: Hawkular requires Cassandra 2.2.x or later. It is recommended to use the
 latest 2.2.x release if possible.
 
 Fortunately, this only requires setting
-a few system properties.
+a few environment variables.
 
-From the command line::
+.Using a cassandra cluster on `localhost`
 [source,shell]
 ----
-bin/standalone.sh -Dhawkular-metrics.cassandra-nodes="node_1_address,node_2_address,node_n_address" -Dhawkular-metrics.backend=remote
+bin/standalone.sh -Dhawkular.backend=remote
 ----
 
-The `hawkular-metrics.cassandra-nodes` property should be a comma-delimited list
+Actually it is possible to pass the backend option via environment variable as shown in the next example.
+
+If you want to use a different host for the Cassandra cluster, you need to pass the list of nodes
+in an another environment variable:
+
+.Using a cassandra cluster on different hosts
+[source,shell]
+----
+export HAWKULAR_BACKEND=remote
+export CASSANDRA_NODES="cassandra_host1,cassandra_host2,..."
+bin/standalone.sh
+----
+
+The `CASSANDRA_NODES` environment variable should be a comma-delimited list
 of Cassandra node endpoint addresses. The value for each address should match the
-value of the `rpc_address` in the cassandra.yaml configuration file. You do not
+value of the `rpc_address` in the `cassandra.yaml` configuration file. You do not
 actually have to specify the address of every Cassandra node. As long as Hawkular
 is able to connect to one node, it will discover all of the other cluster nodes.
-
-From standalone.xml::
-[source,xml]
-----
-<system-properties>
-  <property name="hawkular-metrics.cassandra-nodes" value="node_1_address,node_2_address,node_n_address"/>
-  <property name="hawkular-metrics.backend" value="remote"/>
-</system-properties>
-----
-
-TIP: You can change the keyspace used by setting the `cassandra.keyspace` system property.
 
