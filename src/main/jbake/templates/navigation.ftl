@@ -16,8 +16,7 @@
               <ul class="nav navbar-nav">
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>index.html">Hawkular</a></li>
                 <li>
-                  <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/getting-started.html">Getting
-                      Started</a>
+                  <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a>
                 </li>
                 <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
@@ -25,8 +24,16 @@
                   <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu" role="menu">
-                  <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/getting-started.html">User Documentation</a>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Documentation</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/installation.html">Installation</a>
+                      </li>
+                    </ul>
                   </li>
                   <li>
                     <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Documentation</a>
@@ -54,6 +61,9 @@
                   <li class="menu-item dropdown dropdown-submenu">
                     <a href="javascript:;" onclick="return false;" class="dropdown-toggle" data-toggle="dropdown">Sub-projects</a>
                     <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/alerts/index.html">Alerts</a>
+                      </li>
                       <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/btm/index.html">Business Transaction Management</a>
                       </li>

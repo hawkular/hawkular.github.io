@@ -1,0 +1,410 @@
+= Quick start
+Heiko Rupp
+2015-06-08
+:description: Fastest route to get Hawkular up and running
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Before we start
+We'll install an Hawkular server and then instrument a WildFly server to be manageable by the server.
+We suppose that you have Java 8 already installed on your machine.
+To install the server we propose an alternative using Docker, we suppose that you have Docker already installed.
+
+Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
+single-node cluster. You do not have to worry about setting up and configuring
+Cassandra before getting started with Hawkular.
+
+For a more proper installation, please refer to link:installation.html[the installation guide]
+
+NOTE: The embedded Cassandra is not intended for production use, we definitely recommend to use a separate Cassandra server.
+
+== Step 1: Installing Hawkular server
+=== Option A: Install from a zip file on any operating system
+Download
+http://download.jboss.org/hawkular/hawkular/{hawkular_released_version}/hawkular-dist-{hawkular_released_version}.zip[Hawkular {hawkular_released_version} (zip)]
+and then unzip and start the server as shown below.
+
+.Unzip and start the server
+[source,shell,subs="+attributes"]
+----
+unzip hawkular-dist-{hawkular_released_version}.zip
+cd hawkular-{hawkular_released_version}
+bin/standalone.sh  # use standalone.bat on Windows
+----
+
+You can then navigate your browser to http://localhost:8080/. When you see the login screen,
+you have to register as a user and will then be redirected to the main Hawkular page.
+
+=== Option B: Install from a docker image
+
+Hawkular is publishing builds to https://registry.hub.docker.com/u/jboss/hawkular-aio/[Docker Hub] that you can try
+and download from Docker.
+
+NOTE: Those builds are not secured and should not be run on a public network.
+
+The following assumes that you have Docker installed and started if necessary.
+
+[source, shell]
+----
+$ docker run -d -p 8080:8080 jboss/hawkular-aio   #<1>
+Unable to find image 'jboss/hawkular-aio:latest' locally #<2>
+latest: Pulling from docker.io/jboss/hawkular-aio
+26830c504ec5: Download complete
+[...]
+612ba72033af: Download complete
+Digest: sha256:dd0db25c80464f93fb652906317c003d29bf19e9ba6622ddf4df9377c56d3823
+Status: Downloaded newer image for jboss/hawkular-aio:latest #<3>
+c792a1f059521f6ae99  #<4>
+----
+<1> Start the docker container in the background (`-d`) and tell it that the internal (container's) port 8080 should be
+available as host port 8080 (`-p 8080:8080).
+<2> This is the first time that image is to be used, so docker is downloading it from Docker Hub, which may take a
+while. Starting the same image the next time will only take a few seconds.
+<3> Download has finished, Hawkular server will be started
+<4> Hawkular server has started with a container id of `c792a1f0595`. This id will be different for each start.
+
+Now as Docker is running the container and you can reach the Hawkular UI at http://localhost:8080/
+
+NOTE: If you are running docker on OS/X via boot2docker, you need to use the IP address that is stored in the `DOCKER_HOST`
+environment variable instead of `localhost`.)
+
+[NOTE]
+.Stopping the Docker container
+=======================
+When you are done, you can shut down the container via:
+
+[source,shell]
+----
+$ docker stop c792a1f0595  #<1>
+----
+<1> Container id that was emitted above
+=======================
+
+Later if you want to upgrade to a newer build just run:
+
+[source,shell]
+----
+$ docker pull jboss/hawkular-aio:latest  #<1>
+Pulling repository jboss/hawkular-aio
+26830c504ec5: Download complete
+511136ea3c5a: Download complete
+[...]
+612ba72033af: Download complete
+Status: Image is up to date for jboss/hawkular-aio:latest #<2>
+----
+<1> We ask for the latest build
+<2> In this case the local one was already the latest, so we are good here.
+
+You can then navigate your browser to http://localhost:8080/. When you see the login screen, you have to register as a user and will then be redirected to the main Hawkular page.
+
+== Step 2: Install a Wildfly Monitoring Agent
+
+Now that the server is installed and you have a user registered you would likely want to push some data into that server, at this stage, the only agent we provide is an agent for WildFly 9 and above.
+
+We plan to facilitate the installation of an agent but as of now it requires a bit of file copying and editing, sorry about that.
+
+Here are the steps:
+
+* Download the WildFly module from http://download.jboss.org/hawkular/wildfly-monitor/0.4.1/hawkular-monitor-0.4.1-module.zip[here].
+* Unzip the file inside the `modules/system/layers/base` directory of the WildFly instance that you want to monitor.
+* In the `standalone/configuration/standalone.xml` file of your Hawkular instance, add the Hawkular Monitor Agent
+extension in the `<extensions>` section:
+
+[source,xml]
+----
+<extension module="org.hawkular.agent.monitor"/>
+----
+* In the `standalone/configuration/standalone.xml` file of your Hawkular instance, add the Hawkular Monitor Agent subsystem declaration
+in the `profile>` section. Note that you must set your Hawkular credentials in the username and password attributes
+(in other words, replace SET_ME with their true values for your Hawkular system):
+
+[source,xml]
+----
+<subsystem apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedule
+rThreads="3" enabled="${hawkular.agent.enabled:true}" xmlns="urn:org.hawkular.agent.monitor:monitor:1.0">
+    <diagnostics enabled="true" reportTo="LOG" interval="1" timeUnits="minutes"/>
+    <storage-adapter type="HAWKULAR" username=""SET_ME" password="SET_ME"  <!--1-->
+    <metric-set-dmr name="WildFly Memory Metrics" enabled="true">
+        <metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes" path="/core-service
+=platform-mbean/type=memory" attribute="heap-memory-usage#used"/>
+        <metric-dmr name="Heap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/
+type=memory" attribute="heap-memory-usage#committed"/>
+        <metric-dmr name="Heap Max" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=m
+emory" attribute="heap-memory-usage#max"/>
+        <metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds" path="/core-service=platform-mbean/t
+ype=memory" attribute="non-heap-memory-usage#used"/>
+        <metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbe
+an/type=memory" attribute="non-heap-memory-usage#committed"/>
+        <metric-dmr name="Accumulated GC Duration" metricType="counter" interval="1" timeUnits="minutes" path=
+"/core-service=platform-mbean/type=garbage-collector/name=*" attribute="collection-time"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="WildFly Threading Metrics" enabled="true">
+        <metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none" path="/core-servic
+e=platform-mbean/type=threading" attribute="thread-count"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="WildFly Aggregated Web Metrics" enabled="true">
+        <metric-dmr name="Aggregated Active Web Sessions" interval="1" timeUnits="minutes" path="/deployment=*
+/subsystem=undertow" attribute="active-sessions"/>
+        <metric-dmr name="Aggregated Max Active Web Sessions" interval="1" timeUnits="minutes" path="/deployme
+nt=*/subsystem=undertow" attribute="max-active-sessions"/>
+        <metric-dmr name="Aggregated Expired Web Sessions" metricType="counter" interval="1" timeUnits="minute
+s" path="/deployment=*/subsystem=undertow" attribute="expired-sessions"/>
+        <metric-dmr name="Aggregated Rejected Web Sessions" metricType="counter" interval="1" timeUnits="minut
+es" path="/deployment=*/subsystem=undertow" attribute="rejected-sessions"/>
+        <metric-dmr name="Aggregated Servlet Request Time" metricType="counter" interval="1" timeUnits="minute
+s" path="/deployment=*/subsystem=undertow/servlet=*" attribute="total-request-time"/>
+        <metric-dmr name="Aggregated Servlet Request Count" metricType="counter" interval="1" timeUnits="minut
+es" path="/deployment=*/subsystem=undertow/servlet=*" attribute="request-count"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Undertow Metrics" enabled="true">
+        <metric-dmr name="Active Sessions" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribu
+te="active-sessions"/>
+        <metric-dmr name="Sessions Created" metricType="counter" interval="2" timeUnits="minutes" path="/subsy
+stem=undertow" attribute="sessions-created"/>
+        <metric-dmr name="Expired Sessions" metricType="counter" interval="2" timeUnits="minutes" path="/subsy
+stem=undertow" attribute="expired-sessions"/>
+        <metric-dmr name="Rejected Sessions" metricType="counter" interval="2" timeUnits="minutes" path="/subs
+ystem=undertow" attribute="rejected-sessions"/>
+        <metric-dmr name="Max Active Sessions" interval="2" timeUnits="minutes" path="/subsystem=undertow" att
+ribute="max-active-sessions"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Servlet Metrics" enabled="true">
+        <metric-dmr name="Max Request Time" interval="5" timeUnits="minutes" metricUnits="milliseconds" path="
+/" attribute="max-request-time"/>
+        <metric-dmr name="Min Request Time" interval="5" timeUnits="minutes" path="/" attribute="min-request-t
+ime"/>
+        <metric-dmr name="Total Request Time" metricType="counter" interval="5" timeUnits="minutes" path="/" a
+ttribute="total-request-time"/>
+        <metric-dmr name="Request Count" metricType="counter" interval="5" timeUnits="minutes" path="/" attrib
+ute="request-count"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Singleton EJB Metrics" enabled="true">
+        <metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time"
+/>
+        <metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribut
+e="invocations"/>
+        <metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="pe
+ak-concurrent-invocations"/>
+        <metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Message Driven EJB Metrics" enabled="true">
+        <metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time"
+/>
+        <metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribut
+e="invocations"/>
+        <metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="pe
+ak-concurrent-invocations"/>
+        <metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time"/>
+        <metric-dmr name="Pool Available Count" interval="5" timeUnits="minutes" path="/" attribute="pool-avai
+lable-count"/>
+        <metric-dmr name="Pool Create Count" interval="5" timeUnits="minutes" path="/" attribute="pool-create-
+count"/>
+        <metric-dmr name="Pool Current Size" interval="5" timeUnits="minutes" path="/" attribute="pool-current
+-size"/>
+        <metric-dmr name="Pool Max Size" interval="5" timeUnits="minutes" path="/" attribute="pool-max-size"/>
+        <metric-dmr name="Pool Remove Count" interval="5" timeUnits="minutes" path="/" attribute="pool-remove-
+count"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Stateless Session EJB Metrics" enabled="true">
+        <metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time"
+/>
+        <metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribut
+e="invocations"/>
+        <metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="pe
+ak-concurrent-invocations"/>
+        <metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time"/>
+        <metric-dmr name="Pool Availabile Count" interval="5" timeUnits="minutes" path="/" attribute="pool-ava
+ilable-count"/>
+        <metric-dmr name="Pool Create Count" interval="5" timeUnits="minutes" path="/" attribute="pool-create-
+count"/>
+        <metric-dmr name="Pool Current Size" interval="5" timeUnits="minutes" path="/" attribute="pool-current
+-size"/>
+        <metric-dmr name="Pool Max Size" interval="5" timeUnits="minutes" path="/" attribute="pool-max-size"/>
+        <metric-dmr name="Pool Remove Count" interval="5" timeUnits="minutes" path="/" attribute="pool-remove-
+count"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Datasource JDBC Metrics" enabled="true">
+        <metric-dmr name="Prepared Statement Cache Access Count" interval="10" timeUnits="minutes" path="/stat
+istics=jdbc" attribute="PreparedStatementCacheAccessCount"/>
+        <metric-dmr name="Prepared Statement Cache Add Count" interval="10" timeUnits="minutes" path="/statist
+ics=jdbc" attribute="PreparedStatementCacheAddCount"/>
+        <metric-dmr name="Prepared Statement Cache Current Size" interval="10" timeUnits="minutes" path="/stat
+istics=jdbc" attribute="PreparedStatementCacheCurrentSize"/>
+        <metric-dmr name="Prepared Statement Cache Delete Count" interval="10" timeUnits="minutes" path="/stat
+istics=jdbc" attribute="PreparedStatementCacheDeleteCount"/>
+        <metric-dmr name="Prepared Statement Cache Hit Count" interval="10" timeUnits="minutes" path="/statist
+ics=jdbc" attribute="PreparedStatementCacheHitCount"/>
+        <metric-dmr name="Prepared Statement Cache Miss Count" interval="10" timeUnits="minutes" path="/statis
+tics=jdbc" attribute="PreparedStatementCacheMissCount"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Datasource Pool Metrics" enabled="true">
+        <metric-dmr name="Active Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="A
+ctiveCount"/>
+        <metric-dmr name="Available Count" interval="1" timeUnits="minutes" path="/statistics=pool" attribute=
+"AvailableCount"/>
+        <metric-dmr name="Average Blocking Time" interval="1" timeUnits="minutes" path="/statistics=pool" attr
+ibute="AverageBlockingTime"/>
+        <metric-dmr name="Average Creation Time" interval="1" timeUnits="minutes" path="/statistics=pool" attr
+ibute="AverageCreationTime"/>
+        <metric-dmr name="Average Get Time" interval="1" timeUnits="minutes" path="/statistics=pool" attribute
+="AverageGetTime"/>
+        <metric-dmr name="Blocking Failure Count" interval="10" timeUnits="minutes" path="/statistics=pool" at
+tribute="BlockingFailureCount"/>
+        <metric-dmr name="Created Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="
+CreatedCount"/>
+        <metric-dmr name="Destroyed Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute
+="DestroyedCount"/>
+        <metric-dmr name="Idle Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="Idl
+eCount"/>
+        <metric-dmr name="In Use Count" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="In
+UseCount"/>
+        <metric-dmr name="Max Creation Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribu
+te="MaxCreationTime"/>
+        <metric-dmr name="Max Get Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="M
+axGetTime"/>
+        <metric-dmr name="Max Used Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute=
+"MaxUsedCount"/>
+        <metric-dmr name="Max Wait Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute=
+"MaxWaitCount"/>
+        <metric-dmr name="Max Wait Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="
+MaxWaitTime"/>
+        <metric-dmr name="Timed Out" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="Timed
+Out"/>
+        <metric-dmr name="Total Blocking Time" interval="10" timeUnits="minutes" path="/statistics=pool" attri
+bute="TotalBlockingTime"/>
+        <metric-dmr name="Total Creation Time" interval="10" timeUnits="minutes" path="/statistics=pool" attri
+bute="TotalCreationTime"/>
+        <metric-dmr name="Total Get Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute=
+"TotalGetTime"/>
+        <metric-dmr name="Wait Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="Wai
+tCount"/>
+    </metric-set-dmr>
+    <metric-set-dmr name="Transactions Metrics" enabled="true">
+        <metric-dmr name="Number of Aborted Transactions" metricType="counter" interval="10" timeUnits="minute
+s" path="/" attribute="number-of-aborted-transactions"/>
+        <metric-dmr name="Number of Application Rollbacks" metricType="counter" interval="10" timeUnits="minut
+es" path="/" attribute="number-of-application-rollbacks"/>
+        <metric-dmr name="Number of Committed Transactions" metricType="counter" interval="10" timeUnits="minu
+tes" path="/" attribute="number-of-committed-transactions"/>
+        <metric-dmr name="Number of Heuristics" metricType="counter" interval="10" timeUnits="minutes" path="/
+" attribute="number-of-heuristics"/>
+        <metric-dmr name="Number of In-Flight Transactions" interval="10" timeUnits="minutes" path="/" attribu
+te="number-of-inflight-transactions"/>
+        <metric-dmr name="Number of Nested Transactions" interval="10" timeUnits="minutes" path="/" attribute=
+"number-of-nested-transactions"/>
+        <metric-dmr name="Number of Resource Rollbacks" metricType="counter" interval="10" timeUnits="minutes"
+path="/" attribute="number-of-resource-rollbacks"/>
+        <metric-dmr name="Number of Timed Out Transactions" metricType="counter" interval="10" timeUnits="minu
+tes" path="/" attribute="number-of-timed-out-transactions"/>
+        <metric-dmr name="Number of Transactions" interval="10" timeUnits="minutes" path="/" attribute="number
+-of-transactions"/>
+    </metric-set-dmr>
+    <avail-set-dmr name="Server Availability" enabled="true">
+        <avail-dmr name="App Server" interval="30" timeUnits="seconds" path="/" attribute="server-state" upReg
+ex="run.*"/>
+    </avail-set-dmr>
+    <avail-set-dmr name="Deployment Status" enabled="true">
+        <avail-dmr name="Deployment Status" interval="1" timeUnits="minutes" path="/" attribute="status" upReg
+ex="OK"/>
+    </avail-set-dmr>
+    <resource-type-set-dmr name="Main" enabled="true">
+        <resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server [%ManagedServerName] [${
+jboss.node.name:localhost}]" path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics,WildFly Aggregated
+Web Metrics" availSets="Server Availability">
+            <resource-config-dmr name="Hostname" path="/core-service=server-environment" attribute="qualified-
+host-name"/>
+            <resource-config-dmr name="Version" attribute="release-version"/>
+            <resource-config-dmr name="Bound Address" path="/socket-binding-group=standard-sockets/socket-bind
+ing=http" attribute="bound-address"/>
+        </resource-type-dmr>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="Hawkular" enabled="true">
+        <resource-type-dmr name="Bus Broker" resourceNameTemplate="Bus Broker" path="/subsystem=hawkular-bus-b
+roker" parents="WildFly Server"/>
+        <resource-type-dmr name="Monitor Agent" resourceNameTemplate="Monitor Agent" path="/subsystem=hawkular
+-monitor" parents="WildFly Server">
+            <operation-dmr name="Status" operationName="status" path="/"/>
+        </resource-type-dmr>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="Deployment" enabled="true">
+        <resource-type-dmr name="Deployment" resourceNameTemplate="Deployment [%2]" path="/deployment=*" paren
+ts="WildFly Server" metricSets="Undertow Metrics" availSets="Deployment Status">
+            <operation-dmr name="Deploy" operationName="deploy" path="/"/>
+            <operation-dmr name="Redeploy" operationName="redeploy" path="/"/>
+            <operation-dmr name="Remove" operationName="remove" path="/"/>
+            <operation-dmr name="Undeploy" operationName="undeploy" path="/"/>
+        </resource-type-dmr>
+        <resource-type-dmr name="SubDeployment" resourceNameTemplate="SubDeployment [%-]" path="/subdeployment
+=*" parents="Deployment" metricSets="Undertow Metrics"/>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="Web Component" enabled="true">
+        <resource-type-dmr name="Servlet" resourceNameTemplate="Servlet [%-]" path="/subsystem=undertow/servle
+t=*" parents="Deployment,SubDeployment" metricSets="Servlet Metrics"/>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="EJB" enabled="true">
+        <resource-type-dmr name="Singleton EJB" resourceNameTemplate="Singleton EJB [%-]" path="/subsystem=ejb
+3/singleton-bean=*" parents="Deployment,SubDeployment" metricSets="Singleton EJB Metrics"/>
+        <resource-type-dmr name="Message Driven EJB" resourceNameTemplate="Message Driven EJB [%-]" path="/sub
+system=ejb3/message-driven-bean=*" parents="Deployment,SubDeployment" metricSets="Message Driven EJB Metrics"/>
+        <resource-type-dmr name="Stateless Session EJB" resourceNameTemplate="Stateless Session EJB [%-]" path
+="/subsystem=ejb3/stateless-session-bean=*" parents="Deployment,SubDeployment" metricSets="Stateless Session EJB Metri
+cs"/>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="Datasource" enabled="true">
+        <resource-type-dmr name="Datasource" resourceNameTemplate="Datasource [%-]" path="/subsystem=datasourc
+es/data-source=*" parents="WildFly Server" metricSets="Datasource Pool Metrics,Datasource JDBC Metrics"/>
+    </resource-type-set-dmr>
+    <resource-type-set-dmr name="Transaction Manager" enabled="true">
+        <resource-type-dmr name="Transaction Manager" resourceNameTemplate="Transaction Manager" path="/subsys
+tem=transactions" parents="WildFly Server" metricSets="Transactions Metrics"/>
+    </resource-type-set-dmr>
+    <managed-servers>
+        <local-dmr name="Local Server" enabled="true" resourceTypeSets="Main,Deployment,Web Component,EJB,Datasource,
+Transaction Manager,Hawkular"/>  <!--2-->
+        <remote-dmr name="Another Remote Server" enabled="false" host="localhost" port="9990" username="adminU
+ser" password="adminPass" resourceTypeSets="Main,Deployment,Web Component,EJB,Datasource,Transaction Manager"/> <!--3-->
+    </managed-servers>
+</subsystem>
+----
+<1> You need to provide username/password for one Hawkular user. The app server will only show for this user.
+<2> Change 'Local Server' to some *unique* value among your managed machines.
+<3> Optional A single WildFly instance can manage multiple remote WildFly server, in that case you need to enable the remote-dmr section and specify username and password of a management user of the remote server.
+
+
+* In the `standalone/configuration/standalone.xml` file of your Hawkular instance, add an outbound socket binding
+`<socket-binding-group>` that points to your running Hawkular server instance:
+
+[source,xml]
+----
+<outbound-socket-binding name="hawkular">
+  <remote-destination
+     host="your-hawkular-server-hostname"   <--1-->
+     port="8080" />
+</outbound-socket-binding>
+----
+<1> Adjust this value
+
+Now you can start the managed WildFly instance, keep in mind that if you are following this QuickStart your Hawkular server is probably already running on port 8080, so you need to run this instance on a different port by starting the server with `sh bin/standalone.sh -Djboss.socket.binding.port-offset=100` for instance.
+Now if you have correcty set up the agent, it will report into your Hawkular server at http://localhost:8080/hawkular-ui/app/app-list.
+
+
+== Troubleshooting
+=== Error on starting Hawkular- OutOfMemoryError: unable to create new native thread
+This may happen if you use Cassandra embedded with Hawkular on *x systems
+
+Cassandra requres `ulimit` settings that are higher than usual on common *nix distributions. First check your present limits with `ulimit -a` and eventually increase open files to 65535 and max user processes to 4096 as appropriate on your system.
+
+On RHEL, CentOS and Fedora the settings can be made persistent in `/etc/security/limits.conf` like this:
+----
+[your_username]          hard    nofile          65535
+[your_username]          soft    nofile          65535
+[your_username]          hard    nproc           4096
+[your_username]          soft    nproc           4096
+----
+
+where `[your_username]` needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.

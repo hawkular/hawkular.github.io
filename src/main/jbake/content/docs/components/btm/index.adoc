@@ -50,9 +50,136 @@ The Business Transaction Management (BTM) Server can be clustered to enable repo
 CAUTION: The standalone server does not currently supporting a clustered configuration.
 
 
+== Business Transaction Configuration
+
+Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.
+
+However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.
+
+NOTE: In future releases, UI tools will be provided to help capture this configuration information. However, until then, the details will need to be defined in JSON files. These files are located within the BTM server, under the *_standalone/data/btmconfig_* folder.
+
+[source,json]
+.Example business transaction configuration for an Order Management example included within the RTGov project
+----
+{
+  "businessTransactions": {
+    "rtgov_samples_ordermgmt": {  // <1>
+      "description": "Order Management example from RTGov",
+      "filter": {
+        "inclusions": [  // <2>
+          "^https?://.*/demo-orders/OrderService$",
+          "\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService"
+        ]
+      },
+      "processors": [{  // <3>
+        "nodeType": "Service",  // <4>
+        "request": "true",  // <5>
+        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",  // <6>
+        "operation": "submitOrder",  // <7>
+        "actions": [{  // <8>
+          "actionType": "AddContent",
+          "name": "all",
+          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
+          "expression": "XMLHelper.serialize(values[0])"
+        },{
+          "actionType": "AddCorrelationId",
+          "scope": "Global",  // <14>
+          "expression": "XMLHelper.evaluate(\"order/orderId/text()\", values[0])"
+        },{
+          "actionType": "SetProperty",
+          "name": "customer",
+          "expression": "XMLHelper.evaluate(\"order/customer/text()\", values[0])"
+        },{
+          "actionType": "SetProperty",
+          "name": "item",
+          "expression": "XMLHelper.evaluate(\"order/itemId/text()\", values[0])"
+        }]
+      },{
+        "nodeType": "Service",
+        "request": "false",
+        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",
+        "operation": "submitOrder",
+        "actions": [{
+          "actionType": "SetProperty",
+          "name": "total",
+          "expression": "values[0].total"
+        }]
+      }]
+    }
+  },
+  "properties": {  // <9>
+    "hawkular-btm.collector.onlynamed": "true"
+  }
+}
+----
+<1> Each business transaction configuration must be given an unique name
+<2> Inclusion filters define a regex expression used to match a URI in the captured information. If an inclusion filter matches, then the associated business transaction name will be added to the data reported to the server
+<3> A list of information processors. Each entry in the list will define the criteria for matching against nodes in the business transaction fragment
+<4> The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer, Component or Service
+<5> The 'request' boolean field determines whether the request or response direction should be processed
+<6> The regex expression used to match against an URI of interest
+<7> The optional operation name, only relevant for 'Service' node types
+<8> A list of actions to be performed by the processor, if the matching criteria are satisfied. The list of supported action types, and their relevant fields, are described below
+<9> A map of property name and values. These are merged with properties defined in other json files, so in general it is recommended to place all relevant properties into a single json file
+
+
+.Actions
+|===
+|Action Type |Description
+
+|AddContent |Include content in the business transaction fragment node. Fields are '*_name_*' to distinguish content if multiple entries will be defined, '*_type_*' to classify the content type, and '*_expression_*' an MVEL expression to translate/extract the relevant content
+
+|AddCorrelationId |Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '*_scope_*' field can have values Global, Local (only relevant in the current service/app) or Interaction (scoped to the single interaction, i.e. shared between the communicating endpoints). The '*_expression_*' field is an MVEL expression used to extract the id.
+
+|SetDetail |Extract a node specific value. The '*_name_*' field represents the name associated with the detail, and '*_expression_*' the MVEL expression used to extract the value
+
+|SetFault |Define a fault value. The '*_expression_*' field is the MVEL expression used to extract the fault name
+
+|SetProperty |Extract a named business property. The '*_name_*' field names the business property, and '*_expression_*' defines the MVEL expression used to extract the value
+
+|===
+
+
+=== MVEL Expression Variables
+
+The MVEL expressions are supplied the following variables:
+
+|===
+|Variable |Description
+
+|btxn |The business transaction instance, of type _org.hawkular.btm.api.model.btxn.BusinessTransaction_.
+
+|node |The current business transaction instance node being processed, type is derived from _org.hawkular.btm.api.model.btxn.Node_, current concrete types are _Consumer_, _Producer_, _Component_ and _Service_ (within the same package).
+
+|headers |A map of named header values.
+
+|values |An array of values.
+
+|===
+
+
+=== Action Helper Classes
+
+Some helper classes are provided for use within the action expressions.
+
+.XMLHelper class
+|===
+|Method Signature |Description
+
+|String evaluate(String xpath, Object node) |This method applies an XPath expression to the XML document/fragment supplied in the following formats:  _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
+
+|String serialize(Object node) |This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
+
+|===
+
+
+
+
 == Useful Links
 
 . link:serverinstall.html[Server Installation]
 
 . link:clientconfig.html[Client Configuration]
+
+. link:btmrtgov.html[BTM/RTGov Integration]
 

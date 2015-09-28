@@ -1,0 +1,50 @@
+= Installation Guide
+Thomas Heute
+2015-09-08
+:description: Installing Hawkular
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Installing the server
+Please follow the instruction in the link:quick-start.html[Quick Start document] for the server itself, followed by the Cassandra instructions below.
+
+== Using an external Cassandra Cluster
+Beyond basic usage and development, you will likely want to configure Hawkular
+to use an external Cassandra cluster.
+
+NOTE: Hawkular requires Cassandra 2.2.x or later. It is recommended to use the
+latest 2.2.x release if possible.
+
+Fortunately, this only requires setting
+a few environment variables.
+
+.Using a cassandra cluster on `localhost`
+[source,shell]
+----
+bin/standalone.sh -Dhawkular.backend=remote
+----
+
+Actually it is possible to pass the backend option via environment variable as shown in the next example.
+
+If you want to use a different host for the Cassandra cluster, you need to pass the list of nodes
+in an another environment variable:
+
+.Using a cassandra cluster on different hosts
+[source,shell]
+----
+export HAWKULAR_BACKEND=remote
+export CASSANDRA_NODES="cassandra_host1,cassandra_host2,..."
+bin/standalone.sh
+----
+
+The `CASSANDRA_NODES` environment variable should be a comma-delimited list
+of Cassandra node endpoint addresses. The value for each address should match the
+value of the `rpc_address` in the `cassandra.yaml` configuration file. You do not
+actually have to specify the address of every Cassandra node. As long as Hawkular
+is able to connect to one node, it will discover all of the other cluster nodes.
+

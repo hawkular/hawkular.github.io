@@ -1,0 +1,196 @@
+= Alerts Documentation
+Lucas Ponce
+2015-08-26
+:description: This guide will help you to install and configure a standalone Alerts component
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Prerequisites
+
+=== Git
+
+Hawkular Alerts is hosted on link:https://github.com/hawkular/hawkular-alerts.git[GitHub] so a git client is
+recommended.
+
+=== Java 8
+
+You need a Java Virtual Machine compatible with Java 8.
+Hawkular Alerts runs on the OpenJDK or Oracle runtime environment.
+
+Other Java 8 compatible runtime environments _should_ work as well.
+
+=== Maven
+
+Hawkular source code is managed with link:https://maven.apache.org/[Apache Maven]. A minimal version 3.2.x is needed
+to build Hawkular Alerts project.
+
+=== Wildfly 9
+
+http://wildfly.org/downloads/[Download a Wildfly 9.0.1.Final] archive and expand it somewhere on your disk.
+
+=== Apache Cassandra
+
+Hawkular Alerts relies on https://cassandra.apache.org/[Apache Cassandra] for data storage.
+
+IMPORTANT: Cassandra 2.2.0 or later is required. It is recommended to use the latest 2.2.x release if possible.
+
+You may download a distribution zip file from the http://cassandra.apache.org/download/[Apache Cassandra download] page.
+You could also use the Datastax community packages for:
+
+* http://docs.datastax.com/en/cassandra/2.2/cassandra/install/installRHEL.html[RHEL-based systems]
+* http://docs.datastax.com/en/cassandra/2.2/cassandra/install/installDeb.html[Debian-based systems]
+* http://docs.datastax.com/en/cassandra_win/2.2/cassandra/install/installTOC.html[Windows].
+* For OS/X you can install Cassandra via http://brew.sh[Homebrew]
+
+For demo purposes only you can use a pre-packaged and deployable distribution called embedded-cassandra from
+https://github.com/hawkular/hawkular-commons[Embedded Cassandra].
+
+== Installation
+
+=== Build the standalone distribution
+
+Checkout the Hawkular Alerts repo and build the standalone distribution
+
+[source,shell,subs="+attributes"]
+----
+git clone https://github.com/hawkular/hawkular-alerts.git
+cd hawkular-alerts
+mvn clean install -Pstandalone
+----
+
+TIP: The `-Pstandalone` profile prepares a wildfly 9 server ready for testing under
+`hawkular-alerts-rest-tests/target`.
+
+Next steps describe how to install a standalone distribution from scratch.
+
+=== Deploy the alerts engine
+
+[source,shell,subs="+attributes"]
+----
+cp hawkular-alerts-rest/target/hawkular-alerts-rest-{alerts-version}.war \
+$WILDFLY_HOME/standalone/deployments/
+----
+
+=== Deploy the alerts actions plugins
+
+[source,shell,subs="+attributes"]
+----
+cd hawkular-alerts-actions-plugins
+cp hawkular-alerts-actions-{plugin}/target/hawkular-alerts-actions-{plugin}.war \
+$WILDFLY_HOME/standalone/deployments/
+----
+
+For example, we can install email and file plugins:
+
+[source,shell,subs="+attributes"]
+----
+cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-email/target/hawkular-alerts-actions-email.war \
+$WILDFLY_HOME/standalone/deployments/
+cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-file/target/hawkular-alerts-actions-file.war \
+$WILDFLY_HOME/standalone/deployments/
+----
+
+=== Deploy the embedded cassandra (Optional)
+
+[source,shell,subs="+attributes"]
+----
+git clone https://github.com/hawkular/hawkular-commons.git
+cd hawkular-commons
+mvn clean install
+cp embedded-embedded-cassandra/embedded-cassandra-ear/target/hawkular-commons-embedded-cassandra.ear \
+$WILDFLY_HOME/standalone/deployments/
+----
+
+=== Populate initial alerts definitions (Optional)
+
+Hawkular Alerts can be initializaded with triggers definitions at start up.
+Init files should be places under `$WILDFLY_HOME/standalone/data/hawkular-alerts` folder.
+
+Hawkular Alerts ships with a set of demo files that can be installed
+
+[source,shell,subs="+attributes"]
+----
+cp -R hawkular-alerts-rest-tests/src/test/wildfly-data/hawkular-alerts  $WILDFLY_HOME/standalone/data
+----
+
+=== Test the installation
+
+Eventually start the server with `$WILDFLY_HOME/bin/standalone.sh -Dhawkular.backend=embedded_cassandra`.
+
+Test your installation with a query of all demo trigger definitions
+
+[source,shell,subs="+attributes"]
+----
+curl -X GET -H "Content-Type: application/json" -H "Hawkular-Tenant: 28026b36-8fe4-4332-84c8-524e173a68bf" \
+http://localhost:8080/hawkular/alerts/triggers
+----
+
+[[Configuration]]
+== Configuration
+
+=== Configuration sources
+
+Hawkular Alerts can read configuration from different sources, listed below in order of precedence:
+
+. System property (i.e. `-Dhawkular-alerts.cassandra-nodes=127.0.0.1`)
+. Environment variable (i.e `CASSANDRA_NODES=127.0.0.1`)
+. External file, in the form of a Java Properties file (i.e `hawkular-alerts.cassandra-nodes=127.0.0.1`)
+
+=== External configuration file
+
+Hawkular Alerts can read configuration file from `<user.home>/.hawkular-alerts.properties`.
+
+=== Parameters and flags
+
+The table below lists the parameters and flags supported.
+
+* The `Name` column is the string form when the option is set in the configuration file or as a system property.
+* When the option can be set with an environment variable, the variable name is listed in the `Env` column.
+
+[cols="5,4,4,6", options="header"]
+|===
+|Name
+|Env
+|Default
+|Description
+
+|hawkular-alerts.cassandra-nodes
+|CASSANDRA_NODES
+|127.0.0.1
+|The list of cluster nodes provided to the Cassandra driver, comma-separated
+
+|hawkular-alerts.cassandra-cql-port
+|CASSANDRA_CQL_PORT
+|9042
+|The CQL port provided to the Cassandra driver
+
+|hawkular-alerts.cassandra-keyspace
+|-
+|hawkular_alerts
+|The keyspace where the data will be stored
+
+|hawkular-alerts.cassandra-retry-attempts
+|-
+|15
+|The number of attempts to connect to Cassandra cluster before it throws an I/O error
+
+|hawkular-alerts.cassandra-retry-timeout
+|-
+|3000
+|The timeout in milliseconds between connection attempt to Cassandra cluster
+
+|hawkular-alerts.engine-delay
+|-
+|1000
+|The delay in milliseconds before the Alerts engine timer starts
+
+|hawkular-alerts.engine-period
+|-
+|2000
+|The period in milliseconds between a new execution of the Alerts engine timer
+|===

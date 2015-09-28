@@ -1,4 +1,11 @@
 language: java
+
+sudo: false
+# manage the caches here https://travis-ci.org/hawkular/hawkular.github.io/caches
+cache:
+  directories:
+    - $HOME/.m2/repository
+
 jdk:
 - oraclejdk8
 
@@ -11,7 +18,8 @@ notifications:
 
 env:
   global:
-    secure: "CHhMe+l5PsSiV9JEUH4Pxqxj/MGpnhwwmD/hp3BuF1c1f8sdrTax7xduNpttJ84Mp3GdEDspfL5sI695/JZU5SqSSIvBxJMEwGtt7/c8gSHdmMdSrpsIgob24D9NIUtrzmqaXRa1Upy7Vll0hs30siOdnxQJKZnjv719Dq+73To="
+    # token used for pushing the built website back to github
+    secure: CHhMe+l5PsSiV9JEUH4Pxqxj/MGpnhwwmD/hp3BuF1c1f8sdrTax7xduNpttJ84Mp3GdEDspfL5sI695/JZU5SqSSIvBxJMEwGtt7/c8gSHdmMdSrpsIgob24D9NIUtrzmqaXRa1Upy7Vll0hs30siOdnxQJKZnjv719Dq+73To=
 
 before_install:
   # download all the swagger adoc files
@@ -24,3 +32,5 @@ script:
 after_success:
   # push to master
   - test "${TRAVIS_BRANCH}" = "pages" && test "${TRAVIS_PULL_REQUEST}" = "false" && mvn -s .travis.settings.xml site
+  # deploy the PR
+  - test "${TRAVIS_BRANCH}" = "pages" && [[ "$TRAVIS_PULL_REQUEST" != "false" ]] && bash -x ./pr-auto-deploy/client.sh "${TRAVIS_PULL_REQUEST}" "${DEPLOY_PR_HOST}"

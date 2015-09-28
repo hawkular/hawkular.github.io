@@ -1,0 +1,72 @@
+= Using Hawkular Alerts as a standalone engine
+Lucas Ponce
+2015-08-19
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, hawkular, alerts, standalone, demo
+
+Hawkular Alerts is a component of the Hawkular project. It's goal is to provide flexible and scalable alerting services in a easily consumable way. Some of Hawkular Alerts features are:
+
+* Flexible, multi-condition Triggers.
+* Powerful "Dampening" to control your alert firing rate .
+* Simple Alert Life-cycle management.
+* Automated Trigger disable and enable.
+* Automated Alert Resolution by detecting the end of your alerting event.
+* Pluggable Action and Notification capabilities to act on your alerts.
+* Complete REST API for Definition and Execution.
+* Optional standalone deployment or get added value with Hawkular Metrics or Hawkular.
+* Multi-platform deployment as a J2EE WAR file on JBoss WildFly.
+
+== Standalone deployments
+
+One of the possibilities of the deployments is to use Alerts as a standalone component.
+
+In this scenario, the engine can run on an Wildfly server and we can interact via Java or REST API to create alerts
+definitions or feed data.
+
+Details of how to install and configure Hawkular Alerts can be found in the http://www.hawkular.org/docs/components/alerts/index.html[component documentation].
+
+== Hello World
+
+Let's start using Hawkular Alerts with a small example.
+
+We are going to create an alert definition like this:
+
+[source,shell,subs="+attributes"]
+----
+TRIGGER trigger-for-poc
+WHEN
+    data-x < 5 AND data-y > 5
+HAPPENS
+    2 consecutive times
+THEN
+    EMAIL to:admin-group@hawkular.org,cc:cc-group@hawkular.org
+----
+
+from this script https://github.com/lucasponce/hawkular-examples/blob/master/create-definitions.sh[create-definitions.sh].
+
+In the example, we create a trigger with two conditions that is linked with an email action for alert notifications.
+
+Now that we have the definitions created on the engine, next step will be to send data to evaluate the conditions.
+
+For this example we are going to use directly the REST API from a bash script https://github.com/lucasponce/hawkular-examples/blob/master/send-data.sh[send-data.sh].
+
+The example sends random data to the engine, triggering alerts when two consecutive evaluations of the conditions
+happens, then an email notification is sent with the action details.
+
+We have created a https://youtu.be/3i64kO0XEjw[short demo] showing the whole scenario.
+
+video::3i64kO0XEjw[youtube]
+
+This example is quite simple and its goal is to show the flexibility to use the engine.
+
+More details about Hawkular Alerts features can be found at
+
+* link:/docs/dev/alerts.html[Hawkular Alerts Developer Guide]
+* link:/docs/rest/rest-alerts.html[Hawkular Alerts REST API]
+
+Feel free to try out the latest release for yourself on your own applications. If you have any questions or comments,
+ please contact us on link:/community/join.html[these channels].
+
+If you have suggestions for features/enhancements, or find any bugs, then please log an issue in the https://issues.jboss.org/browse/HWKALERTS[project jira].
+
