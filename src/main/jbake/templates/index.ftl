@@ -16,7 +16,7 @@
           </p>
         </div>
     </section>
-    <section class="boxes">
+    <!--section class="boxes">
         <div class="row">
             <div class="server-side box col-sm-4">
                 <div class="content">
@@ -37,8 +37,8 @@
                 </div>
             </div>
         </div>
-    </section>
-    <section class="description">
+    </section-->
+    <!--section class="description">
         <p>
             Hawkular is an Open Source monitoring solution, following the
             successful <a href="http://rhq-project.github.io/rhq/">RHQ Project</a>,
@@ -59,90 +59,52 @@
             <a href="irc://irc.freenode.net/#hawkular" target="_blank">IRC</a> or by
             <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev" target="_blank">EMail</a>.
         </p>
-    </section>
+    </section-->
     <section class="main-features">
         <div class="container">
             <h2>Hawkular Features</h2>
-
             <div class="row">
                 <ul>
-                    <li class="col-md-4 col-sm-3">
+                    <li class="col-md-3 col-sm-4">
                         <i class="fa fa-cloud"></i>
                         <h4>Metric Storage</h4>
-
-                        <p>Flexible, scalable and high performance metric storage based on Cassandra.</p>
+                        <p>Flexible, scalable and high performance metric storage based on Cassandra. <a href="/docs/overview.html#_metric_storage">More...</a></p>
                     </li>
-                    <li class="col-md-4 col-sm-3">
+                    <li class="col-md-3 col-sm-4">
                         <i class="fa fa-bell"></i>
-                        <h4>
-                            Alerting
-                        </h4>
-
-                        <p>Notify administrators of performance problems or other user defined conditions.</p>
+                        <h4>Alerting</h4>
+                        <p>Notify administrators of performance problems or other user defined conditions. <a href="/docs/overview.html#_alerting">More...</a></p>
                     </li>
-                    <li class="col-md-4 col-sm-3">
+                    <li class="col-md-3 col-sm-4">
                         <i class="fa fa-sitemap"></i>
-                        <h4>
-                            Inventory
-                        </h4>
-
-                        <p>Keep track of the monitored topology and all the monitored resource metadata.</p>
+                        <h4>Inventory</h4>
+                        <p>Keep track of the monitored topology and all the monitored resource metadata. <a href="/docs/overview.html#_inventory">More...</a></p>
                     </li>
-                    <li class="col-md-4 col-sm-3">
-                        <i class="fa fa-heartbeat"></i>
-                        <h4>
-                            Pinger
-                        </h4>
-
-                        <p>Checks if given web is up and running by sending HTTP HEAD requests.</p>
-                    </li>
-
-                    <li class="col-md-4 col-sm-3">
+                    <li class="col-md-3 col-sm-4">
                         <i class="fa fa-bar-chart"></i>
-                        <h4>
-                            Metric Data Visualization
-                            <span>(coming soon)</span>
-                        </h4>
-
-                        <p>View and manage your data in the management console, including real time monitoring.</p>
+                        <h4>Metric Data Visualization</h4>
+                        <p>View your data and add charts where you need them most, including real time monitoring. <a href="/docs/overview.html#_metric_data_visualization">More...</a></p>
                     </li>
-
-                    <li class="col-md-4 col-sm-3">
+                    <!--li class="col-md-3 col-sm-4">
                         <i class="fa fa-mobile"></i>
-                        <h4>
-                            Push Notifications
-                            <span>(coming soon)</span>
-                        </h4>
-
+                        <h4>Pluggable action mechanism <span>(coming soon)</span></h4>
                         <p>As a result of Hawkular Alerts let Aerogear notify your smartphone when something went
-                            wrong.</p>
-                    </li>
-                    <li class="col-md-4 col-sm-3">
-                        <i class="fa fa-code"></i>
-                        <h4>
-                            Easily extensible
-                            <span>(coming soon)</span>
-                        </h4>
-
-                        <p>Write your own metric feed using curl and some Bash magic or use what we prepared for
-                            you.</p>
-                    </li>
-                    <li class="col-md-4 col-sm-3">
-                        <i class="fa fa-dashboard"></i>
-                        <h4>
-                            Analytics
-                            <span>(coming soon)</span>
-                        </h4>
-
-                        <p>Watch your application growth and performance with the Analytics dashboard.</p>
-                    </li>
-                    <li class="col-md-4 col-sm-3">
+                            wrong. <a href="/docs/overview#_pluggable_notifications_mechanism">More...</a></p>
+                    </li-->
+                    <li class="col-md-3 col-sm-4">
                         <i class="fa fa-lock"></i>
-                        <h4>
-                            Security
-                        </h4>
-
-                        <p>Out of the box Single Sign On (SSO) and Identity Management (IDM) with Keycloak.</p>
+                        <h4>Security</h4>
+                        <p>Authentication, Authorization and Multitenancy. <a href="/docs/overview.html#_security_2">More...</a></p>
+                    </li>
+                    <li class="col-md-3 col-sm-4">
+                        <i class="fa fa-heartbeat"></i>
+                        <h4>Pinger</h4>
+                        <p>Checks if given web is up and running by sending HTTP HEAD requests. <a href="/docs/overview.html#_pinger">More...</a></p>
+                    </li>
+                    <li class="col-md-3 col-sm-4">
+                        <i class="fa fa-server"></i>
+                        <h4>Middleware Management Console</h4>
+                        <p>Console to manage Middleware servers. <a href="/docs/overview.html#_middleware_management_console">More...</a></p>
                     </li>
                 </ul>
             </div>
