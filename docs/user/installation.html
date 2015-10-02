@@ -165,6 +165,13 @@
 <ul class="sectlevel1">
 <li><a href="#_installing_the_server">Installing the server</a></li>
 <li><a href="#_using_an_external_cassandra_cluster">Using an external Cassandra Cluster</a></li>
+<li><a href="#_using_an_external_keycloak_server">Using an external Keycloak Server</a>
+<ul class="sectlevel2">
+<li><a href="#_introduction">Introduction</a></li>
+<li><a href="#_preparing_the_environments">Preparing the environments</a></li>
+<li><a href="#_more">More</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -228,6 +235,348 @@ of Cassandra node endpoint addresses. The value for each address should match th
 value of the <code>rpc_address</code> in the <code>cassandra.yaml</code> configuration file. You do not
 actually have to specify the address of every Cassandra node. As long as Hawkular
 is able to connect to one node, it will discover all of the other cluster nodes.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_using_an_external_keycloak_server">Using an external Keycloak Server</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_introduction">Introduction</h3>
+<div class="paragraph">
+<p>Hawkular ships with a ready to use instance of Keycloak. In some situations, however, it is desirable to split Hawkular
+from Keycloak. This document outlines this process. This document is valid from Hawkular 1.0.0.Alpha3 and later.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_the_environments">Preparing the environments</h3>
+<div class="paragraph">
+<p>For the purposes of this document, both Keycloak and Hawkular will be running on the same machine, but on different
+Wildfly instances. Keycloak will be running on a port-offset of 100, while Hawkular will be running on the default
+set of Wildfly ports.</p>
+</div>
+<div class="sect3">
+<h4 id="_preparing_keycloak">Preparing Keycloak</h4>
+<div class="paragraph">
+<p>Before starting Keycloak, we need to copy the event listeners and the themes, deployed as JBoss Modules to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">cd $KEYCLOAK_HOME
+mkdir -p modules/org/hawkular/
+cp -r $HAWKULAR_HOME/modules/org/hawkular/keycloak modules/org/hawkular/</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, change the <code>$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json</code> to add the listeners:</p>
+</div>
+<div class="paragraph">
+<p>Original <code>$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+    "providers": [
+        "classpath:${jboss.server.config.dir}/providers/*"
+    ],
+
+    "admin": {
+        "realm": "master"
+    },
+
+    ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>New <code>$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+    "providers": [
+        "classpath:${jboss.server.config.dir}/providers/*",
+        "module:org.hawkular.keycloak.events.rest",
+        "module:org.hawkular.keycloak.events.jms"
+    ],
+
+    "eventsListener": {
+        "hawkular-rest": {
+            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
+        },
+        "hawkular-jms": {
+            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
+        }
+    },
+
+    "admin": {
+        "realm": "master"
+    },
+    ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Additionally, the Hawkular UI theme should also be activated on this file:</p>
+</div>
+<div class="paragraph">
+<p>Original <code>$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    "theme": {
+        "default": "keycloak",
+        "staticMaxAge": 2592000,
+        "cacheTemplates": true,
+        "cacheThemes": true,
+        "folder": {
+          "dir": "${jboss.server.config.dir}/themes"
+        }
+    },</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>New <code>$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    "theme": {
+        "default": "keycloak",
+        "staticMaxAge": 2592000,
+        "cacheTemplates": true,
+        "cacheThemes": true,
+        "folder": {
+          "dir": "${jboss.server.config.dir}/themes"
+        },
+        "module": {
+            "modules": [ "org.hawkular.keycloak.theme" ]
+        }
+    },</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>For our REST listener, we need a system property on the Keycloak server, which we can add to the <code>standalone.xml</code>:</p>
+</div>
+<div class="paragraph">
+<p>Add to <code>$KEYCLOAK_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;extensions&gt;
+...
+&lt;/extensions&gt;
+
+&lt;system-properties&gt;
+    &lt;property name="hawkular.events.listener.rest.endpoint" value="http://localhost:8080/hawkular-accounts-events-backend/events"/&gt;
+&lt;/system-properties&gt;</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_importing_the_realm">Importing the realm</h4>
+<div class="paragraph">
+<p>The Hawkular realm for Keycloak can either be imported via the <code>-Dkeycloak.import=/path/to/hawkular-realm.json</code> or
+via the UI once the Keycloak server boots.</p>
+</div>
+<div class="paragraph">
+<p>Before importing, change the event listener from JMS to REST on the
+<code>$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json</code> file:</p>
+</div>
+<div class="paragraph">
+<p>Before <code>$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "id" : "hawkular-realm",
+  ...
+  "eventsListeners" : [ "hawkular-jms", "jboss-logging" ],
+  ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After <code>$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "id" : "hawkular-realm",
+  ...
+  "eventsListeners" : [ "hawkular-rest", "jboss-logging" ],
+  ...
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And add the Hawkular URL to the allowed redirect URIs:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json"> "applications" : [
+    {
+      "name": "hawkular-accounts-backend",
+      "redirectUris": ["/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"],
+      ...
+    },
+    {
+      "name": "hawkular-ui",
+      "redirectUris": ["/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:8080"],
+      ...
+    }
+  ]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When using the system property <code>keycloak.import</code> to load the Hawkular realm, make sure that it gets properly imported
+by checking this log entry from Wildfly:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">11:19:50,670 INFO  [org.keycloak.services.resources.KeycloakApplication] (ServerService Thread Pool -- 62) Imported
+realm hawkular from file /path/to/hawkular-realm.json</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_starting_keycloak">Starting Keycloak</h4>
+<div class="paragraph">
+<p>For our purposes, we&#8217;ll start Keycloak with a port offset of 100, meaning that the Keycloak UI console will be
+available on the port 8180, as we want Hawkular to run on port 8080.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$KEYCLOAK_HOME/bin/standalone.sh -Djboss.socket.binding.port-offset=100
+-Dkeycloak.import=$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_removing_keycloak_from_hawkular">Removing Keycloak from Hawkular</h4>
+<div class="paragraph">
+<p>To remove the Keycloak server from Hawkular, remove the server extension and subsystem from the <code>standalone.xml</code>:</p>
+</div>
+<div class="paragraph">
+<p>Remove from <code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;extension module="org.keycloak.keycloak-server-subsystem"/&gt;</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Make sure to remove the <strong>server</strong> subsystem, and not the <strong>adapter</strong>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Remove from <code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;subsystem xmlns="urn:jboss:domain:keycloak-server:1.1"&gt;
+    &lt;web-context&gt;auth&lt;/web-context&gt;
+&lt;/subsystem&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Additionally, you might want to remove the <code>KeycloakDS</code> data source, the <code>keycloak.import</code> and the
+<code>hawkular.events.listener.rest.endpoint</code> system properties:</p>
+</div>
+<div class="paragraph">
+<p>Remove from <code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;datasource jndi-name="java:jboss/datasources/KeycloakDS" pool-name="KeycloakDS" enabled="true" use-java-context="true"&gt;
+    &lt;connection-url&gt;jdbc:h2:${jboss.server.data.dir}${/}h2${/}keycloak;AUTO_SERVER=TRUE&lt;/connection-url&gt;
+    &lt;driver&gt;h2&lt;/driver&gt;
+    &lt;security&gt;
+        &lt;user-name&gt;sa&lt;/user-name&gt;
+        &lt;password&gt;sa&lt;/password&gt;
+    &lt;/security&gt;
+&lt;/datasource&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Remove from <code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;property name="keycloak.import" value="${jboss.home.dir}/standalone/configuration/hawkular-realm-for-dev.json"/&gt;
+&lt;property name="hawkular.events.listener.rest.endpoint" value="http://localhost:8080/hawkular-accounts-events-backend/events"/&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, tell the Keycloak Wildfly Adapter what is the URL for the Keycloak Server:</p>
+</div>
+<div class="paragraph">
+<p><code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;realm name="hawkular"&gt;
+    &lt;auth-server-url&gt;http://localhost:8180/auth&lt;/auth-server-url&gt;
+    &lt;auth-server-url-for-backend-requests&gt;http://localhost:8180/auth&lt;/auth-server-url-for-backend-requests&gt;
+    &lt;ssl-required&gt;none&lt;/ssl-required&gt;
+&lt;/realm&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And the same thing for the Keycloak JavaScript Adapter.
+<code>$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "realm": "hawkular",
+  "auth-server-url": "http://localhost:8180/auth",
+  "ssl-required": "none",
+  "resource": "hawkular-ui",
+  "public-client": true
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, remove the JBoss modules for the listeners and Keycloak UI theme:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">rm -rf $HAWKULAR_HOME/modules/org/hawkular/keycloak</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_starting_hawkular">Starting Hawkular</h4>
+<div class="paragraph">
+<p>Once Keycloak has been fully removed from Hawkular, it can be started normally:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$HAWKULAR_HOME/bin/standalone.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once it finishes booting, it&#8217;s accessible via <a href="http://localhost:8080" class="bare">http://localhost:8080</a> . After opening this URL, the browser is
+redirected to Keycloak for logging in. To confirm that the external Keycloak is being used, check that the URL starts
+with <a href="http://localhost:8180/auth" class="bare">http://localhost:8180/auth</a> .</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_more">More</h3>
+<div class="paragraph">
+<p>More about the Keycloak integration <a href="keycloak.html">here</a>.</p>
+</div>
 </div>
 </div>
 </div>
