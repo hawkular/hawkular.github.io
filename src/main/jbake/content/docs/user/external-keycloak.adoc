@@ -1,27 +1,15 @@
-= External Keycloak
-Juraci Paixão Kröhling
-2015-06-26
-:description: How to use an external Keycloak with Hawkular
-:jbake-type: page
-:jbake-status: published
-:icons: font
-:toc: macro
-:toc-title:
-
-toc::[]
-
-== Introduction
+=== Introduction
 
 Hawkular ships with a ready to use instance of Keycloak. In some situations, however, it is desirable to split Hawkular
 from Keycloak. This document outlines this process. This document is valid from Hawkular 1.0.0.Alpha3 and later.
 
-== Preparing the environments
+=== Preparing the environments
 
 For the purposes of this document, both Keycloak and Hawkular will be running on the same machine, but on different
 Wildfly instances. Keycloak will be running on a port-offset of 100, while Hawkular will be running on the default
 set of Wildfly ports.
 
-=== Preparing Keycloak
+==== Preparing Keycloak
 
 Before starting Keycloak, we need to copy the event listeners and the themes, deployed as JBoss Modules to it:
 
@@ -123,7 +111,7 @@ Add to `$KEYCLOAK_HOME/standalone/configuration/standalone.xml`:
 </system-properties>
 ----
 
-=== Importing the realm
+==== Importing the realm
 
 The Hawkular realm for Keycloak can either be imported via the `-Dkeycloak.import=/path/to/hawkular-realm.json` or
 via the UI once the Keycloak server boots.
@@ -181,7 +169,7 @@ by checking this log entry from Wildfly:
 realm hawkular from file /path/to/hawkular-realm.json
 ----
 
-=== Starting Keycloak
+==== Starting Keycloak
 
 For our purposes, we'll start Keycloak with a port offset of 100, meaning that the Keycloak UI console will be
 available on the port 8180, as we want Hawkular to run on port 8080.
@@ -192,7 +180,7 @@ $KEYCLOAK_HOME/bin/standalone.sh -Djboss.socket.binding.port-offset=100
 -Dkeycloak.import=$HAWKULAR_HOME/standalone/configuration/hawkular-realm.json
 ----
 
-=== Removing Keycloak from Hawkular
+==== Removing Keycloak from Hawkular
 
 To remove the Keycloak server from Hawkular, remove the server extension and subsystem from the `standalone.xml`:
 
@@ -266,7 +254,7 @@ And finally, remove the JBoss modules for the listeners and Keycloak UI theme:
 rm -rf $HAWKULAR_HOME/modules/org/hawkular/keycloak
 ----
 
-=== Starting Hawkular
+==== Starting Hawkular
 
 Once Keycloak has been fully removed from Hawkular, it can be started normally:
 
@@ -279,3 +267,6 @@ $HAWKULAR_HOME/bin/standalone.sh
 Once it finishes booting, it's accessible via http://localhost:8080 . After opening this URL, the browser is
 redirected to Keycloak for logging in. To confirm that the external Keycloak is being used, check that the URL starts
 with http://localhost:8180/auth .
+
+=== More
+More about the Keycloak integration link:keycloak.html[here].
