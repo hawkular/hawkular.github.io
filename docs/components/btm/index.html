@@ -167,7 +167,8 @@
 <li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_the_clients">The Clients</a></li>
-<li><a href="#_the_btm_server">The BTM Server</a></li>
+<li><a href="#_the_server">The Server</a></li>
+<li><a href="#_the_user_interface">The User Interface</a></li>
 </ul>
 </li>
 <li><a href="#_business_transaction_configuration">Business Transaction Configuration</a>
@@ -176,6 +177,7 @@
 <li><a href="#_action_helper_classes">Action Helper Classes</a></li>
 </ul>
 </li>
+<li><a href="#_properties">Properties</a></li>
 <li><a href="#_useful_links">Useful Links</a></li>
 </ul>
 </div>
@@ -247,11 +249,14 @@
 </li>
 </ul>
 </div>
+<div class="paragraph">
+<p>Instructions on how to configure the client environment can be found here: <a href="clientconfig.html">Client Configuration</a></p>
+</div>
 </div>
 <div class="sect2">
-<h3 id="_the_btm_server">The BTM Server</h3>
+<h3 id="_the_server">The Server</h3>
 <div class="paragraph">
-<p>The Business Transaction Management (BTM) Server can be clustered to enable reporting and analysis of the business transaction data to be load balanced across multiple servers.</p>
+<p>The Business Transaction Management (BTM) Server supports reporting and analysis of the business transaction data. These capabilities can be access through a set of REST services, more information can be found here: <a href="../../rest/rest-btm.html">BTM REST services</a></p>
 </div>
 <div class="admonitionblock caution">
 <table>
@@ -260,10 +265,47 @@
 <i class="fa icon-caution" title="Caution"></i>
 </td>
 <td class="content">
-The standalone server does not currently supporting a clustered configuration.
+The standalone server does not currently support a clustered configuration.
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>The instructions for installing the server can be found here: <a href="serverinstall.html">Server Installation</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_user_interface">The User Interface</h3>
+<div class="paragraph">
+<p>Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: <a href="http://localhost:&lt;port&gt;/hawkular/btm-ui" class="bare">http://localhost:&lt;port&gt;/hawkular/btm-ui</a></p>
+</div>
+<div class="paragraph">
+<p><em>Where 'port' is the port used by the server (e.g. 8180 if port offset of 100 has been used).</em></p>
+</div>
+<div class="paragraph">
+<p>The default username and password when first starting the server is <strong><em>jdoe</em></strong> and <strong><em>password</em></strong>.</p>
+</div>
+<div class="sect3">
+<h4 id="_kibana_analytics_dashboard">Kibana analytics dashboard</h4>
+<div class="paragraph">
+<p>The UI currently only provides access to the Kibana analytics dashboard, showing the response time information derived from the executing business transaction instances.</p>
+</div>
+<div class="paragraph">
+<p>Some tips on using Kibana:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The 'filters' green tab at the top of the page can be expanded to show the current filters that have been applied. Whenever you select a time region (from the top chart), or select a magnifying glass or no entry icon, this will cause the information being viewed to be further constrained by adding an additional filter. When you wish to revert back to a previous level of information, simply remove (or disable) the particular filter box.</p>
+</li>
+<li>
+<p>In the lower table, showing the latest response time 'records', you can select the fields in the left hand column to get further statistics regarding the different values.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Further information on using Kibana can be found here: <a href="https://www.elastic.co/guide/en/kibana/3.0/index.html" class="bare">https://www.elastic.co/guide/en/kibana/3.0/index.html</a></p>
+</div>
 </div>
 </div>
 </div>
@@ -298,48 +340,55 @@ In future releases, UI tools will be provided to help capture this configuration
       "description": "Order Management example from RTGov",
       "filter": {
         "inclusions": [  <i class="conum" data-value="2"></i><b>(2)</b>
-          "^https?://.*/demo-orders/OrderService$",
-          "\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService"
+          "^/demo-orders/OrderService$"
         ]
       },
       "processors": [{  <i class="conum" data-value="3"></i><b>(3)</b>
-        "nodeType": "Service",  <i class="conum" data-value="4"></i><b>(4)</b>
-        "request": "true",  <i class="conum" data-value="5"></i><b>(5)</b>
-        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",  <i class="conum" data-value="6"></i><b>(6)</b>
-        "operation": "submitOrder",  <i class="conum" data-value="7"></i><b>(7)</b>
-        "actions": [{  <i class="conum" data-value="8"></i><b>(8)</b>
-          "actionType": "AddContent",
+        "nodeType": "Consumer",  <i class="conum" data-value="4"></i><b>(4)</b>
+        "direction": "In",  <i class="conum" data-value="5"></i><b>(5)</b>
+        "uriFilter": "^/demo-orders/OrderService$",  <i class="conum" data-value="6"></i><b>(6)</b>
+        "actions": [{  <i class="conum" data-value="7"></i><b>(7)</b>
           "name": "all",
           "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
-          "expression": "XMLHelper.serialize(values[0])"
+          "actionType": "AddContent",
+          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']\", values[0]))"
         },{
           "actionType": "AddCorrelationId",
-          "scope": "Global",  <i class="conum" data-value="14"></i><b>(14)</b>
-          "expression": "XMLHelper.evaluate(\"order/orderId/text()\", values[0])"
+          "scope": "Global",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/orderId/text()\", values[0])"
         },{
-          "actionType": "SetProperty",
           "name": "customer",
-          "expression": "XMLHelper.evaluate(\"order/customer/text()\", values[0])"
-        },{
           "actionType": "SetProperty",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/customer/text()\", values[0])"
+        },{
           "name": "item",
-          "expression": "XMLHelper.evaluate(\"order/itemId/text()\", values[0])"
+          "actionType": "SetProperty",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/itemId/text()\", values[0])"
         }]
       },{
-        "nodeType": "Service",
-        "request": "false",
-        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",
-        "operation": "submitOrder",
+        "nodeType": "Consumer",
+        "direction": "Out",
+        "uriFilter": "^/demo-orders/OrderService$",
         "actions": [{
-          "actionType": "SetProperty",
-          "name": "total",
-          "expression": "values[0].total"
+          "name": "all",
+          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrderResponse",
+          "actionType": "AddContent",
+          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrderResponse']\", values[0]))"
+        }]
+      },{
+        "nodeType": "Consumer",
+        "direction": "Out",
+        "uriFilter": "^/demo-orders/OrderService$",
+        "predicate": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']\", values[0]) != null",  <i class="conum" data-value="8"></i><b>(8)</b>
+        "actions": [{
+          "actionType": "SetFault",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultcode/text()\", values[0])"
+        },{
+          "actionType": "SetFaultDescription",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultstring/text()\", values[0])"
         }]
       }]
     }
-  },
-  "properties": {  <i class="conum" data-value="9"></i><b>(9)</b>
-    "hawkular-btm.collector.onlynamed": "true"
   }
 }</code></pre>
 </div>
@@ -360,11 +409,11 @@ In future releases, UI tools will be provided to help capture this configuration
 </tr>
 <tr>
 <td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer, Component or Service</td>
+<td>The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer or Component</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="5"></i><b>5</b></td>
-<td>The 'request' boolean field determines whether the request or response direction should be processed</td>
+<td>The 'direction' field determines whether the <strong>In</strong> (i.e. request) or <strong>Out</strong> (i.e. response) direction should be processed</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="6"></i><b>6</b></td>
@@ -372,15 +421,11 @@ In future releases, UI tools will be provided to help capture this configuration
 </tr>
 <tr>
 <td><i class="conum" data-value="7"></i><b>7</b></td>
-<td>The optional operation name, only relevant for 'Service' node types</td>
+<td>A list of actions to be performed by the processor, if the matching criteria are satisfied. Each action can have an optional predicate expression to determine if it should be applied. The list of supported action types, and their relevant fields, are described below.</td>
 </tr>
 <tr>
 <td><i class="conum" data-value="8"></i><b>8</b></td>
-<td>A list of actions to be performed by the processor, if the matching criteria are satisfied. The list of supported action types, and their relevant fields, are described below</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="9"></i><b>9</b></td>
-<td>A map of property name and values. These are merged with properties defined in other json files, so in general it is recommended to place all relevant properties into a single json file</td>
+<td>An optional predicate expression can be defined at the processor level, to guard against applying the actions it contains.</td>
 </tr>
 </table>
 </div>
@@ -414,6 +459,10 @@ In future releases, UI tools will be provided to help capture this configuration
 <td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault value. The '<strong><em>expression</em></strong>' field is the MVEL expression used to extract the fault name</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">SetFaultDescription</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault description value. The '<strong><em>expression</em></strong>' field is the MVEL expression used to extract the fault description</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SetProperty</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Extract a named business property. The '<strong><em>name</em></strong>' field names the business property, and '<strong><em>expression</em></strong>' defines the MVEL expression used to extract the value</p></td>
 </tr>
@@ -442,7 +491,7 @@ In future releases, UI tools will be provided to help capture this configuration
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The current business transaction instance node being processed, type is derived from <em>org.hawkular.btm.api.model.btxn.Node</em>, current concrete types are <em>Consumer</em>, <em>Producer</em>, <em>Component</em> and <em>Service</em> (within the same package).</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The current business transaction instance node being processed, type is derived from <em>org.hawkular.btm.api.model.btxn.Node</em>, current concrete types are <em>Consumer</em>, <em>Producer</em> and <em>Component</em> (within the same package).</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">headers</p></td>
@@ -478,12 +527,53 @@ In future releases, UI tools will be provided to help capture this configuration
 <td class="tableblock halign-left valign-top"><p class="tableblock">This method applies an XPath expression to the XML document/fragment supplied in the following formats:  <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node selectNode(String xpath, Object node)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This method applies an XPath expression to the XML document/fragment supplied in the following formats:  <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>, to select a Node.</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">String serialize(Object node)</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node deserialize(Object node)</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This method attempts to deserialize the supplied representation of an XML document. The supported input formats are: <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
 </tr>
 </tbody>
 </table>
 </div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_properties">Properties</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The system wide properties are now defined within a single <strong><em>btm.json</em></strong> file that is included within the <em>standalone/data/btmconfig</em> folder of the BTM server.</p>
+</div>
+<div class="paragraph">
+<p>The current properties that can be configured here are:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 3. BTM Properties</caption>
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Property Name</th>
+<th class="tableblock halign-left valign-top">Default</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hawkular-btm.collector.onlynamed</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">false</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Determine whether only business transaction fragments associated with a business transaction name should be reported.</p></td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="sect1">
