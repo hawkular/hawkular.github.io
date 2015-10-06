@@ -9,14 +9,69 @@
 
 
 ==============================================
-*Endpoint* `/`
+*Endpoint* `/ack/{alertId}`
 
 
-NOTE: *Get alerts with optional filtering* 
+NOTE: *Set one alert Acknowledged* 
 
 *Method*
 ****
-*GET* `/`
+*PUT* `/ack/{alertId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |alertId|true|alertId to Ack|string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |ackBy|false|user acknowledging the alerts|string
+    |ackNotes|false|additional notes associated with the acknowledgement|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Alert Acknowledged invoked successfully | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/ack`
+
+
+NOTE: *Set one or more alerts Acknowledged* 
+
+*Method*
+****
+*PUT* `/ack`
 ****
 
 *header parameters*
@@ -31,14 +86,9 @@ NOTE: *Get alerts with optional filtering*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
-    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
-    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
-    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
-    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
-    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
-    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
-    |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
+    |alertIds|true|comma separated list of alertIds to Ack|string
+    |ackBy|false|user acknowledging the alerts|string
+    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
 |=======================
 
 *Response* +
@@ -48,8 +98,56 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success | -
+| 200    | Success, Alerts Acknowledged invoked successfully | -
 | 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{alertId}`
+
+
+NOTE: *Delete an existing Alert* 
+
+*Method*
+****
+*DELETE* `/{alertId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |alertId|true|Alert id to be deleted|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Alert deleted | -
+| 500    | Internal server error | -
+| 404    | Alert not found | -
 
 |=======================
 
@@ -91,6 +189,59 @@ NOTE: *Delete alerts with optional filtering*
     |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
     |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
     |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success | -
+| 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/`
+
+
+NOTE: *Get alerts with optional filtering* 
+
+*Method*
+****
+*GET* `/`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
+    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
+    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
+    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
+    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
+    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
+    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format [category|]name|string
+    |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
 |=======================
 
 *Response* +
@@ -402,170 +553,20 @@ void
 
 {empty} +
 
-
-
-==============================================
-*Endpoint* `/ack/{alertId}`
-
-
-NOTE: *Set one alert Acknowledged* 
-
-*Method*
-****
-*PUT* `/ack/{alertId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|alertId to Ack|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes associated with the acknowledgement|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/ack`
-
-
-NOTE: *Set one or more alerts Acknowledged* 
-
-*Method*
-****
-*PUT* `/ack`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to Ack|string
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{alertId}`
-
-
-NOTE: *Delete an existing Alert* 
-
-*Method*
-****
-*DELETE* `/{alertId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|Alert id to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert deleted | -
-| 500    | Internal server error | -
-| 404    | Alert not found | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
 === Action Handling
 
 
 
 ==============================================
-*Endpoint* `/actions/history`
+*Endpoint* `/actions/`
 
 
-NOTE: *Get actions from history with optional filtering* 
+NOTE: *Create a new action* +
+      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
 
 *Method*
 ****
-*GET* `/actions/history`
+*POST* `/actions/`
 ****
 
 *header parameters*
@@ -575,17 +576,12 @@ NOTE: *Get actions from history with optional filtering*
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-*query parameters*
+*body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |startTime|false|filter out actions created before this time, millisecond since epoch|long
-    |endTime|false|filter out action created after this time, millisecond since epoch|long
-    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
-    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
-    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
-    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
+    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
 |=======================
 
 *Response* +
@@ -595,7 +591,38 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success | -
+| 200    | Success, Action Created | -
+| 500    | Internal server error | -
+| 400    | Existing action/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Find all action ids grouped by plugin* +
+      _Pagination is not yet implemented_
+
+*Method*
+****
+*GET* `/actions/`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success. | -
 | 500    | Internal server error | -
 
 |=======================
@@ -609,14 +636,15 @@ void
 
 
 ==============================================
-*Endpoint* `/actions/history/delete`
+*Endpoint* `/actions/plugin/{actionPlugin}`
 
 
-NOTE: *Delete actions from history with optional filtering* 
+NOTE: *Find all action ids of an specific action plugin* +
+      _Pagination is not yet implemented_
 
 *Method*
 ****
-*PUT* `/actions/history/delete`
+*GET* `/actions/plugin/{actionPlugin}`
 ****
 
 *header parameters*
@@ -626,17 +654,12 @@ NOTE: *Delete actions from history with optional filtering*
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-*query parameters*
+*path parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |startTime|false|filter out actions created before this time, millisecond since epoch|long
-    |endTime|false|filter out action created after this time, millisecond since epoch|long
-    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
-    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
-    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
-    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
+    |actionPlugin|true|Action plugin to filter query for action ids|string
 |=======================
 
 *Response* +
@@ -793,15 +816,14 @@ void
 
 
 ==============================================
-*Endpoint* `/actions/`
+*Endpoint* `/actions/history`
 
 
-NOTE: *Find all action ids grouped by plugin* +
-      _Pagination is not yet implemented_
+NOTE: *Get actions from history with optional filtering* 
 
 *Method*
 ****
-*GET* `/actions/`
+*GET* `/actions/history`
 ****
 
 *header parameters*
@@ -811,42 +833,17 @@ NOTE: *Find all action ids grouped by plugin* +
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new action* +
-      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
-
-*Method*
-****
-*POST* `/actions/`
-****
-
-*header parameters*
+*query parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
+    |startTime|false|filter out actions created before this time, millisecond since epoch|long
+    |endTime|false|filter out action created after this time, millisecond since epoch|long
+    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
+    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
+    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
+    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
 |=======================
 
 *Response* +
@@ -856,9 +853,8 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Action Created | -
+| 200    | Success | -
 | 500    | Internal server error | -
-| 400    | Existing action/Invalid Parameters | -
 
 |=======================
 
@@ -871,15 +867,14 @@ void
 
 
 ==============================================
-*Endpoint* `/actions/plugin/{actionPlugin}`
+*Endpoint* `/actions/history/delete`
 
 
-NOTE: *Find all action ids of an specific action plugin* +
-      _Pagination is not yet implemented_
+NOTE: *Delete actions from history with optional filtering* 
 
 *Method*
 ****
-*GET* `/actions/plugin/{actionPlugin}`
+*PUT* `/actions/history/delete`
 ****
 
 *header parameters*
@@ -889,12 +884,17 @@ NOTE: *Find all action ids of an specific action plugin* +
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-*path parameters*
+*query parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to filter query for action ids|string
+    |startTime|false|filter out actions created before this time, millisecond since epoch|long
+    |endTime|false|filter out action created after this time, millisecond since epoch|long
+    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
+    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
+    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
+    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
 |=======================
 
 *Response* +
@@ -1010,14 +1010,14 @@ void
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}`
+*Endpoint* `/triggers/{triggerId}/conditions`
 
 
-NOTE: *Update an existing group trigger definition and its member definitions* 
+NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
 
 *Method*
 ****
-*PUT* `/triggers/groups/{groupId}`
+*POST* `/triggers/{triggerId}/conditions`
 ****
 
 *header parameters*
@@ -1032,14 +1032,14 @@ NOTE: *Update an existing group trigger definition and its member definitions*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |groupId|true|Group Trigger id to be updated|string
+    |triggerId|true|Trigger definition id to be retrieved|string
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true|Updated group trigger definition|<<Trigger,Trigger>>
+    |body|false|Json representation of a condition. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
 |=======================
 
 *Response* +
@@ -1049,19 +1049,20 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Group Trigger updated | -
+| 200    | Success, Condition created | -
+| 404    | No trigger found | -
 | 500    | Internal server error | -
-| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+| 400    | Bad Request/Invalid Parameters | -
 
 |=======================
 
 {empty} +
 
-NOTE: *Delete a group trigger.* 
+NOTE: *Get all conditions for a specific trigger.* 
 
 *Method*
 ****
-*DELETE* `/triggers/groups/{groupId}`
+*GET* `/triggers/{triggerId}/conditions`
 ****
 
 *header parameters*
@@ -1076,15 +1077,7 @@ NOTE: *Delete a group trigger.*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |groupId|true|Group Trigger id|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |keepNonOrphans|true|Convert the non-orphan member triggers to standard triggers.|boolean
-    |keepOrphans|true|Convert the orphan member triggers to standard triggers.|boolean
+    |triggerId|true|Trigger definition id to be retrieved|string
 |=======================
 
 *Response* +
@@ -1094,10 +1087,141 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Group Trigger Removed | -
+| 200    | Success | -
 | 500    | Internal server error | -
-| 404    | Group Trigger not found | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/{triggerId}/conditions/{conditionId}`
+
+
+NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
+
+*Method*
+****
+*PUT* `/triggers/{triggerId}/conditions/{conditionId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |conditionId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|Json representation of a condition|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Condition updated | -
+| 404    | No Condition found | -
+| 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
+
+*Method*
+****
+*DELETE* `/triggers/{triggerId}/conditions/{conditionId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |conditionId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Condition deleted | -
+| 404    | No Condition found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *@Deprecated : Use GET /alerts/triggers/{triggerId}/conditions* 
+
+*Method*
+****
+*GET* `/triggers/{triggerId}/conditions/{conditionId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |triggerId|true|Trigger definition id to be retrieved|string
+    |conditionId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Condition found | -
+| 404    | No Condition found | -
+| 500    | Internal server error | -
 
 |=======================
 
@@ -1325,6 +1449,106 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | Success, Trigger updated | -
+| 500    | Internal server error | -
+| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/groups/{groupId}`
+
+
+NOTE: *Delete a group trigger.* 
+
+*Method*
+****
+*DELETE* `/triggers/groups/{groupId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |groupId|true|Group Trigger id|string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |keepNonOrphans|true|Convert the non-orphan member triggers to standard triggers.|boolean
+    |keepOrphans|true|Convert the orphan member triggers to standard triggers.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Group Trigger Removed | -
+| 500    | Internal server error | -
+| 404    | Group Trigger not found | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Update an existing group trigger definition and its member definitions* 
+
+*Method*
+****
+*PUT* `/triggers/groups/{groupId}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |groupId|true|Group Trigger id to be updated|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Updated group trigger definition|<<Trigger,Trigger>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Group Trigger updated | -
 | 500    | Internal server error | -
 | 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
 
@@ -1608,15 +1832,15 @@ void
 
 
 ==============================================
-*Endpoint* `/triggers/tag`
+*Endpoint* `/triggers/`
 
 
-NOTE: *Find all Trigger definitions for the specified tag. At least one of category and name is required* +
+NOTE: *Find all Trigger definitions* +
       _Pagination is not yet implemented_
 
 *Method*
 ****
-*GET* `/triggers/tag`
+*GET* `/triggers/`
 ****
 
 *header parameters*
@@ -1626,14 +1850,6 @@ NOTE: *Find all Trigger definitions for the specified tag. At least one of categ
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |name|true|The tag name.|string
-    |value|true|The tag value. Set to &#39;*&#39; to match all values for the tag name.|string
-|=======================
 
 *Response* +
 void
@@ -1642,8 +1858,46 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Triggers list found. Can be empty. | -
+| 200    | Success | -
 | 500    | Internal server error | -
+
+|=======================
+
+{empty} +
+
+NOTE: *Create a new trigger* +
+      _Returns created Trigger_
+
+*Method*
+****
+*POST* `/triggers/`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
+|=======================
+
+*Response* +
+Trigger
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Trigger Created | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
 
 |=======================
 
@@ -1687,84 +1941,6 @@ NOTE: *Find all Group Member Trigger Definitions* +
 |=======================
 |Parameter|Required|Description|Data Type
     |includeOrphans|false|include Orphan members? No if omitted.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/`
-
-
-NOTE: *Create a new trigger* +
-      _Returns created Trigger_
-
-*Method*
-****
-*POST* `/triggers/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
-|=======================
-
-*Response* +
-Trigger
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Find all Trigger definitions* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
 |=======================
 
 *Response* +
@@ -1885,14 +2061,15 @@ Trigger
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}/conditions/{triggerMode}`
+*Endpoint* `/triggers/tag`
 
 
-NOTE: *Set the conditions for the group trigger. This replaces any existing conditions on the group and member conditions.  Returns the new group conditions.* 
+NOTE: *Find all Trigger definitions for the specified tag. At least one of category and name is required* +
+      _Pagination is not yet implemented_
 
 *Method*
 ****
-*PUT* `/triggers/groups/{groupId}/conditions/{triggerMode}`
+*GET* `/triggers/tag`
 ****
 
 *header parameters*
@@ -1902,20 +2079,13 @@ NOTE: *Set the conditions for the group trigger. This replaces any existing cond
 |Parameter|Required|Description|Data Type
     |Hawkular-Tenant|false||string
 |=======================
-*path parameters*
+*query parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |groupId|true|The relevant Group Trigger.|string
-    |triggerMode|true|FIRING or AUTORESOLVE (not case sensitive).|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of GroupConditionsInfo. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
+    |name|true|The tag name.|string
+    |value|true|The tag value. Set to &#39;*&#39; to match all values for the tag name.|string
 |=======================
 
 *Response* +
@@ -1925,233 +2095,7 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | Success, Group Condition Set created | -
-| 404    | No trigger found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/conditions`
-
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/conditions`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition created | -
-| 404    | No trigger found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Get all conditions for a specific trigger.* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/conditions`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/triggers/{triggerId}/conditions/{conditionId}`
-
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}/conditions/{conditionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition updated | -
-| 404    | No Condition found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}/conditions/{conditionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition deleted | -
-| 404    | No Condition found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *@Deprecated : Use GET /alerts/triggers/{triggerId}/conditions* 
-
-*Method*
-****
-*GET* `/triggers/{triggerId}/conditions/{conditionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition found | -
-| 404    | No Condition found | -
+| 200    | Success, Triggers list found. Can be empty. | -
 | 500    | Internal server error | -
 
 |=======================
@@ -2354,6 +2298,62 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | Success, Condition Set created | -
+| 404    | No trigger found | -
+| 500    | Internal server error | -
+| 400    | Bad Request/Invalid Parameters | -
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/triggers/groups/{groupId}/conditions/{triggerMode}`
+
+
+NOTE: *Set the conditions for the group trigger. This replaces any existing conditions on the group and member conditions.  Returns the new group conditions.* 
+
+*Method*
+****
+*PUT* `/triggers/groups/{groupId}/conditions/{triggerMode}`
+****
+
+*header parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |Hawkular-Tenant|false||string
+|=======================
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |groupId|true|The relevant Group Trigger.|string
+    |triggerMode|true|FIRING or AUTORESOLVE (not case sensitive).|string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|Json representation of GroupConditionsInfo. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | Success, Group Condition Set created | -
 | 404    | No trigger found | -
 | 500    | Internal server error | -
 | 400    | Bad Request/Invalid Parameters | -
