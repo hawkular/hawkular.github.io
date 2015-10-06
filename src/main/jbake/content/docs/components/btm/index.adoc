@@ -43,11 +43,35 @@ Currently tested client environments include:
 * Apache Tomcat
 * Apache Karaf OSGI container
 
-=== The BTM Server
+Instructions on how to configure the client environment can be found here: link:clientconfig.html[Client Configuration]
 
-The Business Transaction Management (BTM) Server can be clustered to enable reporting and analysis of the business transaction data to be load balanced across multiple servers.
+=== The Server
 
-CAUTION: The standalone server does not currently supporting a clustered configuration.
+The Business Transaction Management (BTM) Server supports reporting and analysis of the business transaction data. These capabilities can be access through a set of REST services, more information can be found here: link:../../rest/rest-btm.html[BTM REST services]
+
+CAUTION: The standalone server does not currently support a clustered configuration.
+
+The instructions for installing the server can be found here: link:serverinstall.html[Server Installation]
+
+=== The User Interface
+
+Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: http://localhost:<port>/hawkular/btm-ui
+
+_Where 'port' is the port used by the server (e.g. 8180 if port offset of 100 has been used)._
+
+The default username and password when first starting the server is *_jdoe_* and *_password_*.
+
+==== Kibana analytics dashboard
+
+The UI currently only provides access to the Kibana analytics dashboard, showing the response time information derived from the executing business transaction instances.
+
+Some tips on using Kibana:
+
+* The 'filters' green tab at the top of the page can be expanded to show the current filters that have been applied. Whenever you select a time region (from the top chart), or select a magnifying glass or no entry icon, this will cause the information being viewed to be further constrained by adding an additional filter. When you wish to revert back to a previous level of information, simply remove (or disable) the particular filter box.
+
+* In the lower table, showing the latest response time 'records', you can select the fields in the left hand column to get further statistics regarding the different values.
+
+Further information on using Kibana can be found here: https://www.elastic.co/guide/en/kibana/3.0/index.html
 
 
 == Business Transaction Configuration
@@ -67,61 +91,66 @@ NOTE: In future releases, UI tools will be provided to help capture this configu
       "description": "Order Management example from RTGov",
       "filter": {
         "inclusions": [  // <2>
-          "^https?://.*/demo-orders/OrderService$",
-          "\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService"
+          "^/demo-orders/OrderService$"
         ]
       },
       "processors": [{  // <3>
-        "nodeType": "Service",  // <4>
-        "request": "true",  // <5>
-        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",  // <6>
-        "operation": "submitOrder",  // <7>
-        "actions": [{  // <8>
-          "actionType": "AddContent",
+        "nodeType": "Consumer",  // <4>
+        "direction": "In",  // <5>
+        "uriFilter": "^/demo-orders/OrderService$",  // <6>
+        "actions": [{  // <7>
           "name": "all",
           "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
-          "expression": "XMLHelper.serialize(values[0])"
+          "actionType": "AddContent",
+          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']\", values[0]))"
         },{
           "actionType": "AddCorrelationId",
-          "scope": "Global",  // <14>
-          "expression": "XMLHelper.evaluate(\"order/orderId/text()\", values[0])"
+          "scope": "Global",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/orderId/text()\", values[0])"
         },{
-          "actionType": "SetProperty",
           "name": "customer",
-          "expression": "XMLHelper.evaluate(\"order/customer/text()\", values[0])"
-        },{
           "actionType": "SetProperty",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/customer/text()\", values[0])"
+        },{
           "name": "item",
-          "expression": "XMLHelper.evaluate(\"order/itemId/text()\", values[0])"
+          "actionType": "SetProperty",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/itemId/text()\", values[0])"
         }]
       },{
-        "nodeType": "Service",
-        "request": "false",
-        "uriFilter": "^\\{urn:switchyard-quickstart-demo:orders:0.1.0\\}OrderService$",
-        "operation": "submitOrder",
+        "nodeType": "Consumer",
+        "direction": "Out",
+        "uriFilter": "^/demo-orders/OrderService$",
         "actions": [{
-          "actionType": "SetProperty",
-          "name": "total",
-          "expression": "values[0].total"
+          "name": "all",
+          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrderResponse",
+          "actionType": "AddContent",
+          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrderResponse']\", values[0]))"
+        }]
+      },{
+        "nodeType": "Consumer",
+        "direction": "Out",
+        "uriFilter": "^/demo-orders/OrderService$",
+        "predicate": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']\", values[0]) != null",  // <8>
+        "actions": [{
+          "actionType": "SetFault",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultcode/text()\", values[0])"
+        },{
+          "actionType": "SetFaultDescription",
+          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultstring/text()\", values[0])"
         }]
       }]
     }
-  },
-  "properties": {  // <9>
-    "hawkular-btm.collector.onlynamed": "true"
   }
 }
 ----
 <1> Each business transaction configuration must be given an unique name
 <2> Inclusion filters define a regex expression used to match a URI in the captured information. If an inclusion filter matches, then the associated business transaction name will be added to the data reported to the server
 <3> A list of information processors. Each entry in the list will define the criteria for matching against nodes in the business transaction fragment
-<4> The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer, Component or Service
-<5> The 'request' boolean field determines whether the request or response direction should be processed
+<4> The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer or Component
+<5> The 'direction' field determines whether the *In* (i.e. request) or *Out* (i.e. response) direction should be processed
 <6> The regex expression used to match against an URI of interest
-<7> The optional operation name, only relevant for 'Service' node types
-<8> A list of actions to be performed by the processor, if the matching criteria are satisfied. The list of supported action types, and their relevant fields, are described below
-<9> A map of property name and values. These are merged with properties defined in other json files, so in general it is recommended to place all relevant properties into a single json file
-
+<7> A list of actions to be performed by the processor, if the matching criteria are satisfied. Each action can have an optional predicate expression to determine if it should be applied. The list of supported action types, and their relevant fields, are described below.
+<8> An optional predicate expression can be defined at the processor level, to guard against applying the actions it contains.
 
 .Actions
 |===
@@ -134,6 +163,8 @@ NOTE: In future releases, UI tools will be provided to help capture this configu
 |SetDetail |Extract a node specific value. The '*_name_*' field represents the name associated with the detail, and '*_expression_*' the MVEL expression used to extract the value
 
 |SetFault |Define a fault value. The '*_expression_*' field is the MVEL expression used to extract the fault name
+
+|SetFaultDescription |Define a fault description value. The '*_expression_*' field is the MVEL expression used to extract the fault description
 
 |SetProperty |Extract a named business property. The '*_name_*' field names the business property, and '*_expression_*' defines the MVEL expression used to extract the value
 
@@ -149,7 +180,7 @@ The MVEL expressions are supplied the following variables:
 
 |btxn |The business transaction instance, of type _org.hawkular.btm.api.model.btxn.BusinessTransaction_.
 
-|node |The current business transaction instance node being processed, type is derived from _org.hawkular.btm.api.model.btxn.Node_, current concrete types are _Consumer_, _Producer_, _Component_ and _Service_ (within the same package).
+|node |The current business transaction instance node being processed, type is derived from _org.hawkular.btm.api.model.btxn.Node_, current concrete types are _Consumer_, _Producer_ and _Component_ (within the same package).
 
 |headers |A map of named header values.
 
@@ -168,10 +199,28 @@ Some helper classes are provided for use within the action expressions.
 
 |String evaluate(String xpath, Object node) |This method applies an XPath expression to the XML document/fragment supplied in the following formats:  _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
 
+|Node selectNode(String xpath, Object node) |This method applies an XPath expression to the XML document/fragment supplied in the following formats:  _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_, to select a Node.
+
 |String serialize(Object node) |This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
+
+|Node deserialize(Object node) |This method attempts to deserialize the supplied representation of an XML document. The supported input formats are: _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
 
 |===
 
+
+== Properties
+
+The system wide properties are now defined within a single *_btm.json_* file that is included within the _standalone/data/btmconfig_ folder of the BTM server.
+
+The current properties that can be configured here are:
+
+.BTM Properties
+|===
+|Property Name | Default | Description
+
+|hawkular-btm.collector.onlynamed | false | Determine whether only business transaction fragments associated with a business transaction name should be reported.
+
+|===
 
 
 
