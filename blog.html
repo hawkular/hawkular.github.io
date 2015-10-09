@@ -157,6 +157,253 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/10/09/graph-db-performance.html"><h1>Titan Graph DB Performance Tips</h1></a>
+            <p>09 October 2015, by Lukas Krejci</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In Hawkular Inventory, we use the Tinkerpop API (version 2 for the time being)
+to store our inventory model in a graph database. We chose Titan as the storage
+engine configured to store the data in the Cassandra cluster that is also
+backing Hawkular Metrics and Alerts. This blog post will guide you through some
+performance-related lessons with Titan that we learned so far.</p>
+</div>
+<div class="paragraph">
+<p>Inventory is under heavy development with a lot of redesign and refactoring
+going on between releases so we took quite a naive approach to storing and
+querying data from the graph database. That is, we store entities from our
+model as vertices in the graph and the relationships between the entities as
+edges in the graph. Quite simple and a school book example of how it should
+look like.</p>
+</div>
+<div class="paragraph">
+<p>We did declare a couple of indices in the database on the read-only aspects
+of the vertices (i.e. a "type" of the entity the vertex corresponds to) but we
+actually didn&#8217;t pay too much attention to the performance. We wanted to have
+the model right first.</p>
+</div>
+<div class="paragraph">
+<p>Fast forward a couple of months and of course, the performance started to be
+a real problem. The Hawkular agent for Wildfly is inserting a non-trivial
+amount of entities and not only inserting them but also querying them has seen
+a huge performance degradation compared to the simple examples we were unit
+testing with (due to number of vertices and edges stored).</p>
+</div>
+<div class="paragraph">
+<p>The time has come to think about how to squeeze some performance out of Titan
+as well as how to store the data and query it more intelligently.</p>
+</div>
+<div class="paragraph">
+<p>So what we did, you ask, to gain an order of mangnitude speed up?</p>
+</div>
+<div class="paragraph">
+<p>There are 2 aspects that needed our attention actually - insert performance,
+and query performance, which is where we are an order of magnitude faster now.</p>
+</div>
+<div class="paragraph">
+<p>I will focus only on the query performance in this post.</p>
+</div>
+<div class="paragraph">
+<p>As a model example, let&#8217;s consider the following query: find me all resources
+in a certain feed that have a certain resource type.</p>
+</div>
+<div class="paragraph">
+<p>For illustration purposes, this will be a fabricated graph that we will be
+querying.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2015/2015-10-09-inv-structure.png" alt="Example Inventory">
+</div>
+</div>
+<div class="paragraph">
+<p>In <a href="https://github.com/tinkerpop/gremlin/wiki">Gremlin</a> query language, our
+example query would be expressed without any optimizations, that we will going
+to describe later in the post, like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V() <b class="conum">(1)</b>
+  .has("name", "Red Hat, Inc.")
+  .has("type", "tenant") <b class="conum">(2)</b>
+  .out("contains") <b class="conum">(3)</b>
+  .has("name", "staging")
+  .has("type", "environment") <b class="conum">(4)</b>
+  .out("contains") <b class="conum">(5)</b>
+  .has("name", "test.redhat.com")
+  .has("type", "feed") <b class="conum">(6)</b>
+  .out("contains") <b class="conum">(7)</b>
+  .has("type", "resource") <b class="conum">(8)</b>
+  .as("result") <b class="conum">(9)</b>
+    .in("defines") <b class="conum">(10)</b>
+    .has("type", "resourceType")
+    .has("name", "JBoss EAP") <b class="conum">(11)</b>
+  .back("result"); <b class="conum">(12)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>For all vertices in the graph</p>
+</li>
+<li>
+<p>Choose those that have the type "tenant" called "Red Hat, Inc."</p>
+</li>
+<li>
+<p>Go out from them following the "contains" edges, to the target vertices</p>
+</li>
+<li>
+<p>choose those that have the type "environment" and name "staging"</p>
+</li>
+<li>
+<p>out, following "contains" edges</p>
+</li>
+<li>
+<p>choose vertices with type "feed" and name "test.redhat.com"</p>
+</li>
+<li>
+<p>out, following "contains" edges</p>
+</li>
+<li>
+<p>choose vertices with type "resource"</p>
+</li>
+<li>
+<p>mark the position in the traversal as a "result"</p>
+</li>
+<li>
+<p>follow "defines" edges that point to the "result" vertices</p>
+</li>
+<li>
+<p>choose all the source vertices of the edges that have type "Resource Type"
+and name "JBoss EAP"</p>
+</li>
+<li>
+<p>if the above yields a vertex, go back to the "result" and use that instead</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>So out of that pipeline, as they call it, out come the vertices representing
+resources with the desired resource type that live under given feed. E.g. in
+the example above, the query will return <code>eap1-test.redhat.com</code> and
+<code>eap2-test.redhat.com</code>.</p>
+</div>
+<div class="paragraph">
+<p>So what&#8217;s wrong with that you ask?</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_reduce_number_of_hops">1. Reduce number of Hops</h3>
+<div class="paragraph">
+<p>In the graph visualization you can notice that there is a <code>contains</code> edge
+between a number of vertices. Semantically, in Hawkular Inventory vertices
+connected by these edges form a tree and thus each of the vertices can be
+uniquely identified by its path along the <code>contains</code> edges. We call this
+path a canonical path and we use this path in a number of ways in the API.</p>
+</div>
+<div class="paragraph">
+<p>Additionally, this path is stored on each vertex (and indexed by a unique
+index to ensure consistency of the data). Having the path stored on each
+vertex and having an index on it enables us to be "clever" with the query
+and rewrite the parts that follow the <code>contains</code> chain from the Tenant
+vertices down by a simple lookup of the canonical path.</p>
+</div>
+<div class="paragraph">
+<p>As such, the original query would be transformed into:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .out("contains")
+  .has("type", "resource")
+  .as("result")
+    .in("defines")
+    .has("type", "resourceType")
+    .has("name", "JBoss EAP")
+  .back("result");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is a lot faster than the original, because we use an index to find our
+starting point much "deeper" in the graph than previously and have to make
+less hops to get to our results.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_avoid_code_as_back_code_if_possible">2. Avoid <code>.as()&#8230;&#8203;back()</code> If Possible</h3>
+<div class="paragraph">
+<p>This is not shown in the example but we found that we used the <code>.as()&#8230;&#8203;back()</code>
+construct in more places than necessary. Avoiding it speeds the execution up.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mirror_properties_on_the_edges">3. Mirror Properties on The Edges</h3>
+<div class="paragraph">
+<p>This is the single most important optimization we&#8217;ve done so far. The rationale
+is this. To jump from a vertex to another vertex over an edge is a fairly
+expensive operation. Titan uses the adjacency lists to store the vertices and
+their edges in wide rows in Cassandra. It uses another adjacency list for edges
+and their target vertices.</p>
+</div>
+<div class="paragraph">
+<p>So to go from vertex to vertex, Titan actually has to do 2 queries. It would
+be much easier if we could avoid that at least in some cases.</p>
+</div>
+<div class="paragraph">
+<p>The solution here is to copy the values of some (frequently used and, in our
+case, immutable) properties from the "source" and "target" vertices directly
+to the edges. This helps especially in the cases where you do some kind of
+filtering on the target vertices that you instead can do directly on the edges.
+If there is a high number of edges to go through, this helps tremendously
+because you greatly reduce the number of times you have to do the "second hop"
+to the target vertex.</p>
+</div>
+<div class="paragraph">
+<p>So this is the final version of the query that is an order of magnitude faster
+than the original:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .outE("contains") <b class="conum">(1)</b>
+  .has("targetType", "resource") <b class="conum">(2)</b>
+  .inV() <b class="conum">(3)</b>
+  .as("result")
+    .inE("defines") <b class="conum">(4)</b>
+    .has("sourceType", "resourceType")
+    .has("sourceName", "JBoss EAP")
+  .back("result");</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p><code>.out(label)</code> goes to the target vertex, while <code>.outE(label)</code> goes only to
+the edge</p>
+</li>
+<li>
+<p>We&#8217;re now on the edge and are filtering on its properties</p>
+</li>
+<li>
+<p>And we&#8217;re jumping on the target vertex</p>
+</li>
+<li>
+<p>Again, only jumping on the edge and filtering only on its properties.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>While I am sure there are still some optimizations left that we could do to
+make this even faster, I am quite satisfied with the speed up we were able to
+achieve just by these changes.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/10/06/hawkular-btm-0-4-0-released.html"><h1>Hawkular-BTM 0.4.0 released</h1></a>
             <p>06 October 2015, by Gary Brown</p>
             <p><div id="preamble">
@@ -553,183 +800,13 @@ server pages.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/09/03/monitoring-rails-using-hawkular-metrics.html"><h1>Monitoring Rails App using Hawkular Metrics</h1></a>
-            <p>03 September 2015, by Libor Zoubek</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>In this post I am going to show a way to monitor Rails application performance using Hawkular Metrics.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_setting_up_hawkular_metrics">Setting up Hawkular Metrics</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are several ways of setting up Hawkular Metrics standalone server.</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><strong>Build &amp; deploy</strong> - follow <a href="https://github.com/hawkular/hawkular-metrics">Hawkular Metrics Readme</a></p>
-</li>
-<li>
-<p><strong>Docker image</strong> - start <a href="https://hub.docker.com/r/hawkular/hawkular-metrics/">Hawkular Metrics Docker Image</a></p>
-</li>
-<li>
-<p><strong>Public instance</strong> - use <a href="http://livingontheedge.hawkular.org/hawklar/metrics" class="bare">http://livingontheedge.hawkular.org/hawklar/metrics</a> which runs full Hawkular including Metrics. But be sure your data will get lost at some point as this instance gets rebuilt/cleaned up from time to time.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hawkular_ruby_client">Hawkular Ruby Client</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Recently we started to work on a <a href="https://github.com/hawkular/hawkular-client-ruby">hawkular-client</a> in Ruby. So far we have implemented APIs for Hawkular Metrics. In this post we&#8217;ll use the client to push metric data, but it can also retrieve data for further analysis or reports, for more see <a href="http://www.hawkular.org/hawkular-client-ruby/Hawkular/Metrics/Client.html">documentation</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_monitoring_rails_application">Monitoring Rails Application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are several ways to monitor your Rails application&#8217;s performance. The way being shown here is pretty easy to implement, but requires modifications in Rails application. It takes advantage of <code>around_filter</code> of main ApplicationController. Within this filter we&#8217;re going to measure each controller&#8217;s response time to handle request.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_rails_demo_application">Rails Demo Application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>I&#8217;ve created simple Rails4 application called <a href="https://github.com/lzoubek/rails-demo">rails-demo</a>.</p>
-</div>
-<div class="paragraph">
-<p>I added the dependency on <a href="https://rubygems.org/gems/hawkular-client">hawkular-client</a> gem.</p>
-</div>
-<div class="paragraph">
-<p>The <a href="https://github.com/lzoubek/rails-demo/blob/master/app/controllers/application_controller.rb">Application controller</a> code is pretty easy</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-ruby" data-lang="ruby">require "hawkularclient"
-
-class ApplicationController &lt; ActionController::Base
-
-  # Prevent CSRF attacks by raising an exception.
-  # For APIs, you may want to use :null_session instead.
-  protect_from_forgery with: :exception
-
-
-  class MetricsReporter
-
-    def initialize
-      tenant_id = "hawkular.org"
-      # create hawkular metrics client <b class="conum">(1)</b>
-      @client = Hawkular::Metrics::Client::new("http://localhost:8080/hawkular/metrics","","",{:tenant =&gt; tenant_id})
-      # create tenant in case it does not exist
-      if @client.tenants.query.select { |tenant|  tenant.id == tenant_id}.empty?
-      	@client.tenants.create(tenant_id)
-      end
-    end
-
-    def around(controller, &amp;block)
-      # measure measure measure
-      now = Time.now
-      block.call
-      time_spent = Time.now - now
-      # metric ID must be unique within tenant <b class="conum">(2)</b>
-      gauge = "App.#{controller.class.name}:#{controller.params[:action]}"
-      # make sure metric definition is created <b class="conum">(3)</b>
-      @client.gauges.create({:id =&gt; gauge, :tags =&gt; {:app =&gt; "App"}}) rescue
-      # report time in milliseconds
-      @client.gauges.push_data(gauge ,{:value =&gt; time_spent * 1000})
-    end
-
-  end
-
-  # enable filter
-  around_filter MetricsReporter::new
-
-end</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>We create Hawkular Metrics <strong>@client</strong>. Point it to your instance URL, leave user/pass empty (as this has not been implemented yet) and set <strong>tenant</strong> option.</p>
-</li>
-<li>
-<p>We encode our application Name, controller name and controller action into metric ID. So we have different metrics for listing objects and ie. editing an object.</p>
-</li>
-<li>
-<p>We need to create metric definition with our tags, so we&#8217;re able to find all metrics related to rails-demo app later. This line is not required in case you don&#8217;t want to assign tags to your metric definitions.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s start Rails dev environment</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">gem install rails
-git clone https://github.com/lzoubek/rails-demo.git
-cd rails-demo
-bundler install
-bin/rake db:migrate RAILS_ENV=development
-rails server</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>By now, WEBrick should be listening on localhost, open <a href="http://localhost:3000/products" class="bare">http://localhost:3000/products</a> and in case there is no error displayed congratulations, we are monitoring <strong>rails-demo</strong>! Let&#8217;s start hitting the UI with some more requests using helper bash script located in <code>rails-demo</code> repository</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">./hit.sh</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>At this time we are simulating traffic on <strong>rails-demo</strong> application and pushing controller&#8217;s response times to Hawkular Metrics service.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_results">The Results</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Currently Hawkular Metrics (standalone) has no UI. But there is a bunch of useful angular components like <a href="https://github.com/hawkular/hawkular-charts">hawkular-charts</a>, so I wrote simple UI which can at least find metric definitions by tags and draw metric data into line chart.</p>
-</div>
-<div class="paragraph">
-<p>To watch metric data from rails-demo application open <a href="http://lzoubek.github.io/hawkular-metrics-ui-demo">Hawkular Metrics UI Demo</a>, fill in <strong>Metrics API URL</strong> (must be reachable from browser), <strong>Tenant ID</strong> and tags.</p>
-</div>
-<div id="rails-controller-response-times" class="imageblock" style="text-align: center">
-<div class="content">
-<a class="image" href="/img/blog/2015/hawkular-metrics-demo-ui.png"><img src="/img/blog/2015/hawkular-metrics-demo-ui.png" alt="Rails Controller response times" width="800"></a>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>As you may have already noticed, Hawkular Metrics server perfomance can have negative impact on rails-demo application performance because we synchronously push the data within around_filter code.  Even the fact, that rails application must be modified in order to be monitored might not be a good thing. In the next blog post I&#8217;ll write a simple service that is going to parse rails log files and report  data to Hawkular Metrics. In fact, it would be awesome to reuse <a href="https://github.com/scoutapp/scout-plugins">scout plugins</a> and forward their reports into Hawkular Metrics.</p>
-</div>
-<div class="paragraph">
-<p>Having metrics is only one piece in puzzle. Integration with <a href="/docs/components/alerts/index.html">Hawkular Alerts</a> will let you detect performance regressions or unexpected loads.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>03 September 2015 - <a href="blog/2015/09/03/monitoring-rails-using-hawkular-metrics.html">Monitoring Rails App using Hawkular Metrics</a></li>
           <li>29 August 2015 - <a href="blog/2015/08/29/hawkular-metrics-0.6.0.Final-released.html">Hawkular-Metrics 0.6.0 Release</a></li>
           <li>27 August 2015 - <a href="blog/2015/08/27/hawkular-1.0.0.Alpha4-released.html">The fourth milestone of Hawkular released</a></li>
           <li>25 August 2015 - <a href="blog/2015/08/25/hawkular-alerts-autoresolve.html">Introduction to AutoResolve triggers</a></li>

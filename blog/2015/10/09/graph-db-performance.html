@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Titan Graph DB Performance Tips</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../../css/base.css" rel="stylesheet">
+    <link href="../../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../../css/styles.css" rel="stylesheet">
+    <link href="../../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../../js/moment.min.js"></script>
+    <script src="../../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../../index.html">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../../index.html">Hawkular</a></li>
+                <li>
+                  <a href="../../../../docs/user/quick-start.html">Quick Start</a>
+                </li>
+                <li class=""><a href="../../../../downloads.html">Downloads</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Documentation
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Documentation</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="../../../../docs/user/quick-start.html">Quick Start</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/user/installation.html">Installation</a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li>
+                    <a href="../../../../docs/dev/development.html">Developer Documentation</a>
+                  </li>
+                  <li>
+                    <a href="../../../../docs/dev/terms.html">Used Terms</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-alerts.html">Alerts</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-btm.html">Business Transaction Management</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-inventory.html">Inventory</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-metrics.html">Metrics</a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="javascript:;" onclick="return false;" class="dropdown-toggle" data-toggle="dropdown">Sub-projects</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/alerts/index.html">Alerts</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/btm/index.html">Business Transaction Management</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/inventory/index.html">Inventory</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/metrics/index.html">Metrics</a>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../../community/index.html">Home</a>
+                  </li>
+                  <li>
+                    <a href="../../../../community/join.html">Join</a>
+                  </li>
+                  <li>
+                    <a href="../../../../license.html">License</a>
+                  </li>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+                <li class=""><a href="../../../../blog.html">Blog</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Titan Graph DB Performance Tips</h1>
+            <p>blog post</p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In Hawkular Inventory, we use the Tinkerpop API (version 2 for the time being)
+to store our inventory model in a graph database. We chose Titan as the storage
+engine configured to store the data in the Cassandra cluster that is also
+backing Hawkular Metrics and Alerts. This blog post will guide you through some
+performance-related lessons with Titan that we learned so far.</p>
+</div>
+<div class="paragraph">
+<p>Inventory is under heavy development with a lot of redesign and refactoring
+going on between releases so we took quite a naive approach to storing and
+querying data from the graph database. That is, we store entities from our
+model as vertices in the graph and the relationships between the entities as
+edges in the graph. Quite simple and a school book example of how it should
+look like.</p>
+</div>
+<div class="paragraph">
+<p>We did declare a couple of indices in the database on the read-only aspects
+of the vertices (i.e. a "type" of the entity the vertex corresponds to) but we
+actually didn&#8217;t pay too much attention to the performance. We wanted to have
+the model right first.</p>
+</div>
+<div class="paragraph">
+<p>Fast forward a couple of months and of course, the performance started to be
+a real problem. The Hawkular agent for Wildfly is inserting a non-trivial
+amount of entities and not only inserting them but also querying them has seen
+a huge performance degradation compared to the simple examples we were unit
+testing with (due to number of vertices and edges stored).</p>
+</div>
+<div class="paragraph">
+<p>The time has come to think about how to squeeze some performance out of Titan
+as well as how to store the data and query it more intelligently.</p>
+</div>
+<div class="paragraph">
+<p>So what we did, you ask, to gain an order of mangnitude speed up?</p>
+</div>
+<div class="paragraph">
+<p>There are 2 aspects that needed our attention actually - insert performance,
+and query performance, which is where we are an order of magnitude faster now.</p>
+</div>
+<div class="paragraph">
+<p>I will focus only on the query performance in this post.</p>
+</div>
+<div class="paragraph">
+<p>As a model example, let&#8217;s consider the following query: find me all resources
+in a certain feed that have a certain resource type.</p>
+</div>
+<div class="paragraph">
+<p>For illustration purposes, this will be a fabricated graph that we will be
+querying.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2015/2015-10-09-inv-structure.png" alt="Example Inventory">
+</div>
+</div>
+<div class="paragraph">
+<p>In <a href="https://github.com/tinkerpop/gremlin/wiki">Gremlin</a> query language, our
+example query would be expressed without any optimizations, that we will going
+to describe later in the post, like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V() <b class="conum">(1)</b>
+  .has("name", "Red Hat, Inc.")
+  .has("type", "tenant") <b class="conum">(2)</b>
+  .out("contains") <b class="conum">(3)</b>
+  .has("name", "staging")
+  .has("type", "environment") <b class="conum">(4)</b>
+  .out("contains") <b class="conum">(5)</b>
+  .has("name", "test.redhat.com")
+  .has("type", "feed") <b class="conum">(6)</b>
+  .out("contains") <b class="conum">(7)</b>
+  .has("type", "resource") <b class="conum">(8)</b>
+  .as("result") <b class="conum">(9)</b>
+    .in("defines") <b class="conum">(10)</b>
+    .has("type", "resourceType")
+    .has("name", "JBoss EAP") <b class="conum">(11)</b>
+  .back("result"); <b class="conum">(12)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>For all vertices in the graph</p>
+</li>
+<li>
+<p>Choose those that have the type "tenant" called "Red Hat, Inc."</p>
+</li>
+<li>
+<p>Go out from them following the "contains" edges, to the target vertices</p>
+</li>
+<li>
+<p>choose those that have the type "environment" and name "staging"</p>
+</li>
+<li>
+<p>out, following "contains" edges</p>
+</li>
+<li>
+<p>choose vertices with type "feed" and name "test.redhat.com"</p>
+</li>
+<li>
+<p>out, following "contains" edges</p>
+</li>
+<li>
+<p>choose vertices with type "resource"</p>
+</li>
+<li>
+<p>mark the position in the traversal as a "result"</p>
+</li>
+<li>
+<p>follow "defines" edges that point to the "result" vertices</p>
+</li>
+<li>
+<p>choose all the source vertices of the edges that have type "Resource Type"
+and name "JBoss EAP"</p>
+</li>
+<li>
+<p>if the above yields a vertex, go back to the "result" and use that instead</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>So out of that pipeline, as they call it, out come the vertices representing
+resources with the desired resource type that live under given feed. E.g. in
+the example above, the query will return <code>eap1-test.redhat.com</code> and
+<code>eap2-test.redhat.com</code>.</p>
+</div>
+<div class="paragraph">
+<p>So what&#8217;s wrong with that you ask?</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_reduce_number_of_hops">1. Reduce number of Hops</h3>
+<div class="paragraph">
+<p>In the graph visualization you can notice that there is a <code>contains</code> edge
+between a number of vertices. Semantically, in Hawkular Inventory vertices
+connected by these edges form a tree and thus each of the vertices can be
+uniquely identified by its path along the <code>contains</code> edges. We call this
+path a canonical path and we use this path in a number of ways in the API.</p>
+</div>
+<div class="paragraph">
+<p>Additionally, this path is stored on each vertex (and indexed by a unique
+index to ensure consistency of the data). Having the path stored on each
+vertex and having an index on it enables us to be "clever" with the query
+and rewrite the parts that follow the <code>contains</code> chain from the Tenant
+vertices down by a simple lookup of the canonical path.</p>
+</div>
+<div class="paragraph">
+<p>As such, the original query would be transformed into:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .out("contains")
+  .has("type", "resource")
+  .as("result")
+    .in("defines")
+    .has("type", "resourceType")
+    .has("name", "JBoss EAP")
+  .back("result");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is a lot faster than the original, because we use an index to find our
+starting point much "deeper" in the graph than previously and have to make
+less hops to get to our results.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_avoid_code_as_back_code_if_possible">2. Avoid <code>.as()&#8230;&#8203;back()</code> If Possible</h3>
+<div class="paragraph">
+<p>This is not shown in the example but we found that we used the <code>.as()&#8230;&#8203;back()</code>
+construct in more places than necessary. Avoiding it speeds the execution up.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_mirror_properties_on_the_edges">3. Mirror Properties on The Edges</h3>
+<div class="paragraph">
+<p>This is the single most important optimization we&#8217;ve done so far. The rationale
+is this. To jump from a vertex to another vertex over an edge is a fairly
+expensive operation. Titan uses the adjacency lists to store the vertices and
+their edges in wide rows in Cassandra. It uses another adjacency list for edges
+and their target vertices.</p>
+</div>
+<div class="paragraph">
+<p>So to go from vertex to vertex, Titan actually has to do 2 queries. It would
+be much easier if we could avoid that at least in some cases.</p>
+</div>
+<div class="paragraph">
+<p>The solution here is to copy the values of some (frequently used and, in our
+case, immutable) properties from the "source" and "target" vertices directly
+to the edges. This helps especially in the cases where you do some kind of
+filtering on the target vertices that you instead can do directly on the edges.
+If there is a high number of edges to go through, this helps tremendously
+because you greatly reduce the number of times you have to do the "second hop"
+to the target vertex.</p>
+</div>
+<div class="paragraph">
+<p>So this is the final version of the query that is an order of magnitude faster
+than the original:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .outE("contains") <b class="conum">(1)</b>
+  .has("targetType", "resource") <b class="conum">(2)</b>
+  .inV() <b class="conum">(3)</b>
+  .as("result")
+    .inE("defines") <b class="conum">(4)</b>
+    .has("sourceType", "resourceType")
+    .has("sourceName", "JBoss EAP")
+  .back("result");</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p><code>.out(label)</code> goes to the target vertex, while <code>.outE(label)</code> goes only to
+the edge</p>
+</li>
+<li>
+<p>We&#8217;re now on the edge and are filtering on its properties</p>
+</li>
+<li>
+<p>And we&#8217;re jumping on the target vertex</p>
+</li>
+<li>
+<p>Again, only jumping on the edge and filtering only on its properties.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>While I am sure there are still some optimizations left that we could do to
+make this even faster, I am quite satisfied with the speed up we were able to
+achieve just by these changes.</p>
+</div>
+</div></p>
+    	<hr /><br /><br />
+        <p><em>Published by Lukas Krejci on  09 October 2015</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">&copy; 2015 | Baked with <a href="http://jbake.org">JBake v2.4.0</a></p>
+    <p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p>
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../../js/behavior.js"></script>
+    <script src="../../../../js/prettify.js"></script>
+    <script src="../../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

@@ -6,9 +6,260 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Tue, 6 Oct 2015 14:30:49 +0000</pubDate>
-    <lastBuildDate>Tue, 6 Oct 2015 14:30:49 +0000</lastBuildDate>
+    <pubDate>Fri, 9 Oct 2015 23:59:05 +0000</pubDate>
+    <lastBuildDate>Fri, 9 Oct 2015 23:59:05 +0000</lastBuildDate>
 
+    <item>
+      <title>Titan Graph DB Performance Tips</title>
+      <link>http://www.hawkular.org/blog/2015/10/09/graph-db-performance.html</link>
+      <author>noreply@hawkular.org (Lukas Krejci)</author>
+      <pubDate>Fri, 9 Oct 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/10/09/graph-db-performance.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In Hawkular Inventory, we use the Tinkerpop API (version 2 for the time being)
+to store our inventory model in a graph database. We chose Titan as the storage
+engine configured to store the data in the Cassandra cluster that is also
+backing Hawkular Metrics and Alerts. This blog post will guide you through some
+performance-related lessons with Titan that we learned so far.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Inventory is under heavy development with a lot of redesign and refactoring
+going on between releases so we took quite a naive approach to storing and
+querying data from the graph database. That is, we store entities from our
+model as vertices in the graph and the relationships between the entities as
+edges in the graph. Quite simple and a school book example of how it should
+look like.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We did declare a couple of indices in the database on the read-only aspects
+of the vertices (i.e. a &quot;type&quot; of the entity the vertex corresponds to) but we
+actually didn&amp;#8217;t pay too much attention to the performance. We wanted to have
+the model right first.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Fast forward a couple of months and of course, the performance started to be
+a real problem. The Hawkular agent for Wildfly is inserting a non-trivial
+amount of entities and not only inserting them but also querying them has seen
+a huge performance degradation compared to the simple examples we were unit
+testing with (due to number of vertices and edges stored).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The time has come to think about how to squeeze some performance out of Titan
+as well as how to store the data and query it more intelligently.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So what we did, you ask, to gain an order of mangnitude speed up?&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are 2 aspects that needed our attention actually - insert performance,
+and query performance, which is where we are an order of magnitude faster now.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I will focus only on the query performance in this post.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a model example, let&amp;#8217;s consider the following query: find me all resources
+in a certain feed that have a certain resource type.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For illustration purposes, this will be a fabricated graph that we will be
+querying.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2015/2015-10-09-inv-structure.png&quot; alt=&quot;Example Inventory&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In &lt;a href=&quot;https://github.com/tinkerpop/gremlin/wiki&quot;&gt;Gremlin&lt;/a&gt; query language, our
+example query would be expressed without any optimizations, that we will going
+to describe later in the post, like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;g.V() &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+  .has(&quot;name&quot;, &quot;Red Hat, Inc.&quot;)
+  .has(&quot;type&quot;, &quot;tenant&quot;) &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+  .out(&quot;contains&quot;) &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+  .has(&quot;name&quot;, &quot;staging&quot;)
+  .has(&quot;type&quot;, &quot;environment&quot;) &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+  .out(&quot;contains&quot;) &lt;b class=&quot;conum&quot;&gt;(5)&lt;/b&gt;
+  .has(&quot;name&quot;, &quot;test.redhat.com&quot;)
+  .has(&quot;type&quot;, &quot;feed&quot;) &lt;b class=&quot;conum&quot;&gt;(6)&lt;/b&gt;
+  .out(&quot;contains&quot;) &lt;b class=&quot;conum&quot;&gt;(7)&lt;/b&gt;
+  .has(&quot;type&quot;, &quot;resource&quot;) &lt;b class=&quot;conum&quot;&gt;(8)&lt;/b&gt;
+  .as(&quot;result&quot;) &lt;b class=&quot;conum&quot;&gt;(9)&lt;/b&gt;
+    .in(&quot;defines&quot;) &lt;b class=&quot;conum&quot;&gt;(10)&lt;/b&gt;
+    .has(&quot;type&quot;, &quot;resourceType&quot;)
+    .has(&quot;name&quot;, &quot;JBoss EAP&quot;) &lt;b class=&quot;conum&quot;&gt;(11)&lt;/b&gt;
+  .back(&quot;result&quot;); &lt;b class=&quot;conum&quot;&gt;(12)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;For all vertices in the graph&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Choose those that have the type &quot;tenant&quot; called &quot;Red Hat, Inc.&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Go out from them following the &quot;contains&quot; edges, to the target vertices&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;choose those that have the type &quot;environment&quot; and name &quot;staging&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;out, following &quot;contains&quot; edges&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;choose vertices with type &quot;feed&quot; and name &quot;test.redhat.com&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;out, following &quot;contains&quot; edges&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;choose vertices with type &quot;resource&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;mark the position in the traversal as a &quot;result&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;follow &quot;defines&quot; edges that point to the &quot;result&quot; vertices&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;choose all the source vertices of the edges that have type &quot;Resource Type&quot;
+and name &quot;JBoss EAP&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;if the above yields a vertex, go back to the &quot;result&quot; and use that instead&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So out of that pipeline, as they call it, out come the vertices representing
+resources with the desired resource type that live under given feed. E.g. in
+the example above, the query will return &lt;code&gt;eap1-test.redhat.com&lt;/code&gt; and
+&lt;code&gt;eap2-test.redhat.com&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So what&amp;#8217;s wrong with that you ask?&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_reduce_number_of_hops&quot;&gt;1. Reduce number of Hops&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the graph visualization you can notice that there is a &lt;code&gt;contains&lt;/code&gt; edge
+between a number of vertices. Semantically, in Hawkular Inventory vertices
+connected by these edges form a tree and thus each of the vertices can be
+uniquely identified by its path along the &lt;code&gt;contains&lt;/code&gt; edges. We call this
+path a canonical path and we use this path in a number of ways in the API.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Additionally, this path is stored on each vertex (and indexed by a unique
+index to ensure consistency of the data). Having the path stored on each
+vertex and having an index on it enables us to be &quot;clever&quot; with the query
+and rewrite the parts that follow the &lt;code&gt;contains&lt;/code&gt; chain from the Tenant
+vertices down by a simple lookup of the canonical path.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As such, the original query would be transformed into:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;g.V()
+  .has(&quot;path&quot;, &quot;Red Hat, Inc./staging/test.redhat.com&quot;)
+  .out(&quot;contains&quot;)
+  .has(&quot;type&quot;, &quot;resource&quot;)
+  .as(&quot;result&quot;)
+    .in(&quot;defines&quot;)
+    .has(&quot;type&quot;, &quot;resourceType&quot;)
+    .has(&quot;name&quot;, &quot;JBoss EAP&quot;)
+  .back(&quot;result&quot;);&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This is a lot faster than the original, because we use an index to find our
+starting point much &quot;deeper&quot; in the graph than previously and have to make
+less hops to get to our results.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_avoid_code_as_back_code_if_possible&quot;&gt;2. Avoid &lt;code&gt;.as()&amp;#8230;&amp;#8203;back()&lt;/code&gt; If Possible&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This is not shown in the example but we found that we used the &lt;code&gt;.as()&amp;#8230;&amp;#8203;back()&lt;/code&gt;
+construct in more places than necessary. Avoiding it speeds the execution up.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_mirror_properties_on_the_edges&quot;&gt;3. Mirror Properties on The Edges&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This is the single most important optimization we&amp;#8217;ve done so far. The rationale
+is this. To jump from a vertex to another vertex over an edge is a fairly
+expensive operation. Titan uses the adjacency lists to store the vertices and
+their edges in wide rows in Cassandra. It uses another adjacency list for edges
+and their target vertices.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So to go from vertex to vertex, Titan actually has to do 2 queries. It would
+be much easier if we could avoid that at least in some cases.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The solution here is to copy the values of some (frequently used and, in our
+case, immutable) properties from the &quot;source&quot; and &quot;target&quot; vertices directly
+to the edges. This helps especially in the cases where you do some kind of
+filtering on the target vertices that you instead can do directly on the edges.
+If there is a high number of edges to go through, this helps tremendously
+because you greatly reduce the number of times you have to do the &quot;second hop&quot;
+to the target vertex.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So this is the final version of the query that is an order of magnitude faster
+than the original:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;g.V()
+  .has(&quot;path&quot;, &quot;Red Hat, Inc./staging/test.redhat.com&quot;)
+  .outE(&quot;contains&quot;) &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+  .has(&quot;targetType&quot;, &quot;resource&quot;) &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+  .inV() &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+  .as(&quot;result&quot;)
+    .inE(&quot;defines&quot;) &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+    .has(&quot;sourceType&quot;, &quot;resourceType&quot;)
+    .has(&quot;sourceName&quot;, &quot;JBoss EAP&quot;)
+  .back(&quot;result&quot;);&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;.out(label)&lt;/code&gt; goes to the target vertex, while &lt;code&gt;.outE(label)&lt;/code&gt; goes only to
+the edge&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We&amp;#8217;re now on the edge and are filtering on its properties&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;And we&amp;#8217;re jumping on the target vertex&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Again, only jumping on the edge and filtering only on its properties.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;While I am sure there are still some optimizations left that we could do to
+make this even faster, I am quite satisfied with the speed up we were able to
+achieve just by these changes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular-BTM 0.4.0 released</title>
       <link>http://www.hawkular.org/blog/2015/10/06/hawkular-btm-0-4-0-released.html</link>
