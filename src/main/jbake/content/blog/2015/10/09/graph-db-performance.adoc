@@ -1,0 +1,185 @@
+= Titan Graph DB Performance Tips
+Lukas Krejci
+2015-10-09
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, graphdb, inventory
+
+In Hawkular Inventory, we use the Tinkerpop API (version 2 for the time being)
+to store our inventory model in a graph database. We chose Titan as the storage 
+engine configured to store the data in the Cassandra cluster that is also 
+backing Hawkular Metrics and Alerts. This blog post will guide you through some
+performance-related lessons with Titan that we learned so far.
+
+Inventory is under heavy development with a lot of redesign and refactoring 
+going on between releases so we took quite a naive approach to storing and
+querying data from the graph database. That is, we store entities from our
+model as vertices in the graph and the relationships between the entities as
+edges in the graph. Quite simple and a school book example of how it should
+look like.
+
+We did declare a couple of indices in the database on the read-only aspects
+of the vertices (i.e. a "type" of the entity the vertex corresponds to) but we
+actually didn't pay too much attention to the performance. We wanted to have
+the model right first.
+
+Fast forward a couple of months and of course, the performance started to be
+a real problem. The Hawkular agent for Wildfly is inserting a non-trivial
+amount of entities and not only inserting them but also querying them has seen
+a huge performance degradation compared to the simple examples we were unit
+testing with (due to number of vertices and edges stored).
+
+The time has come to think about how to squeeze some performance out of Titan
+as well as how to store the data and query it more intelligently.
+
+So what we did, you ask, to gain an order of mangnitude speed up?
+
+There are 2 aspects that needed our attention actually - insert performance,
+and query performance, which is where we are an order of magnitude faster now.
+
+I will focus only on the query performance in this post.
+
+As a model example, let's consider the following query: find me all resources 
+in a certain feed that have a certain resource type.
+
+For illustration purposes, this will be a fabricated graph that we will be
+querying.
+
+ifndef::env-github[]
+image::/img/blog/2015/2015-10-09-inv-structure.png[Example Inventory, align="center"]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2015/2015-10-09-inv-structure.png[Example Inventory, align="center"]
+endif::[]
+
+In https://github.com/tinkerpop/gremlin/wiki[Gremlin] query language, our 
+example query would be expressed without any optimizations, that we will going
+to describe later in the post, like this:
+
+[source,java]
+----
+g.V() <1>
+  .has("name", "Red Hat, Inc.")
+  .has("type", "tenant") <2>
+  .out("contains") <3>
+  .has("name", "staging")
+  .has("type", "environment") <4>
+  .out("contains") <5>
+  .has("name", "test.redhat.com")
+  .has("type", "feed") <6>
+  .out("contains") <7>
+  .has("type", "resource") <8>
+  .as("result") <9>
+    .in("defines") <10>
+    .has("type", "resourceType") 
+    .has("name", "JBoss EAP") <11>
+  .back("result"); <12>
+----
+
+<1> For all vertices in the graph
+<2> Choose those that have the type "tenant" called "Red Hat, Inc."
+<3> Go out from them following the "contains" edges, to the target vertices
+<4> choose those that have the type "environment" and name "staging"
+<5> out, following "contains" edges
+<6> choose vertices with type "feed" and name "test.redhat.com"
+<7> out, following "contains" edges
+<8> choose vertices with type "resource"
+<9> mark the position in the traversal as a "result"
+<10> follow "defines" edges that point to the "result" vertices
+<11> choose all the source vertices of the edges that have type "Resource Type"
+and name "JBoss EAP"
+<12> if the above yields a vertex, go back to the "result" and use that instead
+
+So out of that pipeline, as they call it, out come the vertices representing
+resources with the desired resource type that live under given feed. E.g. in
+the example above, the query will return `eap1-test.redhat.com` and
+`eap2-test.redhat.com`.
+
+So what's wrong with that you ask?
+
+:numbered:
+
+=== Reduce number of Hops
+
+In the graph visualization you can notice that there is a `contains` edge
+between a number of vertices. Semantically, in Hawkular Inventory vertices
+connected by these edges form a tree and thus each of the vertices can be 
+uniquely identified by its path along the `contains` edges. We call this
+path a canonical path and we use this path in a number of ways in the API.
+
+Additionally, this path is stored on each vertex (and indexed by a unique
+index to ensure consistency of the data). Having the path stored on each
+vertex and having an index on it enables us to be "clever" with the query
+and rewrite the parts that follow the `contains` chain from the Tenant
+vertices down by a simple lookup of the canonical path.
+
+As such, the original query would be transformed into:
+
+[source,java]
+----
+g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .out("contains")
+  .has("type", "resource")
+  .as("result") 
+    .in("defines") 
+    .has("type", "resourceType") 
+    .has("name", "JBoss EAP")
+  .back("result");
+----
+
+This is a lot faster than the original, because we use an index to find our
+starting point much "deeper" in the graph than previously and have to make
+less hops to get to our results.
+
+=== Avoid `.as()...back()` If Possible
+
+This is not shown in the example but we found that we used the `.as()...back()`
+construct in more places than necessary. Avoiding it speeds the execution up.
+
+=== Mirror Properties on The Edges
+
+This is the single most important optimization we've done so far. The rationale
+is this. To jump from a vertex to another vertex over an edge is a fairly
+expensive operation. Titan uses the adjacency lists to store the vertices and
+their edges in wide rows in Cassandra. It uses another adjacency list for edges
+and their target vertices.
+
+So to go from vertex to vertex, Titan actually has to do 2 queries. It would
+be much easier if we could avoid that at least in some cases.
+
+The solution here is to copy the values of some (frequently used and, in our
+case, immutable) properties from the "source" and "target" vertices directly
+to the edges. This helps especially in the cases where you do some kind of 
+filtering on the target vertices that you instead can do directly on the edges.
+If there is a high number of edges to go through, this helps tremendously
+because you greatly reduce the number of times you have to do the "second hop"
+to the target vertex.
+
+So this is the final version of the query that is an order of magnitude faster
+than the original:
+
+[source, java]
+----
+g.V()
+  .has("path", "Red Hat, Inc./staging/test.redhat.com")
+  .outE("contains") <1>
+  .has("targetType", "resource") <2>
+  .inV() <3>
+  .as("result") 
+    .inE("defines") <4>
+    .has("sourceType", "resourceType") 
+    .has("sourceName", "JBoss EAP")
+  .back("result");
+----
+
+<1> `.out(label)` goes to the target vertex, while `.outE(label)` goes only to
+the edge
+<2> We're now on the edge and are filtering on its properties
+<3> And we're jumping on the target vertex
+<4> Again, only jumping on the edge and filtering only on its properties.
+
+While I am sure there are still some optimizations left that we could do to
+make this even faster, I am quite satisfied with the speed up we were able to
+achieve just by these changes.
+
