@@ -24,6 +24,9 @@
                   <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/vision.html">Hawkular Vision</a>
+                  </li>
                   <li class="menu-item dropdown dropdown-submenu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Documentation</a>
                     <ul class="dropdown-menu">

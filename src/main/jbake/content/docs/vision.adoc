@@ -1,0 +1,203 @@
+= The vision behind Hawkular
+Heiko W. Rupp
+2015-09-28
+:description: The why and what of Hawkular
+:jbake-type: page
+:jbake-status: published
+
+
+== Why Hawkular?
+
+To be the best tool to monitor Java Middleware like WildFly or Tomcat helping
+you spending less and more enjoyable time on middleware management.
+
+This is done through automation of various aspects like resource discovery, root cause analysis,
+predictive analytics and easy to use yet powerful user interfaces.
+
+
+== The Goals of Hawkular
+
+Hawkular is clearly a project to best monitor and manage JBoss Projects as well as other Java processes.
+
+For managed servers that Hawkular knows about, it will provide a specific, _easy to use_ environment.
+Hawkular will center around the notion of _applications_ that is the unit of interest in an operating environment.
+
+Of course the tool can only be as good as the understanding of the managed resources, so it will use
+_graceful degradation_ to provide a very good experience for well understood targets and a more generic
+one for others. Managed platforms will be able to supply parts of the user interface to also provide a specific
+interface.
+
+Hawkular will be easy to integrate into existing tools landscapes to deliver data to as well as extract data from.
+This includes access in various programming languages, which is especially important as many users prefer languages
+like Shell, Perl, Ruby, Javascript, Python or others for system administration work.
+
+=== Application centric
+
+Running an application and keeping it running in an optimal fashion is the main driver for IT. Which is why Hawkular
+puts the application at the center of its efforts. Applications are of course composed from individual connected
+parts, that Hawkular deals with as well.
+
+[[img-url-detail]]
+ifndef::env-github[]
+image::/img/mission/app-view.png[alt=Example App]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/mission/app-view.png[alt=Example App]
+endif::[]
+
+In the above example, the app consists of 3 individual deployments that access a shared database and that are linked
+together via a load-balancer. The little plus sign at the right of the database shows that there are other
+applications linked to that same database.
+
+=== Shorter Term Goals
+
+If you look at the goals, then you will clearly see that some are more near term and others need more work
+and research. Longer term goals are listed below.
+
+==== Specific UI
+
+The design of the user interface will allow a new Hawkular user to quickly get going. Screens for monitoring of
+resources like WildFly servers or URLs will only contain elements that are key for those resources.
+Distractions will be kept away. As an example: set up alerts (see next section), only potentially valid options will be
+displayed to allow for an intuitive workflow.
+
+The interface will allow more experienced users to enable more functionality that goes beyond the common use cases.
+
+
+==== Powerful Alerting
+
+Alerting is a core piece of a monitoring and management system. Failure states can only be fixed if someone can
+learn about them and can thus start counter measures.
+In order for notifications to happen a powerful way of expressing rules needs to be available (but in the same time
+keeping a simple and easy to use user interface).
+
+.Rule example
+--
+  alert me if
+     one of my three machines in the cluster fail, but not when it is the middle of the night
+     more than one of my three machines fail
+     do not alert me if maintenance mode is on
+  when fired alert is not acknowledged within 5 minutes escalate
+  notify me
+     via telephone call at night
+     via email during business hours
+--
+
+Some parts of this are:
+
+* Lifecycle: It must be possible to (bulk) acknowledge and close fired alerts. Alerts can be assigned to other users
+in the system to indicate that they own the resolution process.
+* Comparing Apples with Pears: Rules will allow to pull in data from various parts of the system and of various data
+types and mix and match them together as seen in above rule example.
+* Escalation handling: When an alert is not acknowledged within a certain time, a notification is sent to another
+predefined user.
+* Suppression of dependent alerts: Hawkular will not send alerts for resources that depend on other resources that
+are already reported as failing. This happens to reduce the noise and to allow the administrator to concentrate on
+the important tasks.
+As example take the availability of a datasource where the underlying app-server has
+been alerted as down. Here, the non-availability of the datasource will not be reported.
+* Notification plugins: Hawkular will have a set of alert notification senders like notification per email. On top of
+ that it will be possible for users to supply their own notification senders to connect to their own infrastructure
+ like ticketing systems.
+* Externally driven notification targets: Some parameters for alert handling - especially the on-duty and escalation
+rules can be supplied externally e.g. via Spreadsheet.
+* Execution of (user defined) operations on a target resource. This can for example be used to automatically restart
+an application server when a memory leak is detected.
+
+
+==== Single Sign On (SSO) with managed Servers
+
+As the Hawkular user interfaces can not capture all potential use cases of the native consoles of for example
+WildFly, it will be possible to connect to a managed WildFly server in the same domain with a single click.
+Necessary information will automatically be forwarded to prevent the need for re-login.
+
+
+=== Longer Term Goals
+
+The goals listed here need more research and can be seen as a next phase after the initial milestones.
+
+==== Auto-discovery of Applications
+
+Applications consist of several parts as already described above. Hawkular will go through configurations and
+determine which parts belong together to form an application.
+
+Hawkular will also be able to instrument applications in order to get more detailed data from actual requests that
+are executed. Data obtained through this instrumentation will feed into the discovery as well into the root cause
+analysis presented in the next section.
+
+Users will be able to correct and augment the parts and relations found and will also be able to define their own
+relationships to resources that can not be automatically detected.
+
+
+==== Application health
+
+Similar to (basic) alerting it will be possible to define rules for the overall application health state
+
+.Example rule for computed health
+--
+  health is
+     green: all resources are up
+     yellow: at most 1 app-server in the app is down
+     red: otherwise
+--
+
+The result of such computations can obtained through the user interfaces, but also be fed into alerting.
+
+==== Root cause analysis
+
+If a bad state is triggered, the system shall find out as best as possible what may have
+caused the bad state. This will involve going through the list of connected resources to
+find others with a common error pattern or with previous fault states. Also data obtained
+from instrumentation will be taken for the determination of possible root causes.
+
+
+==== Forecasting of potential bad states
+
+To introduce this have a look at this image from Android 5 battery stats screen:
+[[img-url-detail]]
+ifndef::env-github[]
+image::/img/mission/android_forecast.png[alt=Forecasting]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/mission/android_forecast.png[alt=Forecasting]
+endif::[]
+
+On the upper half it does not only show how much battery has been used so far, but also makes a (very simple)
+forecast on how long the battery will last with the same usage pattern.
+
+By providing such a forecast, Hawkular will not only be able to alert admins as reaction of battery running low,
+but we can also have pro-active alerts "alert me when battery will only last one more day".
+
+Btw: the above image is also shows in the bottom half the matching root cause analysis by listing the battery
+consumers.
+
+==== Automatic Correlation / Comparison of data
+
+Suppose you have an application in v1 running and decide to upgrade to v2. In this case you may be interested in
+having Hawkular automagically show you the behavior of v2 in relation to v1. You may want to see graphs that
+run in parallel the cpu load after the deployment of v1 with that of v2 to see how the application behaves.
+
+==== Full Multi-Tenancy
+
+Hawkular is built from the ground on with separation of tenants. This allows to keep the information of users or
+organizations separate without additional configuration. The tenant model follows the GitHub model where a user can
+be a single user, part of an organization or even part of multiple organizations.
+
+==== Service Level handling
+
+It will be possible to compute the current availability of an application within certain time frames to see if
+service level agreements (SLAs) are met. Hawkular will allow to compare the current level with predefined thresholds
+and alert on upcoming or existing crossing of the threshold. There will be the possibility to report on SLAs.
+
+==== Audit logging
+
+Actions inside Hawkular can be written into a "write-only" log, so that it is clear which Hawkular user has triggered
+ an action in the system.
+
+==== Reporting
+
+Hawkular will have the possibility to run reports on various aspects of the system including but not limited to
+application usage, types of resources in the system, SLAs, alerts and many more. Reports will be available in various
+formats and can also automatically be created once per month and be emailed to a receiver. There will be a way for
+users to define their own report formats.
+
