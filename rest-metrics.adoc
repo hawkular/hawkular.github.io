@@ -432,6 +432,56 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 
 ==============================================
 
+[[GET__counters_data]]
+*Endpoint GET `/counters/data`*
+
+NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|-|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|-|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<NumericBucketPoint>>
+|204|No metric data was found.|-
+|400|The tags parameter is required. Either the buckets or the bucketDuration parameter is required but not both.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
 [[POST__counters_data]]
 *Endpoint POST `/counters/data`*
 
@@ -462,6 +512,56 @@ NOTE: *Add data points for multiple counters* +
 |200|Adding data points succeeded.|-
 |400|Missing or invalid payload|<<ApiError>>
 |500|Unexpected error happened while storing the data points|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters_data_rate]]
+*Endpoint GET `/counters/data/rate`*
+
+NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|-|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|-|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<NumericBucketPoint>>
+|204|No metric data was found.|-
+|400|The tags parameter is required. Either the buckets or the bucketDuration parameter is required but not both.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
 
 |=======================
 
