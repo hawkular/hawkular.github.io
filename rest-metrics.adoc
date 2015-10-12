@@ -1,4 +1,210 @@
 
+== Overview
+
+=== Media Type
+
+The API uses *JSON* to communicate with clients.
+
+You _should_ add the following accept header to your requests:
+
+----
+Accept: application/json
+----
+
+When you send JSON data with a `POST` or `PUT` request, you _must_ add the following content type header:
+
+----
+Content-Type: application/json
+----
+
+=== JSON format
+
+The server does not include null or empty entity properties in JSON representations.
+
+[source,javascript]
+----
+// Metric with data
+{
+  "id": "paris01.web001.example.com.cpu.usage",
+  "data": [
+    {"timestamp": 10101010101, "value": 25.73}
+  ]
+}
+
+// Metric without data
+{
+  "id": "paris01.web001.example.com.cpu.usage"
+}
+----
+
+=== Tenant Header
+
+Hawkular Metrics is a multi-tenant time-series data store. Your requests to tenant-dependent resources must include
+a tenant header:
+
+----
+Hawkular-Tenant: my-tenant
+----
+
+=== Timestamps
+
+The API understands all timestamps as milliseconds since January 1, 1970, 00:00:00 UTC.
+
+=== Response codes
+
+Resources in the API follow response codes conventions, listed below.
+
+.Response codes conventions
+[cols="30,70a", options="header"]
+|===
+|Response code |Meaning
+
+|200 Ok
+|The operation completed successfully.
+
+|201 Created
+|A `POST` or `PUT` operation to create an entity completed successfully.
+The reponse should contain a `Location` header.
+
+|204 No Content
+|The operation completed successfully but result entity is null (`object`) or empty (`array`).
+Empty arrays are not sent in the response body.
+
+|400 Bad Request
+|The operation could not be processed. It could be due to:
+
+* Missing or malformed request entity
+* Missing header/query parameter
+* Malformed path/header/query parameter
+* Invalid parameters (breaking business rules)
+
+|404 Not Found
+|Resource denoted by the URI does not exist.
+
+|405 Method Not Allowed
+|Resource denoted by the URI does not support the operation type.
+
+|406 Not Acceptable
+|Cannot reply in a format accepted by the client (specified in `Accept` request header).
+
+|409 Conflict
+|A `POST` or `PUT` operation could not be performed because it conflicts with an existing entity.
+
+|415 Unsupported Media Type
+|Invalid request entity format. For example, `text/plain` whereas `application/json` is expected.
+
+|500 Internal Server Error
+|Resource operation failed unexpectedly.
+
+|503 Service Unavailable
+|The server failed to initialize or the storage backend is not ready yet.
+|===
+
+=== Error responses
+
+Error responses may include an <<ApiError>> entity in the body.
+
+.Sample error entity
+[source,javascript]
+----
+{"errorMsg":"Tenant is not specified. Use 'Hawkular-Tenant' header."}
+----
+
+=== Time ranges
+
+Many resource operations need a time range restriction to be processed.
+
+Such operations accept two <<_timestamps,timestamp>> query parameters:
+
+* `start`: the beginning of the time range, inclusive
+* `end`: the end of the time range, exclusive
+
+Either or both of them can be omitted. `start` defaults to _now_ minus 8 eight hours. `end` defaults to _now_.
+
+`end` must be strictly bigger than `start` otherwise the resource operation returns a `400 Bad Request` response.
+
+.Sample operations with time range query parameters
+[source,bash]
+----
+# Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data
+
+# Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010
+
+# Explicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&end=20202020
+
+# Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?end=20202020
+----
+
+=== Bucket parameters
+
+The API offers the ability to retrieve statistics on gauges, counter and availability metrics.
+To compute these statistics, Hawkular Metrics slices a given <<_time_ranges,time range>> into _buckets_.
+
+The size of _buckets_ is configurable. This allows to send a query to get, for example,
+monthly statistics over a year of data, or hourly statistics over a week of data.
+
+Bucket size is configured with either the `buckets` or the `bucketDuration` query parameter, exclusively:
+
+* `buckets` indicates the desired number of buckets over the specified timerange
+* `bucketDuration` forces bucket size to the specified amount of time
+
+`bucketDuration` is a <<_duration, duration>>-formatted string.
+
+If both parameters are specified, the resource operation returns a `400 Bad Request` response.
+
+
+.Sample operations with bucket query parameters
+[source,bash]
+----
+# Desired number of buckets
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&end=20202020&buckets=10
+
+# Desired bucket size
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&end=20202020&bucketDuration=1mn
+----
+
+=== Custom string formats
+
+Some path or query parameters in the Metrics REST API use custom string formats.
+
+==== Tags list
+
+The parameter represents a list of tags, comma separated. A tag has the form `name:value`.
+Names and values cannot contain commas or colons.
+
+Throughout this document, this string format is identified as `tag-list`.
+
+.Tags List format example
+----
+/hawkular/metrics/metrics?tags=host:web001.example.com,dc:paris01,type:system
+----
+
+==== Duration
+
+The parameter represents an amount of time. Duration is formed of a length and a unit.
+
+Length is a long integer (`int64`).
+
+Allowed units are the following:
+
+* `ms` for milliseconds
+* `s` for seconds
+* `mn` for minutes
+* `h` for hours
+* `d` for days
+
+Throughout this document, this string format is identified as `duration`.
+
+.Duration format example
+----
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?bucketDuration=1h
+----
+
+
 == Base Path
 `/hawkular/metrics/`
 
@@ -6,6 +212,14 @@
 
 
 === Availability
+. link:#++POST__availability++[Create availability metric.]
+. link:#++POST__availability_data++[Add metric data for multiple availability metrics in a single call.]
+. link:#++GET__availability__id_++[Retrieve single metric definition.]
+. link:#++GET__availability__id__data++[Retrieve availability data.]
+. link:#++POST__availability__id__data++[Add data for a single availability metric.]
+. link:#++GET__availability__id__tags++[Retrieve tags associated with the metric definition.]
+. link:#++PUT__availability__id__tags++[Update tags associated with the metric definition.]
+. link:#++DELETE__availability__id__tags__tags_++[Delete tags associated with the metric definition.]
 
 
 ==============================================
@@ -13,8 +227,8 @@
 [[POST__availability]]
 *Endpoint POST `/availability`*
 
-NOTE: *Create availability metric. Same notes as creating gauge metric apply.* +
-
+NOTE: *Create availability metric.* +
+_Same notes as creating gauge metric apply._
 
 
 
@@ -166,7 +380,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |distinct|No|Set to true to return only distinct, contiguous values|boolean|-|-
 
 |=======================
@@ -360,7 +574,7 @@ NOTE: *Delete tags associated with the metric definition.* +
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |id|Yes|-|string|-|-
-|tags|Yes|Tag list|string|-|-
+|tags|Yes|Tag list|string|tag-list|-
 
 |=======================
 
@@ -385,6 +599,17 @@ NOTE: *Delete tags associated with the metric definition.* +
 
 
 === Counter
+. link:#++POST__counters++[Create counter metric.]
+. link:#++GET__counters_data++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.]
+. link:#++POST__counters_data++[Add data points for multiple counters.]
+. link:#++GET__counters_data_rate++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.]
+. link:#++GET__counters__id_++[Retrieve a counter definition.]
+. link:#++GET__counters__id__data++[Retrieve counter data points.]
+. link:#++POST__counters__id__data++[Add data for a single counter.]
+. link:#++GET__counters__id__rate++[Retrieve counter rate data points.]
+. link:#++GET__counters__id__tags++[Retrieve tags associated with the metric definition.]
+. link:#++PUT__counters__id__tags++[Update tags associated with the metric definition.]
+. link:#++DELETE__counters__id__tags__tags_++[Delete tags associated with the metric definition.]
 
 
 ==============================================
@@ -392,8 +617,8 @@ NOTE: *Delete tags associated with the metric definition.* +
 [[POST__counters]]
 *Endpoint POST `/counters`*
 
-NOTE: *Create counter metric. This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted.* +
-_Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention._
+NOTE: *Create counter metric.* +
+_This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted. Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention._
 
 
 
@@ -449,9 +674,9 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
-|tags|No|List of tags filters|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
 |metrics|No|List of metric names|array|-|-
 |stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
 
@@ -485,7 +710,7 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 [[POST__counters_data]]
 *Endpoint POST `/counters/data`*
 
-NOTE: *Add data points for multiple counters* +
+NOTE: *Add data points for multiple counters.* +
 
 
 
@@ -541,9 +766,9 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
-|tags|No|List of tags filters|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
 |metrics|No|List of metric names|array|-|-
 |stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
 
@@ -577,7 +802,7 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 [[GET__counters__id_]]
 *Endpoint GET `/counters/{id}`*
 
-NOTE: *Retrieve a counter definition* +
+NOTE: *Retrieve a counter definition.* +
 
 
 
@@ -645,7 +870,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
 
 |=======================
@@ -678,7 +903,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 [[POST__counters__id__data]]
 *Endpoint POST `/counters/{id}/data`*
 
-NOTE: *Add data for a single counter* +
+NOTE: *Add data for a single counter.* +
 
 
 
@@ -758,7 +983,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
 
 |=======================
@@ -898,7 +1123,7 @@ NOTE: *Delete tags associated with the metric definition.* +
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |id|Yes|-|string|-|-
-|tags|Yes|Tag list|string|-|-
+|tags|Yes|Tag list|string|tag-list|-
 
 |=======================
 
@@ -923,6 +1148,16 @@ NOTE: *Delete tags associated with the metric definition.* +
 
 
 === Gauge
+. link:#++POST__gauges++[Create gauge metric.]
+. link:#++GET__gauges_data++[Find stats for multiple metrics.]
+. link:#++POST__gauges_data++[Add data for multiple gauge metrics in a single call.]
+. link:#++GET__gauges__id_++[Retrieve single metric definition.]
+. link:#++GET__gauges__id__data++[Retrieve gauge data.]
+. link:#++POST__gauges__id__data++[Add data for a single gauge metric.]
+. link:#++GET__gauges__id__periods++[Find condition periods.]
+. link:#++GET__gauges__id__tags++[Retrieve tags associated with the metric definition.]
+. link:#++PUT__gauges__id__tags++[Update tags associated with the metric definition.]
+. link:#++DELETE__gauges__id__tags__tags_++[Delete tags associated with the metric definition.]
 
 
 ==============================================
@@ -973,8 +1208,8 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 [[GET__gauges_data]]
 *Endpoint GET `/gauges/data`*
 
-NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.* +
-
+NOTE: *Find stats for multiple metrics.* +
+_Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics._
 
 
 
@@ -987,9 +1222,9 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
-|tags|No|List of tags filters|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
 |metrics|No|List of metric names|array|-|-
 |stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
 
@@ -1133,7 +1368,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
 |buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|-|-
+|bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
 
 |=======================
@@ -1220,8 +1455,8 @@ NOTE: *Add data for a single gauge metric.* +
 [[GET__gauges__id__periods]]
 *Endpoint GET `/gauges/{id}/periods`*
 
-NOTE: *Retrieve periods for which the condition holds true for each consecutive data point.* +
-
+NOTE: *Find condition periods.* +
+_Retrieve periods for which the condition holds true for each consecutive data point._
 
 
 
@@ -1384,7 +1619,7 @@ NOTE: *Delete tags associated with the metric definition.* +
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |id|Yes|-|string|-|-
-|tags|Yes|Tag list|string|-|-
+|tags|Yes|Tag list|string|tag-list|-
 
 |=======================
 
@@ -1409,6 +1644,9 @@ NOTE: *Delete tags associated with the metric definition.* +
 
 
 === Metric
+. link:#++GET__metrics++[Find tenant's metric definitions.]
+. link:#++POST__metrics++[Create metric.]
+. link:#++POST__metrics_data++[Add data for multiple metrics in a single call.]
 
 
 ==============================================
@@ -1428,7 +1666,7 @@ _Does not include any metric values._
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |type|No|Queried metric type|string|-|gauge, availability, counter
-|tags|No|List of tags filters|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
 
 |=======================
 
@@ -1539,6 +1777,8 @@ NOTE: *Add data for multiple metrics in a single call.* +
 
 
 === Tenant
+. link:#++GET__tenants++[Returns a list of tenants.]
+. link:#++POST__tenants++[Create a new tenant.]
 
 
 ==============================================
