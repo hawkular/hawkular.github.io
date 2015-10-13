@@ -1,0 +1,101 @@
+= Securing Communications
+John Mazzitelli
+2015-10-12
+:description: Turning on secure communications (ssl / https) in Hawkular
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Securing Communications
+
+Please follow the instructions in the link:quick-start.html[Quick Start document] for the server itself, followed by the instructions below.
+
+These instructions will tell you how to prepare the Hawkular Server to support secure communications via SSL/https.
+Following these instructions will enable browsers to access the Hawkular GUI over https as well as allowing
+the UI clients and feeds to access the Hawkular Server over "wss" (WebSockets over SSL).
+
+=== Generating A Self-Signed Certificate (if needed)
+
+If you do not have a keystore with your own private key/certificate, you can generate a self-signed cert.
+Since it will be assumed you are doing this for testing and demo purposes only, the below instructions will generate a
+valid certificate for your localhost only (see "CN=localhost" and the Subject Alternative Name of 127.0.0.1):
+
+[source,shell]
+----
+keytool -genkey -keystore hawkular.keystore -alias hawkular -dname "CN=localhost" -keyalg RSA -storepass hawkular -keypass hawkular -validity 36500 -ext san=ip:127.0.0.1
+----
+
+Make sure your new "hawkular.keystore" is copied to your Hawkular Server's standalone/configuration directory.
+
+=== Make Your Certificate Trusted
+
+If you created your own self-signed certificate (or you have one signed by your own CA that your Java VM does not yet know about or trust),
+you will need to tell your Java VM that it can trust it. You do this by adding your certificate to the "cacerts" file.
+
+First, export your certificate from your keystore file (hawkular.keystore if you followed instructions in step 1) into a file called hawkular.cert:
+
+[source,shell]
+----
+keytool -export -alias hawkular -file hawkular.cert -storepass hawkular -keystore hawkular.keystore
+----
+
+Now import your certificate into your Java's CA certificates file - this makes your certificate trusted by your Java apps
+(note this assumes the default password of "changeit" in your Java install's cacerts file - obviously, you'll want to
+use the correct password if you changed it):
+
+[source,shell]
+----
+keytool -import -keystore $JAVA_HOME/jre/lib/security/cacerts -alias hawkular -storepass changeit -file hawkular.cert
+----
+
+You can examine your certificate and answer the prompt to indicate you do trust that certificate.
+If you want to automate this, you can pass in the -noprompt command line argument and it will automatically add the certificate without asking you for confirmation.
+
+=== Configure Hawkular Server
+
+Now that your keystore is generated and trusted, you have to tell the Hawkular Server to use your keystore when using SSL.
+
+First, you must add a security-realm in standalone/configuration/standalone.xml:
+
+[source,xml]
+----
+<management>
+  <security-realms>
+    <security-realm name="UndertowRealm">
+      <server-identities>
+        <ssl>
+          <keystore path="hawkular.keystore" relative-to="jboss.server.config.dir" keystore-password="hawkular" key-password="hawkular" alias="hawkular" />
+        </ssl>
+      </server-identities>
+    </security-realm>
+----
+
+Next add an HTTPS listener to standalone.xml, using your new security-realm that is configured with your new keystore:
+
+[source,xml]
+----
+  <subsystem xmlns="urn:jboss:domain:undertow:2.0" statistics-enabled="true">
+  ...
+    <server name="default-server">
+      <https-listener name="https" security-realm="UndertowRealm" socket-binding="https"/>
+----
+
+Finally, turn on SSL in the agent by adding these two attributes to the <storage-adapter> element in standalone.xml:
+
+[source,xml]
+----
+  <storage-adapter useSSL="true" securityRealm="UndertowRealm" ... />
+----
+
+=== Ready
+
+You are now ready to access the Hawkular Server via "https://localhost:8443". The agent and any other feeds that want to send data
+to the Hawkular Server can do so over "wss://localhost:8443".
+
+=== More Details
+
+For more details, see the Keycloak documentation here: http://keycloak.github.io/docs/userguide/html_single/index.html#ssl_modes
