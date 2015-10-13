@@ -1,0 +1,54 @@
+= Hawkular Metrics 0.8.0 - Release
+Stefan Negrea
+2015-10-12
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, release
+
+I am happy to announce release 0.8.0 of Hawkular Metrics. This short schedule release is anchored by major enhancements for metrics query aggregation, updated container support, and performance and stability enhancements.
+
+== Major Changes
+
+. **Counters**
+  * Counter rates computations now avoid counter value resets (https://issues.jboss.org/browse/HWKMETRICS-218[HWKMETRICS-218])
+  * Counter rates are now aligned with the actual counter data used to calculate the rate (https://issues.jboss.org/browse/HWKMETRICS-284[HWKMETRICS-284])
+. **Aggregate Metric Statistics**
+  * Added support  for aggregate statistics based on multiple metrics
+  * Gauges, counters, and counter rates are supported
+  * Two methods of aggregation are currently available
+    - **uniform**: data from multiple metrics is bucketed as originating from a single source and then statistics are computed on the entire set
+    - **stacked**: statistics are first computed for every matching metric and then those statistics are stacked (added)
+    - by default uniform statistics are enabled, stacking is enabled by `stacked=true` query parameter
+  * The end-points are  `/gauges/data` , `/counters/data`, `/counters/data/rate`
+  * There is support to query by either tags or metrics ids; but not both
+  * Relevant JIRAs: https://issues.jboss.org/browse/HWKMETRICS-292[HWKMETRICS-292], https://issues.jboss.org/browse/HWKMETRICS-263[HWKMETRICS-263], https://issues.jboss.org/browse/HWKMETRICS-264[HWKMETRICS-264]
+. **Data storage updates**
+  * **Schema changes will require rebuilding the database**
+  * Reduced data storage footprint by limiting the size of  metric type (https://issues.jboss.org/browse/HWKMETRICS-301[HWKMETRICS-301])
+. **Container support**
+  * Secure connections are enabled between Hawkular Metrics and the Heapster sink (https://issues.jboss.org/browse/HWKMETRICS-217[HWKMETRICS-217])
+  * cqlsh can be access directly from within the Cassandra docker (https://issues.jboss.org/browse/HWKMETRICS-260[HWKMETRICS-260])
+  * Various updates to the Heapster sink to support latest Hawkular Metrics features: https://issues.jboss.org/browse/HWKMETRICS-285[HWKMETRICS-285], https://issues.jboss.org/browse/HWKMETRICS-273[HWKMETRICS-273], https://issues.jboss.org/browse/HWKMETRICS-276[HWKMETRICS-276], https://issues.jboss.org/browse/HWKMETRICS-292[HWKMETRICS-292]
+
+== Release links
+
+* Github Release:
+** https://github.com/hawkular/hawkular-metrics/releases/tag/0.8.0
+
+* JBoss Nexus Maven artifacts:
+** http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/
+
+* Jira release tracker:
+** https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328157
+
+== Hawkular Metrics Clients
+
+One of Hawkular Metrics' objectives is to *be easy to integrate with*; providing language specific clients is an important component for fulfilling this objective. Here is the current list of official clients:
+
+* Ruby: https://github.com/hawkular/hawkular-client-ruby
+* Python: https://github.com/hawkular/hawkular-client-python
+* Go: https://github.com/hawkular/hawkular-client-go
+
+== Thanks
+
+A big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Libor Zoubek, Jirka Kremser, and Heiko Rupp for their project  contributions.
