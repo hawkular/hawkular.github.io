@@ -154,7 +154,7 @@
         </div>
       </section>
 
-	<!--<p><em>12 October 2015</em></p>-->
+	<!--<p><em>13 October 2015</em></p>-->
 
 	<section>
       <div class="container">
@@ -163,6 +163,19 @@
 <div id="toc" class="toc">
 <div id="toctitle" class="title"></div>
 <ul class="sectlevel1">
+<li><a href="#_overview">Overview</a>
+<ul class="sectlevel2">
+<li><a href="#_media_type">Media Type</a></li>
+<li><a href="#_json_format">JSON format</a></li>
+<li><a href="#_tenant_header">Tenant Header</a></li>
+<li><a href="#_timestamps">Timestamps</a></li>
+<li><a href="#_response_codes">Response codes</a></li>
+<li><a href="#_error_responses">Error responses</a></li>
+<li><a href="#_time_ranges">Time ranges</a></li>
+<li><a href="#_bucket_parameters">Bucket parameters</a></li>
+<li><a href="#_custom_string_formats">Custom string formats</a></li>
+</ul>
+</li>
 <li><a href="#_base_path">Base Path</a></li>
 <li><a href="#_rest_apis">REST APIs</a>
 <ul class="sectlevel2">
@@ -194,6 +207,333 @@
 </div>
 </div>
 <div class="sect1">
+<h2 id="_overview">Overview</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_media_type">Media Type</h3>
+<div class="paragraph">
+<p>The API uses <strong>JSON</strong> to communicate with clients.</p>
+</div>
+<div class="paragraph">
+<p>You <em>should</em> add the following accept header to your requests:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Accept: application/json</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When you send JSON data with a <code>POST</code> or <code>PUT</code> request, you <em>must</em> add the following content type header:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Content-Type: application/json</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_json_format">JSON format</h3>
+<div class="paragraph">
+<p>The server does not include null or empty entity properties in JSON representations.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">// Metric with data
+{
+  "id": "paris01.web001.example.com.cpu.usage",
+  "data": [
+    {"timestamp": 10101010101, "value": 25.73}
+  ]
+}
+
+// Metric without data
+{
+  "id": "paris01.web001.example.com.cpu.usage"
+}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tenant_header">Tenant Header</h3>
+<div class="paragraph">
+<p>Hawkular Metrics is a multi-tenant time-series data store. Your requests to tenant-dependent resources must include
+a tenant header:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Hawkular-Tenant: my-tenant</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_timestamps">Timestamps</h3>
+<div class="paragraph">
+<p>The API understands all timestamps as milliseconds since January 1, 1970, 00:00:00 UTC.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_response_codes">Response codes</h3>
+<div class="paragraph">
+<p>Resources in the API follow response codes conventions, listed below.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Response codes conventions</caption>
+<colgroup>
+<col style="width: 30%;">
+<col style="width: 70%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Response code</th>
+<th class="tableblock halign-left valign-top">Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200 Ok</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>The operation completed successfully.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">201 Created</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>A <code>POST</code> or <code>PUT</code> operation to create an entity completed successfully.
+The reponse should contain a <code>Location</code> header.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">204 No Content</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>The operation completed successfully but result entity is null (<code>object</code>) or empty (<code>array</code>).
+Empty arrays are not sent in the response body.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">400 Bad Request</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>The operation could not be processed. It could be due to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Missing or malformed request entity</p>
+</li>
+<li>
+<p>Missing header/query parameter</p>
+</li>
+<li>
+<p>Malformed path/header/query parameter</p>
+</li>
+<li>
+<p>Invalid parameters (breaking business rules)</p>
+</li>
+</ul>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">404 Not Found</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>Resource denoted by the URI does not exist.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">405 Method Not Allowed</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>Resource denoted by the URI does not support the operation type.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">406 Not Acceptable</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>Cannot reply in a format accepted by the client (specified in <code>Accept</code> request header).</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">409 Conflict</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>A <code>POST</code> or <code>PUT</code> operation could not be performed because it conflicts with an existing entity.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">415 Unsupported Media Type</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>Invalid request entity format. For example, <code>text/plain</code> whereas <code>application/json</code> is expected.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500 Internal Server Error</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>Resource operation failed unexpectedly.</p>
+</div></div></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">503 Service Unavailable</p></td>
+<td class="tableblock halign-left valign-top"><div><div class="paragraph">
+<p>The server failed to initialize or the storage backend is not ready yet.</p>
+</div></div></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_error_responses">Error responses</h3>
+<div class="paragraph">
+<p>Error responses may include an <a href="#ApiError">ApiError</a> entity in the body.</p>
+</div>
+<div class="listingblock">
+<div class="title">Sample error entity</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{"errorMsg":"Tenant is not specified. Use 'Hawkular-Tenant' header."}</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_time_ranges">Time ranges</h3>
+<div class="paragraph">
+<p>Many resource operations need a time range restriction to be processed.</p>
+</div>
+<div class="paragraph">
+<p>Such operations accept two <a href="#_timestamps">timestamp</a> query parameters:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>start</code>: the beginning of the time range, inclusive</p>
+</li>
+<li>
+<p><code>end</code>: the end of the time range, exclusive</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Either or both of them can be omitted. <code>start</code> defaults to <em>now</em> minus 8 eight hours. <code>end</code> defaults to <em>now</em>.</p>
+</div>
+<div class="paragraph">
+<p><code>end</code> must be strictly bigger than <code>start</code> otherwise the resource operation returns a <code>400 Bad Request</code> response.</p>
+</div>
+<div class="listingblock">
+<div class="title">Sample operations with time range query parameters</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash"># Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data
+
+# Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010
+
+# Explicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&amp;end=20202020
+
+# Implicit time range
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?end=20202020</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_bucket_parameters">Bucket parameters</h3>
+<div class="paragraph">
+<p>The API offers the ability to retrieve statistics on gauges, counter and availability metrics.
+To compute these statistics, Hawkular Metrics slices a given <a href="#_time_ranges">time range</a> into <em>buckets</em>.</p>
+</div>
+<div class="paragraph">
+<p>The size of <em>buckets</em> is configurable. This allows to send a query to get, for example,
+monthly statistics over a year of data, or hourly statistics over a week of data.</p>
+</div>
+<div class="paragraph">
+<p>Bucket size is configured with either the <code>buckets</code> or the <code>bucketDuration</code> query parameter, exclusively:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>buckets</code> indicates the desired number of buckets over the specified timerange</p>
+</li>
+<li>
+<p><code>bucketDuration</code> forces bucket size to the specified amount of time</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p><code>bucketDuration</code> is a <a href="#_duration">duration</a>-formatted string.</p>
+</div>
+<div class="paragraph">
+<p>If both parameters are specified, the resource operation returns a <code>400 Bad Request</code> response.</p>
+</div>
+<div class="listingblock">
+<div class="title">Sample operations with bucket query parameters</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash"># Desired number of buckets
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&amp;end=20202020&amp;buckets=10
+
+# Desired bucket size
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&amp;end=20202020&amp;bucketDuration=1mn</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_custom_string_formats">Custom string formats</h3>
+<div class="paragraph">
+<p>Some path or query parameters in the Metrics REST API use custom string formats.</p>
+</div>
+<div class="sect3">
+<h4 id="_tags_list">Tags list</h4>
+<div class="paragraph">
+<p>The parameter represents a list of tags, comma separated. A tag has the form <code>name:value</code>.
+Names and values cannot contain commas or colons.</p>
+</div>
+<div class="paragraph">
+<p>Throughout this document, this string format is identified as <code>tag-list</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Tags List format example</div>
+<div class="content">
+<pre>/hawkular/metrics/metrics?tags=host:web001.example.com,dc:paris01,type:system</pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_duration">Duration</h4>
+<div class="paragraph">
+<p>The parameter represents an amount of time. Duration is formed of a length and a unit.</p>
+</div>
+<div class="paragraph">
+<p>Length is a long integer (<code>int64</code>).</p>
+</div>
+<div class="paragraph">
+<p>Allowed units are the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>ms</code> for milliseconds</p>
+</li>
+<li>
+<p><code>s</code> for seconds</p>
+</li>
+<li>
+<p><code>mn</code> for minutes</p>
+</li>
+<li>
+<p><code>h</code> for hours</p>
+</li>
+<li>
+<p><code>d</code> for days</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Throughout this document, this string format is identified as <code>duration</code>.</p>
+</div>
+<div class="listingblock">
+<div class="title">Duration format example</div>
+<div class="content">
+<pre>/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?bucketDuration=1h</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
 <h2 id="_base_path">Base Path</h2>
 <div class="sectionbody">
 <div class="paragraph">
@@ -206,6 +546,34 @@
 <div class="sectionbody">
 <div class="sect2">
 <h3 id="_availability">Availability</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#POST__availability">Create availability metric.</a></p>
+</li>
+<li>
+<p><a href="#POST__availability_data">Add metric data for multiple availability metrics in a single call.</a></p>
+</li>
+<li>
+<p><a href="#GET__availability__id_">Retrieve single metric definition.</a></p>
+</li>
+<li>
+<p><a href="#GET__availability__id__data">Retrieve availability data.</a></p>
+</li>
+<li>
+<p><a href="#POST__availability__id__data">Add data for a single availability metric.</a></p>
+</li>
+<li>
+<p><a href="#GET__availability__id__tags">Retrieve tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#PUT__availability__id__tags">Update tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#DELETE__availability__id__tags__tags_">Delete tags associated with the metric definition.</a></p>
+</li>
+</ol>
+</div>
 <div class="exampleblock">
 <div class="content">
 <div id="POST__availability" class="paragraph">
@@ -218,7 +586,8 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Create availability metric. Same notes as creating gauge metric apply.</strong><br>
+<strong>Create availability metric.</strong><br>
+<em>Same notes as creating gauge metric apply.</em>
 </td>
 </tr>
 </table>
@@ -563,7 +932,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -983,7 +1352,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
@@ -1030,6 +1399,43 @@
 </div>
 <div class="sect2">
 <h3 id="_counter">Counter</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#POST__counters">Create counter metric.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters_data">Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.</a></p>
+</li>
+<li>
+<p><a href="#POST__counters_data">Add data points for multiple counters.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters_data_rate">Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters__id_">Retrieve a counter definition.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters__id__data">Retrieve counter data points.</a></p>
+</li>
+<li>
+<p><a href="#POST__counters__id__data">Add data for a single counter.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters__id__rate">Retrieve counter rate data points.</a></p>
+</li>
+<li>
+<p><a href="#GET__counters__id__tags">Retrieve tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#PUT__counters__id__tags">Update tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#DELETE__counters__id__tags__tags_">Delete tags associated with the metric definition.</a></p>
+</li>
+</ol>
+</div>
 <div class="exampleblock">
 <div class="content">
 <div id="POST__counters" class="paragraph">
@@ -1042,8 +1448,8 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Create counter metric. This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted.</strong><br>
-<em>Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
+<strong>Create counter metric.</strong><br>
+<em>This operation also causes the rate to be calculated and persisted periodically after raw count data is persisted. Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention.</em>
 </td>
 </tr>
 </table>
@@ -1185,7 +1591,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -1201,7 +1607,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of tags filters</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -1278,7 +1684,7 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Add data points for multiple counters</strong><br>
+<strong>Add data points for multiple counters.</strong><br>
 </td>
 </tr>
 </table>
@@ -1415,7 +1821,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -1431,7 +1837,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of tags filters</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -1508,7 +1914,7 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Retrieve a counter definition</strong><br>
+<strong>Retrieve a counter definition.</strong><br>
 </td>
 </tr>
 </table>
@@ -1688,7 +2094,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -1757,7 +2163,7 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Add data for a single counter</strong><br>
+<strong>Add data for a single counter.</strong><br>
 </td>
 </tr>
 </table>
@@ -1961,7 +2367,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -2268,7 +2674,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
@@ -2315,6 +2721,40 @@
 </div>
 <div class="sect2">
 <h3 id="_gauge">Gauge</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#POST__gauges">Create gauge metric.</a></p>
+</li>
+<li>
+<p><a href="#GET__gauges_data">Find stats for multiple metrics.</a></p>
+</li>
+<li>
+<p><a href="#POST__gauges_data">Add data for multiple gauge metrics in a single call.</a></p>
+</li>
+<li>
+<p><a href="#GET__gauges__id_">Retrieve single metric definition.</a></p>
+</li>
+<li>
+<p><a href="#GET__gauges__id__data">Retrieve gauge data.</a></p>
+</li>
+<li>
+<p><a href="#POST__gauges__id__data">Add data for a single gauge metric.</a></p>
+</li>
+<li>
+<p><a href="#GET__gauges__id__periods">Find condition periods.</a></p>
+</li>
+<li>
+<p><a href="#GET__gauges__id__tags">Retrieve tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#PUT__gauges__id__tags">Update tags associated with the metric definition.</a></p>
+</li>
+<li>
+<p><a href="#DELETE__gauges__id__tags__tags_">Delete tags associated with the metric definition.</a></p>
+</li>
+</ol>
+</div>
 <div class="exampleblock">
 <div class="content">
 <div id="POST__gauges" class="paragraph">
@@ -2413,7 +2853,8 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.</strong><br>
+<strong>Find stats for multiple metrics.</strong><br>
+<em>Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.</em>
 </td>
 </tr>
 </table>
@@ -2470,7 +2911,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -2486,7 +2927,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of tags filters</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -2823,7 +3264,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Bucket duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">duration</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -3005,7 +3446,8 @@
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-<strong>Retrieve periods for which the condition holds true for each consecutive data point.</strong><br>
+<strong>Find condition periods.</strong><br>
+<em>Retrieve periods for which the condition holds true for each consecutive data point.</em>
 </td>
 </tr>
 </table>
@@ -3389,7 +3831,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Tag list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
@@ -3436,6 +3878,19 @@
 </div>
 <div class="sect2">
 <h3 id="_metric">Metric</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#GET__metrics">Find tenant&#8217;s metric definitions.</a></p>
+</li>
+<li>
+<p><a href="#POST__metrics">Create metric.</a></p>
+</li>
+<li>
+<p><a href="#POST__metrics_data">Add data for multiple metrics in a single call.</a></p>
+</li>
+</ol>
+</div>
 <div class="exampleblock">
 <div class="content">
 <div id="GET__metrics" class="paragraph">
@@ -3490,7 +3945,7 @@
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of tags filters</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
-<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
@@ -3708,6 +4163,16 @@
 </div>
 <div class="sect2">
 <h3 id="_tenant">Tenant</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#GET__tenants">Returns a list of tenants.</a></p>
+</li>
+<li>
+<p><a href="#POST__tenants">Create a new tenant.</a></p>
+</li>
+</ol>
+</div>
 <div class="exampleblock">
 <div class="content">
 <div id="GET__tenants" class="paragraph">
