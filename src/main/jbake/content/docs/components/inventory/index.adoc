@@ -20,9 +20,6 @@ As such inventory is a graph where nodes are the "things" or "resources" you
 monitor and manage in Hawkular and edges are relationships between those
 resources.
 
-CAUTION: Most of the key concepts described on this page will be available
-since version `0.2.0`.
-
 [[types-of-entities]]
 == Types of Entities
 
@@ -66,6 +63,16 @@ compose on your own. For example you might want to create a resource "Health
 Indicators" for which you would pick and choose several metrics collected
 possibly on several machines representing the health of your infrastructure.
 
+Resources can have configuration. A configuration is JSON document that the
+feed can take and apply in some manner to the target resource that it is managing.
+
+A resource can also have a connection configuration. This describes to the feed
+how to connect to the managed resource.
+
+The two types of configurations are described by <<data-entity, data entities>>
+with possible IDs `configuration` or `connectionConfiguration` that are contained 
+in the resource entities.
+
 [[metric]]
 === Metric
 Each resource can have a number of metrics associated with it. As an example,
@@ -93,15 +100,39 @@ define the metadata of the metrics to be referenced by the resources. As with
 resources and metrics, resource types and metric types are separate standalone
 entities with m-to-n relationships.
 
+Resource types can also contain 2 kinds of data entities - either 
+`configurationSchema` or `connectionConfigurationSchema`. The former is a JSON
+schema document describing the format of the configuration of the resources of
+this type, while the latter describes the format of the connection configuration
+of the resources. See <<resource, Resource chapter>> for what those are in
+more detail.
+
 [[metric-type]]
 === Metric Type
-Metric type defines metadata of a metric. Namely it is its unit.
+Metric type defines metadata of a metric. Namely it is its unit and data type
+(gauge, counter, ...).
+
+[[operation-type]]
+=== Operation Type
+
+Resource types can define types of operations that can be executed on resources
+of those types. The operation types define the format of the return values
+as well as the format of the parameters accepted.
 
 [[feed]]
 === Feed
 A feed is a representation of an "agent" that collects monitoring data and
 performs management operations. Feeds also report on the metrics and resources
 (along with their types) it found in the place they are running.
+
+[[data-entity]
+=== Data Entity
+
+A data entity holds a JSON value. It can be contained in a variety of other
+entities (resource types, resource, operation types) and the ID of the data
+entity defines its "purpose" in the containing entity. E.g. operation types
+can have data entities with ID either `returnType` or `parameterTypes`.
+
 
 [[inventory-organization]]
 == Inventory Organization
@@ -148,7 +179,9 @@ The type specifiers in the individual path segments can be these:
   * *f* - feed
   * *r* - resource
   * *m* - metric
-  
+  * *ot* - operation type
+  * *d* - data entity
+    
 Globally Unique Feeds::
 The only thing that needs to be globally unique in inventory are the feeds.
 +

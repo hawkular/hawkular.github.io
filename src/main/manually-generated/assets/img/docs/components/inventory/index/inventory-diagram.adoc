@@ -9,6 +9,8 @@ class MetricType
 class ResourceType
 class Resource
 class Metric
+class OperationType
+class DataEntity
 
 Tenant "1" --> "0..*" Environment: contains >
 note right on link
@@ -61,6 +63,10 @@ Feed "1" --> "0..*" Resource: contains >
 
 Feed "1" --> "0..*" Metric: contains >
 
+Feed "1" --> "0..*" ResourceType: contains >
+
+Feed "1" --> "0..*" MetricType: contains >
+
 Resource "0..*" --> "0..*" Metric: incorporates >
 note right on link
     This relationship is many to many. 1 resource can incorporate
@@ -81,6 +87,22 @@ note right on link
     implicitly.
 end note
 
+ResourceType "1" --> "0..*" OperationType: contains >
+note right on link
+    Operation types define the return types and parameter types
+    of operations that can be executed on resources of
+    given resource type.
+end note
+
+ResourceType "1" --> "0..2" DataEntity: contains >
+note right on link
+    Resource type can contain data entities with ID
+    "configurationSchema" or "connectionConfigurationSchema"
+    These are JSON schema documents describing the
+    format of the configurations accepted by the resources
+    of this type.
+end note
+
 MetricType "1" --> "0..*" Metric: defines >
 
 Resource "1" --> "0..*" Resource: contains >
@@ -99,6 +121,23 @@ note right on link
 
     "isParentOf" relationship cannot form loops but can form
     diamonds (as opposed to "contains").
+end note
+
+Resource "1" --> "0..2" DataEntity: contains >
+note right on link
+    Similarly to resource types, resources can contain up to 2
+    data entities called either "configuration" or 
+    "connectionConfiguration". These are actual JSON representations
+    of the configuration of the resource. The JSON documents
+    are validated against the schema from the resource type.
+end note
+
+OperationType "1" --> "0..2" DataEntity: contains >
+note right on link
+    Operation types can contain 2 data entities describing the format
+    of the return values and parameters of the operations. As with
+    resource types, these are JSON schema documents. The possible
+    IDs are "returnType" and "parameterTypes".
 end note
 
 -------------
