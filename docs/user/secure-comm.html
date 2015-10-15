@@ -172,6 +172,12 @@
 <li><a href="#_more_details">More Details</a></li>
 </ul>
 </li>
+<li><a href="#_securing_communications_between_agent_and_a_managed_wildfly_server">Securing Communications Between Agent and a Managed WildFly Server</a>
+<ul class="sectlevel2">
+<li><a href="#_securing_the_management_interface_of_the_managed_wildfly_server">Securing the Management Interface of the Managed WildFly Server</a></li>
+<li><a href="#_configuring_the_agent_for_secure_communications_to_managed_wildfly_server">Configuring the Agent For Secure Communications to Managed WildFly Server</a></li>
+</ul>
+</li>
 </ul>
 </div>
 </div>
@@ -284,6 +290,93 @@ to the Hawkular Server can do so over "wss://localhost:8443".</p>
 <h3 id="_more_details">More Details</h3>
 <div class="paragraph">
 <p>For more details, see the Keycloak documentation here: <a href="http://keycloak.github.io/docs/userguide/html_single/index.html#ssl_modes" class="bare">http://keycloak.github.io/docs/userguide/html_single/index.html#ssl_modes</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_securing_communications_between_agent_and_a_managed_wildfly_server">Securing Communications Between Agent and a Managed WildFly Server</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The above instructions tell you how to secure your Hawkular Server and how the Hawkular WildFly Monitor agent can talk to the Hawkular Server over that secured communications channel. But this does nothing to secure the communications between the agent and the remote WildFly Servers the agent is monitoring. To secure this communications channel, the following must be performed.</p>
+</div>
+<div class="sect2">
+<h3 id="_securing_the_management_interface_of_the_managed_wildfly_server">Securing the Management Interface of the Managed WildFly Server</h3>
+<div class="paragraph">
+<p>You first must ensure that the managed WildFly Server provides a secure management interface. You do this by changing its configured management interface. In the managed WildFly Server standalone.xml:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;management-interfaces&gt;
+  &lt;http-interface http-upgrade-enabled="true" security-realm="ManagementRealm"&gt;
+    &lt;socket-binding https="management-https"&gt;
+  &lt;/http-interface&gt;
+&lt;/management-interfaces&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is essentially the same as the out-of-box WildFly management interface except for two changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The socket-binding now has an attribute "https" to denote the management interface must be accessed over HTTPS.</p>
+</li>
+<li>
+<p>The socket-binding&#8217;s https attribute has a value of "management-https" (as opposed to management-http) to denote the port that the management interface should listen to is that of the secure HTTPS port. "management-https" is a defined &lt;socket-binding&gt; that you will find out-of-box in the &lt;socket-binding-group&gt; section.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The next thing you must do is provide a keystore for the ManagementRealm to use now that you are requiring SSL. This is the same kind of configuration that was performed above when securing the Hawkular Server, but instead of creating a new security-realm, you normally only have to add a &lt;server-identities&gt; section to the already existing, out-of-box, security-realm called "ManagementRealm". You need to obtain a keystore with your managed WildFly Server&#8217;s certificate, put it in the managed WildFly Server&#8217;s configuration directory, and add a server-identities element to the ManagementRealm security-realm in standalone.xml:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;management&gt;
+  &lt;security-realms&gt;
+    &lt;security-realm name="ManagementRealm"&gt;
+      ...
+      &lt;server-identities&gt;
+        &lt;ssl&gt;
+          &lt;keystore path="your-wildfly.keystore" relative-to="jboss.server.config.dir" keystore-password="your-password" key-password="your-password" alias="your-alias" /&gt;
+        &lt;/ssl&gt;
+      &lt;/server-identities&gt;
+    &lt;/security-realm&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this point, your managed WildFly Server will only accept secure communications over its management interface.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_configuring_the_agent_for_secure_communications_to_managed_wildfly_server">Configuring the Agent For Secure Communications to Managed WildFly Server</h3>
+<div class="paragraph">
+<p>The above only configured the managed WildFly Server itself. You then have to tell the Hawkular WildFly Monitor agent to talk to that managed server over the secure interface. You do this by first creating a security-realm in the agent&#8217;s WildFly Server container with the managed WildFly Server&#8217;s certificate in the given keystore (remember this is now editing the <em>agent&#8217;s</em> WildFly Server standalone.xml):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;management&gt;
+  &lt;security-realms&gt;
+    &lt;security-realm name="ManagedWildFlyRealm"&gt;
+      &lt;server-identities&gt;
+        &lt;ssl&gt;
+          &lt;keystore path="your-wildfly.keystore" relative-to="jboss.server.config.dir" keystore-password="your-password" key-password="your-password" alias="your-alias" /&gt;
+        &lt;/ssl&gt;
+      &lt;/server-identities&gt;
+    &lt;/security-realm&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now tell the agent to talk to the managed WildFly Server securely by setting the "useSSL" and "securityRealm" attributes in the appropriate &lt;remote-dmr&gt; server entry in standalone.xml:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;managed-servers&gt;
+  &lt;remote-dmr useSSL="true" securityRealm="ManagedWildFlyRealm" ... /&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this point, the agent will be able to talk to the managed WildFly Server over the secure management interface.</p>
 </div>
 </div>
 </div>
