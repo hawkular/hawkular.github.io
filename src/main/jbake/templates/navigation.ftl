@@ -15,32 +15,23 @@
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>index.html">Hawkular</a></li>
-                <li>
-                  <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a>
-                </li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/overview.html">Overview</a></li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a></li>
                 <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                   Documentation
                   <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu" role="menu">
-                  <li class="menu-item dropdown dropdown-submenu">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">User Documentation</a>
-                    <ul class="dropdown-menu">
-                      <li class="menu-item ">
-                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a>
-                      </li>
-                      <li class="menu-item ">
-                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/installation.html">Installation</a>
-                      </li>
-                    </ul>
+                  <li>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/user-guide.html">User Guide</a>
                   </li>
                   <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Documentation</a>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/installation-guide.html">Installation Guide</a>
                   </li>
-                  <li>
+                  <!--li>
                     <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/terms.html">Used Terms</a>
-                  </li>
+                  </li-->
                   <li class="menu-item dropdown dropdown-submenu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
                     <ul class="dropdown-menu">
@@ -89,6 +80,9 @@
                   </li>
                   <li>
                     <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>license.html">License</a>
+                  </li>
+                  <li>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Guide</a>
                   </li>
                   <li>
                     <a href="https://travis-ci.org/hawkular">CI Builds</a>
