@@ -40,6 +40,35 @@ bin/standalone.sh  # use standalone.bat on Windows
 You can then navigate your browser to http://localhost:8080/. When you see the login screen,
 you have to register as a user and will then be redirected to the main Hawkular page.
 
+Should you decide to use another hostname and/or port, you'd need to change two files to point to the currect
+URL for Keycloak: `keycloak.json` and `standalone.xml`. Replace the instances of `http://localhost:8080` on the
+property `auth-server-url` by the desired hostname:port
+
+.$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json
+[source,json]
+----
+{
+  "realm": "hawkular",
+  "auth-server-url": "http://localhost:8080/auth",
+  ...
+}
+
+----
+
+.$HAWKULAR_HOME/standalone/configuration/standalone.xml
+[source,xml]
+----
+<subsystem xmlns="urn:jboss:domain:keycloak:1.1">
+  <realm name="hawkular">
+    <auth-server-url>http://localhost:8080/auth</auth-server-url>
+    <ssl-required>none</ssl-required>
+  </realm>
+...
+...
+</subsystem>
+
+----
+
 === Option B: Install from a docker image
 
 Hawkular is publishing builds to https://registry.hub.docker.com/u/jboss/hawkular-aio/[Docker Hub] that you can try
@@ -316,3 +345,26 @@ On RHEL, CentOS and Fedora the settings can be made persistent in `/etc/security
 ----
 
 where `[your_username]` needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.
+
+=== Unable to resolve realm public key remotely, status = 404
+
+Exception: `ERROR [io.undertow.request] (default task-2) UT005023: Exception handling request to
+/hawkular/accounts/personas/current: java.lang.RuntimeException: Unable to resolve realm public key remotely, status
+= 404`
+
+This happens when the auth server (Keycloak) cannot be reached. Make sure that the authentication server URL is set
+to the correct location of the Keycloak server. This might be wrong if you are using the `-b` option to bind
+Wildfly to a specific IP or if you have specified a port-offset (`-Djboss.socket.binding.port-offset=123`).
+
+The property to verify is called `auth-server-url` and is located on the following files:
+----
+$HAWKULAR_HOME/standalone/configuration/standalone.xml
+$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json
+----
+
+=== Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID
+
+Exception: `ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:
+Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID`
+
+Similar to the above: make sure that your auth server (Keycloak) configuration is correct.
