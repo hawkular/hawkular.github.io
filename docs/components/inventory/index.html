@@ -166,6 +166,7 @@
 <li><a href="#metric">Metric</a></li>
 <li><a href="#resource-type">Resource Type</a></li>
 <li><a href="#metric-type">Metric Type</a></li>
+<li><a href="#operation-type">Operation Type</a></li>
 <li><a href="#feed">Feed</a></li>
 </ul>
 </li>
@@ -201,19 +202,6 @@ their relationships with each other.</p>
 <p>As such inventory is a graph where nodes are the "things" or "resources" you
 monitor and manage in Hawkular and edges are relationships between those
 resources.</p>
-</div>
-<div class="admonitionblock caution">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-caution" title="Caution"></i>
-</td>
-<td class="content">
-Most of the key concepts described on this page will be available
-since version <code>0.2.0</code>.
-</td>
-</tr>
-</table>
 </div>
 </div>
 </div>
@@ -270,6 +258,19 @@ compose on your own. For example you might want to create a resource "Health
 Indicators" for which you would pick and choose several metrics collected
 possibly on several machines representing the health of your infrastructure.</p>
 </div>
+<div class="paragraph">
+<p>Resources can have configuration. A configuration is JSON document that the
+feed can take and apply in some manner to the target resource that it is managing.</p>
+</div>
+<div class="paragraph">
+<p>A resource can also have a connection configuration. This describes to the feed
+how to connect to the managed resource.</p>
+</div>
+<div class="paragraph">
+<p>The two types of configurations are described by <a href="#data-entity">data entities</a>
+with possible IDs <code>configuration</code> or <code>connectionConfiguration</code> that are contained
+in the resource entities.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="metric">Metric</h3>
@@ -304,11 +305,28 @@ define the metadata of the metrics to be referenced by the resources. As with
 resources and metrics, resource types and metric types are separate standalone
 entities with m-to-n relationships.</p>
 </div>
+<div class="paragraph">
+<p>Resource types can also contain 2 kinds of data entities - either
+<code>configurationSchema</code> or <code>connectionConfigurationSchema</code>. The former is a JSON
+schema document describing the format of the configuration of the resources of
+this type, while the latter describes the format of the connection configuration
+of the resources. See <a href="#resource">Resource chapter</a> for what those are in
+more detail.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="metric-type">Metric Type</h3>
 <div class="paragraph">
-<p>Metric type defines metadata of a metric. Namely it is its unit.</p>
+<p>Metric type defines metadata of a metric. Namely it is its unit and data type
+(gauge, counter, &#8230;&#8203;).</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="operation-type">Operation Type</h3>
+<div class="paragraph">
+<p>Resource types can define types of operations that can be executed on resources
+of those types. The operation types define the format of the return values
+as well as the format of the parameters accepted.</p>
 </div>
 </div>
 <div class="sect2">
@@ -317,6 +335,16 @@ entities with m-to-n relationships.</p>
 <p>A feed is a representation of an "agent" that collects monitoring data and
 performs management operations. Feeds also report on the metrics and resources
 (along with their types) it found in the place they are running.</p>
+</div>
+<div class="paragraph">
+<p>[[data-entity]
+=== Data Entity</p>
+</div>
+<div class="paragraph">
+<p>A data entity holds a JSON value. It can be contained in a variety of other
+entities (resource types, resource, operation types) and the ID of the data
+entity defines its "purpose" in the containing entity. E.g. operation types
+can have data entities with ID either <code>returnType</code> or <code>parameterTypes</code>.</p>
 </div>
 </div>
 </div>
@@ -387,6 +415,12 @@ is located in environment <code>env-id</code> which is inside a tenant <code>ten
 </li>
 <li>
 <p><strong>m</strong> - metric</p>
+</li>
+<li>
+<p><strong>ot</strong> - operation type</p>
+</li>
+<li>
+<p><strong>d</strong> - data entity</p>
 </li>
 </ul>
 </div>
