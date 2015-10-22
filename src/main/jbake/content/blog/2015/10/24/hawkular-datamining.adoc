@@ -1,0 +1,76 @@
+= Introduction to Hawkular Data Mining Module
+Pavol Loffay
+2015-10-24
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog
+
+I would like to introduce a module which will provide functionality for predicting alerts and also showing forecasts
+of metrics in Hawkular UI.
+
+== Architecture
+Let's start with the architecture how it fits to Hawkular. This module isn't intended to work in standalone fashion.
+Used algorithm inside the engine will eventually change but architecture will remain as is described in the following
+diagram.
+On application startup, or if forecast for given metrics gets enabled, predictive model is initialized with data from
+metrics module. If there is a new metric data available on the bus, it recalculates the model and provide users with
+better
+predictions. For alert prediction it is crucial to know the threshold value. Predicted value is compared to the
+threshold
+and if necessary, an alert event is posted on the bus. Predicted values for arbitrary timestamps can
+be queried through REST API.
+
+.Architecture
+ifndef::env-github[]
+image::/img/blog/2015/hawkular-datamining-arch.png[Architecture]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2015/hawkular-datamining-arch.png[Architecture]
+endif::[]
+
+This module is not yet included in the main Hawkular distribution; therefore has to be started from separate application
+server. To run this application, execute maven with dev profile. It produces configured wildfly in target directory of
+hawkular-datamaning-dist module. Later it will be possible to deploy it as standalone web application in the Hawkular
+server.
+
+.Assuming the Hawkular server is running:
+--
+   mvn clean install -Pdev && ./hawkular-datamaning-dist/target/wildfly-*/bin/standalone.sh
+--
+
+== Algorithm
+Metric data are basically streams of data coming from feeds therefore the algorithm has to recalculate weights of
+predictive model for each new incoming data in order to get the most accurate results (online learning).
+Apache Spark was chosen to provide streaming and distributed data processing engine. At the moment only local mode of
+Apache Spark is used.
+
+In the following chart regression line of 'Heap Used' metrics is showed. Currently, the line is drawn on
+top of the historical data, the plan is to have it on the right to denote the future predictions.
+
+.Yellow line is showing the result of linear regression of 'Heap Used' metrics.
+ifndef::env-github[]
+image::/img/blog/2015/hawkular-datamining-forecast.png[Forecast of Heap Used]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2015/hawkular-datamining-forecast.png[Forecast of Heap Used]
+endif::[]
+
+So far I have been using linear regression with stochastic gradient descent. However this model doesn't fulfill
+the requirements to get accurate results and predict seasonality. It was a good start to establish the architecture.
+Further I'm going to
+continue with more sophisticated methods like ARIMA (Autoregressive integrated moving average) and investigate
+possibility of using neural networks.
+
+== Goals
+* Provide an alert prediction for given set of metrics. Users should be able to optionally enable a prediction.
+* Show forecast of near future in Hawkular UI.
+
+== Next steps
+* Customize charts for forecasting https://issues.jboss.org/browse/HAWKULAR-738[HAWKULAR-738]
+* Seasonal ARIMA model
+* Forecasting with Multi-Layer neural networks
+
+== Links
+ * Repository https://github.com/hawkular/hawkular-datamining
+ * Hawkular with customized charts https://github.com/pavolloffay/hawkular/tree/prediction-charts
+
