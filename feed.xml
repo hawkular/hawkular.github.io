@@ -6,9 +6,140 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Fri, 23 Oct 2015 08:55:06 +0000</pubDate>
-    <lastBuildDate>Fri, 23 Oct 2015 08:55:06 +0000</lastBuildDate>
+    <pubDate>Fri, 23 Oct 2015 08:57:05 +0000</pubDate>
+    <lastBuildDate>Fri, 23 Oct 2015 08:57:05 +0000</lastBuildDate>
 
+    <item>
+      <title>Introduction to Hawkular Data Mining Module</title>
+      <link>http://www.hawkular.org/blog/2015/10/24/hawkular-datamining.html</link>
+      <author>noreply@hawkular.org (Pavol Loffay)</author>
+      <pubDate>Sat, 24 Oct 2015 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2015/10/24/hawkular-datamining.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I would like to introduce a module which will provide functionality for predicting alerts and also showing forecasts
+of metrics in Hawkular UI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_architecture&quot;&gt;Architecture&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s start with the architecture how it fits to Hawkular. This module isn&amp;#8217;t intended to work in standalone fashion.
+Used algorithm inside the engine will eventually change but architecture will remain as is described in the following
+diagram.
+On application startup, or if forecast for given metrics gets enabled, predictive model is initialized with data from
+metrics module. If there is a new metric data available on the bus, it recalculates the model and provide users with
+better
+predictions. For alert prediction it is crucial to know the threshold value. Predicted value is compared to the
+threshold
+and if necessary, an alert event is posted on the bus. Predicted values for arbitrary timestamps can
+be queried through REST API.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2015/hawkular-datamining-arch.png&quot; alt=&quot;Architecture&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Architecture&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This module is not yet included in the main Hawkular distribution; therefore has to be started from separate application
+server. To run this application, execute maven with dev profile. It produces configured wildfly in target directory of
+hawkular-datamaning-dist module. Later it will be possible to deploy it as standalone web application in the Hawkular
+server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;openblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Assuming the Hawkular server is running:&lt;/div&gt;&lt;div class=&quot;content&quot;&gt;
+&lt;div class=&quot;literalblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;mvn clean install -Pdev &amp;amp;&amp;amp; ./hawkular-datamaning-dist/target/wildfly-*/bin/standalone.sh&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_algorithm&quot;&gt;Algorithm&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Metric data are basically streams of data coming from feeds therefore the algorithm has to recalculate weights of
+predictive model for each new incoming data in order to get the most accurate results (online learning).
+Apache Spark was chosen to provide streaming and distributed data processing engine. At the moment only local mode of
+Apache Spark is used.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the following chart regression line of &apos;Heap Used&apos; metrics is showed. Currently, the line is drawn on
+top of the historical data, the plan is to have it on the right to denote the future predictions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2015/hawkular-datamining-forecast.png&quot; alt=&quot;Forecast of Heap Used&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2. Yellow line is showing the result of linear regression of &apos;Heap Used&apos; metrics.&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So far I have been using linear regression with stochastic gradient descent. However this model doesn&amp;#8217;t fulfill
+the requirements to get accurate results and predict seasonality. It was a good start to establish the architecture.
+Further I&amp;#8217;m going to
+continue with more sophisticated methods like ARIMA (Autoregressive integrated moving average) and investigate
+possibility of using neural networks.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_goals&quot;&gt;Goals&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Provide an alert prediction for given set of metrics. Users should be able to optionally enable a prediction.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Show forecast of near future in Hawkular UI.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_next_steps&quot;&gt;Next steps&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Customize charts for forecasting &lt;a href=&quot;https://issues.jboss.org/browse/HAWKULAR-738&quot;&gt;HAWKULAR-738&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Seasonal ARIMA model&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Forecasting with Multi-Layer neural networks&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Repository &lt;a href=&quot;https://github.com/hawkular/hawkular-datamining&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-datamining&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular with customized charts &lt;a href=&quot;https://github.com/pavolloffay/hawkular/tree/prediction-charts&quot; class=&quot;bare&quot;&gt;https://github.com/pavolloffay/hawkular/tree/prediction-charts&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>The sixth milestone of Hawkular released</title>
       <link>http://www.hawkular.org/blog/2015/10/21/hawkular-1.0.0.Alpha6-released.html</link>

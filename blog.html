@@ -151,6 +151,133 @@
 
 
 <div class="blog-container">
+            <a href="blog/2015/10/24/hawkular-datamining.html"><h1>Introduction to Hawkular Data Mining Module</h1></a>
+            <p>24 October 2015, by Pavol Loffay</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>I would like to introduce a module which will provide functionality for predicting alerts and also showing forecasts
+of metrics in Hawkular UI.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_architecture">Architecture</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s start with the architecture how it fits to Hawkular. This module isn&#8217;t intended to work in standalone fashion.
+Used algorithm inside the engine will eventually change but architecture will remain as is described in the following
+diagram.
+On application startup, or if forecast for given metrics gets enabled, predictive model is initialized with data from
+metrics module. If there is a new metric data available on the bus, it recalculates the model and provide users with
+better
+predictions. For alert prediction it is crucial to know the threshold value. Predicted value is compared to the
+threshold
+and if necessary, an alert event is posted on the bus. Predicted values for arbitrary timestamps can
+be queried through REST API.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2015/hawkular-datamining-arch.png" alt="Architecture">
+</div>
+<div class="title">Figure 1. Architecture</div>
+</div>
+<div class="paragraph">
+<p>This module is not yet included in the main Hawkular distribution; therefore has to be started from separate application
+server. To run this application, execute maven with dev profile. It produces configured wildfly in target directory of
+hawkular-datamaning-dist module. Later it will be possible to deploy it as standalone web application in the Hawkular
+server.</p>
+</div>
+<div class="openblock">
+<div class="title">Assuming the Hawkular server is running:</div><div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>mvn clean install -Pdev &amp;&amp; ./hawkular-datamaning-dist/target/wildfly-*/bin/standalone.sh</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_algorithm">Algorithm</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Metric data are basically streams of data coming from feeds therefore the algorithm has to recalculate weights of
+predictive model for each new incoming data in order to get the most accurate results (online learning).
+Apache Spark was chosen to provide streaming and distributed data processing engine. At the moment only local mode of
+Apache Spark is used.</p>
+</div>
+<div class="paragraph">
+<p>In the following chart regression line of 'Heap Used' metrics is showed. Currently, the line is drawn on
+top of the historical data, the plan is to have it on the right to denote the future predictions.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2015/hawkular-datamining-forecast.png" alt="Forecast of Heap Used">
+</div>
+<div class="title">Figure 2. Yellow line is showing the result of linear regression of 'Heap Used' metrics.</div>
+</div>
+<div class="paragraph">
+<p>So far I have been using linear regression with stochastic gradient descent. However this model doesn&#8217;t fulfill
+the requirements to get accurate results and predict seasonality. It was a good start to establish the architecture.
+Further I&#8217;m going to
+continue with more sophisticated methods like ARIMA (Autoregressive integrated moving average) and investigate
+possibility of using neural networks.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_goals">Goals</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Provide an alert prediction for given set of metrics. Users should be able to optionally enable a prediction.</p>
+</li>
+<li>
+<p>Show forecast of near future in Hawkular UI.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_next_steps">Next steps</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Customize charts for forecasting <a href="https://issues.jboss.org/browse/HAWKULAR-738">HAWKULAR-738</a></p>
+</li>
+<li>
+<p>Seasonal ARIMA model</p>
+</li>
+<li>
+<p>Forecasting with Multi-Layer neural networks</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_links">Links</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Repository <a href="https://github.com/hawkular/hawkular-datamining" class="bare">https://github.com/hawkular/hawkular-datamining</a></p>
+</li>
+<li>
+<p>Hawkular with customized charts <a href="https://github.com/pavolloffay/hawkular/tree/prediction-charts" class="bare">https://github.com/pavolloffay/hawkular/tree/prediction-charts</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2015/10/21/hawkular-1.0.0.Alpha6-released.html"><h1>The sixth milestone of Hawkular released</h1></a>
             <p>21 October 2015, by Heiko W.Rupp</p>
             <p><div id="preamble">
@@ -798,60 +925,13 @@ achieve just by these changes.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/10/05/hawkular-metrics-2k-commits.html"><h1>Hawkular Metrics - 2k Commits</h1></a>
-            <p>05 October 2015, by Stefan Negrea</p>
-            <p><div class="paragraph">
-<p>The Hawkular Metrics project reached a nice milestone last week. On Tuesday a pull-request merge commit marked the <a href="https://github.com/hawkular/hawkular-metrics/commit/1e04c5219b4eee6da0eab2714e7196a3dc45f0e1">2000th</a> commit on the master branch of the project.</p>
-</div>
-<div class="paragraph">
-<p>Here are few other interesting data points about the project:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>over 25k lines of code (~87% Java)</p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-metrics/commits/master">over 2k commits</a>, <a href="https://github.com/hawkular/hawkular-metrics/pulls?q=is%3Aall">over 385 pull requests</a></p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-metrics/releases">17 releases</a> (with a monthly release cadence)</p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-metrics/commit/d725243544e1d692610cf56b7fe0ffdaff3487f8">19 months since first repository commit</a></p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-metrics">24 contributors, 35 forks, and 54 stars in Github</a></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>For those not familiar with <a href="https://github.com/hawkular/hawkular-metrics/blob/master/README.adoc">Hawkular Metrics</a>, the project is a high performance storage engine for large volume metric data. The project uses Cassandra as a storage engine because of its flexible data model well suited for time-series data storage and linear scalability with no single point of failure.</p>
-</div>
-<div class="paragraph">
-<p>Hawkular Metrics offers powerful querying, aggregation, and tagging features for gauge, availability, and counter metrics. The data storage was designed with multi-tenancy as a core feature, which is supported out-of-box. The main public API for the project is a clean REST interface.</p>
-</div>
-<div class="paragraph">
-<p>These <a href="https://github.com/hawkular/hawkular-metrics/commits/1e04c5219b4eee6da0eab2714e7196a3dc45f0e1">first 2000 commits</a> are just the beginning of great things to come in a relatively young project. There are plans to add additional metric types and more complex statistical and querying capabilities. Ingestion data aggregation, cross metric down-sampling, and rich tagging queries over tag data are just a few of the features we have planned. So far we have been very careful introducing features in order to keep a API clean and deliver robust software.</p>
-</div>
-<div class="paragraph">
-<p>We welcome all contributions and input. If you or your organization is looking for a metric storage engine, we would love to talk with you. We want to learn about your use case, how you approach metric storage, and if there features are missing in Hawkular Metrics for your particular application.  A good resource for future plans as well as past releases is the <a href="https://issues.jboss.org/projects/HWKMETRICS?selectedItem=com.atlassian.jira.jira-projects-plugin:release-page&amp;status=all">Hawkular Metrics JIRA</a>. Feel free to contact us overy irc (#hawkular on freenode), <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev">mailing list</a>, or email.</p>
-</div>
-<div class="paragraph">
-<p>As a closing, I want to send a big “Thank You” to the <a href="http://www.hawkular.org/">Hawkular organization</a> for hosting the project and to all the project committers for their outstanding contributions:  <a href="https://github.com/tsegismont">Thomas Segismont</a>, <a href="https://github.com/stefannegrea">Stefan Negrea</a>, <a href="https://github.com/jsanda">John Sanda</a>, <a href="https://github.com/mtho11">Mike Thompson</a>, <a href="https://github.com/pilhuhn">Heiko Rupp</a>, <a href="https://github.com/burmanm">Micheal Burman</a>, <a href="https://github.com/mwringe">Matt Wringe</a>, <a href="https://github.com/ppalaga">Peter Palaga</a>, <a href="https://github.com/jkandasa">Jeeva Kandasamy</a>, <a href="https://github.com/heiko-braun">Heiko Braun</a>, <a href="https://github.com/Jiri-Kremser">Jirka Kremser</a>, <a href="https://github.com/vnugent">Viet Nguyen</a>, <a href="https://github.com/jimmidyson">Jimmi Dyson</a>, <a href="https://github.com/aslakknutsen">Aslak Knutsen</a>, <a href="https://github.com/jpkrohling">Juraci Paixão Kröhling</a>, <a href="https://github.com/theute">Thomas Heute</a>, <a href="https://github.com/jshaughn">Jay Shaughnessy</a>, <a href="https://github.com/metlos">Lukas Krejci</a>, <a href="https://github.com/jstrachan">James Strachan</a>, <a href="https://github.com/gkhachik">Garik Khachikyan</a>, <a href="https://github.com/spadgett">Sam Padgett</a>, <a href="https://github.com/vrockai">Villiam Rockai</a>, <a href="https://github.com/jmazzitelli">John Mazzitelli</a>, <a href="https://github.com/ammendonca">Alexandre Mendonça</a>.</p>
-</div>
-<div class="paragraph">
-<p>To 4000 commits in half the time!</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>05 October 2015 - <a href="blog/2015/10/05/hawkular-metrics-2k-commits.html">Hawkular Metrics - 2k Commits</a></li>
           <li>30 September 2015 - <a href="blog/2015/09/30/hawkular-metrics-0.7.0.Final-released.html">Hawkular-Metrics 0.7.0 Release</a></li>
           <li>23 September 2015 - <a href="blog/2015/09/23/hawkular-1.0.0.Alpha5-released.html">The fifth milestone of Hawkular released</a></li>
           <li>03 September 2015 - <a href="blog/2015/09/03/monitoring-rails-using-hawkular-metrics.html">Monitoring Rails App using Hawkular Metrics</a></li>
