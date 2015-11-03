@@ -168,6 +168,8 @@
 <li><a href="#_troubleshooting">Troubleshooting</a>
 <ul class="sectlevel2">
 <li><a href="#_error_on_starting_hawkular_outofmemoryerror_unable_to_create_new_native_thread">Error on starting Hawkular- OutOfMemoryError: unable to create new native thread</a></li>
+<li><a href="#_unable_to_resolve_realm_public_key_remotely_status_404">Unable to resolve realm public key remotely, status = 404</a></li>
+<li><a href="#_can_t_do_anything_without_a_feed_aborting_startup_java_lang_runtimeexception_cannot_get_tenant_id">Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</a></li>
 </ul>
 </li>
 </ul>
@@ -225,6 +227,34 @@ bin/standalone.sh  # use standalone.bat on Windows</code></pre>
 <div class="paragraph">
 <p>You can then navigate your browser to <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a>. When you see the login screen,
 you have to register as a user and will then be redirected to the main Hawkular page.</p>
+</div>
+<div class="paragraph">
+<p>Should you decide to use another hostname and/or port, you&#8217;d need to change two files to point to the currect
+URL for Keycloak: <code>keycloak.json</code> and <code>standalone.xml</code>. Replace the instances of <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> on the
+property <code>auth-server-url</code> by the desired hostname:port</p>
+</div>
+<div class="listingblock">
+<div class="title">$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "realm": "hawkular",
+  "auth-server-url": "http://localhost:8080/auth",
+  ...
+}</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">$HAWKULAR_HOME/standalone/configuration/standalone.xml</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;subsystem xmlns="urn:jboss:domain:keycloak:1.1"&gt;
+  &lt;realm name="hawkular"&gt;
+    &lt;auth-server-url&gt;http://localhost:8080/auth&lt;/auth-server-url&gt;
+    &lt;ssl-required&gt;none&lt;/ssl-required&gt;
+  &lt;/realm&gt;
+...
+...
+&lt;/subsystem&gt;</code></pre>
+</div>
 </div>
 </div>
 <div class="sect2">
@@ -625,6 +655,38 @@ Now if you have correcty set up the agent, it will report into your Hawkular ser
 </div>
 <div class="paragraph">
 <p>where <code>[your_username]</code> needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_unable_to_resolve_realm_public_key_remotely_status_404">Unable to resolve realm public key remotely, status = 404</h3>
+<div class="paragraph">
+<p>Exception: <code>ERROR [io.undertow.request] (default task-2) UT005023: Exception handling request to
+/hawkular/accounts/personas/current: java.lang.RuntimeException: Unable to resolve realm public key remotely, status
+= 404</code></p>
+</div>
+<div class="paragraph">
+<p>This happens when the auth server (Keycloak) cannot be reached. Make sure that the authentication server URL is set
+to the correct location of the Keycloak server. This might be wrong if you are using the <code>-b</code> option to bind
+Wildfly to a specific IP or if you have specified a port-offset (<code>-Djboss.socket.binding.port-offset=123</code>).</p>
+</div>
+<div class="paragraph">
+<p>The property to verify is called <code>auth-server-url</code> and is located on the following files:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>$HAWKULAR_HOME/standalone/configuration/standalone.xml
+$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_can_t_do_anything_without_a_feed_aborting_startup_java_lang_runtimeexception_cannot_get_tenant_id">Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</h3>
+<div class="paragraph">
+<p>Exception: <code>ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:
+Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</code></p>
+</div>
+<div class="paragraph">
+<p>Similar to the above: make sure that your auth server (Keycloak) configuration is correct.</p>
 </div>
 </div>
 </div>
