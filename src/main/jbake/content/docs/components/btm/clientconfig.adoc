@@ -16,9 +16,9 @@ This section will help you to configure a JVM based client environment to instru
 
 First step is to obtain the BTM distribution. If you have not already done so, then see the instructions on the link:serverinstall.html[Server Installation] page.
 
-Once the BTM distribution zip has been unpacked, you will find a folder called *_btm_*. This folder contains the necessary environment script, jar and instrumentation configuration files to configure a client JVM environment. 
+Once the BTM distribution zip has been unpacked, you will find a folder called *_btm_*. This folder contains the necessary environment script and agent jar to configure a client JVM environment. 
 
-This section will explain how to use the supplied environment script, to setup the necessary client configuration, before starting the JVM. However if you would prefer to integrate this environment into your application/container configuration, then simply copy the entries from the contained *_env.sh_* script, moving the jar and configuration files into appropriate locations.
+This section will explain how to use the supplied environment script, to setup the necessary client configuration, before starting the JVM. However if you would prefer to integrate this environment into your application/container configuration, then simply copy the entries from the contained *_env.sh_* script, moving the jar into an appropriate location.
 
 First step is to setup the *_BTM_HOME_* environment variable to point to the *_btm_* folder in the unpacked BTM distribution.
 
@@ -43,8 +43,8 @@ The properties that can be supplied to the client collector mechanism are:
 |===
 | Name | Description
 
-| hawkular-btm.config | This property is used to locate either a configuration file, or a directory containing multiple configuration files. These files are a JSON representation of the client configuration, containing instrumentation rules. The default value is the _client/config_ directory within the BTM distribution.
 | hawkular-btm.base-uri | The URI for the BTM server. The default value is _http://localhost:8180/hawkular/btm_.
+| hawkular-btm.config.refresh | Optional business transaction configuration refresh interval (in seconds).
 | hawkular-btm.username | The username to use with the REST client when communicating with the BTM server. The default is _jdoe_.
 | hawkular-btm.password | The password to use with the REST client when communicating with the BTM server. The default is _password_.
 | hawkular-btm.log.level | The logging level to use when reporting client collector information to the console (uses Java Util Logging levels. The default is _INFO_.
@@ -54,7 +54,7 @@ The properties that can be supplied to the client collector mechanism are:
 
 Although the steps above will work in many situations (e.g. Java standalone, Apache Tomcat), some environments have tighter control over the classpath made available to the business applications. Therefore some additional container specific configuration will be required.
 
-==== Wildfly
+==== Wildfly / JBoss EAP
 
 Wildfly requires any 'system packages', that need to be generally accessible by any application, to be defined in a system property called *_jboss.modules.system.pkgs_*.
 
@@ -83,6 +83,7 @@ This section lists the technologies that have instrumentation rules defined:
 * Servlet
 * Restlet
 * JDBC
+* EJB (within Wildfly / JBoss EAP)
 * SwitchYard
 
 
