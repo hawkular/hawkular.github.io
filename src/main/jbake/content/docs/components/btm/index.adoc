@@ -39,7 +39,7 @@ Typically a business application will involve more than one server, executing di
 Currently tested client environments include:
 
 * Standalone JVM (e.g. micro services running outside traditional containers)
-* Wildfly JEE server
+* Wildfly and JBoss EAP JEE server
 * Apache Tomcat
 * Apache Karaf OSGI container
 
@@ -55,15 +55,184 @@ The instructions for installing the server can be found here: link:serverinstall
 
 === The User Interface
 
-Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: http://localhost:<port>/hawkular/btm-ui
+The BTM User Interface provides the capability to:
+
+* Configure business transactions
+
+* View a list of business transactions, with summary statistics
+
+* Access more detailed analytics for the business transactions
+
+These capabilities will be discussed in more detail in the following section.
+
+
+== Console
+
+Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: http://localhost:<port>/hawkular-ui/btm
 
 _Where 'port' is the port used by the server (e.g. 8180 if port offset of 100 has been used)._
 
 The default username and password when first starting the server is *_jdoe_* and *_password_*.
 
-==== Kibana analytics dashboard
+=== Business Transaction List
 
-The UI currently only provides access to the Kibana analytics dashboard, showing the response time information derived from the executing business transaction instances.
+The initial page of the BTM console shows information about the business transactions, separated into tabs for the following categories.
+
+==== Active
+
+This tab shows summary statistics for a list of actively managed business transactions.
+
+The statistics include:
+
+* The number of completed instances of the business transaction (per hour)
+
+* The completion time 95 percentile (per hour)
+
+* The number of instances that completed with faults (per hour)
+
+* The number of alerts associated with this business transaction
+
+NOTE: The alerts count is currently a placeholder, awaiting integration with the Alerts mechanism.
+
+For each business transaction:
+
+* Users can navigate to the detailed statistical information about the business transaction by selecting the transactions names. NOTE: This page is currently blank and will provide some content in the next release.
+
+* Selecting the cog icon will take the user to the business transaction's configuration page.
+
+* The trash icon is used to delete the business transaction.
+
+
+==== Candidates
+
+The candidates tab is used to identify interactions (associated with URIs) that have not currently be associated with a business transaction. When new URIs are detected, a red flag symbol will appear next to the _Candidates_ tab name.
+
+At the top of the page, it is possible to either enter the name of a new business transaction, or select one of the existing business transactions from a drop down list. Once a name has been entered, or existing one selected, then the list of URIs will become enabled.
+
+The user can select zero or more of the URIs that are appropriate for the business transaction. These URIs will be used to create _inclusion filters (regular expressions)_ that will enable the interactions associated with those URIs to be allocated to the business transaction.
+
+If a new business transaction is being created, then the user can click either the *_Manage_* or *_Ignore_* buttons. This will determine the initial reporting level of the business transaction, as to whether instances of this transaction will be reported to the server (i.e. managed) or not (i.e. ignored).
+
+If an existing business transaction is selected, then pressing the *_Update_* button will associate the inclusion filter for any checked URIs with the existing business transaction.
+
+Whichever button is selected, the user will be taken to the configuration page for the business transaction. See the following section for information on how to configure the business transaction.
+
+
+==== Disabled
+
+This tab lists the business transactions that have a reporting level of _None_.
+
+When in this mode, reporting of instance information about the business transaction will be suspended. This is considered to be a temporary state, unlike the following 'Ignored' state which is generally reserved for transactions that will never be of interest.
+
+
+==== Ignored
+
+This tab lists the business transactoins that are being ignored.
+
+This state exists to enable business transaction instances to be categorised, and permanently marked as not being of interest. By explicitly identifying even business interactions that are not of interest, it is possible to detect any new traffic that may occur that has not previously be categorised, which informs the administrators that attention is required to investigate the unfamilar interactions.
+
+
+=== Business Transaction Configuration
+
+The configuration for a business transaction is separated into three sections.
+
+==== Description
+
+Simply enables the user to provide a description of the business transaction and its scope (in case it incorporates a number of different invocations).
+
+==== Filters
+
+The filters section defines the link between the transaction instances, performed on specific URIs, and the business transaction name.
+
+This is achieved by defining one or more inclusion filter regular expressions that may match a URI. Once a URI is matched against one of the inclusion filters, it may then be matched against the exclusion filter regular expressions (if defined) to determine if a subset of the included URIs should be excluded.
+
+Once a transaction instance has been associated with a business transaction, the _Reporting Level_ is used to determine how that business transaction instance should be handled.
+
+.Reporting Levels
+|===
+|Level |Description
+
+|All |This level means that all information about the business transaction should be reported
+
+|None | This means that the business transaction is temporarily disabled so no information should be reported
+
+|Ignore | This means that the business transaction is permanently disabled so not of interest
+
+|===
+
+==== Processors
+
+Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.
+
+However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.
+
+Zero or more processors can be defined for a business transaction. If none are defined, then the business transaction configuration will simply be used to associate specific interactions with the business transaction name.
+
+If a processor is defined, it is comprised of an initial set of parameters to identify which specific node(s) in the business transaction call trace are to be processed, and then a set of actions that should be performed. The actions will be discussed further down.
+
+.Processor Criteria
+|===
+|Field |Description
+
+|Node Type |This field identifies the type of call trace _node_ that the processor will be applied to, with possible values of _Consumer_, _Producer_ or _Component_
+
+|Direction |The direction the interaction being processed will flow, either _In_ or _Out_
+
+|URI Filter |Regular expression that can optionally be defined to isolate the nodes of interest, where multiple nodes of the same type may occur within the same transaction instance
+
+|Operation |For _Component_ node types, the optional operation name can be used to identify a specific node in the call trace
+
+|Predicate |A predicate can be defined to provide finer grained filtering on whether the processor should be applied to a particular call trace node, which by default is not specified
+
+|===
+
+As mentioned, each processor can define multiple actions to be performed on nodes that meet the criteria associated with the processor.
+
+Each action can also be guarded by its own predicate, so that not all actions will be performed for each node that passes the processor's overall criteria. The default is no predicate for the actions.
+
+The fields that need to be defined for an action will be specific to the action type, and therefore are listed in the description fields for the action:
+
+.Actions
+|===
+|Action Type |Description
+
+|Add Content |Include content in the business transaction fragment node. Fields are '*_name_*' to distinguish content if multiple entries will be defined, '*_type_*' to classify the content type, and an expression (see below) to determine how the content is derived
+
+|Add Correlation Identifier |Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '*_scope_*' field can have values _Global_, _Local_ (only relevant in the current service/app) or _Interaction_ (scoped to the single interaction, i.e. shared between the communicating endpoints). The expression (see below) determines how the value is derived.
+
+|Evaluate URI |Apply a template to the URI to extract path and query parameters, e.g. /customer/{customerId} or /orders?{id}
+
+|Set Detail |Extract a node specific value. The '*_name_*' field represents the name associated with the detail, and  an expression (see below) to determine how the value is derived
+
+|Set Fault Code |Define a fault code value. The expression (see below) determines how the value is derived
+
+|Set Fault Description |Define a fault description value. The expression (see below) determines how the value is derived
+
+|Set Property |Extract a named business property. The '*_name_*' field names the business property, and the expression (see below) determines how the value is derived
+
+|===
+
+
+.Expressions (for Predicates and Values)
+|===
+|Expression Type | Description
+
+|Literal | A literal value
+
+|XML | XPath expression applied to a XML document. The _Source_ field identifies where the information is obtained from (e.g. Content, Header). The _Key_ is dependent upon the source, if _Content_ then the key represents the index in an array of arguments, if _Header_ then the key is the header property name.
+
+|JSON | JSONPath Expression applied to a JSON document. The _Source_ field identifies where the information is obtained from (e.g. Content, Header). The _Key_ is dependent upon the source, if _Content_ then the key represents the index in an array of arguments, if _Header_ then the key is the header property name.
+
+|Text | Converts a value into text form. The _Source_ field identifies where the information is obtained from (e.g. Content, Header). The _Key_ is dependent upon the source, if _Content_ then the key represents the index in an array of arguments, if _Header_ then the key is the header property name.
+
+|FreeForm | A MVEL expression (should only be used with extreme caution, as may be subject to change in the future). 
+
+|===
+
+
+=== Kibana analytics dashboard
+
+The UI provides access to the Kibana analytics dashboard, showing the completion time information derived from the executing business transaction instances, by selecting the _View Analytics_ button on the top right corner of the Business Transaction page.
 
 Some tips on using Kibana:
 
@@ -73,139 +242,6 @@ Some tips on using Kibana:
 
 Further information on using Kibana can be found here: https://www.elastic.co/guide/en/kibana/3.0/index.html
 
-
-== Business Transaction Configuration
-
-Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.
-
-However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.
-
-NOTE: In future releases, UI tools will be provided to help capture this configuration information. However, until then, the details will need to be defined in JSON files. These files are located within the BTM server, under the *_standalone/data/btmconfig_* folder.
-
-[source,json]
-.Example business transaction configuration for an Order Management example included within the RTGov project
-----
-{
-  "businessTransactions": {
-    "rtgov_samples_ordermgmt": {  // <1>
-      "description": "Order Management example from RTGov",
-      "filter": {
-        "inclusions": [  // <2>
-          "^/demo-orders/OrderService$"
-        ]
-      },
-      "processors": [{  // <3>
-        "nodeType": "Consumer",  // <4>
-        "direction": "In",  // <5>
-        "uriFilter": "^/demo-orders/OrderService$",  // <6>
-        "actions": [{  // <7>
-          "name": "all",
-          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
-          "actionType": "AddContent",
-          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']\", values[0]))"
-        },{
-          "actionType": "AddCorrelationId",
-          "scope": "Global",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/orderId/text()\", values[0])"
-        },{
-          "name": "customer",
-          "actionType": "SetProperty",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/customer/text()\", values[0])"
-        },{
-          "name": "item",
-          "actionType": "SetProperty",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/itemId/text()\", values[0])"
-        }]
-      },{
-        "nodeType": "Consumer",
-        "direction": "Out",
-        "uriFilter": "^/demo-orders/OrderService$",
-        "actions": [{
-          "name": "all",
-          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrderResponse",
-          "actionType": "AddContent",
-          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrderResponse']\", values[0]))"
-        }]
-      },{
-        "nodeType": "Consumer",
-        "direction": "Out",
-        "uriFilter": "^/demo-orders/OrderService$",
-        "predicate": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']\", values[0]) != null",  // <8>
-        "actions": [{
-          "actionType": "SetFault",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultcode/text()\", values[0])"
-        },{
-          "actionType": "SetFaultDescription",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultstring/text()\", values[0])"
-        }]
-      }]
-    }
-  }
-}
-----
-<1> Each business transaction configuration must be given an unique name
-<2> Inclusion filters define a regex expression used to match a URI in the captured information. If an inclusion filter matches, then the associated business transaction name will be added to the data reported to the server
-<3> A list of information processors. Each entry in the list will define the criteria for matching against nodes in the business transaction fragment
-<4> The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer or Component
-<5> The 'direction' field determines whether the *In* (i.e. request) or *Out* (i.e. response) direction should be processed
-<6> The regex expression used to match against an URI of interest
-<7> A list of actions to be performed by the processor, if the matching criteria are satisfied. Each action can have an optional predicate expression to determine if it should be applied. The list of supported action types, and their relevant fields, are described below.
-<8> An optional predicate expression can be defined at the processor level, to guard against applying the actions it contains.
-
-.Actions
-|===
-|Action Type |Description
-
-|AddContent |Include content in the business transaction fragment node. Fields are '*_name_*' to distinguish content if multiple entries will be defined, '*_type_*' to classify the content type, and '*_expression_*' an MVEL expression to translate/extract the relevant content
-
-|AddCorrelationId |Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '*_scope_*' field can have values Global, Local (only relevant in the current service/app) or Interaction (scoped to the single interaction, i.e. shared between the communicating endpoints). The '*_expression_*' field is an MVEL expression used to extract the id.
-
-|SetDetail |Extract a node specific value. The '*_name_*' field represents the name associated with the detail, and '*_expression_*' the MVEL expression used to extract the value
-
-|SetFault |Define a fault value. The '*_expression_*' field is the MVEL expression used to extract the fault name
-
-|SetFaultDescription |Define a fault description value. The '*_expression_*' field is the MVEL expression used to extract the fault description
-
-|SetProperty |Extract a named business property. The '*_name_*' field names the business property, and '*_expression_*' defines the MVEL expression used to extract the value
-
-|===
-
-
-=== MVEL Expression Variables
-
-The MVEL expressions are supplied the following variables:
-
-|===
-|Variable |Description
-
-|btxn |The business transaction instance, of type _org.hawkular.btm.api.model.btxn.BusinessTransaction_.
-
-|node |The current business transaction instance node being processed, type is derived from _org.hawkular.btm.api.model.btxn.Node_, current concrete types are _Consumer_, _Producer_ and _Component_ (within the same package).
-
-|headers |A map of named header values.
-
-|values |An array of values.
-
-|===
-
-
-=== Action Helper Classes
-
-Some helper classes are provided for use within the action expressions.
-
-.XMLHelper class
-|===
-|Method Signature |Description
-
-|String evaluate(String xpath, Object node) |This method applies an XPath expression to the XML document/fragment supplied in the following formats:  _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
-
-|Node selectNode(String xpath, Object node) |This method applies an XPath expression to the XML document/fragment supplied in the following formats:  _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_, to select a Node.
-
-|String serialize(Object node) |This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
-
-|Node deserialize(Object node) |This method attempts to deserialize the supplied representation of an XML document. The supported input formats are: _String_, _javax.xml.transform.dom.DOMSource_ and _org.w3c.dom.Node_.
-
-|===
 
 
 == Properties
@@ -222,6 +258,7 @@ The current properties that can be configured here are:
 
 |===
 
+WARNING: The _hawkular-btm.collector.onlynamed_ property may be withdrawn in a future release, as it is now possible to name and ignore business transactions. Having the unnamed transactions reported to the server allows changes to be detected and administrators to determine if changes are required.
 
 
 == Useful Links
