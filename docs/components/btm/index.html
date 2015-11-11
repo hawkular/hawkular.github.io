@@ -165,10 +165,11 @@
 <li><a href="#_the_user_interface">The User Interface</a></li>
 </ul>
 </li>
-<li><a href="#_business_transaction_configuration">Business Transaction Configuration</a>
+<li><a href="#_console">Console</a>
 <ul class="sectlevel2">
-<li><a href="#_mvel_expression_variables">MVEL Expression Variables</a></li>
-<li><a href="#_action_helper_classes">Action Helper Classes</a></li>
+<li><a href="#_business_transaction_list">Business Transaction List</a></li>
+<li><a href="#_business_transaction_configuration">Business Transaction Configuration</a></li>
+<li><a href="#_kibana_analytics_dashboard">Kibana analytics dashboard</a></li>
 </ul>
 </li>
 <li><a href="#_properties">Properties</a></li>
@@ -233,7 +234,7 @@
 <p>Standalone JVM (e.g. micro services running outside traditional containers)</p>
 </li>
 <li>
-<p>Wildfly JEE server</p>
+<p>Wildfly and JBoss EAP JEE server</p>
 </li>
 <li>
 <p>Apache Tomcat</p>
@@ -271,7 +272,32 @@ The standalone server does not currently support a clustered configuration.
 <div class="sect2">
 <h3 id="_the_user_interface">The User Interface</h3>
 <div class="paragraph">
-<p>Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: <a href="http://localhost:&lt;port&gt;/hawkular/btm-ui" class="bare">http://localhost:&lt;port&gt;/hawkular/btm-ui</a></p>
+<p>The BTM User Interface provides the capability to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Configure business transactions</p>
+</li>
+<li>
+<p>View a list of business transactions, with summary statistics</p>
+</li>
+<li>
+<p>Access more detailed analytics for the business transactions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These capabilities will be discussed in more detail in the following section.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_console">Console</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: <a href="http://localhost:&lt;port&gt;/hawkular-ui/btm" class="bare">http://localhost:&lt;port&gt;/hawkular-ui/btm</a></p>
 </div>
 <div class="paragraph">
 <p><em>Where 'port' is the port used by the server (e.g. 8180 if port offset of 100 has been used).</em></p>
@@ -279,10 +305,296 @@ The standalone server does not currently support a clustered configuration.
 <div class="paragraph">
 <p>The default username and password when first starting the server is <strong><em>jdoe</em></strong> and <strong><em>password</em></strong>.</p>
 </div>
-<div class="sect3">
-<h4 id="_kibana_analytics_dashboard">Kibana analytics dashboard</h4>
+<div class="sect2">
+<h3 id="_business_transaction_list">Business Transaction List</h3>
 <div class="paragraph">
-<p>The UI currently only provides access to the Kibana analytics dashboard, showing the response time information derived from the executing business transaction instances.</p>
+<p>The initial page of the BTM console shows information about the business transactions, separated into tabs for the following categories.</p>
+</div>
+<div class="sect3">
+<h4 id="_active">Active</h4>
+<div class="paragraph">
+<p>This tab shows summary statistics for a list of actively managed business transactions.</p>
+</div>
+<div class="paragraph">
+<p>The statistics include:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The number of completed instances of the business transaction (per hour)</p>
+</li>
+<li>
+<p>The completion time 95 percentile (per hour)</p>
+</li>
+<li>
+<p>The number of instances that completed with faults (per hour)</p>
+</li>
+<li>
+<p>The number of alerts associated with this business transaction</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+The alerts count is currently a placeholder, awaiting integration with the Alerts mechanism.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>For each business transaction:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Users can navigate to the detailed statistical information about the business transaction by selecting the transactions names. NOTE: This page is currently blank and will provide some content in the next release.</p>
+</li>
+<li>
+<p>Selecting the cog icon will take the user to the business transaction&#8217;s configuration page.</p>
+</li>
+<li>
+<p>The trash icon is used to delete the business transaction.</p>
+</li>
+</ul>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_candidates">Candidates</h4>
+<div class="paragraph">
+<p>The candidates tab is used to identify interactions (associated with URIs) that have not currently be associated with a business transaction. When new URIs are detected, a red flag symbol will appear next to the <em>Candidates</em> tab name.</p>
+</div>
+<div class="paragraph">
+<p>At the top of the page, it is possible to either enter the name of a new business transaction, or select one of the existing business transactions from a drop down list. Once a name has been entered, or existing one selected, then the list of URIs will become enabled.</p>
+</div>
+<div class="paragraph">
+<p>The user can select zero or more of the URIs that are appropriate for the business transaction. These URIs will be used to create <em>inclusion filters (regular expressions)</em> that will enable the interactions associated with those URIs to be allocated to the business transaction.</p>
+</div>
+<div class="paragraph">
+<p>If a new business transaction is being created, then the user can click either the <strong><em>Manage</em></strong> or <strong><em>Ignore</em></strong> buttons. This will determine the initial reporting level of the business transaction, as to whether instances of this transaction will be reported to the server (i.e. managed) or not (i.e. ignored).</p>
+</div>
+<div class="paragraph">
+<p>If an existing business transaction is selected, then pressing the <strong><em>Update</em></strong> button will associate the inclusion filter for any checked URIs with the existing business transaction.</p>
+</div>
+<div class="paragraph">
+<p>Whichever button is selected, the user will be taken to the configuration page for the business transaction. See the following section for information on how to configure the business transaction.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_disabled">Disabled</h4>
+<div class="paragraph">
+<p>This tab lists the business transactions that have a reporting level of <em>None</em>.</p>
+</div>
+<div class="paragraph">
+<p>When in this mode, reporting of instance information about the business transaction will be suspended. This is considered to be a temporary state, unlike the following 'Ignored' state which is generally reserved for transactions that will never be of interest.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ignored">Ignored</h4>
+<div class="paragraph">
+<p>This tab lists the business transactoins that are being ignored.</p>
+</div>
+<div class="paragraph">
+<p>This state exists to enable business transaction instances to be categorised, and permanently marked as not being of interest. By explicitly identifying even business interactions that are not of interest, it is possible to detect any new traffic that may occur that has not previously be categorised, which informs the administrators that attention is required to investigate the unfamilar interactions.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_business_transaction_configuration">Business Transaction Configuration</h3>
+<div class="paragraph">
+<p>The configuration for a business transaction is separated into three sections.</p>
+</div>
+<div class="sect3">
+<h4 id="_description">Description</h4>
+<div class="paragraph">
+<p>Simply enables the user to provide a description of the business transaction and its scope (in case it incorporates a number of different invocations).</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_filters">Filters</h4>
+<div class="paragraph">
+<p>The filters section defines the link between the transaction instances, performed on specific URIs, and the business transaction name.</p>
+</div>
+<div class="paragraph">
+<p>This is achieved by defining one or more inclusion filter regular expressions that may match a URI. Once a URI is matched against one of the inclusion filters, it may then be matched against the exclusion filter regular expressions (if defined) to determine if a subset of the included URIs should be excluded.</p>
+</div>
+<div class="paragraph">
+<p>Once a transaction instance has been associated with a business transaction, the <em>Reporting Level</em> is used to determine how that business transaction instance should be handled.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 1. Reporting Levels</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Level</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">All</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This level means that all information about the business transaction should be reported</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">None</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This means that the business transaction is temporarily disabled so no information should be reported</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Ignore</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This means that the business transaction is permanently disabled so not of interest</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect3">
+<h4 id="_processors">Processors</h4>
+<div class="paragraph">
+<p>Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.</p>
+</div>
+<div class="paragraph">
+<p>However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.</p>
+</div>
+<div class="paragraph">
+<p>Zero or more processors can be defined for a business transaction. If none are defined, then the business transaction configuration will simply be used to associate specific interactions with the business transaction name.</p>
+</div>
+<div class="paragraph">
+<p>If a processor is defined, it is comprised of an initial set of parameters to identify which specific node(s) in the business transaction call trace are to be processed, and then a set of actions that should be performed. The actions will be discussed further down.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 2. Processor Criteria</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Node Type</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">This field identifies the type of call trace <em>node</em> that the processor will be applied to, with possible values of <em>Consumer</em>, <em>Producer</em> or <em>Component</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Direction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The direction the interaction being processed will flow, either <em>In</em> or <em>Out</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">URI Filter</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Regular expression that can optionally be defined to isolate the nodes of interest, where multiple nodes of the same type may occur within the same transaction instance</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Operation</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">For <em>Component</em> node types, the optional operation name can be used to identify a specific node in the call trace</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Predicate</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A predicate can be defined to provide finer grained filtering on whether the processor should be applied to a particular call trace node, which by default is not specified</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>As mentioned, each processor can define multiple actions to be performed on nodes that meet the criteria associated with the processor.</p>
+</div>
+<div class="paragraph">
+<p>Each action can also be guarded by its own predicate, so that not all actions will be performed for each node that passes the processor&#8217;s overall criteria. The default is no predicate for the actions.</p>
+</div>
+<div class="paragraph">
+<p>The fields that need to be defined for an action will be specific to the action type, and therefore are listed in the description fields for the action:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 3. Actions</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Action Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add Content</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Include content in the business transaction fragment node. Fields are '<strong><em>name</em></strong>' to distinguish content if multiple entries will be defined, '<strong><em>type</em></strong>' to classify the content type, and an expression (see below) to determine how the content is derived</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Add Correlation Identifier</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '<strong><em>scope</em></strong>' field can have values <em>Global</em>, <em>Local</em> (only relevant in the current service/app) or <em>Interaction</em> (scoped to the single interaction, i.e. shared between the communicating endpoints). The expression (see below) determines how the value is derived.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Evaluate URI</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Apply a template to the URI to extract path and query parameters, e.g. /customer/{customerId} or /orders?{id}</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set Detail</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a node specific value. The '<strong><em>name</em></strong>' field represents the name associated with the detail, and  an expression (see below) to determine how the value is derived</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set Fault Code</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault code value. The expression (see below) determines how the value is derived</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set Fault Description</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault description value. The expression (see below) determines how the value is derived</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set Property</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a named business property. The '<strong><em>name</em></strong>' field names the business property, and the expression (see below) determines how the value is derived</p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 4. Expressions (for Predicates and Values)</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Expression Type</th>
+<th class="tableblock halign-left valign-top">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Literal</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A literal value</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">XML</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">XPath expression applied to a XML document. The <em>Source</em> field identifies where the information is obtained from (e.g. Content, Header). The <em>Key</em> is dependent upon the source, if <em>Content</em> then the key represents the index in an array of arguments, if <em>Header</em> then the key is the header property name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JSON</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">JSONPath Expression applied to a JSON document. The <em>Source</em> field identifies where the information is obtained from (e.g. Content, Header). The <em>Key</em> is dependent upon the source, if <em>Content</em> then the key represents the index in an array of arguments, if <em>Header</em> then the key is the header property name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Text</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Converts a value into text form. The <em>Source</em> field identifies where the information is obtained from (e.g. Content, Header). The <em>Key</em> is dependent upon the source, if <em>Content</em> then the key represents the index in an array of arguments, if <em>Header</em> then the key is the header property name.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">FreeForm</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A MVEL expression (should only be used with extreme caution, as may be subject to change in the future).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_kibana_analytics_dashboard">Kibana analytics dashboard</h3>
+<div class="paragraph">
+<p>The UI provides access to the Kibana analytics dashboard, showing the completion time information derived from the executing business transaction instances, by selecting the <em>View Analytics</em> button on the top right corner of the Business Transaction page.</p>
 </div>
 <div class="paragraph">
 <p>Some tips on using Kibana:</p>
@@ -303,240 +615,6 @@ The standalone server does not currently support a clustered configuration.
 </div>
 </div>
 </div>
-</div>
-<div class="sect1">
-<h2 id="_business_transaction_configuration">Business Transaction Configuration</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.</p>
-</div>
-<div class="paragraph">
-<p>However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-In future releases, UI tools will be provided to help capture this configuration information. However, until then, the details will need to be defined in JSON files. These files are located within the BTM server, under the <strong><em>standalone/data/btmconfig</em></strong> folder.
-</td>
-</tr>
-</table>
-</div>
-<div class="listingblock">
-<div class="title">Example business transaction configuration for an Order Management example included within the RTGov project</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-  "businessTransactions": {
-    "rtgov_samples_ordermgmt": {  <i class="conum" data-value="1"></i><b>(1)</b>
-      "description": "Order Management example from RTGov",
-      "filter": {
-        "inclusions": [  <i class="conum" data-value="2"></i><b>(2)</b>
-          "^/demo-orders/OrderService$"
-        ]
-      },
-      "processors": [{  <i class="conum" data-value="3"></i><b>(3)</b>
-        "nodeType": "Consumer",  <i class="conum" data-value="4"></i><b>(4)</b>
-        "direction": "In",  <i class="conum" data-value="5"></i><b>(5)</b>
-        "uriFilter": "^/demo-orders/OrderService$",  <i class="conum" data-value="6"></i><b>(6)</b>
-        "actions": [{  <i class="conum" data-value="7"></i><b>(7)</b>
-          "name": "all",
-          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrder",
-          "actionType": "AddContent",
-          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']\", values[0]))"
-        },{
-          "actionType": "AddCorrelationId",
-          "scope": "Global",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/orderId/text()\", values[0])"
-        },{
-          "name": "customer",
-          "actionType": "SetProperty",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/customer/text()\", values[0])"
-        },{
-          "name": "item",
-          "actionType": "SetProperty",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrder']/order/itemId/text()\", values[0])"
-        }]
-      },{
-        "nodeType": "Consumer",
-        "direction": "Out",
-        "uriFilter": "^/demo-orders/OrderService$",
-        "actions": [{
-          "name": "all",
-          "type": "{urn:switchyard-quickstart-demo:orders:1.0}submitOrderResponse",
-          "actionType": "AddContent",
-          "expression": "XMLHelper.serialize(XMLHelper.selectNode(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'submitOrderResponse']\", values[0]))"
-        }]
-      },{
-        "nodeType": "Consumer",
-        "direction": "Out",
-        "uriFilter": "^/demo-orders/OrderService$",
-        "predicate": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']\", values[0]) != null",  <i class="conum" data-value="8"></i><b>(8)</b>
-        "actions": [{
-          "actionType": "SetFault",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultcode/text()\", values[0])"
-        },{
-          "actionType": "SetFaultDescription",
-          "expression": "XMLHelper.evaluate(\"*[local-name() = 'Envelope']/*[local-name() = 'Body']/*[local-name() = 'Fault']/faultstring/text()\", values[0])"
-        }]
-      }]
-    }
-  }
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Each business transaction configuration must be given an unique name</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>Inclusion filters define a regex expression used to match a URI in the captured information. If an inclusion filter matches, then the associated business transaction name will be added to the data reported to the server</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>A list of information processors. Each entry in the list will define the criteria for matching against nodes in the business transaction fragment</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>The 'nodeType' can identify one of the support node types, e.g. Consumer, Producer or Component</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="5"></i><b>5</b></td>
-<td>The 'direction' field determines whether the <strong>In</strong> (i.e. request) or <strong>Out</strong> (i.e. response) direction should be processed</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="6"></i><b>6</b></td>
-<td>The regex expression used to match against an URI of interest</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="7"></i><b>7</b></td>
-<td>A list of actions to be performed by the processor, if the matching criteria are satisfied. Each action can have an optional predicate expression to determine if it should be applied. The list of supported action types, and their relevant fields, are described below.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="8"></i><b>8</b></td>
-<td>An optional predicate expression can be defined at the processor level, to guard against applying the actions it contains.</td>
-</tr>
-</table>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 1. Actions</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Action Type</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AddContent</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Include content in the business transaction fragment node. Fields are '<strong><em>name</em></strong>' to distinguish content if multiple entries will be defined, '<strong><em>type</em></strong>' to classify the content type, and '<strong><em>expression</em></strong>' an MVEL expression to translate/extract the relevant content</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">AddCorrelationId</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Define correlation identifier used to correlate the current fragment with other fragments based on business context. The '<strong><em>scope</em></strong>' field can have values Global, Local (only relevant in the current service/app) or Interaction (scoped to the single interaction, i.e. shared between the communicating endpoints). The '<strong><em>expression</em></strong>' field is an MVEL expression used to extract the id.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetDetail</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a node specific value. The '<strong><em>name</em></strong>' field represents the name associated with the detail, and '<strong><em>expression</em></strong>' the MVEL expression used to extract the value</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetFault</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault value. The '<strong><em>expression</em></strong>' field is the MVEL expression used to extract the fault name</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetFaultDescription</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Define a fault description value. The '<strong><em>expression</em></strong>' field is the MVEL expression used to extract the fault description</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">SetProperty</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Extract a named business property. The '<strong><em>name</em></strong>' field names the business property, and '<strong><em>expression</em></strong>' defines the MVEL expression used to extract the value</p></td>
-</tr>
-</tbody>
-</table>
-<div class="sect2">
-<h3 id="_mvel_expression_variables">MVEL Expression Variables</h3>
-<div class="paragraph">
-<p>The MVEL expressions are supplied the following variables:</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Variable</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">btxn</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The business transaction instance, of type <em>org.hawkular.btm.api.model.btxn.BusinessTransaction</em>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">node</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">The current business transaction instance node being processed, type is derived from <em>org.hawkular.btm.api.model.btxn.Node</em>, current concrete types are <em>Consumer</em>, <em>Producer</em> and <em>Component</em> (within the same package).</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">headers</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A map of named header values.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">values</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">An array of values.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-<div class="sect2">
-<h3 id="_action_helper_classes">Action Helper Classes</h3>
-<div class="paragraph">
-<p>Some helper classes are provided for use within the action expressions.</p>
-</div>
-<table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 2. XMLHelper class</caption>
-<colgroup>
-<col style="width: 50%;">
-<col style="width: 50%;">
-</colgroup>
-<thead>
-<tr>
-<th class="tableblock halign-left valign-top">Method Signature</th>
-<th class="tableblock halign-left valign-top">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String evaluate(String xpath, Object node)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This method applies an XPath expression to the XML document/fragment supplied in the following formats:  <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Node selectNode(String xpath, Object node)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This method applies an XPath expression to the XML document/fragment supplied in the following formats:  <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>, to select a Node.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">String serialize(Object node)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This method attempts to serialize the supplied node as a textual representation of an XML document. The supported input formats are: <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
-</tr>
-<tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Node deserialize(Object node)</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">This method attempts to deserialize the supplied representation of an XML document. The supported input formats are: <em>String</em>, <em>javax.xml.transform.dom.DOMSource</em> and <em>org.w3c.dom.Node</em>.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-</div>
 <div class="sect1">
 <h2 id="_properties">Properties</h2>
 <div class="sectionbody">
@@ -547,7 +625,7 @@ In future releases, UI tools will be provided to help capture this configuration
 <p>The current properties that can be configured here are:</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
-<caption class="title">Table 3. BTM Properties</caption>
+<caption class="title">Table 5. BTM Properties</caption>
 <colgroup>
 <col style="width: 33%;">
 <col style="width: 33%;">
@@ -568,6 +646,18 @@ In future releases, UI tools will be provided to help capture this configuration
 </tr>
 </tbody>
 </table>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+The <em>hawkular-btm.collector.onlynamed</em> property may be withdrawn in a future release, as it is now possible to name and ignore business transactions. Having the unnamed transactions reported to the server allows changes to be detected and administrators to determine if changes are required.
+</td>
+</tr>
+</table>
+</div>
 </div>
 </div>
 <div class="sect1">
