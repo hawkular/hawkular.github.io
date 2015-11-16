@@ -164,7 +164,7 @@
 <li><a href="#_option_b_install_from_a_docker_image">Option B: Install from a docker image</a></li>
 </ul>
 </li>
-<li><a href="#_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular Wildfly Agent</a></li>
+<li><a href="#_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular WildFly Agent</a></li>
 <li><a href="#_troubleshooting">Troubleshooting</a>
 <ul class="sectlevel2">
 <li><a href="#_error_on_starting_hawkular_outofmemoryerror_unable_to_create_new_native_thread">Error on starting Hawkular- OutOfMemoryError: unable to create new native thread</a></li>
@@ -390,202 +390,40 @@ Status: Image is up to date for jboss/hawkular-aio:latest <i class="conum" data-
 </div>
 </div>
 <div class="sect1">
-<h2 id="_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular Wildfly Agent</h2>
+<h2 id="_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular WildFly Agent</h2>
 <div class="sectionbody">
 <div class="paragraph">
 <p>Now that the server is installed and you have a user registered you would likely want to push some data into that server, at this stage, the only agent we provide is an agent for WildFly 9 and above.</p>
 </div>
 <div class="paragraph">
-<p>We plan to facilitate the installation of an agent but as of now it requires a bit of file copying and editing, sorry about that.</p>
-</div>
-<div class="paragraph">
-<p><strong>NOTE: An agent installer is now available, though not released as of October 31, 2015. Ask in IRC (freenode: #hawkular) for instructions if you want an easier way to install the agent in your WildFly Server. Once the installer is released, better documentation on how to install the agent using the new installer will be provided here</strong></p>
-</div>
-<div class="paragraph">
-<p>Here are the steps:</p>
+<p>Here are the steps to install the Hawkular WildFly agent into your own WildFly Server installation:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Download the WildFly module from <a href="http://download.jboss.org/hawkular/wildfly-monitor/0.4.1/hawkular-monitor-0.4.1-module.zip">here</a>.</p>
+<p>Download the Hawkular WildFly Agent installer
+You can download the installer from <a href="http://localhost:8080/hawkular/wildfly-agent/download/installer=true">your Hawkular Server that is already running</a>.</p>
 </li>
 <li>
-<p>Unzip the file inside the <code>modules/system/layers/base</code> directory of the WildFly instance that you want to monitor.</p>
-</li>
-<li>
-<p>In the <code>standalone/configuration/standalone.xml</code> file of your Hawkular instance, add the Hawkular Monitor Agent
-extension in the <code>&lt;extensions&gt;</code> section:</p>
+<p>Run the installer, telling it the location of your WildFly Server is.</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;extension module="org.hawkular.agent.monitor"/&gt;</code></pre>
+<pre>java -jar hawkular-wildfly-agent-installer*.jar --wildfly-home=/your/wildfly/server</pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>In the <code>standalone/configuration/standalone.xml</code> file of your Hawkular instance, add the Hawkular Monitor Agent subsystem declaration
-in the <code>profile&gt;</code> section. Note that you must set your Hawkular credentials in the username and password attributes
-(in other words, replace SET_ME with their true values for your Hawkular system):</p>
+<p>In the <code>standalone/configuration/standalone.xml</code> file of your WildFly Server in which you just installed the Hawkular WildFly Agent, set your Hawkular credentials in the storage-adapter XML element.</p>
 </li>
 </ul>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
-&lt;subsystem xmlns="urn:org.hawkular.agent.monitor:monitor:1.0" apiJndiName="java:global/hawkular/agent/monitor/api" numMetricSchedulerThreads="3" numAvailSchedulerThreads="3" enabled="${hawkular.agent.enabled:true}"&gt;
-  &lt;diagnostics enabled="true" reportTo="LOG" interval="1" timeUnits="minutes" /&gt;
-  &lt;storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /&gt;<i class="conum" data-value="1"></i><b>(1)</b>
-  &lt;metric-set-dmr name="WildFly Memory Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Heap Used" interval="30" timeUnits="seconds" metricUnits="bytes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#used" /&gt;
-    &lt;metric-dmr name="Heap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#committed" /&gt;
-    &lt;metric-dmr name="Heap Max" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="heap-memory-usage#max" /&gt;
-    &lt;metric-dmr name="NonHeap Used" interval="30" timeUnits="seconds" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#used" /&gt;
-    &lt;metric-dmr name="NonHeap Committed" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=memory" attribute="non-heap-memory-usage#committed" /&gt;
-    &lt;metric-dmr name="Accumulated GC Duration" metricType="counter" interval="1" timeUnits="minutes" path="/core-service=platform-mbean/type=garbage-collector/name=*" attribute="collection-time" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="WildFly Threading Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Thread Count" interval="2" timeUnits="minutes" metricUnits="none" path="/core-service=platform-mbean/type=threading" attribute="thread-count" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="WildFly Aggregated Web Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Aggregated Active Web Sessions" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow" attribute="active-sessions" /&gt;
-    &lt;metric-dmr name="Aggregated Max Active Web Sessions" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow" attribute="max-active-sessions" /&gt;
-    &lt;metric-dmr name="Aggregated Expired Web Sessions" metricType="counter" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow" attribute="expired-sessions" /&gt;
-    &lt;metric-dmr name="Aggregated Rejected Web Sessions" metricType="counter" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow" attribute="rejected-sessions" /&gt;
-    &lt;metric-dmr name="Aggregated Servlet Request Time" metricType="counter" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow/servlet=*" attribute="total-request-time" /&gt;
-    &lt;metric-dmr name="Aggregated Servlet Request Count" metricType="counter" interval="1" timeUnits="minutes" path="/deployment=*/subsystem=undertow/servlet=*" attribute="request-count" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Undertow Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Active Sessions" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribute="active-sessions" /&gt;
-    &lt;metric-dmr name="Sessions Created" metricType="counter" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribute="sessions-created" /&gt;
-    &lt;metric-dmr name="Expired Sessions" metricType="counter" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribute="expired-sessions" /&gt;
-    &lt;metric-dmr name="Rejected Sessions" metricType="counter" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribute="rejected-sessions" /&gt;
-    &lt;metric-dmr name="Max Active Sessions" interval="2" timeUnits="minutes" path="/subsystem=undertow" attribute="max-active-sessions" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Servlet Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Max Request Time" interval="5" timeUnits="minutes" metricUnits="milliseconds" path="/" attribute="max-request-time" /&gt;
-    &lt;metric-dmr name="Min Request Time" interval="5" timeUnits="minutes" path="/" attribute="min-request-time" /&gt;
-    &lt;metric-dmr name="Total Request Time" metricType="counter" interval="5" timeUnits="minutes" path="/" attribute="total-request-time" /&gt;
-    &lt;metric-dmr name="Request Count" metricType="counter" interval="5" timeUnits="minutes" path="/" attribute="request-count" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Singleton EJB Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time" /&gt;
-    &lt;metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribute="invocations" /&gt;
-    &lt;metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="peak-concurrent-invocations" /&gt;
-    &lt;metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Message Driven EJB Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time" /&gt;
-    &lt;metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribute="invocations" /&gt;
-    &lt;metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="peak-concurrent-invocations" /&gt;
-    &lt;metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time" /&gt;
-    &lt;metric-dmr name="Pool Available Count" interval="5" timeUnits="minutes" path="/" attribute="pool-available-count" /&gt;
-    &lt;metric-dmr name="Pool Create Count" interval="5" timeUnits="minutes" path="/" attribute="pool-create-count" /&gt;
-    &lt;metric-dmr name="Pool Current Size" interval="5" timeUnits="minutes" path="/" attribute="pool-current-size" /&gt;
-    &lt;metric-dmr name="Pool Max Size" interval="5" timeUnits="minutes" path="/" attribute="pool-max-size" /&gt;
-    &lt;metric-dmr name="Pool Remove Count" interval="5" timeUnits="minutes" path="/" attribute="pool-remove-count" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Stateless Session EJB Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Execution Time" interval="5" timeUnits="minutes" path="/" attribute="execution-time" /&gt;
-    &lt;metric-dmr name="Invocations" metricType="counter" interval="5" timeUnits="minutes" path="/" attribute="invocations" /&gt;
-    &lt;metric-dmr name="Peak Concurrent Invocations" interval="5" timeUnits="minutes" path="/" attribute="peak-concurrent-invocations" /&gt;
-    &lt;metric-dmr name="Wait Time" interval="5" timeUnits="minutes" path="/" attribute="wait-time" /&gt;
-    &lt;metric-dmr name="Pool Availabile Count" interval="5" timeUnits="minutes" path="/" attribute="pool-available-count" /&gt;
-    &lt;metric-dmr name="Pool Create Count" interval="5" timeUnits="minutes" path="/" attribute="pool-create-count" /&gt;
-    &lt;metric-dmr name="Pool Current Size" interval="5" timeUnits="minutes" path="/" attribute="pool-current-size" /&gt;
-    &lt;metric-dmr name="Pool Max Size" interval="5" timeUnits="minutes" path="/" attribute="pool-max-size" /&gt;
-    &lt;metric-dmr name="Pool Remove Count" interval="5" timeUnits="minutes" path="/" attribute="pool-remove-count" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Datasource JDBC Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Access Count" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheAccessCount" /&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Add Count" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheAddCount" /&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Current Size" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheCurrentSize" /&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Delete Count" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheDeleteCount" /&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Hit Count" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheHitCount" /&gt;
-    &lt;metric-dmr name="Prepared Statement Cache Miss Count" interval="10" timeUnits="minutes" path="/statistics=jdbc" attribute="PreparedStatementCacheMissCount" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Datasource Pool Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Active Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="ActiveCount" /&gt;
-    &lt;metric-dmr name="Available Count" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="AvailableCount" /&gt;
-    &lt;metric-dmr name="Average Blocking Time" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="AverageBlockingTime" /&gt;
-    &lt;metric-dmr name="Average Creation Time" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="AverageCreationTime" /&gt;
-    &lt;metric-dmr name="Average Get Time" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="AverageGetTime" /&gt;
-    &lt;metric-dmr name="Blocking Failure Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="BlockingFailureCount" /&gt;
-    &lt;metric-dmr name="Created Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="CreatedCount" /&gt;
-    &lt;metric-dmr name="Destroyed Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="DestroyedCount" /&gt;
-    &lt;metric-dmr name="Idle Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="IdleCount" /&gt;
-    &lt;metric-dmr name="In Use Count" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="InUseCount" /&gt;
-    &lt;metric-dmr name="Max Creation Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="MaxCreationTime" /&gt;
-    &lt;metric-dmr name="Max Get Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="MaxGetTime" /&gt;
-    &lt;metric-dmr name="Max Used Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="MaxUsedCount" /&gt;
-    &lt;metric-dmr name="Max Wait Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="MaxWaitCount" /&gt;
-    &lt;metric-dmr name="Max Wait Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="MaxWaitTime" /&gt;
-    &lt;metric-dmr name="Timed Out" interval="1" timeUnits="minutes" path="/statistics=pool" attribute="TimedOut" /&gt;
-    &lt;metric-dmr name="Total Blocking Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="TotalBlockingTime" /&gt;
-    &lt;metric-dmr name="Total Creation Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="TotalCreationTime" /&gt;
-    &lt;metric-dmr name="Total Get Time" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="TotalGetTime" /&gt;
-    &lt;metric-dmr name="Wait Count" interval="10" timeUnits="minutes" path="/statistics=pool" attribute="WaitCount" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;metric-set-dmr name="Transactions Metrics" enabled="true"&gt;
-    &lt;metric-dmr name="Number of Aborted Transactions" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-aborted-transactions" /&gt;
-    &lt;metric-dmr name="Number of Application Rollbacks" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-application-rollbacks" /&gt;
-    &lt;metric-dmr name="Number of Committed Transactions" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-committed-transactions" /&gt;
-    &lt;metric-dmr name="Number of Heuristics" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-heuristics" /&gt;
-    &lt;metric-dmr name="Number of In-Flight Transactions" interval="10" timeUnits="minutes" path="/" attribute="number-of-inflight-transactions" /&gt;
-    &lt;metric-dmr name="Number of Nested Transactions" interval="10" timeUnits="minutes" path="/" attribute="number-of-nested-transactions" /&gt;
-    &lt;metric-dmr name="Number of Resource Rollbacks" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-resource-rollbacks" /&gt;
-    &lt;metric-dmr name="Number of Timed Out Transactions" metricType="counter" interval="10" timeUnits="minutes" path="/" attribute="number-of-timed-out-transactions" /&gt;
-    &lt;metric-dmr name="Number of Transactions" interval="10" timeUnits="minutes" path="/" attribute="number-of-transactions" /&gt;
-  &lt;/metric-set-dmr&gt;
-  &lt;avail-set-dmr name="Server Availability" enabled="true"&gt;
-    &lt;avail-dmr name="App Server" interval="30" timeUnits="seconds" path="/" attribute="server-state" upRegex="run.*" /&gt;
-  &lt;/avail-set-dmr&gt;
-  &lt;avail-set-dmr name="Deployment Status" enabled="true"&gt;
-    &lt;avail-dmr name="Deployment Status" interval="1" timeUnits="minutes" path="/" attribute="status" upRegex="OK" /&gt;
-  &lt;/avail-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Main" enabled="true"&gt;
-    &lt;resource-type-dmr name="WildFly Server" resourceNameTemplate="WildFly Server [%ManagedServerName] [${jboss.node.name:localhost}]" path="/" metricSets="WildFly Memory Metrics,WildFly Threading Metrics,WildFly Aggregated Web Metrics" availSets="Server Availability"&gt;
-      &lt;resource-config-dmr name="Hostname" path="/core-service=server-environment" attribute="qualified-host-name" /&gt;
-      &lt;resource-config-dmr name="Version" attribute="release-version" /&gt;
-      &lt;resource-config-dmr name="Bound Address" path="/socket-binding-group=standard-sockets/socket-binding=http" attribute="bound-address" /&gt;
-    &lt;/resource-type-dmr&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Hawkular" enabled="true"&gt;
-    &lt;resource-type-dmr name="Bus Broker" resourceNameTemplate="Bus Broker" path="/subsystem=hawkular-bus-broker" parents="WildFly Server" /&gt;
-    &lt;resource-type-dmr name="Monitor Agent" resourceNameTemplate="Monitor Agent" path="/subsystem=hawkular-monitor" parents="WildFly Server"&gt;
-      &lt;operation-dmr name="Status" operationName="status" path="/" /&gt;
-    &lt;/resource-type-dmr&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Deployment" enabled="true"&gt;
-    &lt;resource-type-dmr name="Deployment" resourceNameTemplate="Deployment [%2]" path="/deployment=*" parents="WildFly Server" metricSets="Undertow Metrics" availSets="Deployment Status"&gt;
-      &lt;operation-dmr name="Deploy" operationName="deploy" path="/" /&gt;
-      &lt;operation-dmr name="Redeploy" operationName="redeploy" path="/" /&gt;
-      &lt;operation-dmr name="Remove" operationName="remove" path="/" /&gt;
-      &lt;operation-dmr name="Undeploy" operationName="undeploy" path="/" /&gt;
-    &lt;/resource-type-dmr&gt;
-    &lt;resource-type-dmr name="SubDeployment" resourceNameTemplate="SubDeployment [%-]" path="/subdeployment=*" parents="Deployment" metricSets="Undertow Metrics" /&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Web Component" enabled="true"&gt;
-    &lt;resource-type-dmr name="Servlet" resourceNameTemplate="Servlet [%-]" path="/subsystem=undertow/servlet=*" parents="Deployment,SubDeployment" metricSets="Servlet Metrics" /&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="EJB" enabled="true"&gt;
-    &lt;resource-type-dmr name="Singleton EJB" resourceNameTemplate="Singleton EJB [%-]" path="/subsystem=ejb3/singleton-bean=*" parents="Deployment,SubDeployment" metricSets="Singleton EJB Metrics" /&gt;
-    &lt;resource-type-dmr name="Message Driven EJB" resourceNameTemplate="Message Driven EJB [%-]" path="/subsystem=ejb3/message-driven-bean=*" parents="Deployment,SubDeployment" metricSets="Message Driven EJB Metrics" /&gt;
-    &lt;resource-type-dmr name="Stateless Session EJB" resourceNameTemplate="Stateless Session EJB [%-]" path="/subsystem=ejb3/stateless-session-bean=*" parents="Deployment,SubDeployment" metricSets="Stateless Session EJB Metri cs" /&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Datasource" enabled="true"&gt;
-    &lt;resource-type-dmr name="Datasource" resourceNameTemplate="Datasource [%-]" path="/subsystem=datasources/data-source=*" parents="WildFly Server" metricSets="Datasource Pool Metrics,Datasource JDBC Metrics" /&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;resource-type-set-dmr name="Transaction Manager" enabled="true"&gt;
-    &lt;resource-type-dmr name="Transaction Manager" resourceNameTemplate="Transaction Manager" path="/subsystem=transactions" parents="WildFly Server" metricSets="Transactions Metrics" /&gt;
-  &lt;/resource-type-set-dmr&gt;
-  &lt;managed-servers&gt;
-    &lt;local-dmr name="Local Server" enabled="true" resourceTypeSets="Main,Deployment,Web Component,EJB,Datasource,Transaction Manager,Hawkular" /&gt;<i class="conum" data-value="2"></i><b>(2)</b>
-    &lt;remote-dmr name="Another Remote Server" enabled="false" host="localhost" port="9990" username="adminUser" password="adminPass" resourceTypeSets="Main,Deployment,Web Component,EJB,Datasource,Transaction Manager" /&gt;<i class="conum" data-value="3"></i><b>(3)</b>
-  &lt;/managed-servers&gt;
-&lt;/subsystem&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /&gt; &lt;!-- &lt;1&gt; --&gt;</code></pre>
 </div>
 </div>
 <div class="colist arabic">
@@ -600,28 +438,7 @@ in the <code>profile&gt;</code> section. Note that you must set your Hawkular cr
 </tr>
 <tr>
 <td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>Optional: A single WildFly instance can manage multiple remote WildFly server, in that case you need to enable the remote-dmr section and specify username and password of a management user of the remote server.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>In the <code>standalone/configuration/standalone.xml</code> file of your Hawkular instance, add an outbound socket binding
-<code>&lt;socket-binding-group&gt;</code> that points to your running Hawkular server instance:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;outbound-socket-binding name="hawkular"&gt;
-  &lt;remote-destination
-     host="your-hawkular-server-hostname"   <i class="conum" data-value="1"></i><b>(1)</b>
-     port="8080" /&gt;
-&lt;/outbound-socket-binding&gt;</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Adjust this value</td>
+<td>Optional: A single Hawkular WildFly Agent instance can also manage multiple remote WildFly servers. In that case you need to enable a remote-dmr section and specify the username and password of a management user of the remote WildFly Server.</td>
 </tr>
 </table>
 </div>
