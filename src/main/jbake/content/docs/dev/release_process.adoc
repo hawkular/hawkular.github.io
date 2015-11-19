@@ -33,15 +33,22 @@ toc::[]
 ├── hawkular-dist-{hawkular_released_version}.zip.md5
 └── hawkular-dist-{hawkular_released_version}.zip.sha1
 ----
+
+2 - Make sure the rights are correct:
 [source,shell,subs="+attributes"]
 ----
-rsync -rv --protocol=28 0.3.0 hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/wildfly-monitor
+chown 444 {hawkular_released_version}/*
+----
+
+3 - Upload the files
+[source,shell,subs="+attributes"]
+----
 rsync -rv --protocol=28 {hawkular_released_version} hawkular@filemgmt.jboss.org:/downloads_htdocs/hawkular/hawkular
 ----
-2 - It's safer to check the file permissions after the upload
 
+== Step 3 - Update JBoss.org Hawkular Docker images
 
-== Step 3 - Update JBoss.org Hawkular images
+1 - Update the DockerFile
 [source,shell,subs="+attributes"]
 ----
 # git clone git@github.com:jboss-dockerfiles/hawkular.git
@@ -53,6 +60,10 @@ rsync -rv --protocol=28 {hawkular_released_version} hawkular@filemgmt.jboss.org:
 # git tag {hawkular_released_version}
 # git push --tags
 ----
+
+2 - Build the docker container
+Go to https://hub.docker.com/r/jboss/hawkular-aio/~/settings/automated-builds/
+
 
 == Step 4 - Close JIRA release
 Go to: https://issues.jboss.org/plugins/servlet/project-config/HAWKULAR/versions
@@ -70,5 +81,5 @@ Go to: https://issues.jboss.org/plugins/servlet/project-config/HAWKULAR/versions
 ----
 
 == Step 6 - Tweet/G+
-Use Hootsuite (/ask Thomas)
+Use Hootsuite
 
