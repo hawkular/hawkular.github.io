@@ -340,19 +340,19 @@ void
 
 {empty} +
 
-=== Resources CRUD
+=== Manages associations between resource types and resources
 
 
 
 ==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/children`
+*Endpoint* `/resourceTypes/{resourceTypeId}/resources`
 
 
-NOTE: *Retrieves child resources of a resource. This can be paged.* 
+NOTE: *Retrieves all resources with given resource types. Accepts paging query parameters.* 
 
 *Method*
 ****
-*GET* `/{environmentId}/resources/{resourcePath:.+}/children`
+*GET* `/resourceTypes/{resourceTypeId}/resources`
 ****
 
 *path parameters*
@@ -360,8 +360,7 @@ NOTE: *Retrieves child resources of a resource. This can be paged.*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
+    |resourceTypeId|true||string
 |=======================
 
 *Response* +
@@ -371,19 +370,29 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
+| 200    | the list of resources | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Associates given resources as children of a given resource.* 
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/resources`
+
+
+NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
 
 *Method*
 ****
-*POST* `/{environmentId}/resources/{resourcePath:.+}/children`
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/resources`
 ****
 
 *path parameters*
@@ -391,15 +400,65 @@ NOTE: *Associates given resources as children of a given resource.*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
+    |feedId|true||string
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the list of metric types associated with the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== CRUD for operation type data
+
+
+
+==============================================
+*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+
+
+NOTE: *Updates the configuration of a resource type* 
+
+*Method*
+****
+*PUT* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|false|resources|<<UNKNOWN[string],UNKNOWN[string]>>
+    |body|true||<<Update,Update>>
 |=======================
 
 *Response* +
@@ -410,28 +469,18 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
+| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{parentPath:.+}`
-
-
-NOTE: *Creates a new resource* 
+NOTE: *Updates the configuration of a resource type* 
 
 *Method*
 ****
-*POST* `/{environmentId}/resources/{parentPath:.+}`
+*DELETE* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
 ****
 
 *path parameters*
@@ -439,8 +488,46 @@ NOTE: *Creates a new resource*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |parentPath|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Creates the configuration for pre-existing resource type* 
+
+*Method*
+****
+*POST* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
 |=======================
 *body parameters*
 
@@ -457,10 +544,46 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 204    | OK Created | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves a single resource type* 
+
+*Method*
+****
+*GET* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -474,14 +597,14 @@ void
 
 
 ==============================================
-*Endpoint* `/{environmentId}/resources`
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
 
 
-NOTE: *Creates a new resource* 
+NOTE: *Updates the configuration of a resource type* 
 
 *Method*
 ****
-*POST* `/{environmentId}/resources`
+*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
 ****
 
 *path parameters*
@@ -489,7 +612,94 @@ NOTE: *Creates a new resource*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |environmentId|true||string
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Updates the configuration of a resource type* 
+
+*Method*
+****
+*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Creates the configuration for pre-existing resource type* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
 |=======================
 *body parameters*
 
@@ -506,21 +716,722 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 204    | OK Created | -
+| 404    | Tenant, environment, resource type or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Retrieves resources in the environment, optionally filtering by resource type. Accepts paging query parameters.* 
+NOTE: *Retrieves a single resource type* 
 
 *Method*
 ****
-*GET* `/{environmentId}/resources`
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== CRUD of environments.
+
+
+
+==============================================
+*Endpoint* `/environments`
+
+
+NOTE: *Returns all environments under given tenant. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/environments`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | [Set](#<<Set>>)
+| 401    | Unauthorized access | -
+| 404    | Tenant not found | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Creates a new environment in given tenant.* 
+
+*Method*
+****
+*POST* `/environments`
+****
+
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Environment created | -
+| 401    | Unauthorized access | -
+| 409    | Environment already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/environments/{environmentId}`
+
+
+NOTE: *Retrieves a single environment* 
+
+*Method*
+****
+*GET* `/environments/{environmentId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 401    | Unauthorized access | -
+| 404    | Environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Updates properties of the environment* 
+
+*Method*
+****
+*PUT* `/environments/{environmentId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | The properties of the environment successfully updated | -
+| 400    | Properties invalid | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Tenant or environment not found | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Deletes the environment from the tenant* 
+
+*Method*
+****
+*DELETE* `/environments/{environmentId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | Environment successfully deleted | -
+| 400    | Delete failed because it would leave inventory in invalid state | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Tenant or environment not found | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Manages associations between resource types and metric types
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
+
+
+NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the list of metric types associated with the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Associates a pre-existing metric type with a resource type* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|A list of paths to metric types to be associated with the resource type. They can either be canonical or relative to the resource type.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, resource type or metric type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves metric types associated with the given resource type. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The list of metric types | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/resourceTypes/{resourceTypeId}/metricTypes`
+
+
+NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
+
+*Method*
+****
+*GET* `/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the list of metric types associated with the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Associates a pre-existing metric type with a resource type* 
+
+*Method*
+****
+*POST* `/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|A list of paths to metric types to be associated with the resource type. They can either be canonical or relative to the resource type.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, resource type or metric type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves metric types associated with the given resource type. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/resourceTypes/{resourceTypeId}/metricTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The list of metric types | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+
+
+NOTE: *Retrieves the given metric type associated with the given resource type.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |metricTypePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if metric type path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The list of metric types | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Disassociates the given resource type from the given metric type* 
+
+*Method*
+****
+*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |metricTypePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+
+
+NOTE: *Retrieves the given metric type associated with the given resource type.* 
+
+*Method*
+****
+*GET* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |metricTypePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if metric type path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The list of metric types | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Disassociates the given resource type from the given metric type* 
+
+*Method*
+****
+*DELETE* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |metricTypePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Metrics CRUD
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/metrics`
+
+
+NOTE: *Retrieves all metrics in a feed* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/metrics`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 401    | Unauthorized access | -
+| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Creates a new metric in given feed* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/metrics`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Metric created | -
+| 400    | Invalid inputs | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 409    | Metric already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/metrics`
+
+
+NOTE: *Retrieves all metrics in an environment. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/{environmentId}/metrics`
 ****
 
 *path parameters*
@@ -535,7 +1446,6 @@ NOTE: *Retrieves resources in the environment, optionally filtering by resource 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |type|false||string
     |feedless|false||boolean
 |=======================
 
@@ -547,6 +1457,7 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | OK | -
+| 401    | Unauthorized access | -
 | 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
@@ -554,21 +1465,11 @@ void
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parents`
-
-
-NOTE: *Retrieves parents resources of the resource. This can be paged.* 
+NOTE: *Creates a new metric in given environment* 
 
 *Method*
 ****
-*GET* `/{environmentId}/resources/{resourcePath:.+}/parents`
+*POST* `/{environmentId}/metrics`
 ****
 
 *path parameters*
@@ -577,48 +1478,6 @@ NOTE: *Retrieves parents resources of the resource. This can be paged.*
 |=======================
 |Parameter|Required|Description|Data Type
     |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
-
-
-NOTE: *Creates a new resource* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |parentPath|true||string
 |=======================
 *body parameters*
 
@@ -635,10 +1494,10 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 201    | Metric created | -
+| 400    | Invalid inputs | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 409    | Metric already exists | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -652,14 +1511,14 @@ void
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/resources`
+*Endpoint* `/{environmentId}/metrics/{metricId}`
 
 
-NOTE: *Creates a new resource* 
+NOTE: *Retrieves a single metric* 
 
 *Method*
 ****
-*POST* `/feeds/{feedId}/resources`
+*GET* `/{environmentId}/metrics/{metricId}`
 ****
 
 *path parameters*
@@ -667,46 +1526,8 @@ NOTE: *Creates a new resource*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |feedId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves resources in the feed, optionally filtering by resource type* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
+    |environmentId|true||string
+    |metricId|true||string
 |=======================
 
 *Response* +
@@ -717,7 +1538,81 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | OK | -
-| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Rnvironment or metrics doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Updates a metric* 
+
+*Method*
+****
+*PUT* `/{environmentId}/metrics/{metricId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |metricId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 401    | Unauthorized access | -
+| 404    | Tenant, environment or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | The update failed because of invalid data | -
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Deletes a metric* 
+
+*Method*
+****
+*DELETE* `/{environmentId}/metrics/{metricId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |metricId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 401    | Unauthorized access | -
+| 404    | Tenant, environment or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | The delete failed because it would make inventory invalid | -
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -731,14 +1626,14 @@ void
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}`
+*Endpoint* `/feeds/{feedId}/metrics/{metricId}`
 
 
-NOTE: *Retrieves a single resource* 
+NOTE: *Retrieves a single metric* 
 
 *Method*
 ****
-*GET* `/feeds/{feedId}/resources/{resourcePath:.+}`
+*GET* `/feeds/{feedId}/metrics/{metricId}`
 ****
 
 *path parameters*
@@ -747,7 +1642,7 @@ NOTE: *Retrieves a single resource*
 |=======================
 |Parameter|Required|Description|Data Type
     |feedId|true||string
-    |resourcePath|true||string
+    |metricId|true||string
 |=======================
 
 *Response* +
@@ -758,18 +1653,19 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 200    | OK | -
-| 404    | Tenant, environment, feed or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Environment, feed or metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Update a resource* 
+NOTE: *Updates a metric* 
 
 *Method*
 ****
-*PUT* `/feeds/{feedId}/resources/{resourcePath:.+}`
+*PUT* `/feeds/{feedId}/metrics/{metricId}`
 ****
 
 *path parameters*
@@ -778,14 +1674,14 @@ NOTE: *Update a resource*
 |=======================
 |Parameter|Required|Description|Data Type
     |feedId|true||string
-    |resourcePath|true||string
+    |metricId|true||string
 |=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
+    |body|false||<<Update,Update>>
 |=======================
 
 *Response* +
@@ -796,19 +1692,20 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Tenant, feed or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | The update failed because of invalid data | -
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Retrieves a single resource* 
+NOTE: *Deletes a metric* 
 
 *Method*
 ****
-*DELETE* `/feeds/{feedId}/resources/{resourcePath:.+}`
+*DELETE* `/feeds/{feedId}/metrics/{metricId}`
 ****
 
 *path parameters*
@@ -817,7 +1714,7 @@ NOTE: *Retrieves a single resource*
 |=======================
 |Parameter|Required|Description|Data Type
     |feedId|true||string
-    |resourcePath|true||string
+    |metricId|true||string
 |=======================
 
 *Response* +
@@ -828,516 +1725,9 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 404    | Tenant, environment, feed or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 404    | Tenant, feed or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | The delete failed because it would make inventory invalid | -
 | 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
-
-
-NOTE: *Retrieves child resources of a resource. This can be paged.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Associates given resources as children of a given resource.* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|resources|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/parents`
-
-
-NOTE: *Retrieves parent resources of a resource. This can be paged.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/parents`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/parent`
-
-
-NOTE: *Retrieves the parent resources that contains the given resource. Such parent resource will not exist for resources directly contained in an environment or a feed.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/parent`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment, feed or the resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/children/{childPath:.+}`
-
-
-NOTE: *Disassociates given child resource from given resource. The the resource doesn&#39;t own the child, the child will no longer be considered a child of the resource, otherwise an error will be returned.* 
-
-*Method*
-****
-*DELETE* `/{environmentId}/resources/{resourcePath:.+}/children/{childPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-    |childPath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false||boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | environment, the parent resource or the child resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/children/{childPath:.+}`
-
-
-NOTE: *Disassociates given child resource from given resource. The the resource doesn&#39;t own the child, the child will no longer be considered a child of the resource, otherwise an error will be returned.* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/resources/{resourcePath:.+}/children/{childPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-    |childPath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false||boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | feed, the parent resource or the child resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}`
-
-
-NOTE: *Deletes a single resource* 
-
-*Method*
-****
-*DELETE* `/{environmentId}/resources/{resourcePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Update a resource* 
-
-*Method*
-****
-*PUT* `/{environmentId}/resources/{resourcePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves a single resource* 
-
-*Method*
-****
-*GET* `/{environmentId}/resources/{resourcePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | -
-| 404    | Tenant, environment or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/recursiveChildren`
-
-
-NOTE: *Recursively retrieves child resources of a resource of given type. Can be paged.* 
-
-*Method*
-****
-*GET* `/{environmentId}/resources/{resourcePath:.+}/recursiveChildren`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |typeId|false||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/recursiveChildren`
-
-
-NOTE: *Recursively retrieves child resources of a resource of given type. Can be paged.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/recursiveChildren`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourcePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |typeId|false||string
-    |feedlessType|false||boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the parent resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parent`
-
-
-NOTE: *Retrieves the parent resources that contains the given resource. Such parent resource will not exist for resources directly contained in an environment or a feed.* 
-
-*Method*
-****
-*GET* `/{environmentId}/resources/{resourcePath:.+}/parent`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |resourcePath|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | A list of child resources | -
-| 404    | environment or the resource not found | -
-| 500    | Internal server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -1720,19 +2110,19 @@ void
 
 {empty} +
 
-=== CRUD for operation type data
+=== Manages associations between resource types and metric types
 
 
 
 ==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
 
 
-NOTE: *Updates the configuration of a resource type* 
+NOTE: *Retrieves operation types* 
 
 *Method*
 ****
-*PUT* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
 ****
 
 *path parameters*
@@ -1740,136 +2130,8 @@ NOTE: *Updates the configuration of a resource type*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
+    |feedId|true||string
     |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates the configuration of a resource type* 
-
-*Method*
-****
-*DELETE* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates the configuration for pre-existing resource type* 
-
-*Method*
-****
-*POST* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK Created | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves a single resource type* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
 |=======================
 
 *Response* +
@@ -1887,21 +2149,11 @@ void
 
 {empty} +
 
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-
-
-NOTE: *Updates the configuration of a resource type* 
+NOTE: *Creates a new operation type under a pre-existing resource type* 
 
 *Method*
 ****
-*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
 ****
 
 *path parameters*
@@ -1911,92 +2163,6 @@ NOTE: *Updates the configuration of a resource type*
 |Parameter|Required|Description|Data Type
     |feedId|true||string
     |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates the configuration of a resource type* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates the configuration for pre-existing resource type* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
 |=======================
 *body parameters*
 
@@ -2021,11 +2187,98 @@ void
 
 {empty} +
 
-NOTE: *Retrieves a single resource type* 
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes`
+
+
+NOTE: *Retrieves operation types* 
 
 *Method*
 ****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}/data`
+*GET* `/resourceTypes/{resourceTypeId}/operationTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Creates a new operation type under a pre-existing resource type* 
+
+*Method*
+****
+*POST* `/resourceTypes/{resourceTypeId}/operationTypes`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK Created | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+
+
+NOTE: *Updates the configuration of a resource type* 
+
+*Method*
+****
+*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
 ****
 
 *path parameters*
@@ -2037,12 +2290,186 @@ NOTE: *Retrieves a single resource type*
     |resourceTypeId|true||string
     |operationTypeId|true||string
 |=======================
-*query parameters*
+*body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |dataType|false||<<org.hawkular.inventory.api.OperationTypes$DataRole,org.hawkular.inventory.api.OperationTypes$DataRole>>
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Updates the configuration of a resource type* 
+
+*Method*
+****
+*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves a single resource type* 
+
+*Method*
+****
+** `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+
+
+NOTE: *Updates the operation type* 
+
+*Method*
+****
+*PUT* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Deletes the operation type* 
+
+*Method*
+****
+*DELETE* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves the operation type* 
+
+*Method*
+****
+*GET* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |resourceTypeId|true||string
+    |operationTypeId|true||string
 |=======================
 
 *Response* +
@@ -2660,14 +3087,14 @@ void
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}`
 
 
-NOTE: *Creates a new resource* 
+NOTE: *Retrieves a single resource* 
 
 *Method*
 ****
-*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
+*GET* `/feeds/{feedId}/resources/{resourcePath:.+}`
 ****
 
 *path parameters*
@@ -2676,14 +3103,7 @@ NOTE: *Creates a new resource*
 |=======================
 |Parameter|Required|Description|Data Type
     |feedId|true||string
-    |parentPath|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
+    |resourcePath|true||string
 |=======================
 
 *Response* +
@@ -2693,11 +3113,546 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 200    | OK | -
+| 404    | Tenant, environment, feed or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Update a resource* 
+
+*Method*
+****
+*PUT* `/feeds/{feedId}/resources/{resourcePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves a single resource* 
+
+*Method*
+****
+*DELETE* `/feeds/{feedId}/resources/{resourcePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, feed or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
+
+
+NOTE: *Retrieves child resources of a resource. This can be paged.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Associates given resources as children of a given resource.* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources/{resourcePath:.+}/children`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|resources|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/parents`
+
+
+NOTE: *Retrieves parent resources of a resource. This can be paged.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/parents`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/parent`
+
+
+NOTE: *Retrieves the parent resources that contains the given resource. Such parent resource will not exist for resources directly contained in an environment or a feed.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/parent`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment, feed or the resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/children/{childPath:.+}`
+
+
+NOTE: *Disassociates given child resource from given resource. The the resource doesn&#39;t own the child, the child will no longer be considered a child of the resource, otherwise an error will be returned.* 
+
+*Method*
+****
+*DELETE* `/{environmentId}/resources/{resourcePath:.+}/children/{childPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+    |childPath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false||boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | environment, the parent resource or the child resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/children/{childPath:.+}`
+
+
+NOTE: *Disassociates given child resource from given resource. The the resource doesn&#39;t own the child, the child will no longer be considered a child of the resource, otherwise an error will be returned.* 
+
+*Method*
+****
+*DELETE* `/feeds/{feedId}/resources/{resourcePath:.+}/children/{childPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+    |childPath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false||boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | feed, the parent resource or the child resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}`
+
+
+NOTE: *Deletes a single resource* 
+
+*Method*
+****
+*DELETE* `/{environmentId}/resources/{resourcePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Update a resource* 
+
+*Method*
+****
+*PUT* `/{environmentId}/resources/{resourcePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Update,Update>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves a single resource* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources/{resourcePath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 404    | Tenant, environment or resource doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/recursiveChildren`
+
+
+NOTE: *Recursively retrieves child resources of a resource of given type. Can be paged.* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources/{resourcePath:.+}/recursiveChildren`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |typeId|false||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}/recursiveChildren`
+
+
+NOTE: *Recursively retrieves child resources of a resource of given type. Can be paged.* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources/{resourcePath:.+}/recursiveChildren`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourcePath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |typeId|false||string
+    |feedlessType|false||boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -2777,6 +3732,522 @@ void
 | 200    | OK | -
 | 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |parentPath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parent`
+
+
+NOTE: *Retrieves the parent resources that contains the given resource. Such parent resource will not exist for resources directly contained in an environment or a feed.* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources/{resourcePath:.+}/parent`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Manages associations between environments and feeds
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/feeds`
+
+
+NOTE: *Associates a pre-existing feed with an environment* 
+
+*Method*
+****
+*POST* `/{environmentId}/feeds`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|A list of paths to feeds to be associated with the environment. They can either be canonical or relative to the environment.|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 400    | Feed is already associated with another environment | [ApiError](#<<ApiError>>)
+| 404    | Tenant, environment or one of the feeds doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves all feeds associated with an environment. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/{environmentId}/feeds`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The list of feeds | -
+| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/feeds/{feedPath:.+}`
+
+
+NOTE: *Retrieves a single feed associated with an environment* 
+
+*Method*
+****
+*GET* `/{environmentId}/feeds/{feedPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |feedPath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if feed path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | The feed | -
+| 404    | Tenant, environment or feed does not exist or the feed is not associated with the environment | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Disassociates the given resource from the given metric* 
+
+*Method*
+****
+*DELETE* `/{environmentId}/feeds/{feedPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |feedPath|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | Tenant, environment, resource or metric does not exist or the metric is not associated with the resource | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+=== Resources CRUD
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/children`
+
+
+NOTE: *Retrieves child resources of a resource. This can be paged.* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources/{resourcePath:.+}/children`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Associates given resources as children of a given resource.* 
+
+*Method*
+****
+*POST* `/{environmentId}/resources/{resourcePath:.+}/children`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|false|resources|<<UNKNOWN[string],UNKNOWN[string]>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{parentPath:.+}`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/{environmentId}/resources/{parentPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |parentPath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/{environmentId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves resources in the environment, optionally filtering by resource type. Accepts paging query parameters.* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+|=======================
+*query parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |type|false||string
+    |feedless|false||boolean
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parents`
+
+
+NOTE: *Retrieves parents resources of the resource. This can be paged.* 
+
+*Method*
+****
+*GET* `/{environmentId}/resources/{resourcePath:.+}/parents`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |environmentId|true||string
+    |resourcePath|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | A list of child resources | -
+| 404    | environment or the parent resource not found | -
+| 500    | Internal server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -3367,6 +4838,135 @@ void
 
 
 ==============================================
+*Endpoint* `/feeds/{feedId}/resources`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves resources in the feed, optionally filtering by resource type* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |parentPath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
 *Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parent`
 
 
@@ -3396,806 +4996,6 @@ void
 | 200    | A list of child resources | -
 | 404    | environment or the resource not found | -
 | 500    | Internal server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== CRUD of environments.
-
-
-
-==============================================
-*Endpoint* `/environments`
-
-
-NOTE: *Returns all environments under given tenant. Accepts paging query parameters.* 
-
-*Method*
-****
-*GET* `/environments`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | [Set](#<<Set>>)
-| 401    | Unauthorized access | -
-| 404    | Tenant not found | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates a new environment in given tenant.* 
-
-*Method*
-****
-*POST* `/environments`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | Environment created | -
-| 401    | Unauthorized access | -
-| 409    | Environment already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/environments/{environmentId}`
-
-
-NOTE: *Retrieves a single environment* 
-
-*Method*
-****
-*GET* `/environments/{environmentId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates properties of the environment* 
-
-*Method*
-****
-*PUT* `/environments/{environmentId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | The properties of the environment successfully updated | -
-| 400    | Properties invalid | [ApiError](#<<ApiError>>)
-| 401    | Unauthorized access | -
-| 404    | Tenant or environment not found | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Deletes the environment from the tenant* 
-
-*Method*
-****
-*DELETE* `/environments/{environmentId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | Environment successfully deleted | -
-| 400    | Delete failed because it would leave inventory in invalid state | [ApiError](#<<ApiError>>)
-| 401    | Unauthorized access | -
-| 404    | Tenant or environment not found | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Resource type CRUD
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes`
-
-
-NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of metric types associated with the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates a new resource type* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resourceTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource type already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/resourceTypes`
-
-
-NOTE: *Retrieves all resource types. Accepts paging query parameters.* 
-
-*Method*
-****
-*GET* `/resourceTypes`
-****
-
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedless|false||boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of resource types | -
-| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates a new resource type* 
-
-*Method*
-****
-*POST* `/resourceTypes`
-****
-
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource type already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
-
-
-NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of metric types associated with the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Update a resource type* 
-
-*Method*
-****
-*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Deletes a resource type* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}`
-
-
-NOTE: *Retrieves a single resource type* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Update a resource type* 
-
-*Method*
-****
-*PUT* `/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Deletes a resource type* 
-
-*Method*
-****
-*DELETE* `/resourceTypes/{resourceTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Manages associations between environments and feeds
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/feeds`
-
-
-NOTE: *Associates a pre-existing feed with an environment* 
-
-*Method*
-****
-*POST* `/{environmentId}/feeds`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|A list of paths to feeds to be associated with the environment. They can either be canonical or relative to the environment.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 400    | Feed is already associated with another environment | [ApiError](#<<ApiError>>)
-| 404    | Tenant, environment or one of the feeds doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves all feeds associated with an environment. Accepts paging query parameters.* 
-
-*Method*
-****
-*GET* `/{environmentId}/feeds`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The list of feeds | -
-| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/{environmentId}/feeds/{feedPath:.+}`
-
-
-NOTE: *Retrieves a single feed associated with an environment* 
-
-*Method*
-****
-*GET* `/{environmentId}/feeds/{feedPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |feedPath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if feed path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The feed | -
-| 404    | Tenant, environment or feed does not exist or the feed is not associated with the environment | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Disassociates the given resource from the given metric* 
-
-*Method*
-****
-*DELETE* `/{environmentId}/feeds/{feedPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |feedPath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment, resource or metric does not exist or the metric is not associated with the resource | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Manages associations between resource types and resources
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/resources`
-
-
-NOTE: *Retrieves all resources with given resource types. Accepts paging query parameters.* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/resources`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of resources | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/resources`
-
-
-NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/resources`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of metric types associated with the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
@@ -4815,135 +5615,6 @@ void
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
-
-
-NOTE: *Creates a new resource* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |parentPath|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resources`
-
-
-NOTE: *Creates a new resource* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resources`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 201    | Resource successfully created | -
-| 400    | Invalid input data | [ApiError](#<<ApiError>>)
-| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 409    | Resource already exists | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves resources in the feed, optionally filtering by resource type* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resources`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | -
-| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
 *Endpoint* `/feeds/{feedId}/resources/{resourcePath:.+}`
 
 
@@ -5522,6 +6193,135 @@ void
 
 
 ==============================================
+*Endpoint* `/feeds/{feedId}/resources`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Retrieves resources in the feed, optionally filtering by resource type* 
+
+*Method*
+****
+*GET* `/feeds/{feedId}/resources`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | OK | -
+| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
+*Endpoint* `/feeds/{feedId}/resources/{parentPath:.+}`
+
+
+NOTE: *Creates a new resource* 
+
+*Method*
+****
+*POST* `/feeds/{feedId}/resources/{parentPath:.+}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |parentPath|true||string
+|=======================
+*body parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |body|true||<<Blueprint,Blueprint>>
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 201    | Resource successfully created | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource already exists | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+==============================================
+
+{empty} +
+
+
+
+==============================================
 *Endpoint* `/{environmentId}/resources/{resourcePath:.+}/parent`
 
 
@@ -5560,19 +6360,19 @@ void
 
 {empty} +
 
-=== Metrics CRUD
+=== Resource type CRUD
 
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/metrics`
+*Endpoint* `/feeds/{feedId}/resourceTypes`
 
 
-NOTE: *Retrieves all metrics in a feed* 
+NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
 
 *Method*
 ****
-*GET* `/feeds/{feedId}/metrics`
+*GET* `/feeds/{feedId}/resourceTypes`
 ****
 
 *path parameters*
@@ -5590,20 +6390,19 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant, environment or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 200    | the list of metric types associated with the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Creates a new metric in given feed* 
+NOTE: *Creates a new resource type* 
 
 *Method*
 ****
-*POST* `/feeds/{feedId}/metrics`
+*POST* `/feeds/{feedId}/resourceTypes`
 ****
 
 *path parameters*
@@ -5618,7 +6417,7 @@ NOTE: *Creates a new metric in given feed*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
+    |body|false||<<Blueprint,Blueprint>>
 |=======================
 
 *Response* +
@@ -5628,10 +6427,10 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Metric created | -
-| 400    | Invalid inputs | [ApiError](#<<ApiError>>)
-| 401    | Unauthorized access | -
-| 409    | Metric already exists | [ApiError](#<<ApiError>>)
+| 201    | OK | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource type already exists | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -5645,23 +6444,16 @@ void
 
 
 ==============================================
-*Endpoint* `/{environmentId}/metrics`
+*Endpoint* `/resourceTypes`
 
 
-NOTE: *Retrieves all metrics in an environment. Accepts paging query parameters.* 
+NOTE: *Retrieves all resource types. Accepts paging query parameters.* 
 
 *Method*
 ****
-*GET* `/{environmentId}/metrics`
+*GET* `/resourceTypes`
 ****
 
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
 *query parameters*
 
 [options="header"]
@@ -5677,35 +6469,27 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant or environment doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 200    | the list of resource types | -
+| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Creates a new metric in given environment* 
+NOTE: *Creates a new resource type* 
 
 *Method*
 ****
-*POST* `/{environmentId}/metrics`
+*POST* `/resourceTypes`
 ****
 
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-|=======================
 *body parameters*
 
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
+    |body|false||<<Blueprint,Blueprint>>
 |=======================
 
 *Response* +
@@ -5715,10 +6499,10 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 201    | Metric created | -
-| 400    | Invalid inputs | [ApiError](#<<ApiError>>)
-| 401    | Unauthorized access | -
-| 409    | Metric already exists | [ApiError](#<<ApiError>>)
+| 201    | OK | -
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 409    | Resource type already exists | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -5732,129 +6516,14 @@ void
 
 
 ==============================================
-*Endpoint* `/{environmentId}/metrics/{metricId}`
+*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
 
 
-NOTE: *Retrieves a single metric* 
-
-*Method*
-****
-*GET* `/{environmentId}/metrics/{metricId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |metricId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Rnvironment or metrics doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates a metric* 
+NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
 
 *Method*
 ****
-*PUT* `/{environmentId}/metrics/{metricId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |metricId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant, environment or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 400    | The update failed because of invalid data | -
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Deletes a metric* 
-
-*Method*
-****
-*DELETE* `/{environmentId}/metrics/{metricId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |environmentId|true||string
-    |metricId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant, environment or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 400    | The delete failed because it would make inventory invalid | -
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/metrics/{metricId}`
-
-
-NOTE: *Retrieves a single metric* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/metrics/{metricId}`
+*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
 ****
 
 *path parameters*
@@ -5863,123 +6532,38 @@ NOTE: *Retrieves a single metric*
 |=======================
 |Parameter|Required|Description|Data Type
     |feedId|true||string
-    |metricId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Environment, feed or metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates a metric* 
-
-*Method*
-****
-*PUT* `/feeds/{feedId}/metrics/{metricId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |metricId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant, feed or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 400    | The update failed because of invalid data | -
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Deletes a metric* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/metrics/{metricId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |metricId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, feed or the metric doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 400    | The delete failed because it would make inventory invalid | -
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Manages associations between resource types and metric types
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-
-
-NOTE: *Updates the operation type* 
-
-*Method*
-****
-*PUT* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
     |resourceTypeId|true||string
-    |operationTypeId|true||string
+|=======================
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 200    | the list of metric types associated with the resource type | -
+| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Update a resource type* 
+
+*Method*
+****
+*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
+****
+
+*path parameters*
+
+[options="header"]
+|=======================
+|Parameter|Required|Description|Data Type
+    |feedId|true||string
+    |resourceTypeId|true||string
 |=======================
 *body parameters*
 
@@ -5997,18 +6581,19 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Deletes the operation type* 
+NOTE: *Deletes a resource type* 
 
 *Method*
 ****
-*DELETE* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}`
 ****
 
 *path parameters*
@@ -6016,8 +6601,8 @@ NOTE: *Deletes the operation type*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
+    |feedId|true||string
     |resourceTypeId|true||string
-    |operationTypeId|true||string
 |=======================
 
 *Response* +
@@ -6028,37 +6613,6 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 404    | Tenant, or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves the operation type* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the resource type | -
 | 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
@@ -6073,127 +6627,14 @@ void
 
 
 ==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
+*Endpoint* `/resourceTypes/{resourceTypeId}`
 
-
-NOTE: *Updates the configuration of a resource type* 
-
-*Method*
-****
-*PUT* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Update,Update>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Updates the configuration of a resource type* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, environment, feed or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
 
 NOTE: *Retrieves a single resource type* 
 
 *Method*
 ****
-** `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes/{operationTypeId}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |operationTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/operationTypes`
-
-
-NOTE: *Retrieves operation types* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/operationTypes`
+*GET* `/resourceTypes/{resourceTypeId}`
 ****
 
 *path parameters*
@@ -6219,11 +6660,11 @@ void
 
 {empty} +
 
-NOTE: *Creates a new operation type under a pre-existing resource type* 
+NOTE: *Update a resource type* 
 
 *Method*
 ****
-*POST* `/resourceTypes/{resourceTypeId}/operationTypes`
+*PUT* `/resourceTypes/{resourceTypeId}`
 ****
 
 *path parameters*
@@ -6238,167 +6679,7 @@ NOTE: *Creates a new operation type under a pre-existing resource type*
 [options="header"]
 |=======================
 |Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK Created | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
-
-
-NOTE: *Retrieves operation types* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Creates a new operation type under a pre-existing resource type* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/operationTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true||<<Blueprint,Blueprint>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK Created | -
-| 404    | Tenant, environment, resource type or feed doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Manages associations between resource types and metric types
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
-
-
-NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | the list of metric types associated with the resource type | -
-| 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Associates a pre-existing metric type with a resource type* 
-
-*Method*
-****
-*POST* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|A list of paths to metric types to be associated with the resource type. They can either be canonical or relative to the resource type.|<<UNKNOWN[string],UNKNOWN[string]>>
+    |body|true||<<Update,Update>>
 |=======================
 
 *Response* +
@@ -6409,59 +6690,19 @@ void
 |=======================
 | Status Code | Reason      | Response Model
 | 204    | OK | -
-| 404    | Tenant, resource type or metric type doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 404    | Resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
 
 {empty} +
 
-NOTE: *Retrieves metric types associated with the given resource type. Accepts paging query parameters.* 
+NOTE: *Deletes a resource type* 
 
 *Method*
 ****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The list of metric types | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/metricTypes`
-
-
-NOTE: *Retrieves all metric types associated with the resource type. Accepts paging query params.* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/metricTypes`
+*DELETE* `/resourceTypes/{resourceTypeId}`
 ****
 
 *path parameters*
@@ -6479,249 +6720,8 @@ void
 [options="header"]
 |=======================
 | Status Code | Reason      | Response Model
-| 200    | the list of metric types associated with the resource type | -
+| 204    | OK | -
 | 404    | Tenant or resource type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Associates a pre-existing metric type with a resource type* 
-
-*Method*
-****
-*POST* `/resourceTypes/{resourceTypeId}/metricTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|A list of paths to metric types to be associated with the resource type. They can either be canonical or relative to the resource type.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant, resource type or metric type doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Retrieves metric types associated with the given resource type. Accepts paging query parameters.* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/metricTypes`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The list of metric types | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-
-
-NOTE: *Retrieves the given metric type associated with the given resource type.* 
-
-*Method*
-****
-*GET* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |metricTypePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if metric type path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The list of metric types | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Disassociates the given resource type from the given metric type* 
-
-*Method*
-****
-*DELETE* `/feeds/{feedId}/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |feedId|true||string
-    |resourceTypeId|true||string
-    |metricTypePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-
-
-NOTE: *Retrieves the given metric type associated with the given resource type.* 
-
-*Method*
-****
-*GET* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |metricTypePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if metric type path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | The list of metric types | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
-NOTE: *Disassociates the given resource type from the given metric type* 
-
-*Method*
-****
-*DELETE* `/resourceTypes/{resourceTypeId}/metricTypes/{metricTypePath:.+}`
-****
-
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resourceTypeId|true||string
-    |metricTypePath|true||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |canonical|false|True if metric path should be considered canonical, false by default.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 404    | Tenant or resource type does not exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
 
 |=======================
@@ -7363,30 +7363,6 @@ void
 *Endpoint* `/tenant/`
 
 
-NOTE: *Deletes the tenant and all its data. Be careful!* 
-
-*Method*
-****
-*DELETE* `/tenant/`
-****
-
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 204    | OK | -
-| 401    | Unauthorized access | -
-| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
-| 500    | Server error | [ApiError](#<<ApiError>>)
-
-|=======================
-
-{empty} +
-
 NOTE: *Retrieves the tenant of the currently logged in persona* 
 
 *Method*
@@ -7435,6 +7411,30 @@ void
 | Status Code | Reason      | Response Model
 | 204    | OK | -
 | 400    | Invalid input data | [ApiError](#<<ApiError>>)
+| 401    | Unauthorized access | -
+| 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
+| 500    | Server error | [ApiError](#<<ApiError>>)
+
+|=======================
+
+{empty} +
+
+NOTE: *Deletes the tenant and all its data. Be careful!* 
+
+*Method*
+****
+*DELETE* `/tenant/`
+****
+
+
+*Response* +
+void
+
+*Status codes*
+[options="header"]
+|=======================
+| Status Code | Reason      | Response Model
+| 204    | OK | -
 | 401    | Unauthorized access | -
 | 404    | Tenant doesn&#39;t exist | [ApiError](#<<ApiError>>)
 | 500    | Server error | [ApiError](#<<ApiError>>)
