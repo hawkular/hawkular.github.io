@@ -42,7 +42,7 @@ In your backend, you'll need to add the dependency to the Account's API:
 <dependency>
   <groupId>org.hawkular.accounts</groupId>
   <artifactId>hawkular-accounts-api</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>2.0.2.Final</version> <!-- Refer to the Accounts project for the most recent version -->
 </dependency>
 ----
 
@@ -87,6 +87,13 @@ Apart from that, you'll need also to change your `web.xml` to activate the authe
   <auth-method>KEYCLOAK</auth-method>
   <realm-name>hawkular</realm-name>
 </login-config>
+
+<security-role>
+  <role-name>user</role-name>
+</security-role>
+<security-role>
+  <role-name>admin</role-name>
+</security-role>
 ----
 
 Optionally, and recommended, is the inclusion of a `jboss-web.xml` and `jboss-ejb3.xml` to your project, with the
@@ -139,7 +146,7 @@ public class SampleEndpoint {
     EntityManager em;
 
     @Inject
-    Persona currentPersona;
+    Instance<Persona> currentPersonaInstance;
 
     /**
      * A managed instance of the {@link PermissionChecker}, ready to be used.
@@ -175,6 +182,7 @@ public class SampleEndpoint {
 
     @GET
     public Response getAllSamples() {
+        Persona currentPersona = currentPersonaInstance.get();
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<Sample> query = builder.createQuery(Sample.class);
         Root<Sample> root = query.from(Sample.class);
@@ -200,6 +208,7 @@ public class SampleEndpoint {
 
     @POST
     public Response createSample(SampleRequest request) {
+        Persona currentPersona = currentPersonaInstance.get();
         // for this example, we allow everybody to create a sample, but there might be situations where an user can
         // only create resources if they are allowed access to some other resource.
         Sample sample = new Sample(UUID.randomUUID().toString(), currentPersona.getId());
@@ -242,58 +251,6 @@ soon as the user has changed the current persona using the "Persona Switcher" (`
 
 image::/img/dev-docs/persona-switcher.png[Persona Switcher at the UI]
 
-While in development mode, you might want to adapt your `index.html` to include the required UI elements and
-JavaScript components. On the `ui/console` build from the main `hawkular` maven module, this is already done.
-
-In particular, you'll need to:
-
-* Add the hawkular-accounts JavaScript and CSS to your index.html
-* Add some UI elements, such the account switcher and the countdown notification.
-
-`index.html`:
-[source,html]
-----
-<!DOCTYPE html>
-<html>
-
-<head>
-    <link rel="stylesheet" href="../../dist/hawkular-ui-components-accounts.css"/>
-    <script src="../../dist/hawkular-ui-components-accounts.js"></script>
-</head>
-
-<body>
-<div data-idle-countdown="countdown" data-ng-init="countdown=30" id="idle">
-    <strong>You'll be logged out in {{countdown}} second(s).</strong>.
-</div>
-
-<nav class="navbar navbar-default navbar-pf" role="navigation">
-    <ul class="nav navbar-nav navbar-primary" hawtio-main-nav></ul>
-    <ul class="nav navbar-nav" hawtio-sub-tabs></ul>
-    <ul class="nav navbar-nav navbar-utility pull-right">
-        <li class="dropdown" data-ng-controller="HawkularAccounts.PersonaController">
-            <a href="#" dropdown-toggle>
-                <span class="pficon pficon-user"></span>
-                {{currentPersona.name}} <b class="caret"></b>
-            </a>
-            <ul class="dropdown-menu" id="personaSwitcher">
-                <li data-ng-repeat="persona in personas">
-                    <a href="#" data-ng-click="switchPersona(persona)">{{persona.name}}</a>
-                </li>
-                <li class="divider"></li>
-                <li>
-                    <a href="#" data-ng-click="userDetails.logout()">Log Out</a>
-                </li>
-            </ul>
-        </li>
-    </ul>
-</nav>
-</body>
-</html>
-----
-
-Please, refer to the `index.html` from the `accounts` plugin at `hawkular-ui-components` for an example of what's
-required.
-
 == CLI access
 
 Requests coming from the CLI need to pass the authentication data for an user via CLI,
@@ -321,7 +278,7 @@ curl -v -H 'Hawkular-Persona: uuid' http://user:pass@localhost:8080/context/endp
 A list of possible personas for a given user can be obtained via:
 [source,bash]
 ----
-curl -v http://user:pass@localhost:8080/hawkular-accounts/personas
+curl -v http://user:pass@localhost:8080/hawkular/accounts/personas
 ----
 
 == Events
