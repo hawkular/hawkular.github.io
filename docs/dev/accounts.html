@@ -229,7 +229,7 @@ in a mostly seamless way.</p>
 <pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
   &lt;groupId&gt;org.hawkular.accounts&lt;/groupId&gt;
   &lt;artifactId&gt;hawkular-accounts-api&lt;/artifactId&gt;
-  &lt;version&gt;1.0.0-SNAPSHOT&lt;/version&gt;
+  &lt;version&gt;2.0.2.Final&lt;/version&gt; &lt;!-- Refer to the Accounts project for the most recent version --&gt;
 &lt;/dependency&gt;</code></pre>
 </div>
 </div>
@@ -279,7 +279,14 @@ for details on what each option does.</p>
 &lt;login-config&gt;
   &lt;auth-method&gt;KEYCLOAK&lt;/auth-method&gt;
   &lt;realm-name&gt;hawkular&lt;/realm-name&gt;
-&lt;/login-config&gt;</code></pre>
+&lt;/login-config&gt;
+
+&lt;security-role&gt;
+  &lt;role-name&gt;user&lt;/role-name&gt;
+&lt;/security-role&gt;
+&lt;security-role&gt;
+  &lt;role-name&gt;admin&lt;/role-name&gt;
+&lt;/security-role&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
@@ -340,7 +347,7 @@ public class SampleEndpoint {
     EntityManager em;
 
     @Inject
-    Persona currentPersona;
+    Instance&lt;Persona&gt; currentPersonaInstance;
 
     /**
      * A managed instance of the {@link PermissionChecker}, ready to be used.
@@ -376,6 +383,7 @@ public class SampleEndpoint {
 
     @GET
     public Response getAllSamples() {
+        Persona currentPersona = currentPersonaInstance.get();
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery&lt;Sample&gt; query = builder.createQuery(Sample.class);
         Root&lt;Sample&gt; root = query.from(Sample.class);
@@ -401,6 +409,7 @@ public class SampleEndpoint {
 
     @POST
     public Response createSample(SampleRequest request) {
+        Persona currentPersona = currentPersonaInstance.get();
         // for this example, we allow everybody to create a sample, but there might be situations where an user can
         // only create resources if they are allowed access to some other resource.
         Sample sample = new Sample(UUID.randomUUID().toString(), currentPersona.getId());
@@ -450,70 +459,6 @@ soon as the user has changed the current persona using the "Persona Switcher" (<
 <img src="/img/dev-docs/persona-switcher.png" alt="Persona Switcher at the UI">
 </div>
 </div>
-<div class="paragraph">
-<p>While in development mode, you might want to adapt your <code>index.html</code> to include the required UI elements and
-JavaScript components. On the <code>ui/console</code> build from the main <code>hawkular</code> maven module, this is already done.</p>
-</div>
-<div class="paragraph">
-<p>In particular, you&#8217;ll need to:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Add the hawkular-accounts JavaScript and CSS to your index.html</p>
-</li>
-<li>
-<p>Add some UI elements, such the account switcher and the countdown notification.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p><code>index.html</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-html" data-lang="html">&lt;!DOCTYPE html&gt;
-&lt;html&gt;
-
-&lt;head&gt;
-    &lt;link rel="stylesheet" href="../../dist/hawkular-ui-components-accounts.css"/&gt;
-    &lt;script src="../../dist/hawkular-ui-components-accounts.js"&gt;&lt;/script&gt;
-&lt;/head&gt;
-
-&lt;body&gt;
-&lt;div data-idle-countdown="countdown" data-ng-init="countdown=30" id="idle"&gt;
-    &lt;strong&gt;You'll be logged out in {{countdown}} second(s).&lt;/strong&gt;.
-&lt;/div&gt;
-
-&lt;nav class="navbar navbar-default navbar-pf" role="navigation"&gt;
-    &lt;ul class="nav navbar-nav navbar-primary" hawtio-main-nav&gt;&lt;/ul&gt;
-    &lt;ul class="nav navbar-nav" hawtio-sub-tabs&gt;&lt;/ul&gt;
-    &lt;ul class="nav navbar-nav navbar-utility pull-right"&gt;
-        &lt;li class="dropdown" data-ng-controller="HawkularAccounts.PersonaController"&gt;
-            &lt;a href="#" dropdown-toggle&gt;
-                &lt;span class="pficon pficon-user"&gt;&lt;/span&gt;
-                {{currentPersona.name}} &lt;b class="caret"&gt;&lt;/b&gt;
-            &lt;/a&gt;
-            &lt;ul class="dropdown-menu" id="personaSwitcher"&gt;
-                &lt;li data-ng-repeat="persona in personas"&gt;
-                    &lt;a href="#" data-ng-click="switchPersona(persona)"&gt;{{persona.name}}&lt;/a&gt;
-                &lt;/li&gt;
-                &lt;li class="divider"&gt;&lt;/li&gt;
-                &lt;li&gt;
-                    &lt;a href="#" data-ng-click="userDetails.logout()"&gt;Log Out&lt;/a&gt;
-                &lt;/li&gt;
-            &lt;/ul&gt;
-        &lt;/li&gt;
-    &lt;/ul&gt;
-&lt;/nav&gt;
-&lt;/body&gt;
-&lt;/html&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Please, refer to the <code>index.html</code> from the <code>accounts</code> plugin at <code>hawkular-ui-components</code> for an example of what&#8217;s
-required.</p>
-</div>
 </div>
 </div>
 </div>
@@ -551,7 +496,7 @@ HTTP header:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">curl -v http://user:pass@localhost:8080/hawkular-accounts/personas</code></pre>
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">curl -v http://user:pass@localhost:8080/hawkular/accounts/personas</code></pre>
 </div>
 </div>
 </div>
