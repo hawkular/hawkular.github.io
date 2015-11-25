@@ -106,6 +106,11 @@
                         <h4>Middleware Management Console</h4>
                         <p>Console to manage Middleware servers. <a href="/docs/overview.html#_middleware_management_console">More...</a></p>
                     </li>
+                    <li class="col-md-3 col-sm-4">
+                        <i class="fa fa-briefcase"></i>
+                        <h4>Business Transaction Management</h4>
+                        <p>Capture information about the business transaction instances being executed across your servers. <a href="/docs/overview.html#_business_transaction_management">More...</a></p>
+                    </li>
                 </ul>
             </div>
         </div>
