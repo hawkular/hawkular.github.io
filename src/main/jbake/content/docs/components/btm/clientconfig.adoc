@@ -63,6 +63,26 @@ org.osgi.framework.bootdelegation=...,org.jboss.byteman.*
 
 ----
 
+=== Instrumenting a Docker Image
+
+If a docker image has been defined to run a Java based application, it is possible to instrument it, to collect business transaction data and report it to the BTM server. This can be achieved by creating a _derived_ Docker image, which adds the BTM agent and defines the properties required to communicate with the server.
+
+The _Dockerfile_ should be:
+
+----
+FROM <Name of image being instrumented>
+
+ENV BTM_VERSION=<BTM Version being used>
+ENV BTM_AGENT=/libs/hawkular-btm-agent-rest-$BTM_VERSION.jar
+
+ADD https://repository.jboss.org/nexus/service/local/artifact/maven/redirect?r=releases&g=org.hawkular.btm&a=hawkular-btm-agent-rest&v=$BTM_VERSION&e=jar $BTM_AGENT
+
+ENV JAVA_OPTS -javaagent:$BTM_AGENT=boot:$BTM_AGENT -Dhawkular-btm.base-uri=\$BTM_URI -Dhawkular-btm.config.refresh=10 -Dhawkular-btm.username=\$BTM_USERNAME -Dhawkular-btm.password=\$BTM_PASSWORD
+----
+
+The environment variables _BTM_URI_, _BTM_USERNAME_ and _BTM_PASSWORD_ would be supplied at runtime.
+
+
 == Instrumented Technologies
 
 This section lists the technologies that have instrumentation rules defined:
