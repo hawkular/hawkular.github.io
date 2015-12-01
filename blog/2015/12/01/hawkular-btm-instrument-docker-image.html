@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - BTM: Instrumenting an application running from a docker image</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../../css/base.css" rel="stylesheet">
+    <link href="../../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../../css/styles.css" rel="stylesheet">
+    <link href="../../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../../js/moment.min.js"></script>
+    <script src="../../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../../index.html">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../../index.html">Hawkular</a></li>
+                <li><a href="../../../../docs/overview.html">Overview</a></li>
+                <li><a href="../../../../docs/user/quick-start.html">Quick Start</a></li>
+                <li class=""><a href="../../../../downloads.html">Downloads</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Documentation
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../../docs/user/user-guide.html">User Guide</a>
+                  </li>
+                  <li>
+                    <a href="../../../../docs/user/installation-guide.html">Installation Guide</a>
+                  </li>
+                  <!--li>
+                    <a href="../../../../docs/dev/terms.html">Used Terms</a>
+                  </li-->
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-alerts.html">Alerts</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-btm.html">Business Transaction Management</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-inventory.html">Inventory</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/rest/rest-metrics.html">Metrics</a>
+                      </li>
+                    </ul>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="javascript:;" onclick="return false;" class="dropdown-toggle" data-toggle="dropdown">Sub-projects</a>
+                    <ul class="dropdown-menu">
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/alerts/index.html">Alerts</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/btm/index.html">Business Transaction Management</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/inventory/index.html">Inventory</a>
+                      </li>
+                      <li class="menu-item ">
+                        <a href="../../../../docs/components/metrics/index.html">Metrics</a>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../../community/index.html">Home</a>
+                  </li>
+                  <li>
+                    <a href="../../../../community/join.html">Join</a>
+                  </li>
+                  <li>
+                    <a href="../../../../license.html">License</a>
+                  </li>
+                  <li>
+                    <a href="../../../../docs/dev/development.html">Developer Guide</a>
+                  </li>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+                <li class=""><a href="../../../../blog.html">Blog</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>BTM: Instrumenting an application running from a docker image</h1>
+            <p>blog post</p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This post outlines how to instrument a docker image, to capture business transaction management data and report it to a business transaction management server running in a remote location.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_obtaining_an_example_docker_image">Obtaining an example docker image</h3>
+<div class="paragraph">
+<p>To demonstrate the approach, we will use an example docker image associated with a Javascript application running on Vert.x. Either download the complete example distribution from <a href="https://github.com/vert-x3/vertx-examples/releases/tag/3.0.0">here</a>, and navigate to the <em>docker-examples/vertx-docker-javascript</em> folder, or create a folder in your preferred location with the following two files:</p>
+</div>
+<div class="listingblock">
+<div class="title">Dockerfile</div>
+<div class="content">
+<pre>###
+# vert.x docker example using a JavaScript verticle
+# To build:
+#  docker build -t sample/vertx-javascript .
+# To run:
+#  docker run -t -i -p 8080:8080 sample/vertx-javascript
+###
+
+# Extend vert.x image
+FROM vertx/vertx3
+
+# Set the name of the verticle to deploy
+ENV VERTICLE_NAME hello-verticle.js
+
+# Set the location of the verticles
+ENV VERTICLE_HOME /usr/verticles
+
+EXPOSE 8080
+
+# Copy your verticle to the container
+COPY $VERTICLE_NAME $VERTICLE_HOME/
+
+# Launch the verticle
+WORKDIR $VERTICLE_HOME
+ENTRYPOINT ["sh", "-c"]
+CMD ["vertx run $VERTICLE_NAME -cp $VERTICLE_HOME/*"]</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">hello-verticle.js</div>
+<div class="content">
+<pre>vertx.createHttpServer().requestHandler(function (request) {
+    request.response().end("Wild world");
+}).listen(8080);</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Next, we should try out this example application so that we know how it works without any instrumentation. (Note: this assumes that you already have docker installed on your system, and the docker daemon is running. If not please see <a href="http://www.docker.com" class="bare">http://www.docker.com</a>).</p>
+</div>
+<div class="paragraph">
+<p>As described in the <em>Dockerfile</em> comment block, first run the command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>docker build -t sample/vertx-javascript .</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and once you have the <em>Successfully built &#8230;&#8203;</em> message, run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>docker run -t -i -p 8080:8080 sample/vertx-javascript</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and once you have seen the <em>Succeeded in deploying verticle</em> message, go to a browser and enter the URL <a href="http://localhost:8080" class="bare">http://localhost:8080</a>. This should display the text <strong>Wild world</strong>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_creating_an_instrumented_version_of_the_docker_image">Creating an instrumented version of the docker image</h3>
+<div class="paragraph">
+<p>When instrumenting a Java application, whether a standalone Java app, or components running within an application server, we only need to set the <em>JAVA_OPTS</em> environment variable to reference a <strong>javaagent</strong> jar, and define some properties for contacting the BTM server (i.e. URL and username/password).</p>
+</div>
+<div class="paragraph">
+<p>When running an application within a docker image, although it is possible to specify environment variables (such as <em>JAVA_OPTS</em>), it is not possible to reference files (i.e. jars) outside of the image. Therefore to be able to instrument an image, we need to create a separate image based on the one we wish to instrument, with the additional steps required to include the <strong>javaagent</strong> and required properties.</p>
+</div>
+<div class="paragraph">
+<p>To achieve this, create a separate folder from the image being instrumented, and define the following file:</p>
+</div>
+<div class="listingblock">
+<div class="title">Dockerfile</div>
+<div class="content">
+<pre>###
+# vert.x docker example using a JavaScript verticle, instrumented for BTM
+# To build:
+#  docker build -t sample/vertx-javascript-with-btm .
+# To run:
+#  docker run -t -i --net=host sample/vertx-javascript-with-btm
+###
+
+# Extend vert.x javascript sample image
+FROM sample/vertx-javascript
+
+ENV BTM_URI http://localhost:8180/hawkular/btm
+ENV BTM_USERNAME jdoe
+ENV BTM_PASSWORD password
+
+ENV BTM_VERSION=0.6.0.Final
+ENV BTM_AGENT=/libs/hawkular-btm-agent-rest-$BTM_VERSION.jar
+
+ADD https://repository.jboss.org/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=org.hawkular.btm&amp;a=hawkular-btm-agent-rest&amp;v=$BTM_VERSION&amp;e=jar $BTM_AGENT
+
+ENV JAVA_OPTS -javaagent:$BTM_AGENT=boot:$BTM_AGENT -Dhawkular-btm.base-uri=\$BTM_URI -Dhawkular-btm.config.refresh=10 -Dhawkular-btm.username=\$BTM_USERNAME -Dhawkular-btm.password=\$BTM_PASSWORD</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Most of the dockerfile is defining environment variable defaults, but the most important steps are the final two, adding the Hawkular BTM agent to the image and then defining the <em>JAVA_OPTS</em> variable to reference it (along with the required properties).</p>
+</div>
+<div class="paragraph">
+<p>Next we need to build the new instrumented image:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>docker build -t sample/vertx-javascript-with-btm .</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once this has been successfully built, we need to start up a BTM server. This can be done by downloading the most recent distribution from <a href="https://github.com/hawkular/hawkular-btm/releases" class="bare">https://github.com/hawkular/hawkular-btm/releases</a>, unpacking the distribution and running the following command from the top level folder:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>bin/standalone.sh -Djboss.socket.binding.port-offset=100</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This starts the BTM server on port 8180, so it does not conflict with the port being used by the instrumented application.</p>
+</div>
+<div class="paragraph">
+<p>Final step is to run the instrumented example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>docker run -t -i --net=host sample/vertx-javascript-with-btm</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Instead of defining port mapping, we have used the <em>--net=host</em> option, to enable the instrumented application to call out to the BTM server running on the host. Also, the default environment variables can be overridden by using the <em>--env</em> option (e.g. <em>--env BTM_URI=http://&#8230;&#8203;&#8230;&#8203;</em>).
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Finally, once the <em>Succeeded in deploying verticle</em> message is displayed, we return to a browser. If we enter a URL <a href="http://localhost:8080/test/app" class="bare">http://localhost:8080/test/app</a> and press return, we should see the same message as before (<strong>Wild world</strong>).</p>
+</div>
+<div class="paragraph">
+<p>If we now go to the BTM console (<a href="http://localhost:8180/hawkular-ui/btm" class="bare">http://localhost:8180/hawkular-ui/btm</a> logging in as <em>jdoe</em> with password <em>password</em>), you should see the entered URL in the <em>Candidates</em> page. This shows that the BTM server has been informed about the business transaction performed on that URI.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_summary">Summary</h3>
+<div class="paragraph">
+<p>This post has shown how any Java based application, defined as a docker image, can be instrumented by defining a derived image that adds the <strong>javaagent</strong> jar and sets the required properties for communicating with the BTM server.</p>
+</div>
+</div></p>
+    	<hr /><br /><br />
+        <p><em>Published by Gary Brown on  01 December 2015</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">&copy; 2015 | Hawkular is released under <a href="/license.html">Apache License v2.0</a></p>
+    <p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p>
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../../js/behavior.js"></script>
+    <script src="../../../../js/prettify.js"></script>
+    <script src="../../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
