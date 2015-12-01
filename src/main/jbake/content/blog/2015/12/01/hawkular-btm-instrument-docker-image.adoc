@@ -1,0 +1,132 @@
+= BTM: Instrumenting an application running from a docker image
+Gary Brown
+2015-12-01
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, btm, docker
+
+This post outlines how to instrument a docker image, to capture business transaction management data and report it to a business transaction management server running in a remote location.
+
+=== Obtaining an example docker image
+
+To demonstrate the approach, we will use an example docker image associated with a Javascript application running on Vert.x. Either download the complete example distribution from https://github.com/vert-x3/vertx-examples/releases/tag/3.0.0[here], and navigate to the _docker-examples/vertx-docker-javascript_ folder, or create a folder in your preferred location with the following two files:
+
+.Dockerfile
+----
+###
+# vert.x docker example using a JavaScript verticle
+# To build:
+#  docker build -t sample/vertx-javascript .
+# To run:
+#  docker run -t -i -p 8080:8080 sample/vertx-javascript
+###
+
+# Extend vert.x image
+FROM vertx/vertx3
+
+# Set the name of the verticle to deploy
+ENV VERTICLE_NAME hello-verticle.js
+
+# Set the location of the verticles
+ENV VERTICLE_HOME /usr/verticles
+
+EXPOSE 8080
+
+# Copy your verticle to the container
+COPY $VERTICLE_NAME $VERTICLE_HOME/
+
+# Launch the verticle
+WORKDIR $VERTICLE_HOME
+ENTRYPOINT ["sh", "-c"]
+CMD ["vertx run $VERTICLE_NAME -cp $VERTICLE_HOME/*"]
+----
+
+.hello-verticle.js
+----
+vertx.createHttpServer().requestHandler(function (request) {
+    request.response().end("Wild world");
+}).listen(8080);
+----
+
+Next, we should try out this example application so that we know how it works without any instrumentation. (Note: this assumes that you already have docker installed on your system, and the docker daemon is running. If not please see http://www.docker.com).
+
+As described in the _Dockerfile_ comment block, first run the command:
+
+----
+docker build -t sample/vertx-javascript .
+----
+
+and once you have the _Successfully built ..._ message, run:
+
+----
+docker run -t -i -p 8080:8080 sample/vertx-javascript
+----
+
+and once you have seen the _Succeeded in deploying verticle_ message, go to a browser and enter the URL http://localhost:8080. This should display the text *Wild world*.
+
+
+=== Creating an instrumented version of the docker image
+
+When instrumenting a Java application, whether a standalone Java app, or components running within an application server, we only need to set the _JAVA_OPTS_ environment variable to reference a *javaagent* jar, and define some properties for contacting the BTM server (i.e. URL and username/password).
+
+When running an application within a docker image, although it is possible to specify environment variables (such as _JAVA_OPTS_), it is not possible to reference files (i.e. jars) outside of the image. Therefore to be able to instrument an image, we need to create a separate image based on the one we wish to instrument, with the additional steps required to include the *javaagent* and required properties.
+
+To achieve this, create a separate folder from the image being instrumented, and define the following file:
+
+.Dockerfile
+----
+###
+# vert.x docker example using a JavaScript verticle, instrumented for BTM
+# To build:
+#  docker build -t sample/vertx-javascript-with-btm .
+# To run:
+#  docker run -t -i --net=host sample/vertx-javascript-with-btm
+###
+
+# Extend vert.x javascript sample image
+FROM sample/vertx-javascript
+
+ENV BTM_URI http://localhost:8180/hawkular/btm
+ENV BTM_USERNAME jdoe
+ENV BTM_PASSWORD password
+
+ENV BTM_VERSION=0.6.0.Final
+ENV BTM_AGENT=/libs/hawkular-btm-agent-rest-$BTM_VERSION.jar
+
+ADD https://repository.jboss.org/nexus/service/local/artifact/maven/redirect?r=releases&g=org.hawkular.btm&a=hawkular-btm-agent-rest&v=$BTM_VERSION&e=jar $BTM_AGENT
+
+ENV JAVA_OPTS -javaagent:$BTM_AGENT=boot:$BTM_AGENT -Dhawkular-btm.base-uri=\$BTM_URI -Dhawkular-btm.config.refresh=10 -Dhawkular-btm.username=\$BTM_USERNAME -Dhawkular-btm.password=\$BTM_PASSWORD
+----
+
+Most of the dockerfile is defining environment variable defaults, but the most important steps are the final two, adding the Hawkular BTM agent to the image and then defining the _JAVA_OPTS_ variable to reference it (along with the required properties).
+
+Next we need to build the new instrumented image:
+
+----
+docker build -t sample/vertx-javascript-with-btm .
+----
+
+Once this has been successfully built, we need to start up a BTM server. This can be done by downloading the most recent distribution from https://github.com/hawkular/hawkular-btm/releases, unpacking the distribution and running the following command from the top level folder:
+
+----
+bin/standalone.sh -Djboss.socket.binding.port-offset=100
+----
+
+This starts the BTM server on port 8180, so it does not conflict with the port being used by the instrumented application.
+
+Final step is to run the instrumented example:
+
+----
+docker run -t -i --net=host sample/vertx-javascript-with-btm
+----
+
+NOTE: Instead of defining port mapping, we have used the _--net=host_ option, to enable the instrumented application to call out to the BTM server running on the host. Also, the default environment variables can be overridden by using the _--env_ option (e.g. _--env BTM_URI=http://......_).
+
+Finally, once the _Succeeded in deploying verticle_ message is displayed, we return to a browser. If we enter a URL http://localhost:8080/test/app and press return, we should see the same message as before (*Wild world*).
+
+If we now go to the BTM console (http://localhost:8180/hawkular-ui/btm logging in as _jdoe_ with password _password_), you should see the entered URL in the _Candidates_ page. This shows that the BTM server has been informed about the business transaction performed on that URI.
+
+=== Summary
+
+This post has shown how any Java based application, defined as a docker image, can be instrumented by defining a derived image that adds the *javaagent* jar and sets the required properties for communicating with the BTM server.
+
