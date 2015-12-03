@@ -149,12 +149,18 @@ java -jar hawkular-wildfly-agent-installer*.jar --target-location=/your/wildfly/
 
 [source,xml]
 ----
-  <storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /> <!-- <1> -->
+  <storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /> <1>
 ----
 
+[source,xml]
+----
+<managed-servers>
+  <local-dmr enabled="true" name="SET_ME" ... /> <2>
+----
 <1> You need to provide username/password for one Hawkular user. The app server will only show for this user.
-<2> You can change 'Local' to some *unique* value among your managed machines. (todo: do we really need to do this?)
-<3> Optional: A single Hawkular WildFly Agent instance can also manage multiple remote WildFly servers. In that case you need to enable a remote-dmr section and specify the username and password of a management user of the remote WildFly Server.
+<2> In the same file (and if monitoring multiple servers), change the server name to some *unique* value among your managed machines.
+
+TIP: Optional: A single Hawkular WildFly Agent instance can also manage multiple remote WildFly servers. In that case you need to enable a remote-dmr section and specify the username and password of a management user of the remote WildFly Server.
 
 Now you can start the managed WildFly instance, keeping in mind that if you are following this QuickStart your Hawkular Server is probably already running on port 8080, so you need to run this instance on a different port by starting the server with `sh bin/standalone.sh -Djboss.socket.binding.port-offset=100` for instance.
 Now if you have correcty set up the agent, it will report into your Hawkular Server at http://localhost:8080/hawkular-ui/app/app-list.
@@ -179,7 +185,7 @@ where `[your_username]` needs to be replaced by the by the name of the user who 
 === Unable to resolve realm public key remotely, status = 404
 
 Exception: `ERROR [io.undertow.request] (default task-2) UT005023: Exception handling request to
-/hawkular/accounts/personas/current: java.lang.RuntimeException: Unable to resolve realm public key remotely, status
+/hawkular/accounts/personas/current:` `java.lang.RuntimeException: Unable to resolve realm public key remotely, status
 = 404`
 
 This happens when the auth server (Keycloak) cannot be reached. Make sure that the authentication server URL is set
@@ -194,7 +200,7 @@ $HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/k
 
 === Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID
 
-Exception: `ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:
-Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID`
+Exception: `ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:`
+`Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID`
 
 Similar to the above: make sure that your auth server (Keycloak) configuration is correct.
