@@ -40,33 +40,25 @@ bin/standalone.sh  # use standalone.bat on Windows
 You can then navigate your browser to http://localhost:8080/. When you see the login screen,
 you have to register as a user and will then be redirected to the main Hawkular page.
 
-Should you decide to use another hostname and/or port, you'd need to change two files to point to the currect
-URL for Keycloak: `keycloak.json` and `standalone.xml`. Replace the instances of `http://localhost:8080` on the
-property `auth-server-url` by the desired hostname:port
+Should you decide to use another hostname and/or port, you'd need to change the system property `keycloak.server.url`
+ either via command line or by changing the `standalone.xml`. Example:
 
-.$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json
-[source,json]
+[source,bash]
 ----
-{
-  "realm": "hawkular",
-  "auth-server-url": "http://localhost:8080/auth",
-  ...
-}
-
+bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth
 ----
 
-.$HAWKULAR_HOME/standalone/configuration/standalone.xml
+For a more permanent solution, you can change the `standalone.xml` by setting an appropriate value for the system
+property:
 [source,xml]
 ----
-<subsystem xmlns="urn:jboss:domain:keycloak:1.1">
-  <realm name="hawkular">
-    <auth-server-url>http://localhost:8080/auth</auth-server-url>
-    <ssl-required>none</ssl-required>
-  </realm>
-...
-...
-</subsystem>
+<property name="keycloak.server.url" value="http://localhost:8180/auth"/>
+----
 
+Then, just start Keycloak as usual:
+[source,bash]
+----
+bin/standalone.sh
 ----
 
 === Option B: Install from a docker image
