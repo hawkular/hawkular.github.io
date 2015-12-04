@@ -213,14 +213,14 @@ The embedded Cassandra is not intended for production use, we definitely recomme
 <h3 id="_option_a_install_from_a_zip_file_on_any_operating_system">Option A: Install from a zip file on any operating system</h3>
 <div class="paragraph">
 <p>Download
-<a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha4/hawkular-dist-1.0.0.Alpha4.zip">Hawkular 1.0.0.Alpha4 (zip)</a>
+<a href="http://download.jboss.org/hawkular/hawkular/x.y.z/hawkular-dist-x.y.z.zip">Hawkular x.y.z (zip)</a>
 and then unzip and start the server as shown below.</p>
 </div>
 <div class="listingblock">
 <div class="title">Unzip and start the server</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">unzip hawkular-dist-1.0.0.Alpha4.zip
-cd hawkular-1.0.0.Alpha4
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">unzip hawkular-dist-x.y.z.zip
+cd hawkular-x.y.z
 bin/standalone.sh  # use standalone.bat on Windows</code></pre>
 </div>
 </div>
@@ -229,31 +229,29 @@ bin/standalone.sh  # use standalone.bat on Windows</code></pre>
 you have to register as a user and will then be redirected to the main Hawkular page.</p>
 </div>
 <div class="paragraph">
-<p>Should you decide to use another hostname and/or port, you&#8217;d need to change two files to point to the currect
-URL for Keycloak: <code>keycloak.json</code> and <code>standalone.xml</code>. Replace the instances of <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> on the
-property <code>auth-server-url</code> by the desired hostname:port</p>
+<p>Should you decide to use another hostname and/or port, you&#8217;d need to change the system property <code>keycloak.server.url</code>
+ either via command line or by changing the <code>standalone.xml</code>. Example:</p>
 </div>
 <div class="listingblock">
-<div class="title">$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-  "realm": "hawkular",
-  "auth-server-url": "http://localhost:8080/auth",
-  ...
-}</code></pre>
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>For a more permanent solution, you can change the <code>standalone.xml</code> by setting an appropriate value for the system
+property:</p>
 </div>
 <div class="listingblock">
-<div class="title">$HAWKULAR_HOME/standalone/configuration/standalone.xml</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;subsystem xmlns="urn:jboss:domain:keycloak:1.1"&gt;
-  &lt;realm name="hawkular"&gt;
-    &lt;auth-server-url&gt;http://localhost:8080/auth&lt;/auth-server-url&gt;
-    &lt;ssl-required&gt;none&lt;/ssl-required&gt;
-  &lt;/realm&gt;
-...
-...
-&lt;/subsystem&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;property name="keycloak.server.url" value="http://localhost:8180/auth"/&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, just start Keycloak as usual:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">bin/standalone.sh</code></pre>
 </div>
 </div>
 </div>
