@@ -1,7 +1,7 @@
 === Introduction
 
 Hawkular ships with a ready to use instance of Keycloak. In some situations, however, it is desirable to split Hawkular
-from Keycloak. This document outlines this process. This document is valid from Hawkular 1.0.0.Alpha3 and later.
+from Keycloak. This document outlines this process.
 
 === Preparing the environments
 
@@ -44,15 +44,11 @@ New `$KEYCLOAK_HOME/standalone/configuration/keycloak-server.json`:
 {
     "providers": [
         "classpath:${jboss.server.config.dir}/providers/*",
-        "module:org.hawkular.keycloak.events.rest",
-        "module:org.hawkular.keycloak.events.jms"
+        "module:org.hawkular.keycloak.events.rest"
     ],
 
     "eventsListener": {
         "hawkular-rest": {
-            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
-        },
-        "hawkular-jms": {
             "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
         }
     },
@@ -223,29 +219,15 @@ Remove from `$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
 <property name="hawkular.events.listener.rest.endpoint" value="http://localhost:8080/hawkular-accounts-events-backend/events"/>
 ----
 
-Now, tell the Keycloak Wildfly Adapter what is the URL for the Keycloak Server:
-
-`$HAWKULAR_HOME/standalone/configuration/standalone.xml`:
+Change the property "keycloak.server.url" from `$HAWKULAR_HOME/standalone/configuration/standalone.xml` to point to
+our external Keycloak server URL:
 [source,xml]
 ----
-<realm name="hawkular">
-    <auth-server-url>http://localhost:8180/auth</auth-server-url>
-    <ssl-required>none</ssl-required>
-</realm>
+<property name="keycloak.server.url" value="http://localhost:8180/auth"/>
 ----
 
-And the same thing for the Keycloak JavaScript Adapter.
-`$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json`:
-[source,json]
-----
-{
-  "realm": "hawkular",
-  "auth-server-url": "http://localhost:8180/auth",
-  "ssl-required": "none",
-  "resource": "hawkular-ui",
-  "public-client": true
-}
-----
+If you prefer to not change the `standalone.xml`, the system property "keycloak.server.url" can also be passed via
+the command line: `-Dkeycloak.server.url=http://localhost:8180/auth`
 
 And finally, remove the JBoss modules for the listeners and Keycloak UI theme:
 [source,bash]
@@ -259,7 +241,7 @@ Once Keycloak has been fully removed from Hawkular, it can be started normally:
 
 [source,bash]
 ----
-$HAWKULAR_HOME/bin/standalone.sh
+$HAWKULAR_HOME/bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth
 ----
 
 
