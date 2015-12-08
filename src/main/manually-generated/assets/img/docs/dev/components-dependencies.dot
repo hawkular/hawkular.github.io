@@ -4,73 +4,104 @@
 // dot -Tsvg manually-generated/assets/img/docs/dev/components-dependencies.dot -o jbake/assets/img/docs/dev/components-dependencies.svg
 
 digraph {
+    compound=true
+    newrank=true
     graph [bgcolor="transparent" fontname="helvetica"]
     node [fontname = "helvetica" shape=box]
     edge [fontname = "helvetica"]
 
-    "hawkular"
-    "hawkular-accounts"
-    "hawkular-agent"
-    "hawkular-alerts"
-    "hawkular-btm"
-    "hawkular-build-tools"
-    "hawkular-bus"
-    "hawkular-commons"
-    "hawkular-command-gateway"
-    "hawkular-inventory"
-    "hawkular-metrics"
-    "hawkular-parent"
+    "Hawkular"
+    "Accounts"
+    "Agent"
+    "Alerts"
+    "BTM"
+    "Build Tools"
+    "Command Gateway"
 
-    "hawkular-parent" -> "hawkular-build-tools"
+    // commons
+
+    "Inventory"
+    "Metrics"
+    "Hawkular Parent"
+    "Android Client"
+
+    // parent
+    "Hawkular Parent" -> "Build Tools"
+
+    subgraph cluster_commons {
+        label="Commons"
+
+        subgraph cluster_status {
+            label=""
+            style="invis"
+            "REST Status"
+        }
+
+        subgraph cluster_nest {
+            label=""
+            style="invis"
+            "Nest" -> { "Bus" "Embedded Cassandra" "Cassandra Driver" }
+        }
+
+        subgraph cluster_email {
+            label=""
+            style="invis"
+            "Commons E-Mail" -> "Commons Templates"
+        }
+    }
+    "Bus" -> "Hawkular Parent" [ltail=cluster_commons]
+    { "Cassandra Driver" "Embedded Cassandra" "REST Status" } -> "Hawkular Parent" [style="invis"] // invisible edges for better layout
 
     // all components depend on parent
-    "hawkular" -> "hawkular-parent"
-    "hawkular-accounts" -> "hawkular-parent"
-    "hawkular-android-client" -> "hawkular-parent"
-    "hawkular-agent" -> "hawkular-parent"
-    "hawkular-alerts" -> "hawkular-parent"
-    "hawkular-btm" -> "hawkular-parent"
-    "hawkular-bus" -> "hawkular-parent"
-    "hawkular-commons" -> "hawkular-parent"
-    "hawkular-inventory" -> "hawkular-parent"
-    "hawkular-metrics" -> "hawkular-parent"
+    "Android Client" -> "Hawkular Parent"
 
-    // hawkular direct deps
-    "hawkular" -> "hawkular-accounts"
-    "hawkular" -> "hawkular-agent"
-    "hawkular" -> "hawkular-alerts"
-    "hawkular" -> "hawkular-bus"
-    "hawkular" -> "hawkular-commons"
-    "hawkular" -> "hawkular-inventory"
-    "hawkular" -> "hawkular-metrics"
+    // Hawkular direct deps
+    "Hawkular" -> "Accounts"
+    "Hawkular" -> "Agent"
+    "Hawkular" -> "Alerts"
+    "Hawkular" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Hawkular" -> "Inventory"
+    "Hawkular" -> "Metrics"
 
-    // command-gateway direct deps
-    "hawkular-command-gateway" -> "hawkular-accounts"
-    "hawkular-command-gateway" -> "hawkular-bus"
-    "hawkular-command-gateway" -> "hawkular-inventory"
+    // Accounts direct deps
+    "Accounts" -> "Nest" [lhead=cluster_commons label="Nest, Mail, Status" fontcolor="grey"]
+    "Accounts" -> { "Commons E-Mail" "REST Status" } [style="invis"] // invisible edges for better layout
 
     // agent direct deps
-    "hawkular-agent" -> "hawkular-command-gateway"
-    "hawkular-agent" -> "hawkular-bus"
-    "hawkular-agent" -> "hawkular-inventory"
-    "hawkular-agent" -> "hawkular-metrics"
-    "hawkular-agent" -> "hawkular-accounts"
+    "Agent" -> "Command Gateway"
+    "Agent" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Agent" -> "Inventory"
+    "Agent" -> "Metrics"
+    "Agent" -> "Accounts"
 
     // alerts direct deps
-    "hawkular-alerts" -> "hawkular" [style=dashed, color=gray, label="itest" fontcolor="grey"]
-    "hawkular-alerts" -> "hawkular-accounts" [style=dashed, color=gray, label="itest" fontcolor="grey"]
-    "hawkular-alerts" -> "hawkular-commons" [style=dashed, color=gray, label="itest" fontcolor="grey"]
-    "hawkular-alerts" -> "hawkular-bus"
-    "hawkular-alerts" -> "hawkular-metrics"
+    "Alerts" -> "Accounts"
+    "Alerts" -> "Metrics"
+    "Alerts" -> "Inventory"
+    "Alerts" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
 
     // btm direct deps
-    "hawkular-btm" -> "hawkular-accounts"
+    "BTM" -> "Accounts"
+
+    // command-gateway direct deps
+    "Command Gateway" -> "Accounts"
+    "Command Gateway" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Command Gateway" -> "Inventory"
+
 
     // inventory direct deps
-    "hawkular-inventory" -> "hawkular-accounts"
-    "hawkular-inventory" -> "hawkular-bus"
-    "hawkular-inventory" -> "hawkular-commons" [style=dashed, color=gray, label="itest" fontcolor="grey"]
+    "Inventory" -> "Accounts"
+    "Inventory" -> "Nest" [lhead=cluster_commons label="Bus, Nest, Status" fontcolor="grey"]
 
-    // accounts direct deps
-    "hawkular-accounts" -> "hawkular-commons"
+    // metrics
+    "Metrics" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+
+    // layout
+    { rank=same "Build Tools" }
+    { rank=same "Hawkular Parent" "Android Client" }
+    { rank=same "Bus" "Embedded Cassandra" "Cassandra Driver" "Commons Templates" }
+    { rank=same "Nest" "REST Status" "Commons E-Mail" }
+    { rank=same "Accounts" }
+
+
 }
