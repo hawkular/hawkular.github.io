@@ -282,7 +282,7 @@ _Same notes as creating gauge metric apply._
 |=======================
 |Required|Description|Data Type
 
-|Yes|-|<<Metric>>
+|Yes|-|<<MetricAvailabilityType>>
 
 |=======================
 
@@ -325,7 +325,7 @@ NOTE: *Add metric data for multiple availability metrics in a single call.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of availability metrics|array of <<Availability>>
+|Yes|List of availability metrics|array of <<MetricAvailabilityType>>
 
 |=======================
 
@@ -438,7 +438,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Successfully fetched availability data.|array of <<AvailabilityDataPoint>>
+|200|Successfully fetched availability data.|array of <<DataPoint>>
 |204|No availability data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
 |500|Unexpected error occurred while fetching availability data.|<<ApiError>>
@@ -480,7 +480,7 @@ NOTE: *Add data for a single availability metric.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of availability datapoints|array of <<AvailabilityDataPoint>>
+|Yes|List of availability datapoints|array of <<DataPointAvailabilityType>>
 
 |=======================
 
@@ -716,7 +716,7 @@ _This operation also causes the rate to be calculated and persisted periodically
 |=======================
 |Required|Description|Data Type
 
-|Yes|-|<<Metric>>
+|Yes|-|<<MetricLong>>
 
 |=======================
 
@@ -809,7 +809,7 @@ NOTE: *Add data points for multiple counters.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of metrics|array of <<Counter>>
+|Yes|List of metrics|array of <<MetricLong>>
 
 |=======================
 
@@ -972,7 +972,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Successfully fetched metric data.|array of <<CounterDataPoint>>
+|200|Successfully fetched metric data.|array of <<DataPoint>>
 |204|No metric data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
 |500|Unexpected error occurred while fetching metric data.|<<ApiError>>
@@ -1014,7 +1014,7 @@ NOTE: *Add data for a single counter.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of data points containing timestamp and value|array of <<CounterDataPoint>>
+|Yes|List of data points containing timestamp and value|array of <<DataPointLong>>
 
 |=======================
 
@@ -1085,7 +1085,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Successfully fetched metric data.|array of <<GaugeDataPoint>>
+|200|Successfully fetched metric data.|array of <<DataPoint>>
 |204|No metric data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
 |500|Unexpected error occurred while fetching metric data.|<<ApiError>>
@@ -1308,7 +1308,7 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 |=======================
 |Required|Description|Data Type
 
-|Yes|-|<<Metric>>
+|Yes|-|<<MetricDouble>>
 
 |=======================
 
@@ -1401,7 +1401,7 @@ NOTE: *Add data for multiple gauge metrics in a single call.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of metrics|array of <<Gauge>>
+|Yes|List of metrics|array of <<MetricDouble>>
 
 |=======================
 
@@ -1514,7 +1514,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Successfully fetched metric data.|array of <<GaugeDataPoint>>
+|200|Successfully fetched metric data.|array of <<DataPoint>>
 |204|No metric data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
 |500|Unexpected error occurred while fetching metric data.|<<ApiError>>
@@ -1556,7 +1556,7 @@ NOTE: *Add data for a single gauge metric.* +
 |=======================
 |Required|Description|Data Type
 
-|Yes|List of datapoints containing timestamp and value|array of <<GaugeDataPoint>>
+|Yes|List of datapoints containing timestamp and value|array of <<DataPointDouble>>
 
 |=======================
 
@@ -1841,7 +1841,7 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 |=======================
 |Required|Description|Data Type
 
-|Yes|-|<<Metric>>
+|Yes|-|<<MetricObject>>
 
 |=======================
 
@@ -1999,68 +1999,32 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 
 
-[[Availability]]
-=== Availability
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|data|No|Availability data points|array of <<AvailabilityDataPoint>>|-|-
-|id|Yes|Identifier of the metric|string|-|-
-
-|=======================
-
-
-[[AvailabilityDataPoint]]
-=== AvailabilityDataPoint
+[[DataPoint]]
+=== DataPoint
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
 |timestamp|Yes|-|integer|int64|-
-|value|Yes|-|string|-|up, down, unknown
+|value|Yes|-|object|-|-
 
 |=======================
 
 
-[[Counter]]
-=== Counter
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|data|No|Counter data points|array of <<CounterDataPoint>>|-|-
-|id|Yes|Identifier of the metric|string|-|-
-
-|=======================
-
-
-[[CounterDataPoint]]
-=== CounterDataPoint
+[[DataPointAvailabilityType]]
+=== DataPointAvailabilityType
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
 |timestamp|Yes|-|integer|int64|-
-|value|Yes|-|integer|int64|-
+|value|Yes|-|string|-|UP, DOWN, UNKNOWN
 
 |=======================
 
 
-[[Gauge]]
-=== Gauge
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|data|No|Gauge data points|array of <<GaugeDataPoint>>|-|-
-|id|Yes|Identifier of the metric|string|-|-
-
-|=======================
-
-
-[[GaugeDataPoint]]
-=== GaugeDataPoint
+[[DataPointDouble]]
+=== DataPointDouble
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
@@ -2071,16 +2035,105 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 
 
+[[DataPointLong]]
+=== DataPointLong
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|timestamp|Yes|-|integer|int64|-
+|value|Yes|-|integer|int64|-
+
+|=======================
+
+
+[[DataPointObject]]
+=== DataPointObject
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|timestamp|Yes|-|integer|int64|-
+|value|Yes|-|object|-|-
+
+|=======================
+
+
 [[Metric]]
 === Metric
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|dataPoints|No|Metric data points|array of <<DataPointObject>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
-|id|Yes|Identifier of the metric|string|-|-
+|id|No|-|string|-|-
 |tags|No|Metric tags|object|-|-
-|tenantId|No|Identifier of the tenant|string|-|-
+|tenantId|No|-|string|-|-
+|type|No|Metric type|string|-|gauge, availability, counter
+
+|=======================
+
+
+[[MetricAvailabilityType]]
+=== MetricAvailabilityType
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataPoints|No|Metric data points|array of <<DataPointAvailabilityType>>|-|-
+|dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
+|id|No|-|string|-|-
+|tags|No|Metric tags|object|-|-
+|tenantId|No|-|string|-|-
+|type|No|Metric type|string|-|gauge, availability, counter
+
+|=======================
+
+
+[[MetricDouble]]
+=== MetricDouble
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataPoints|No|Metric data points|array of <<DataPointDouble>>|-|-
+|dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
+|id|No|-|string|-|-
+|tags|No|Metric tags|object|-|-
+|tenantId|No|-|string|-|-
+|type|No|Metric type|string|-|gauge, availability, counter
+
+|=======================
+
+
+[[MetricLong]]
+=== MetricLong
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataPoints|No|Metric data points|array of <<DataPointLong>>|-|-
+|dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
+|id|No|-|string|-|-
+|tags|No|Metric tags|object|-|-
+|tenantId|No|-|string|-|-
+|type|No|Metric type|string|-|gauge, availability, counter
+
+|=======================
+
+
+[[MetricObject]]
+=== MetricObject
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataPoints|No|Metric data points|array of <<DataPointObject>>|-|-
+|dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
+|id|No|-|string|-|-
+|tags|No|Metric tags|object|-|-
+|tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
 
 |=======================
@@ -2092,9 +2145,9 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|availabilities|No|-|array of <<Availability>>|-|-
-|counters|No|-|array of <<Counter>>|-|-
-|gauges|No|-|array of <<Gauge>>|-|-
+|availabilities|No|-|array of <<MetricAvailabilityType>>|-|-
+|counters|No|-|array of <<MetricLong>>|-|-
+|gauges|No|-|array of <<MetricDouble>>|-|-
 
 |=======================
 
