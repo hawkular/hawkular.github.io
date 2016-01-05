@@ -11,6 +11,7 @@ class Resource
 class Metric
 class OperationType
 class DataEntity
+class MetadataPack
 
 Tenant "1" --> "0..*" Environment: contains >
 note right on link
@@ -39,6 +40,13 @@ note right on link
     or feeds.
 end note
 
+Environment "0..1" --> "0..*" Feed: incorporates >
+note right on link
+    Environment can express that it is composed of a number
+    of feeds. A feed on the other hand can be incorporated
+    in at most 1 environment at a time.
+end note
+
 Tenant "1" --> "0..*" ResourceType: contains >
 note right on link
     Resource types live under tenant, so that they can be
@@ -51,12 +59,20 @@ end note
 
 Tenant "1" --> "0..*" MetricType: contains >
 
-Environment "1" --> "0..*" Feed: contains >
+Tenant "1" --> "0..*" Feed: contains >
 note right on link
    Feeds represent "things" that report data and metadata
-   Because these things live in the monitored infrastructure, they
-   are logically part of the environments that partition that
-   infrastructure.
+   Because feeds live in an infrastructure, they can be
+   associated with an environment, but they DON'T have to.
+   Also, having the feed only associate with an environment
+   makes it trivial to move a feed from one environment to
+   another.
+end note
+
+Tenant "1" --> "0..*" MetadataPack: contains >
+note right on link
+   Metadata packs group and "freeze" metadata so that users
+   can be sure they exist in a state they expect.
 end note
 
 Feed "1" --> "0..*" Resource: contains >
@@ -72,6 +88,15 @@ note right on link
     This relationship is many to many. 1 resource can incorporate
     many metrics and also many resources can incorporate a single
     metric.
+end note
+
+Resource "1" --> "0..*" Metric: contains >
+note right on link
+   In addition to incorporated metrics, a resource can also contain
+   metrics. The distinction is that contained metrics cease to exist
+   when a resource is deleted. This is a recommended way of modelling
+   metric-to-resource relationships for the feeds that need to somehow
+   express this reliance.
 end note
 
 ResourceType "0..*" --> "0..*" MetricType: incorporates >
@@ -140,4 +165,23 @@ note right on link
     IDs are "returnType" and "parameterTypes".
 end note
 
+MetadataPack "0..*" --> "0..*" ResourceType: incorporates >
+note right on link
+    By including a GLOBAL resource type (i.e. a resource type
+    defined at the tenant level) in a metadatapack one essentially
+    makes it read-only. A membership in a metadatapack ensures that
+    the resource type cannot be modified or delete to make sure
+    that users relying on existence of a metatadata pack can be sure
+    of the resource type's existence in the state they expect.
+end note
+
+MetadataPack "0..*" --> "0..*" MetricType: incorporates >
+note right on link
+    By including a GLOBAL metric type (i.e. a metric type
+    defined at the tenant level) in a metadatapack one essentially
+    makes it read-only. A membership in a metadatapack ensures that
+    the metric type cannot be modified or delete to make sure
+    that users relying on existence of a metatadata pack can be sure
+    of the metric type's existence in the state they expect.
+end note
 -------------

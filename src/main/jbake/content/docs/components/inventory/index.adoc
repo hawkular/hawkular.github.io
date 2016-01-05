@@ -1,6 +1,6 @@
 = Inventory Documentation
 Lukas Krejci
-2015-07-09
+2016-01-05
 :icons: font
 :jbake-type: page
 :jbake-status: published
@@ -63,6 +63,12 @@ compose on your own. For example you might want to create a resource "Health
 Indicators" for which you would pick and choose several metrics collected
 possibly on several machines representing the health of your infrastructure.
 
+To make things slightly more complicated though, metrics CAN also be contained
+within a resource. This is mainly useful for feeds that want to model the fact
+that a metric cannot exist without a resource in question. Such metrics still can
+be incorporated into othe resources but as soon as the containing resource is
+deleted, the resources that incorporate the metric "lose" it.
+
 Resources can have configuration. A configuration is JSON document that the
 feed can take and apply in some manner to the target resource that it is managing.
 
@@ -81,8 +87,8 @@ individual measurements of the response time, are being stored in
 link:../metrics/index.html[Hawkular Metrics], the definition of the metric is
 held in inventory, too. This is to keep track of what resources are composed of.
 
-Notice though that resources do not "own" their metrics. Rather, an m-to-n
-relationship exists between the two, meaning that a single metric can be
+Notice though that resources do not have to "own" their metrics. Rather, an m-to-n
+relationship can exist between the two, meaning that a single metric can be
 incorporated into several resources (or none). Please refer to 
 <<resource, Resource chapter>> for more detailed discussion of this.
 
@@ -133,6 +139,14 @@ entities (resource types, resource, operation types) and the ID of the data
 entity defines its "purpose" in the containing entity. E.g. operation types
 can have data entities with ID either `returnType` or `parameterTypes`.
 
+[[metadata-pack]]
+=== Metadata Pack
+A metadata pack is a means of grouping resource types and metric types together
+and ensuring they do not change. If a metadata pack with a certain "identity hash"
+exists, the users can be sure that a set of resource types and metric types with
+the exact configuration schemas, units, operation types, etc. are also defined. As 
+such a metadata pack is a means of quickly making sure that other metadata exists 
+in a way the user expects.
 
 [[inventory-organization]]
 == Inventory Organization
@@ -181,6 +195,7 @@ The type specifiers in the individual path segments can be these:
   * *m* - metric
   * *ot* - operation type
   * *d* - data entity
+  * *mp* - metadata pack
     
 Globally Unique Feeds::
 The only thing that needs to be globally unique in inventory are the feeds.
