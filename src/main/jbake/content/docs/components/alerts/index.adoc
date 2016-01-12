@@ -29,27 +29,6 @@ Other Java 8 compatible runtime environments _should_ work as well.
 Hawkular source code is managed with link:https://maven.apache.org/[Apache Maven]. A minimal version 3.2.x is needed
 to build Hawkular Alerts project.
 
-=== Wildfly 9
-
-http://wildfly.org/downloads/[Download a Wildfly 9.0.1.Final] archive and expand it somewhere on your disk.
-
-=== Apache Cassandra
-
-Hawkular Alerts relies on https://cassandra.apache.org/[Apache Cassandra] for data storage.
-
-IMPORTANT: Cassandra 2.2.0 or later is required. It is recommended to use the latest 2.2.x release if possible.
-
-You may download a distribution zip file from the http://cassandra.apache.org/download/[Apache Cassandra download] page.
-You could also use the Datastax community packages for:
-
-* http://docs.datastax.com/en/cassandra/2.2/cassandra/install/installRHEL.html[RHEL-based systems]
-* http://docs.datastax.com/en/cassandra/2.2/cassandra/install/installDeb.html[Debian-based systems]
-* http://docs.datastax.com/en/cassandra_win/2.2/cassandra/install/installTOC.html[Windows].
-* For OS/X you can install Cassandra via http://brew.sh[Homebrew]
-
-For demo purposes only you can use a pre-packaged and deployable distribution called embedded-cassandra from
-https://github.com/hawkular/hawkular-commons[Embedded Cassandra].
-
 == Installation
 
 === Build the standalone distribution
@@ -63,64 +42,18 @@ cd hawkular-alerts
 mvn clean install -Pstandalone
 ----
 
-TIP: The `-Pstandalone` profile prepares a wildfly 9 server ready for testing under
-`hawkular-alerts-rest-tests/target`.
-
-Next steps describe how to install a standalone distribution from scratch.
-
-=== Deploy the alerts engine
-
-[source,shell,subs="+attributes"]
-----
-cp hawkular-alerts-rest/target/hawkular-alerts-rest-{alerts-version}.war \
-$WILDFLY_HOME/standalone/deployments/
-----
-
-=== Deploy the alerts actions plugins
-
-[source,shell,subs="+attributes"]
-----
-cd hawkular-alerts-actions-plugins
-cp hawkular-alerts-actions-{plugin}/target/hawkular-alerts-actions-{plugin}.war \
-$WILDFLY_HOME/standalone/deployments/
-----
-
-For example, we can install email and file plugins:
-
-[source,shell,subs="+attributes"]
-----
-cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-email/target/hawkular-alerts-actions-email.war \
-$WILDFLY_HOME/standalone/deployments/
-cp hawkular-alerts-actions-plugins/hawkular-alerts-actions-file/target/hawkular-alerts-actions-file.war \
-$WILDFLY_HOME/standalone/deployments/
-----
-
-=== Deploy the embedded cassandra (Optional)
-
-[source,shell,subs="+attributes"]
-----
-git clone https://github.com/hawkular/hawkular-commons.git
-cd hawkular-commons
-mvn clean install
-cp embedded-embedded-cassandra/embedded-cassandra-ear/target/hawkular-commons-embedded-cassandra.ear \
-$WILDFLY_HOME/standalone/deployments/
-----
-
-=== Populate initial alerts definitions (Optional)
-
-Hawkular Alerts can be initializaded with triggers definitions at start up.
-Init files should be places under `$WILDFLY_HOME/standalone/data/hawkular-alerts` folder.
-
-Hawkular Alerts ships with a set of demo files that can be installed
-
-[source,shell,subs="+attributes"]
-----
-cp -R hawkular-alerts-rest-tests/src/test/wildfly-data/hawkular-alerts  $WILDFLY_HOME/standalone/data
-----
+TIP: The `-Pstandalone` profile prepares a Wildfly server ready for testing under
+`hawkular-alerts-rest-tests/target/wildfly-{version}`.
 
 === Test the installation
 
-Eventually start the server with `$WILDFLY_HOME/bin/standalone.sh -Dhawkular.backend=embedded_cassandra`.
+Eventually start the server with `$WILDFLY_HOME/bin/standalone.sh`.
+
+[source,shell,subs="+attributes"]
+----
+cd hawkular-alerts-rest/test/target/wildfly-{version}
+bin/standalone.sh
+----
 
 Test your installation with a query of all demo trigger definitions
 
@@ -130,8 +63,22 @@ curl -X GET -H "Content-Type: application/json" -H "Hawkular-Tenant: 28026b36-8f
 http://localhost:8080/hawkular/alerts/triggers
 ----
 
+=== Populate initial alerts definitions (Optional)
+
+Hawkular Alerts can be initializaded with triggers definitions at start up.
+Init files should be places under `$WILDFLY_HOME/standalone/data/hawkular-alerts` folder.
+
 [[Configuration]]
 == Configuration
+
+=== Cassandra backend
+
+Hawkular Alerts relies on https://cassandra.apache.org/[Apache Cassandra] for data storage.
+
+For demo purposes only the standalone distribution uses a pre-packaged and deployable distribution called
+embedded-cassandra from https://github.com/hawkular/hawkular-commons[Embedded Cassandra].
+
+A external Cassandra installation can be used overriding `-Dhawkular.backend=external`.
 
 === Configuration sources
 
