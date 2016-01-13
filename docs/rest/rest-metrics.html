@@ -148,7 +148,7 @@
         </div>
       </section>
 
-	<!--<p><em>08 January 2016</em></p>-->
+	<!--<p><em>13 January 2016</em></p>-->
 
 	<section>
       <div class="container">
@@ -166,6 +166,7 @@
 <li><a href="#_response_codes">Response codes</a></li>
 <li><a href="#_error_responses">Error responses</a></li>
 <li><a href="#_time_ranges">Time ranges</a></li>
+<li><a href="#_limit_and_order">Limit and Order</a></li>
 <li><a href="#_bucket_parameters">Bucket parameters</a></li>
 <li><a href="#_custom_string_formats">Custom string formats</a></li>
 </ul>
@@ -423,6 +424,93 @@ Empty arrays are not sent in the response body.</p>
 
 # Implicit time range
 /hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?end=20202020</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_limit_and_order">Limit and Order</h3>
+<div class="paragraph">
+<p>The API offers the ability to limit the number of data points returned as well specify the order of the results.
+Limit and order only work with raw data; if used in conjunction with bucketed results, it will return an error.</p>
+</div>
+<div class="paragraph">
+<p>Usage and default value details:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>default order is descending</p>
+</li>
+<li>
+<p>no limit imposed if parameter not specified</p>
+</li>
+<li>
+<p>limit of 0 or negative is equivalent to no limit</p>
+</li>
+<li>
+<p>if the user specifies limit, then the order is important because it returns data points up to limit in the specified order</p>
+</li>
+<li>
+<p>start time and end time influence the default order if actual limit is specified</p>
+<div class="ulist">
+<ul>
+<li>
+<p>if only start time is specified then order is ascending</p>
+</li>
+<li>
+<p>if only end time is specified then order is descending</p>
+</li>
+<li>
+<p>if both are specified then order is descending</p>
+</li>
+<li>
+<p>if none are specified then order is descending</p>
+</li>
+<li>
+<p>order defaults are overridden if order specified</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p>default order is descending if limit is not specified regardless of specified time range</p>
+</li>
+</ul>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+please refer to <code>Time Ranges</code> section for defaults when omitting end, start, or both.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Sample operations with time range query parameters</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash"># Implicit time range, not limit, and descending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data
+
+# Explicit limit of 10, implicit time range, implicit descending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?limit=10
+
+# Explicit limit of 10, implicit time range, explicit ascending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?limit=10&amp;order=ASC
+
+# Explicit limit of 10, explicit time range, implicit descending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=10101010&amp;end=20202020&amp;limit=10
+
+# Explicit limit of 10, explicit start, implicit end, implicit ascending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=20202020&amp;limit=10
+
+# Explicit limit of 10, explicit start, implicit end, explicit descending order
+/hawkular/metrics/gauges/paris01.web001.example.com.cpu.usage/data?start=20202020&amp;limit=10&amp;order=DESC</code></pre>
 </div>
 </div>
 </div>
@@ -1038,6 +1126,22 @@ Names and values cannot contain commas or colons.</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">limit</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Limit the number of data points returned</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">int32</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">order</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data point sort order, based on timestamp</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">ASC, DESC</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1509,7 +1613,7 @@ Names and values cannot contain commas or colons.</p>
 <p><a href="#POST__counters_data">Add data points for multiple counters.</a></p>
 </li>
 <li>
-<p><a href="#GET__counters_data_rate">Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.</a></p>
+<p><a href="#GET__counters_rate">Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.</a></p>
 </li>
 <li>
 <p><a href="#GET__counters__id_">Retrieve a counter definition.</a></p>
@@ -1947,8 +2051,8 @@ Names and values cannot contain commas or colons.</p>
 </div>
 <div class="exampleblock">
 <div class="content">
-<div id="GET__counters_data_rate" class="paragraph">
-<p><strong>Endpoint GET <code>/counters/data/rate</code></strong></p>
+<div id="GET__counters_rate" class="paragraph">
+<p><strong>Endpoint GET <code>/counters/rate</code></strong></p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -2305,6 +2409,22 @@ Names and values cannot contain commas or colons.</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">limit</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Limit the number of data points returned</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">int32</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">order</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data point sort order, based on timestamp</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">ASC, DESC</p></td>
 </tr>
 </tbody>
 </table>
@@ -3582,6 +3702,22 @@ Names and values cannot contain commas or colons.</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">limit</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Limit the number of data points returned</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">int32</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">order</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data point sort order, based on timestamp</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">ASC, DESC</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -4253,6 +4389,14 @@ Names and values cannot contain commas or colons.</p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">List of tags filters</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">tag-list</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Regexp to match metricId, requires tags filtering</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>

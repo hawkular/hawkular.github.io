@@ -6,9 +6,206 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
     <language>en-us</language>
-    <pubDate>Fri, 8 Jan 2016 13:55:09 +0000</pubDate>
-    <lastBuildDate>Fri, 8 Jan 2016 13:55:09 +0000</lastBuildDate>
+    <pubDate>Wed, 13 Jan 2016 07:48:17 +0000</pubDate>
+    <lastBuildDate>Wed, 13 Jan 2016 07:48:17 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular Metrics 0.11.0 - Release</title>
+      <link>http://www.hawkular.org/blog/2016/01/12/hawkular-metrics-0.11.0.Final-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Tue, 12 Jan 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/01/12/hawkular-metrics-0.11.0.Final-released.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I am happy to announce release 0.11.0 of Hawkular Metrics. This is a large release anchored by query API enhancements, large under-the-cover refactoring of the metric models, and support for deploying the project on Wildfly 10.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_major_changes&quot;&gt;Major Changes&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Query API Updates&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Limit and Sort Order for raw data queries (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-334&quot;&gt;HWKMETRICS-334&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-62&quot;&gt;HWKMETRICS-62&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-51&quot;&gt;HWKMETRICS-51&lt;/a&gt;)&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;limit&lt;/code&gt; and &lt;code&gt;order&lt;/code&gt; parameters are now available for raw data queries on all metric types&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;limit&lt;/code&gt; - integer representing the maximum number of raw data points to be returned&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;order&lt;/code&gt; - either &lt;code&gt;ASC&lt;/code&gt; or &lt;code&gt;DESC&lt;/code&gt; based on the timestamp of the data point&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;if both are specified than limit is applied from the start of the sorted list&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;for defaults and additional details please visit - &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/blob/release/0.11.0/api/metrics-api-jaxrs/src/main/rest-doc/base.adoc&quot;&gt;Hawkular Metrics - Rest Documentation&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Ability to query all metric raw or aggregate metric data (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-331&quot;&gt;HWKMETRICS-331&lt;/a&gt;)&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;fromEarliest&lt;/code&gt; query parameter was added to allow querying for all available data for a metric&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;this allows querying all data without specifying start and end&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;data retention for the metric is taken account, so the max time span is from &lt;code&gt;now&lt;/code&gt; to &lt;code&gt;now - data retention&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Fixed the url for querying rate data across multiple metrics (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-332&quot;&gt;HWKMETRICS-332&lt;/a&gt;)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Filtering metrics by id (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-234&quot;&gt;HWKMETRICS-234&lt;/a&gt;)&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;with tag filtering enabled, it is now possible add id filtering via &lt;code&gt;id&lt;/code&gt; parameter&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;id&lt;/code&gt; parameter supports regex&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Internal Updates&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Model refactoring  (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-326&quot;&gt;HWKMETRICS-326&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-323&quot;&gt;HWKMETRICS-323&lt;/a&gt;)&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;this was a large effort to consolidate the internal domain model without changing any of the user APIs&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;this change will help the documentation efforts for future releases as well as a consistent data structure for the REST APIs&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Hawkular Integration&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The integration with Hawkular has now been updated to use asynchronous messages (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-337&quot;&gt;HWKMETRICS-337&lt;/a&gt;)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Wildfly 10 - Deploying &amp;amp; Running&lt;/strong&gt;&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Deploying and running the project on Wildfly 10  is now fully supported&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Support for Wildfly 9 is deprecated and will be completely dropped in the next release&lt;/strong&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_release_links&quot;&gt;Release links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Github Release:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.11.0&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.11.0&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;JBoss Nexus Maven artifacts:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot; class=&quot;bare&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jira release tracker:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328918&quot; class=&quot;bare&quot;&gt;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328918&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_hawkular_metrics_clients&quot;&gt;Hawkular Metrics Clients&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;One of Hawkular Metrics&apos; objectives is to &lt;strong&gt;be easy to integrate with&lt;/strong&gt;; providing language specific clients is an important component for fulfilling this objective. Here is the current list of official clients:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Ruby: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-ruby&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-client-ruby&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Python: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-python&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-client-python&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Go: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-go&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-client-go&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_thanks&quot;&gt;Thanks&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A big &quot;Thank  you&quot; goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Libor Zoubek, and Heiko Rupp for their project  contributions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>We are hiring !</title>
       <link>http://www.hawkular.org/blog/2016/01/05/we-are-hiring.html</link>
