@@ -1,0 +1,64 @@
+= Hawkular Metrics 0.11.0 - Release
+Stefan Negrea
+2016-1-12
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, release
+
+I am happy to announce release 0.11.0 of Hawkular Metrics. This is a large release anchored by query API enhancements, large under-the-cover refactoring of the metric models, and support for deploying the project on Wildfly 10.
+
+== Major Changes
+
+. **Query API Updates**
+  * Limit and Sort Order for raw data queries (https://issues.jboss.org/browse/HWKMETRICS-334[HWKMETRICS-334], https://issues.jboss.org/browse/HWKMETRICS-62[HWKMETRICS-62], https://issues.jboss.org/browse/HWKMETRICS-51[HWKMETRICS-51])
+    ** `limit` and `order` parameters are now available for raw data queries on all metric types
+    ** `limit` - integer representing the maximum number of raw data points to be returned
+    ** `order` - either `ASC` or `DESC` based on the timestamp of the data point
+    ** if both are specified than limit is applied from the start of the sorted list
+    ** for defaults and additional details please visit - https://github.com/hawkular/hawkular-metrics/blob/release/0.11.0/api/metrics-api-jaxrs/src/main/rest-doc/base.adoc[Hawkular Metrics - Rest Documentation]
+
+  * Ability to query all metric raw or aggregate metric data (https://issues.jboss.org/browse/HWKMETRICS-331[HWKMETRICS-331])
+    ** `fromEarliest` query parameter was added to allow querying for all available data for a metric
+    ** this allows querying all data without specifying start and end
+    ** data retention for the metric is taken account, so the max time span is from `now` to `now - data retention`
+
+  * Fixed the url for querying rate data across multiple metrics (https://issues.jboss.org/browse/HWKMETRICS-332[HWKMETRICS-332])
+
+  * Filtering metrics by id (https://issues.jboss.org/browse/HWKMETRICS-234[HWKMETRICS-234])
+    ** with tag filtering enabled, it is now possible add id filtering via `id` parameter
+    ** `id` parameter supports regex
+
+. **Internal Updates**
+  * Model refactoring  (https://issues.jboss.org/browse/HWKMETRICS-326[HWKMETRICS-326], https://issues.jboss.org/browse/HWKMETRICS-323[HWKMETRICS-323])
+    ** this was a large effort to consolidate the internal domain model without changing any of the user APIs
+    ** this change will help the documentation efforts for future releases as well as a consistent data structure for the REST APIs
+
+. **Hawkular Integration**
+ * The integration with Hawkular has now been updated to use asynchronous messages (https://issues.jboss.org/browse/HWKMETRICS-337[HWKMETRICS-337])
+
+. **Wildfly 10 - Deploying & Running**
+  * Deploying and running the project on Wildfly 10  is now fully supported
+  * **Support for Wildfly 9 is deprecated and will be completely dropped in the next release**
+
+== Release links
+
+* Github Release:
+** https://github.com/hawkular/hawkular-metrics/releases/tag/0.11.0
+
+* JBoss Nexus Maven artifacts:
+** http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/
+
+* Jira release tracker:
+** https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328918
+
+== Hawkular Metrics Clients
+
+One of Hawkular Metrics' objectives is to *be easy to integrate with*; providing language specific clients is an important component for fulfilling this objective. Here is the current list of official clients:
+
+* Ruby: https://github.com/hawkular/hawkular-client-ruby
+* Python: https://github.com/hawkular/hawkular-client-python
+* Go: https://github.com/hawkular/hawkular-client-go
+
+== Thanks
+
+A big "Thank  you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Libor Zoubek, and Heiko Rupp for their project  contributions.
