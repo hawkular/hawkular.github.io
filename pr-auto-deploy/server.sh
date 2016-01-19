@@ -29,15 +29,15 @@ deployPr() {
     exit 1
   }
   _base="/tmp/pr$prNo"
-  rm -Rf $_base &> /dev/null ; mkdir -p $_base && cd $_ &&\
+  kill -9 `cat $_base/pid`; rm -Rf $_base &> /dev/null ; mkdir -p $_base && cd $_ &&\
   git clone --single-branch -b pages https://github.com/hawkular/hawkular.github.io &&\
   cd $_base/hawkular.github.io &&\
   git fetch origin refs/pull/$prNo/head:pr$prNo &&\
-  git checkout pr$prNo && rm $_base/fake-input &> /dev/null
-  mkfifo $_base/fake-input
+  git checkout pr$prNo
   [[ -s $_base/pid ]] && kill -9 `cat /tmp/pr$prNo/pid`
   _actual_port=`expr $prNo + $BASE_PORT`
-  cat $_base/fake-input | mvn -Pinline -Djbake.port=$_actual_port -Djbake.listenAddress=0.0.0.0 -Djbake.livereload=false &> /dev/null &
+  mvn &> /dev/null
+  nohup ruby -run -e httpd $_base/hawkular.github.io/target/website -p $_actual_port &> /dev/null &
   PID=$!
   echo $PID > $_base/pid
   echo "kill -9 $PID" | at now + $[DAYS_AVAILABLE*24] hours
