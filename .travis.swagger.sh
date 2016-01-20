@@ -51,18 +51,18 @@ toc::[]\n\
 }
 
 setHawkularReleasedVersion() {
-  HAWKULAR_RELEASED_VERSION=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
+  HAWKULAR_RELEASED_VERSION=`curl -Ls -H "Authorization: token $DEPLOY_TOKEN" https://api.github.com/repos/hawkular/hawkular/releases | grep "tag_name" | head -1 | cut -d '"' -f4`
   safelyReplaceUsingFallback "HAWKULAR_RELEASED_VERSION" "x.y.z"
 }
 
 setHawkularReleasedDate() {
-  HAWKULAR_RELEASED_DATE=`curl -Ls https://api.github.com/repos/hawkular/hawkular/releases | grep "published_at" | head -1 | cut -d '"' -f4`
+  HAWKULAR_RELEASED_DATE=`curl -Ls -H "Authorization: token $DEPLOY_TOKEN" https://api.github.com/repos/hawkular/hawkular/releases | grep "published_at" | head -1 | cut -d '"' -f4`
   #HAWKULAR_RELEASED_DATE=`date -d $HAWKULAR_RELEASED_DATE +'%B %-m %Y'`
   safelyReplaceUsingFallback "HAWKULAR_RELEASED_DATE" "month day year"
 }
 
 setHawkularMasterVersion() {
-  HAWKULAR_MASTER_VERSION=`curl -Ls https://raw.githubusercontent.com/hawkular/hawkular/master/pom.xml | grep "^  <version>" | sed -e "s;  <version>\([0-9a-zA-Z\.\-]*\)</version>;\1;"`
+  HAWKULAR_MASTER_VERSION=`curl -Ls -H "Authorization: token $DEPLOY_TOKEN" https://raw.githubusercontent.com/hawkular/hawkular/master/pom.xml | grep "^  <version>" | sed -e "s;  <version>\([0-9a-zA-Z\.\-]*\)</version>;\1;"`
   safelyReplaceUsingFallback "HAWKULAR_MASTER_VERSION" "x.y.z-SNAPSHOT"
 }
 
@@ -82,7 +82,7 @@ downloadAndProcess() {
   DOC_PATH="src/main/jbake/content/docs/rest/"
 
   mkdir -p $DOC_PATH
-  FILES=`curl -Ls https://api.github.com/repos/$REPO/contents/?ref=$BRANCH | grep "download_url.*adoc" | cut -d '"' -f4`
+  FILES=`curl -Ls -H "Authorization: token $DEPLOY_TOKEN" https://api.github.com/repos/$REPO/contents/?ref=$BRANCH | grep "download_url.*adoc" | cut -d '"' -f4`
 
   # travis has sometimes issue with the call above, so make sure it's not empty
   [[ "x" == "x$FILES" ]] && FILES="https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts.adoc \
