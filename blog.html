@@ -151,295 +151,109 @@
 
 
 <div class="blog-container">
-            <a href="blog/2015/12/01/hawkular-btm-instrument-docker-image.html"><h1>BTM: Instrumenting an application running from a docker image</h1></a>
-            <p>01 December 2015, by Gary Brown</p>
+            <a href="blog/2016/01/21/hawkular-1.0.0.Alpha9-released.html"><h1>The nineth milestone of Hawkular released</h1></a>
+            <p>21 January 2016, by Heiko W.Rupp</p>
             <p><div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>This post outlines how to instrument a docker image, to capture business transaction management data and report it to a business transaction management server running in a remote location.</p>
+<p>Hawkular, the monitoring platform, is happy to announce milestone release 1.0.0.Alpha9.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_obtaining_an_example_docker_image">Obtaining an example docker image</h2>
+<h2 id="_rebase_on_wildfly_10_cr5">Rebase on Wildfly 10 (CR5)</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>To demonstrate the approach, we will use an example docker image associated with a Javascript application running on Vert.x. Either download the complete example distribution from <a href="https://github.com/vert-x3/vertx-examples/releases/tag/3.0.0">here</a>, and navigate to the <em>docker-examples/vertx-docker-javascript</em> folder, or create a folder in your preferred location with the following two files:</p>
-</div>
-<div class="listingblock">
-<div class="title">Dockerfile</div>
-<div class="content">
-<pre>###
-# vert.x docker example using a JavaScript verticle
-# To build:
-#  docker build -t sample/vertx-javascript .
-# To run:
-#  docker run -t -i -p 8080:8080 sample/vertx-javascript
-###
-
-# Extend vert.x image
-FROM vertx/vertx3
-
-# Set the name of the verticle to deploy
-ENV VERTICLE_NAME hello-verticle.js
-
-# Set the location of the verticles
-ENV VERTICLE_HOME /usr/verticles
-
-EXPOSE 8080
-
-# Copy your verticle to the container
-COPY $VERTICLE_NAME $VERTICLE_HOME/
-
-# Launch the verticle
-WORKDIR $VERTICLE_HOME
-ENTRYPOINT ["sh", "-c"]
-CMD ["vertx run $VERTICLE_NAME -cp $VERTICLE_HOME/*"]</pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">hello-verticle.js</div>
-<div class="content">
-<pre>vertx.createHttpServer().requestHandler(function (request) {
-    request.response().end("Wild world");
-}).listen(8080);</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Next, we should try out this example application so that we know how it works without any instrumentation. (Note: this assumes that you already have docker installed on your system, and the docker daemon is running. If not please see <a href="http://www.docker.com" class="bare">http://www.docker.com</a>).</p>
-</div>
-<div class="paragraph">
-<p>As described in the <em>Dockerfile</em> comment block, first run the command:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>docker build -t sample/vertx-javascript .</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and once you have the <em>Successfully built &#8230;&#8203;</em> message, run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>docker run -t -i -p 8080:8080 sample/vertx-javascript</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>and once you have seen the <em>Succeeded in deploying verticle</em> message, go to a browser and enter the URL <a href="http://localhost:8080" class="bare">http://localhost:8080</a>. This should display the text <strong>Wild world</strong>.</p>
+<p>The biggest, but also least visible change of this release has been the upgrade of the underling
+appserver to WildFly 10 (CR5), that also features the new AMQ Artemis messaging subsystem.
+On top of that Keycloak has also been upgrade to latest and greatest.</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_creating_an_instrumented_version_of_the_docker_image">Creating an instrumented version of the docker image</h2>
+<h2 id="_agent_installer_screen">Agent installer screen</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>When instrumenting a Java application, whether a standalone Java app, or components running within an application server, we only need to set the <em>JAVA_OPTS</em> environment variable to reference a <strong>javaagent</strong> jar, and define some properties for contacting the BTM server (i.e. URL and username/password).</p>
+<p>We made the agent installer screen generally available with the knowledge that
+we are going to change and move that in the next release. This way you can
+use it and the installer more easily to instrument your WildFly 10 and EAP 7 Beta
+servers.</p>
 </div>
-<div class="paragraph">
-<p>When running an application within a docker image, although it is possible to specify environment variables (such as <em>JAVA_OPTS</em>), it is not possible to reference files (i.e. jars) outside of the image. Therefore to be able to instrument an image, we need to create a separate image based on the one we wish to instrument, with the additional steps required to include the <strong>javaagent</strong> and required properties.</p>
-</div>
-<div class="paragraph">
-<p>To achieve this, create a separate folder from the image being instrumented, and define the following file:</p>
-</div>
-<div class="listingblock">
-<div class="title">Dockerfile</div>
+<div id="img-installer-screen" class="imageblock">
 <div class="content">
-<pre>###
-# vert.x docker example using a JavaScript verticle, instrumented for BTM
-# To build:
-#  docker build -t sample/vertx-javascript-with-btm .
-# To run:
-#  docker run -t -i --net=host sample/vertx-javascript-with-btm
-###
-
-# Extend vert.x javascript sample image
-FROM sample/vertx-javascript
-
-ENV BTM_URI http://localhost:8180/hawkular/btm
-ENV BTM_USERNAME jdoe
-ENV BTM_PASSWORD password
-
-ENV BTM_VERSION=0.6.0.Final
-ENV BTM_AGENT=/libs/hawkular-btm-agent-rest-$BTM_VERSION.jar
-
-ADD https://repository.jboss.org/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=org.hawkular.btm&amp;a=hawkular-btm-agent-rest&amp;v=$BTM_VERSION&amp;e=jar $BTM_AGENT
-
-ENV JAVA_OPTS -javaagent:$BTM_AGENT=boot:$BTM_AGENT -Dhawkular-btm.base-uri=\$BTM_URI -Dhawkular-btm.config.refresh=10 -Dhawkular-btm.username=\$BTM_USERNAME -Dhawkular-btm.password=\$BTM_PASSWORD</pre>
+<img src="/img/blog/2016/1alpha9_installer.png" alt="Installer Screen">
 </div>
-</div>
-<div class="paragraph">
-<p>Most of the dockerfile is defining environment variable defaults, but the most important steps are the final two, adding the Hawkular BTM agent to the image and then defining the <em>JAVA_OPTS</em> variable to reference it (along with the required properties).</p>
-</div>
-<div class="paragraph">
-<p>Next we need to build the new instrumented image:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>docker build -t sample/vertx-javascript-with-btm .</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once this has been successfully built, we need to start up a BTM server. This can be done by downloading the most recent distribution from <a href="https://github.com/hawkular/hawkular-btm/releases" class="bare">https://github.com/hawkular/hawkular-btm/releases</a>, unpacking the distribution and running the following command from the top level folder:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>bin/standalone.sh -Djboss.socket.binding.port-offset=100</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This starts the BTM server on port 8180, so it does not conflict with the port being used by the instrumented application.</p>
-</div>
-<div class="paragraph">
-<p>Final step is to run the instrumented example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>docker run -t -i --net=host sample/vertx-javascript-with-btm</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-Instead of defining port mapping, we have used the <em>--net=host</em> option, to enable the instrumented application to call out to the BTM server running on the host. Also, the default environment variables can be overridden by using the <em>--env</em> option (e.g. <em>--env BTM_URI=http://&#8230;&#8203;&#8230;&#8203;</em>).
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Finally, once the <em>Succeeded in deploying verticle</em> message is displayed, we return to a browser. If we enter a URL <a href="http://localhost:8080/test/app" class="bare">http://localhost:8080/test/app</a> and press return, we should see the same message as before (<strong>Wild world</strong>).</p>
-</div>
-<div class="paragraph">
-<p>If we now go to the BTM console (<a href="http://localhost:8180/hawkular-ui/btm" class="bare">http://localhost:8180/hawkular-ui/btm</a> logging in as <em>jdoe</em> with password <em>password</em>), you should see the entered URL in the <em>Candidates</em> page. This shows that the BTM server has been informed about the business transaction performed on that URI.</p>
+<div class="title">Figure 1. Screen to get an agent installer from</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_summary">Summary</h2>
+<h2 id="_platform_subtab_for_app_servers">Platform subtab for App servers</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>This post has shown how any Java based application, defined as a docker image, can be instrumented by defining a derived image that adds the <strong>javaagent</strong> jar and sets the required properties for communicating with the BTM server.</p>
+<p>When you go to an individual application server you will now see a brand new
+platform tab, that gives you some information about the (virtual) host, the
+server is running on</p>
 </div>
+<div id="img-platform-subtab" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/1alpha9_platform.png" alt="Platform Overview">
 </div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
-            <a href="blog/2015/11/30/hawkular-btm-0-6-0-released.html"><h1>Monitoring Business Transactions in JBoss Ticket Monster App (Part 2)</h1></a>
-            <p>30 November 2015, by Gary Brown</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>I am happy to announce release 0.6.0.Final of the Hawkular Business Transaction Management project.</p>
-</div>
-<div class="paragraph">
-<p>The main focus for this release has been creating a UI to display statistical information about the configured business transactions. A demo can be seen <a href="https://vimeo.com/147347020">here</a>.</p>
+<div class="title">Figure 2. Platform subtab</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_highlights_of_this_release">Highlights of this release</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Statistics page per business transaction configuration showing</p>
-<div class="ulist">
-<ul>
-<li>
-<p>a histogram with min, avg, max details, and transaction/fault counts overlaid as a bar chart</p>
-</li>
-<li>
-<p>fault pie chart</p>
-</li>
-<li>
-<p>property pie chart with combobox to select the property of interest</p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>Selecting pie chart segment, for fault or property value, can add item to filter, focusing the information being displayed</p>
-</li>
-<li>
-<p>Validation capability added to the business transaction configuration UI page. If validation errors are detected in a business transaction configuration, it will be held in a staging area on the server, and is not published out to any active collector agents until fixed.</p>
-</li>
-<li>
-<p>URI candidate list compression - where many URIs are related to a template with path parameter, the parameter will be inferred, and only the template URI shown in the list</p>
-</li>
-<li>
-<p>Processing faults, captured in the collector, will now be associated with the business transaction fragment so that they can be handled with an understanding of the context in which they occurred</p>
-</li>
-<li>
-<p>Where available, the 'principal' will now be recorded against the business transaction (fragment). Servlet instrumentation rules have been updated to store this information on the business transaction, rather than node detail level.</p>
-</li>
-<li>
-<p>SQL prepared statement description now excludes any representation of binary data, to make the description more readable.</p>
-</li>
-<li>
-<p>JAVA_OPT parameters required to configure the collector (java) agent have now been simplified, moving the byteman properties into BTM specific agent</p>
-</li>
-</ul>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-There are some backward incompatible changes to the REST service APIs to hopefully make the APIs simpler and more consistent.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Download the release from <a href="https://github.com/hawkular/hawkular-btm/releases/tag/0.6.0.Final">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>Documentation on how to use Hawkular BTM can be found <a href="http://www.hawkular.org/docs/components/btm/index.html">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>The detailed release notes can be found <a href="https://issues.jboss.org/secure/ReleaseNote.jspa?projectId=12316120&amp;version=12328755">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>Feature requests and bugs should be reported in our project <a href="https://issues.jboss.org/browse/HWKBTM">jira</a>.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
-            <a href="blog/2015/11/19/hawkular-1.0.0.Alpha7-released.html"><h1>Yet another release of Hawkular, the seventh one !</h1></a>
-            <p>19 November 2015, by Thomas Heute</p>
-            <p><div class="sect1">
-<h2 id="_what_is_new">What is new?</h2>
+<h2 id="_tiling_of_datasources">Tiling of Datasources</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Hawkular, the monitoring platform, is happy to announce the release of its seventh milestone 1.0.0.Alpha7.</p>
+<p>The datasources tab has been converted to show a tile view for the individual datasources.
+Clickin on one then leads to the detail view.</p>
 </div>
-<div class="sect2">
-<h3 id="_alert_center">Alert Center</h3>
+<div id="img-ds-tiles" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/1alpha9_ds.png" alt="Datasources">
+</div>
+<div class="title">Figure 3. Datasources view</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_new_transactions_subtab">New Transactions subtab</h2>
+<div class="sectionbody">
 <div class="paragraph">
-<p>More progress on the alert center, with the option to list, search and edit triggers (the rules of the alerts definitions).
-Alerts are also more prominent from the resources themselves.</p>
+<p>Application servers now also show information about transactions</p>
+</div>
+<div id="img-ts-tab" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/1alpha9_tx.png" alt="URL List">
+</div>
+<div class="title">Figure 4. Transactions subtab</div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_ui_modifications">UI modifications</h3>
-<div class="paragraph">
-<p>Small/medium enhancements to the UI.
-Ability to zoom in in a graph for more details.</p>
 </div>
-</div>
-<div class="sect2">
-<h3 id="_release_notes">Release notes</h3>
+<div class="sect1">
+<h2 id="_release_notes">Release notes</h2>
+<div class="sectionbody">
 <div class="paragraph">
 <p>Full list of Jira issues fixed in this release:
-<a href="/releasenotes/1.0.0.Alpha7.html">Release Notes - Hawkular - Version 1.0.0.Alpha7</a></p>
+<a href="/releasenotes/1.0.0.Alpha9.html">Release Notes - Hawkular - Version 1.0.0.Alpha9</a></p>
+</div>
+<div class="sect2">
+<h3 id="_notes_for_windows_users">Notes for Windows users</h3>
+<div class="paragraph">
+<p>To run successfully you must start Hawkular like:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>standalone.bat -Dorg.hawkular.data.dir=&lt;HawkulaInstallDirUsingFORWARDSlashes&gt;/standalone/data</p>
+</div>
+</blockquote>
+</div>
+</div>
 </div>
 </div>
 </div>
@@ -448,19 +262,16 @@ Ability to zoom in in a graph for more details.</p>
 <h2 id="_watch_the_demo_online">Watch the demo online</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The Hawkular console demo also includes a preview of Hawkular BTM (Business Transaction Management)</p>
-</div>
-<div class="paragraph">
 <p>Visit the recording here:</p>
 </div>
 <div class="videoblock">
 <div class="content">
-<iframe width="600" height="400" src="//www.youtube.com/embed/ExUnnEuM2zk?rel=0" frameborder="0" allowfullscreen></iframe>
+<iframe width="600" height="400" src="//www.youtube.com/embed/jod9T7hCOGg?rel=0" frameborder="0" allowfullscreen></iframe>
 </div>
 </div>
 <div class="paragraph">
 <p>We will announce the next milestone demo on our
-<a href="https://plus.google.com/+HawkularOrgProject">Google Plus page</a>.</p>
+<a href="https://plus.google.com/b/100667078659222571663/+HawkularOrgProject">Google Plus page</a>.</p>
 </div>
 </div>
 </div>
@@ -473,10 +284,10 @@ Ability to zoom in in a graph for more details.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha7/hawkular-dist-1.0.0.Alpha7.zip">Hawkular 1.0.0.Alpha7 (zip)</a></p>
+<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha9/hawkular-dist-1.0.0.Alpha9.zip">Hawkular 1.0.0.Alpha9 (zip)</a></p>
 </li>
 <li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha7/hawkular-dist-1.0.0.Alpha7.tar.gz">Hawkular 1.0.0.Alpha7 (tar.gz)</a></p>
+<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha9/hawkular-dist-1.0.0.Alpha9.tar.gz">Hawkular 1.0.0.Alpha9 (tar.gz)</a></p>
 </li>
 </ul>
 </div>
@@ -486,109 +297,196 @@ Ability to zoom in in a graph for more details.</p>
 <h2 id="_what_s_next">What&#8217;s next?</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The next Alpha is planned for December 16th, and we are planning to work on the following:</p>
+<p>The next Alpha is planned for February 17th, and we are planning to work on the following features:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>More stabilization work</p>
+<p>Move Hawkular onto WildFly 10 Final (if available )</p>
 </li>
 <li>
-<p>More work on the organizations / multitenancy</p>
+<p>Improvements in agent installer</p>
 </li>
 <li>
-<p>Support agent download from server for installer purposes</p>
+<p>WF state display ("reload needed") + action to reload</p>
 </li>
 <li>
-<p>Start of an 'overview' page per app server</p>
+<p>Faceted filtering</p>
+</li>
+<li>
+<p>Bug fixing</p>
+</li>
+<li>
+<p>Ruby-client work</p>
+</li>
+<li>
+<p>Perf improvements</p>
+</li>
+<li>
+<p>metrics</p>
+</li>
+<li>
+<p>agent-inventory-sync</p>
 </li>
 </ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_btw">Btw</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There is one easter-egg in the release, it&#8217;s in the demo ;)</p>
 </div>
 </div>
 </div></p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/11/10/hawkular-btm-0-5-0-released.html"><h1>Monitoring Business Transactions in JBoss Ticket Monster App</h1></a>
-            <p>10 November 2015, by Gary Brown</p>
+            <a href="blog/2016/01/20/hawkular-datamining-demo-hwk-alpha9.html"><h1>Hawkular Data Mining - Predictive Charts</h1></a>
+            <p>20 January 2016, by Pavol Loffay</p>
             <p><div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>I am happy to announce release 0.5.0.Final of the Hawkular Business Transaction Management project.</p>
+<p>I would like to present you functionality of Hawkular Data Mining module.</p>
 </div>
 <div class="paragraph">
-<p>The main focus of this release has been the development of a UI for configuring business transactions. This has lead to the introduction of an iterative approach for defining business transactions, as shown in this <a href="https://vimeo.com/145283731">demo monitoring the JBoss Ticket Monster application</a>.</p>
+<p>Hawkular Data Mining module can be deployed in Hawkular and can be used to predict future values of metrics.
+Predicted values are automatically sent to Alerts where conditions are evaluated and an alert can be triggered.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_time_series_models">Time series models</h3>
+<div class="paragraph">
+<p>At the beginning, we <a href="http://www.hawkular.org/blog/2015/10/24/hawkular-datamining.html">started</a> with linear
+regression in Apache Spark. This simple model was a good start. Now we use Holt&#8217;s linear trend method which is
+a variant of exponential smoothing with linear trend. For an alert forecasting it is important to model a trend.
+<a href="https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average">ARIMA</a> models
+were also proposed, however they require stationary time series and periodical recalculation of parameters would
+have to be done. Which requires all historical data in place. For seasonal time series we plan to use Holt Winters
+model which is just an extension of the model which is currently used.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_data_mining_with_hawkular">Data Mining with Hawkular</h3>
+<div class="paragraph">
+<p>Predictions are by default disabled. Enabling can by done by creating Relationship from Tenant to Metric, MetricType
+or Tenant. Relationship to Tenant enables forecasting of all metrics under given Tenant, to MetricType enables all
+metrics of given type. Configuration properties at lower levels override uppers.</p>
 </div>
 <div class="paragraph">
-<p>This demo shows how quickly an application can be monitored, without making any changes to the application, allowing business metrics to be obtained. In this case, the performance id can be captured from all bookings, allowing a pie chart to be displayed showing the percentage of bookings for each performance.</p>
+<p>Configuration has only one property&#8201;&#8212;&#8201;forecasting horizon in seconds. If a new metric data is available
+module predicts future values up to the last timestamp + forecasting horizon. Then, the predicted
+values are sent to Alerts where conditions are evaluated.</p>
+</div>
+<div class="openblock">
+<div class="title">Hawkular with integrated Data Mining:</div><div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>$ git clone -b datamining git@github.com:hawkular/hawkular.git
+$ cd hawkular
+$ mvn clean install -Pdev
+$ dist/target/hawkular-*/bin/standalone.sh</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="openblock">
+<div class="title">Enable prediction for Heap Used Metric, <a href="https://gist.github.com/pavolloffay/5c0a7aea318818f59293">helper functions</a>.</div><div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>$ tenant=$(curl -s GET 'http://jdoe:password@localhost:8080/hawkular/inventory/tenant'| grep --color=never -oP 'path" : "\K/t;[0-9a-z\-]+')
+$ metric=`feed`'/m;MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
+$ curl -ivX POST -H "Content-Type: application/json" 'http://jdoe:password@localhost:8080/hawkular/inventory/tenants/relationships' -d '{
+    "name": "__inPrediction",
+    "source": "'$tenant'",
+    "target": "'$metric'",
+    "properties": {"forecastingHorizon": 150}
+}'</pre>
+</div>
+</div>
+</div>
 </div>
 <div class="paragraph">
-<p>Feel free to try out Hawkular BTM on your own applications and provide feedback on any issues you find, or feature requests that you feel will improve the software.</p>
+<p>Now, we can query predictions for any time in the future. Of course we cannot get reasonable result for predictions
+of further future. Confidence intervals widen as the forecast horizon increases. The rate at which the
+confidence interval widen is a function of the selected model. The prediction API takes the number of steps to the
+future for which it returns the predicted values. One step is equal to the interval at which given metric is collected.
+So the number of steps intuitively corresponds to n future measurements.</p>
+</div>
+<div class="openblock">
+<div class="title">Get five step ahead predictions for Heap Used metric, <a href="https://gist.github.com/pavolloffay/5c0a7aea318818f59293">helper functions</a></div><div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>$ metricId='MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
+$ curl -s GET -H 'Hawkular-Tenant:'`tenantId` 'http://localhost:8080/hawkular/datamining/models/'$metricId'/predict?ahead=5'</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/datamining-heap-used-holt.png" alt="Forecast of Heap Used">
+</div>
+<div class="title">Figure 1. Blue dashed line represents forecast of 'Heap Used' metric using Holt&#8217;s linear trend model.</div>
+</div>
+<div class="paragraph">
+<p>Chart in the Figure 1 can be found in Hawkular UI from branch
+<a href="https://github.com/hawkular/hawkular/tree/datamining">datamining</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_as_standalone">As Standalone</h3>
+<div class="paragraph">
+<p>Hawkular Data Mining can be used also as standalone application. Following snippets of code show how to create a new
+model directly through Data Mining REST API, insert data and get predictions.</p>
+</div>
+<div class="openblock">
+<div class="title">Create model</div><div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>$ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models' -d '{
+   "metricId": "metric1",
+   "collectionInterval": "150"
+  }'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/learn' -d '[
+  {"timestamp": 1, "value": 1},  {"timestamp": 2, "value": 10}, {"timestamp": 3, "value": 20},
+  {"timestamp": 4, "value": 40}, {"timestamp": 5, "value": 50}]
+ ]'</pre>
+</div>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>$ curl -ivX GET -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/predict?ahead=5'</pre>
+</div>
+</div>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_highlights_of_this_release">Highlights of this release</h2>
+<h2 id="_what_s_next">What&#8217;s next?</h2>
 <div class="sectionbody">
 <div class="ulist">
 <ul>
 <li>
-<p>UI for displaying summary details for Business Transactions</p>
+<p>Improve model - estimate smoothing parameters from historical data</p>
 </li>
 <li>
-<p>UI for configuring information about a Business Transaction</p>
+<p>Holt-Winters seasonal version, model AR process with adaptive filter</p>
 </li>
 <li>
-<p>Business Transaction level filtering. Enables transaction information to be 'ignored' (permanently), 'disabled' (temporarily), or 'all'. Other intermediate levels of granularity may be supported in the future, including potentially filtering on a per instance basis.</p>
-</li>
-<li>
-<p>Support for JSON expression evaluation using JSONPath</p>
-</li>
-<li>
-<p>Deriving 'completion time' from Business Transaction instances, and storing independent from response time, in Elasticsearch. Percentile information is derived for the completion time, for use in the business transaction summary display</p>
-</li>
-<li>
-<p>Added instrumentation rules for observe EJB invocations in JBoss EAP and Wildfly servers</p>
-</li>
-<li>
-<p>Added action for REST URI template processing to extract path and query parameters as business transaction properties</p>
-</li>
-<li>
-<p>Implemented refresh mechanism for retrieving updates to business transaction configurations within the collector (client), enabling iterative approach for defining the configuration</p>
+<p>Select the most important metrics and tune models for them</p>
 </li>
 </ul>
-</div>
-<div class="paragraph">
-<p>Download the release from <a href="https://github.com/hawkular/hawkular-btm/releases/tag/0.5.0.Final">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>Documentation on how to use Hawkular BTM can be found <a href="http://www.hawkular.org/docs/components/btm/index.html">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>The detailed release notes can be found <a href="https://issues.jboss.org/secure/ReleaseNote.jspa?projectId=12316120&amp;version=12328438">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>Feature requests and bugs should be reported in our project <a href="https://issues.jboss.org/browse/HWKBTM">jira</a>.</p>
 </div>
 </div>
 </div></p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2015/10/30/hawkular-metrics-0.8.0.Final-released.html"><h1>Hawkular Metrics 0.9.0 - Release</h1></a>
-            <p>30 October 2015, by Stefan Negrea</p>
+            <a href="blog/2016/01/12/hawkular-metrics-0.11.0.Final-released.html"><h1>Hawkular Metrics 0.11.0 - Release</h1></a>
+            <p>12 January 2016, by Stefan Negrea</p>
             <p><div id="preamble">
 <div class="sectionbody">
 <div class="paragraph">
-<p>I am happy to announce release 0.9.0 of Hawkular Metrics. This is a regular schedule release anchored by integration enhancements for <a href="http://www.hawkular.org/">Hawkular</a> <a href="https://github.com/hawkular/hawkular">project</a> via <a href="https://github.com/hawkular/hawkular-bus">Hawkular Bus</a>.</p>
+<p>I am happy to announce release 0.11.0 of Hawkular Metrics. This is a large release anchored by query API enhancements, large under-the-cover refactoring of the metric models, and support for deploying the project on Wildfly 10.</p>
 </div>
 </div>
 </div>
@@ -598,34 +496,105 @@ Ability to zoom in in a graph for more details.</p>
 <div class="olist arabic">
 <ol class="arabic">
 <li>
-<p><strong><a href="http://www.hawkular.org/">Hawkular</a> integration</strong></p>
+<p><strong>Query API Updates</strong></p>
 <div class="ulist">
 <ul>
 <li>
-<p>When deployed within Hawkular, the project now publishes metrics insertion events on the <a href="https://github.com/hawkular/hawkular-bus">Hawkular Bus</a> for consumption by interested parties (<a href="https://issues.jboss.org/browse/HWKMETRICS-83">HWKMETRICS-83</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-10">HWKMETRICS-10</a>)</p>
+<p>Limit and Sort Order for raw data queries (<a href="https://issues.jboss.org/browse/HWKMETRICS-334">HWKMETRICS-334</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-62">HWKMETRICS-62</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-51">HWKMETRICS-51</a>)</p>
+<div class="ulist">
+<ul>
+<li>
+<p><code>limit</code> and <code>order</code> parameters are now available for raw data queries on all metric types</p>
 </li>
 <li>
-<p>Added support for publishing large amounts of events (<a href="https://issues.jboss.org/browse/HWKMETRICS-315">HWKMETRICS-315</a>)</p>
+<p><code>limit</code> - integer representing the maximum number of raw data points to be returned</p>
+</li>
+<li>
+<p><code>order</code> - either <code>ASC</code> or <code>DESC</code> based on the timestamp of the data point</p>
+</li>
+<li>
+<p>if both are specified than limit is applied from the start of the sorted list</p>
+</li>
+<li>
+<p>for defaults and additional details please visit - <a href="https://github.com/hawkular/hawkular-metrics/blob/release/0.11.0/api/metrics-api-jaxrs/src/main/rest-doc/base.adoc">Hawkular Metrics - Rest Documentation</a></p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p><strong>Improved tag query</strong></p>
+<p>Ability to query all metric raw or aggregate metric data (<a href="https://issues.jboss.org/browse/HWKMETRICS-331">HWKMETRICS-331</a>)</p>
 <div class="ulist">
 <ul>
 <li>
-<p>It is now possible to query metrics by tag via respective metric type end-points: <code>/gauges</code>, <code>/counters</code>,  <code>/availability</code> (<a href="https://issues.jboss.org/browse/HWKMETRICS-317">HWKMETRICS-317</a>)</p>
+<p><code>fromEarliest</code> query parameter was added to allow querying for all available data for a metric</p>
+</li>
+<li>
+<p>this allows querying all data without specifying start and end</p>
+</li>
+<li>
+<p>data retention for the metric is taken account, so the max time span is from <code>now</code> to <code>now - data retention</code></p>
 </li>
 </ul>
 </div>
 </li>
 <li>
-<p><strong>InfluxDB compatibility</strong></p>
+<p>Fixed the url for querying rate data across multiple metrics (<a href="https://issues.jboss.org/browse/HWKMETRICS-332">HWKMETRICS-332</a>)</p>
+</li>
+<li>
+<p>Filtering metrics by id (<a href="https://issues.jboss.org/browse/HWKMETRICS-234">HWKMETRICS-234</a>)</p>
 <div class="ulist">
 <ul>
 <li>
-<p>Added millisecond unit support (<a href="https://issues.jboss.org/browse/HWKMETRICS-322">HWKMETRICS-322</a>)</p>
+<p>with tag filtering enabled, it is now possible add id filtering via <code>id</code> parameter</p>
+</li>
+<li>
+<p><code>id</code> parameter supports regex</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Internal Updates</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Model refactoring  (<a href="https://issues.jboss.org/browse/HWKMETRICS-326">HWKMETRICS-326</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-323">HWKMETRICS-323</a>)</p>
+<div class="ulist">
+<ul>
+<li>
+<p>this was a large effort to consolidate the internal domain model without changing any of the user APIs</p>
+</li>
+<li>
+<p>this change will help the documentation efforts for future releases as well as a consistent data structure for the REST APIs</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Hawkular Integration</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>The integration with Hawkular has now been updated to use asynchronous messages (<a href="https://issues.jboss.org/browse/HWKMETRICS-337">HWKMETRICS-337</a>)</p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><strong>Wildfly 10 - Deploying &amp; Running</strong></p>
+<div class="ulist">
+<ul>
+<li>
+<p>Deploying and running the project on Wildfly 10  is now fully supported</p>
+</li>
+<li>
+<p><strong>Support for Wildfly 9 is deprecated and will be completely dropped in the next release</strong></p>
 </li>
 </ul>
 </div>
@@ -644,7 +613,7 @@ Ability to zoom in in a graph for more details.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.9.0" class="bare">https://github.com/hawkular/hawkular-metrics/releases/tag/0.9.0</a></p>
+<p><a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.11.0" class="bare">https://github.com/hawkular/hawkular-metrics/releases/tag/0.11.0</a></p>
 </li>
 </ul>
 </div>
@@ -664,7 +633,7 @@ Ability to zoom in in a graph for more details.</p>
 <div class="ulist">
 <ul>
 <li>
-<p><a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328458" class="bare">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328458</a></p>
+<p><a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328918" class="bare">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12328918</a></p>
 </li>
 </ul>
 </div>
@@ -705,12 +674,312 @@ Ability to zoom in in a graph for more details.</p>
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2016/01/05/we-are-hiring.html"><h1>We are hiring !</h1></a>
+            <p>05 January 2016, by Thomas Heute</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Red Hat is hiring a Java sustaining engineer</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_jboss_operations_network_jon_rhq_and_hawkular">JBoss Operations Network (JON), RHQ and Hawkular</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="https://www.redhat.com/en/technologies/jboss-middleware/operations-network">JBoss Operations Network</a> is the product that is fully supported by Red Hat, it is currently based on the <a href="rhq-project.org">RHQ project</a>. The RHQ project is still being maintained and enhanced while developing <a href="http://www.hawkular.org">Hawkular</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_who_are_we_looking_for">Who are we looking for ?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We are looking for a talented Java developer, preferably with Java EE experience willing to help us on RHQ/JBoss Operations Network. You will join the sustaining engineering team and when time allows help on Hawkular as well.</p>
+</div>
+<div class="paragraph">
+<p>You need to be in a country where <a href="https://www.redhat.com/en/about/office-locations">Red Hat has a legal entity</a> but preferably Czech Republic, Poland, India, Mexico&#8230;&#8203;</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_do_we_offer">What do we offer ?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We offer a great place to work, Red Hat is listed as one of the <a href="https://www.glassdoor.com/Best-Places-to-Work-LST_KQ0,19.htm">best place to work</a>.</p>
+</div>
+<div class="paragraph">
+<p>Sustaining engineers get to learn a lot and fast, you will be challenged on many areas of the project, from Cassandra storage to Google Web Toolkit with the help of very talented engineers who will help you grow as a developer. We&#8217;ll spread the work with the rest of the team depending on what you enjoy doing, what you want to do/learn and things that must be done.</p>
+</div>
+<div class="paragraph">
+<p>You will be able to work remotely from home, partially or fully.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_apply">How to apply ?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Please <a href="http://jobs.redhat.com/jobs/descriptions/middleware-software-engineer-management-and-monitoring-brno-jihomoravsky-kraj-czech-republic-job-1-5929970">apply here</a>, you can also contact me directly via direct message <a href="https://twitter.com/theute">through Twitter</a> or find me (theute) on IRC Freenode servers.</p>
+</div>
+<div class="paragraph">
+<p>Best thing you can do is also to create Pull Requests on either of <a href="https://github.com/hawkular/hawkular">Hawkular</a> or <a href="https://github.com/rhq-project/rhq">RHQ</a> project, this would beat any other reference, if you are looking for ideas, feel free to join #hawkular or #rhq on the IRC Freenode servers.</p>
+</div>
+<div class="paragraph">
+<p>I&#8217;m looking forward to grow the team and deliver more, faster, better, happier, stronger together.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
+            <a href="blog/2015/12/16/hawkular-1.0.0.Alpha8-released.html"><h1>The eigth milestone of Hawkular released</h1></a>
+            <p>16 December 2015, by Heiko W.Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular, the monitoring platform, is happy to announce milestone release 1.0.0.Alpha8.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_dealing_with_keycloak">Dealing with Keycloak</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular uses Keycloak
+<a href="http://keycloak.jboss.org">Keycloak</a>
+as its Single Sign On and Identity Management System.</p>
+</div>
+<div class="paragraph">
+<p>In the downloads, Keycloak is/as always running embedded and expected the Hawkular
+server to run on localhost - if what was not the case the user had to edit two
+files before being able to bind the server on a different (public) IP or even use
+an external Keycloak server.</p>
+</div>
+<div class="paragraph">
+<p>With Hawkular 1.0.0.Alpha 8 it is now possible to pass a command line option on
+startup to point to the Keycloak server:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="literalblock">
+<div class="content">
+<pre>bin/standalone.sh -Dkeycloak.server.url=http://&lt;kc-server&gt;:&lt;kc-port&gt;/auth</pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tokens">Tokens</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>So far when doing REST calls from your client, via <code>curl</code> or also when using the
+ agent, it was required to pass username and password, which was not optimal.</p>
+</div>
+<div class="paragraph">
+<p>We now started supporting the use of token + secret. For this purpose there is a
+new UI part in the user menu</p>
+</div>
+<div id="img-token-screen" class="imageblock">
+<div class="content">
+<img src="/img/blog/2015/a8_token_screen.png" alt="Token Screen">
+</div>
+<div class="title">Figure 1. Screen to create and list tokens</div>
+</div>
+<div class="paragraph">
+<p>When you have such a token, you will be then able to access URLs via</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>curl -H 'Accept: application/json' -i -u b3063b1f-640b-4853-81df-47257c01e63e:94edc711ef80c592cb417bfffd9bc496 <a href="http://snert:8080/hawkular/accounts/personas/current" class="bare">http://snert:8080/hawkular/accounts/personas/current</a></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>instead of</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>curl -H 'Accept: application/json' -i -u jdoe:password <a href="http://snert:8080/hawkular/accounts/personas/current" class="bare">http://snert:8080/hawkular/accounts/personas/current</a></p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Please note that this does not yet work for all subsystems.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_server_overview_page">Server Overview page</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When you go to an indivdual application server you will now see a brand new
+overview page</p>
+</div>
+<div id="img-server-overview" class="imageblock">
+<div class="content">
+<img src="/img/blog/2015/a8_server_overview.png" alt="Server Overview">
+</div>
+<div class="title">Figure 2. Server overview</div>
+</div>
+<div class="paragraph">
+<p>This page is now also the default when you select an application server from the list.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_url_list">URL List</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The URL list page has been revamped to show individual servers in small tiles that
+include the state and also a sparkline diagram of the response time.</p>
+</div>
+<div id="img-server-overview" class="imageblock">
+<div class="content">
+<img src="/img/blog/2015/a8_url_list.png" alt="URL List">
+</div>
+<div class="title">Figure 3. Server overview</div>
+</div>
+<div class="paragraph">
+<p>As you can see, it is now possible to filter the tiles shown by name
+and also state.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_release_notes">Release notes</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Full list of Jira issues fixed in this release:
+<a href="/releasenotes/1.0.0.Alpha8.html">Release Notes - Hawkular - Version 1.0.0.Alpha8</a></p>
+</div>
+<div class="sect2">
+<h3 id="_notes_for_windows_users">Notes for Windows users</h3>
+<div class="paragraph">
+<p>Windows:
+To be able to perform deployments on Windows the user must hand-edit <code>standalone.xml</code> and replace:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>blobTransferPolicy.uploadUrl=file:${org.hawkular.data.dir:${jboss.server.data.dir}}</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>with</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="paragraph">
+<p>blobTransferPolicy.uploadUrl=file:///${org.hawkular.data.dir:${jboss.server.data.dir}}</p>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>To run successfully you must start hawkular like:</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="quoteblock">
+<blockquote>
+<div class="paragraph">
+<p>standalone.bat -Dorg.hawkular.data.dir=&lt;HawkulaInstallDirUsingFORWARDSlashes&gt;/standalone/data</p>
+</div>
+</blockquote>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_watch_the_demo_online">Watch the demo online</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Visit the recording here:</p>
+</div>
+<div class="videoblock">
+<div class="content">
+<iframe width="600" height="400" src="//www.youtube.com/embed/2a5HAnt7Dik?rel=0" frameborder="0" allowfullscreen></iframe>
+</div>
+</div>
+<div class="paragraph">
+<p>We will announce the next milestone demo on our
+<a href="https://plus.google.com/b/100667078659222571663/+HawkularOrgProject">Google Plus page</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_downloads">Downloads</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You can download the release here:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha8/hawkular-dist-1.0.0.Alpha8.zip">Hawkular 1.0.0.Alpha8 (zip)</a></p>
+</li>
+<li>
+<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha8/hawkular-dist-1.0.0.Alpha8.tar.gz">Hawkular 1.0.0.Alpha8 (tar.gz)</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Agent-installer:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://download.jboss.org/hawkular/wildfly-monitor/0.11.1.Final/hawkular-wildfly-monitor-installer-0.11.2.Final-standalone.jar">Agent installer 0.11.2 (zip)</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_s_next">What&#8217;s next?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The next Alpha is planned for January 20th, and we are planning to work on the following features:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Stabilization work</p>
+</li>
+<li>
+<p>More work on labels</p>
+</li>
+<li>
+<p>Allow to use tokens all over the place</p>
+</li>
+<li>
+<p>Move Hawkular onto WildFly 10 (if available )</p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>01 December 2015 - <a href="blog/2015/12/01/hawkular-btm-instrument-docker-image.html">BTM: Instrumenting an application running from a docker image</a></li>
+          <li>30 November 2015 - <a href="blog/2015/11/30/hawkular-btm-0-6-0-released.html">Monitoring Business Transactions in JBoss Ticket Monster App (Part 2)</a></li>
+          <li>19 November 2015 - <a href="blog/2015/11/19/hawkular-1.0.0.Alpha7-released.html">Yet another release of Hawkular, the seventh one !</a></li>
+          <li>10 November 2015 - <a href="blog/2015/11/10/hawkular-btm-0-5-0-released.html">Monitoring Business Transactions in JBoss Ticket Monster App</a></li>
+          <li>30 October 2015 - <a href="blog/2015/10/30/hawkular-metrics-0.8.0.Final-released.html">Hawkular Metrics 0.9.0 - Release</a></li>
           <li>30 October 2015 - <a href="blog/2015/11/30/hawkular-metrics-0.10.0.Final-released.html">Hawkular Metrics 0.10.0 - Release</a></li>
           <li>24 October 2015 - <a href="blog/2015/10/24/hawkular-datamining.html">Introduction to Hawkular Data Mining Module</a></li>
           <li>21 October 2015 - <a href="blog/2015/10/21/hawkular-1.0.0.Alpha6-released.html">The sixth milestone of Hawkular released</a></li>

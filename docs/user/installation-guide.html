@@ -252,7 +252,7 @@ is able to connect to one node, it will discover all of the other cluster nodes.
 <h3 id="_introduction">Introduction</h3>
 <div class="paragraph">
 <p>Hawkular ships with a ready to use instance of Keycloak. In some situations, however, it is desirable to split Hawkular
-from Keycloak. This document outlines this process. This document is valid from Hawkular 1.0.0.Alpha3 and later.</p>
+from Keycloak. This document outlines this process.</p>
 </div>
 </div>
 <div class="sect2">
@@ -303,15 +303,11 @@ cp -r $HAWKULAR_HOME/modules/org/hawkular/keycloak modules/org/hawkular/</code><
 <pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
     "providers": [
         "classpath:${jboss.server.config.dir}/providers/*",
-        "module:org.hawkular.keycloak.events.rest",
-        "module:org.hawkular.keycloak.events.jms"
+        "module:org.hawkular.keycloak.events.rest"
     ],
 
     "eventsListener": {
         "hawkular-rest": {
-            "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
-        },
-        "hawkular-jms": {
             "excludes": [ "REFRESH_TOKEN", "CODE_TO_TOKEN", "LOGIN" ]
         }
     },
@@ -524,33 +520,17 @@ Make sure to remove the <strong>server</strong> subsystem, and not the <strong>a
 </div>
 </div>
 <div class="paragraph">
-<p>Now, tell the Keycloak Wildfly Adapter what is the URL for the Keycloak Server:</p>
-</div>
-<div class="paragraph">
-<p><code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code>:</p>
+<p>Change the property "keycloak.server.url" from <code>$HAWKULAR_HOME/standalone/configuration/standalone.xml</code> to point to
+the external Keycloak server URL:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;realm name="hawkular"&gt;
-    &lt;auth-server-url&gt;http://localhost:8180/auth&lt;/auth-server-url&gt;
-    &lt;ssl-required&gt;none&lt;/ssl-required&gt;
-&lt;/realm&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;property name="keycloak.server.url" value="http://localhost:8180/auth"/&gt;</code></pre>
 </div>
 </div>
 <div class="paragraph">
-<p>And the same thing for the Keycloak JavaScript Adapter.
-<code>$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-  "realm": "hawkular",
-  "auth-server-url": "http://localhost:8180/auth",
-  "ssl-required": "none",
-  "resource": "hawkular-ui",
-  "public-client": true
-}</code></pre>
-</div>
+<p>If you prefer to not change the <code>standalone.xml</code>, the system property "keycloak.server.url" can also be passed via
+the command line: <code>-Dkeycloak.server.url=http://localhost:8180/auth</code></p>
 </div>
 <div class="paragraph">
 <p>And finally, remove the JBoss modules for the listeners and Keycloak UI theme:</p>
@@ -568,7 +548,7 @@ Make sure to remove the <strong>server</strong> subsystem, and not the <strong>a
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$HAWKULAR_HOME/bin/standalone.sh</code></pre>
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$HAWKULAR_HOME/bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth</code></pre>
 </div>
 </div>
 <div class="paragraph">
