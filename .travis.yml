@@ -19,19 +19,21 @@ notifications:
 env:
   global:
     # token used for pushing the built website back to github
-    secure: "ffozNmbm6jDaqpfw70q6Es2JsXCyCnsLsGq3ER49tTPFGSnw1o1CEBKSjHXBYFOCfWXReFAlwGJzVVURRAlYs5yNL4//a/KosM1vhiJx269MwjuVK9v9zElQyeC7arvjQb3AT0GpEzhSQYQ0Rlg2+fb1MjHGXdUnIO8OiNH1jc8="
+    secure: "W1suzJbMFuHw964/f5TPzCtzaUMcj7OuUQK2MdauyVCqRZAT5nWiUDFwB1uVrP/t3RTelANDNysMVf9U/SKRpB/1gyhkQvH5ECgog7SPhNssuE8aMpopzRcG7EwarNsItu9fxapOB/YYTHEgi7j1TNIfcuEJAdUvsSXxaPa45ZA="
 
 before_install:
   # download all the swagger adoc files
   - bash -x ./.travis.swagger.sh
 
-script:
+install:
   - cat ./src/main/jbake/jbake.properties
   # bake the pages
   - mvn install -B
 
-after_success:
+script:
   # push to master
   - test "${TRAVIS_BRANCH}" = "pages" && test "${TRAVIS_PULL_REQUEST}" = "false" && mvn -s .travis.settings.xml site
+
+after_success:
   # deploy the PR
   - test "${TRAVIS_BRANCH}" = "pages" && [[ "$TRAVIS_PULL_REQUEST" != "false" ]] && bash -x ./pr-auto-deploy/client.sh "${TRAVIS_PULL_REQUEST}" "${DEPLOY_PR_HOST}"
