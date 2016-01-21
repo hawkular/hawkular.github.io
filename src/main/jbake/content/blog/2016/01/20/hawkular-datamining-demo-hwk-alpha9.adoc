@@ -1,0 +1,96 @@
+= Hawkular Data Mining - Predictive Charts
+Pavol Loffay
+2016-1-20
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, data mining
+
+I would like to present you functionality of Hawkular Data Mining module.
+
+Hawkular Data Mining module can be deployed in Hawkular and can be used to predict future values of metrics.
+Predicted values are automatically sent to Alerts where conditions are evaluated and an alert can be triggered.
+
+=== Time series models
+At the beginning, we link:http://www.hawkular.org/blog/2015/10/24/hawkular-datamining.html[started] with linear
+regression in Apache Spark. This simple model was a good start. Now we use Holt's linear trend method which is
+a variant of exponential smoothing with linear trend. For an alert forecasting it is important to model a trend.
+link:https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average[ARIMA] models
+were also proposed, however they require stationary time series and periodical recalculation of parameters would
+have to be done. Which requires all historical data in place. For seasonal time series we plan to use Holt Winters
+model which is just an extension of the model which is currently used.
+
+=== Data Mining with Hawkular
+Predictions are by default disabled. Enabling can by done by creating Relationship from Tenant to Metric, MetricType
+or Tenant. Relationship to Tenant enables forecasting of all metrics under given Tenant, to MetricType enables all
+metrics of given type. Configuration properties at lower levels override uppers.
+
+Configuration has only one property -- forecasting horizon in seconds. If a new metric data is available
+module predicts future values up to the last timestamp + forecasting horizon. Then, the predicted
+values are sent to Alerts where conditions are evaluated.
+
+.Hawkular with integrated Data Mining:
+--
+ $ git clone -b datamining git@github.com:hawkular/hawkular.git
+ $ cd hawkular
+ $ mvn clean install -Pdev
+ $ dist/target/hawkular-*/bin/standalone.sh
+--
+
+.Enable prediction for Heap Used Metric, link:https://gist.github.com/pavolloffay/5c0a7aea318818f59293[helper functions].
+--
+ $ tenant=$(curl -s GET 'http://jdoe:password@localhost:8080/hawkular/inventory/tenant'| grep --color=never -oP 'path" : "\K/t;[0-9a-z\-]+')
+ $ metric=`feed`'/m;MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
+ $ curl -ivX POST -H "Content-Type: application/json" 'http://jdoe:password@localhost:8080/hawkular/inventory/tenants/relationships' -d '{
+     "name": "__inPrediction",
+     "source": "'$tenant'",
+     "target": "'$metric'",
+     "properties": {"forecastingHorizon": 150}
+ }'
+--
+
+Now, we can query predictions for any time in the future. Of course we cannot get reasonable result for predictions
+of further future. Confidence intervals widen as the forecast horizon increases. The rate at which the
+confidence interval widen is a function of the selected model. The prediction API takes the number of steps to the
+future for which it returns the predicted values. One step is equal to the interval at which given metric is collected.
+So the number of steps intuitively corresponds to n future measurements.
+
+.Get five step ahead predictions for Heap Used metric, link:https://gist.github.com/pavolloffay/5c0a7aea318818f59293[helper functions]
+--
+ $ metricId='MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
+ $ curl -s GET -H 'Hawkular-Tenant:'`tenantId` 'http://localhost:8080/hawkular/datamining/models/'$metricId'/predict?ahead=5'
+--
+
+.Blue dashed line represents forecast of 'Heap Used' metric using Holt's linear trend model.
+ifndef::env-github[]
+image::/img/blog/2016/datamining-heap-used-holt.png[Forecast of Heap Used]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2016/datamining-heap-used-holt.png[Forecast of Heap Used]
+endif::[]
+
+Chart in the Figure 1 can be found in Hawkular UI from branch
+link:https://github.com/hawkular/hawkular/tree/datamining[datamining].
+
+=== As Standalone
+Hawkular Data Mining can be used also as standalone application. Following snippets of code show how to create a new
+model directly through Data Mining REST API, insert data and get predictions.
+
+.Create model
+--
+ $ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models' -d '{
+    "metricId": "metric1",
+    "collectionInterval": "150"
+   }'
+
+ $ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/learn' -d '[
+   {"timestamp": 1, "value": 1},  {"timestamp": 2, "value": 10}, {"timestamp": 3, "value": 20},
+   {"timestamp": 4, "value": 40}, {"timestamp": 5, "value": 50}]
+  ]'
+
+ $ curl -ivX GET -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/predict?ahead=5'
+--
+
+== What's next?
+ * Improve model - estimate smoothing parameters from historical data
+ * Holt-Winters seasonal version, model AR process with adaptive filter
+ * Select the most important metrics and tune models for them
