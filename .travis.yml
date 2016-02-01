@@ -16,6 +16,9 @@ notifications:
     on_success: change
     on_failure: change
 
+git:
+  depth: 1
+
 env:
   global:
     # token used for pushing the built website back to github
@@ -33,8 +36,16 @@ install:
 
 script:
   # push to master
-  - test "${TRAVIS_BRANCH}" = "pages" && test "${TRAVIS_PULL_REQUEST}" = "false" && echo -e "\npushing to master...\n" && mvn -X -s .travis.settings.xml site
+  - if [[ "${TRAVIS_BRANCH}" = "pages" ]] && [[ "${TRAVIS_PULL_REQUEST}" = "false" ]];
+    then
+      echo -e "\npushing to master...\n"
+      mvn -X -s .travis.settings.xml site
+    fi
 
 after_success:
   # deploy the PR
-  - test "${TRAVIS_BRANCH}" = "pages" && [[ "$TRAVIS_PULL_REQUEST" != "false" ]] && echo -e "\ndeploying the PR...\n" && bash -x ./pr-auto-deploy/client.sh "${TRAVIS_PULL_REQUEST}" "${DEPLOY_PR_HOST}"
+  - if [[ "${TRAVIS_BRANCH}" = "pages" ]] && [[ "$TRAVIS_PULL_REQUEST" != "false" ]];
+    then
+      echo -e "\ndeploying the PR...\n"
+      bash -x ./pr-auto-deploy/client.sh "${TRAVIS_PULL_REQUEST}" "${DEPLOY_PR_HOST}"
+    fi
