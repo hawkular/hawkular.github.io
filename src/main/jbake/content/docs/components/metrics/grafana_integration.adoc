@@ -14,7 +14,7 @@ toc::[]
 This guide will help you to configure http://grafana.org[Grafana] so that you can build awesome dashboards with
 the data stored in Hawkular Metrics.
 
-NOTE: We assume you've already installed and started a Hawkular Metrics server.
+NOTE: We assume you've already installed and started a Hawkular server or a standalone Metrics server.
 
 == Installing Grafana
 
@@ -48,7 +48,7 @@ endif::[]
 
 Fill-in the datasource creation form.
 
-[cols="1,8", options="header"]
+[cols="1,8a", options="header"]
 |===
 |Name
 |Description
@@ -68,15 +68,41 @@ Change the scheme, host and port as needed.
 
 |Access
 |Set to `direct` if the Hawkular Metrics server is not reachable from the Grafana backend.
+The `direct` access implies Grafana host is a CORS allowed origin on the server side. CORS can be configured via:
+
+* properties on a standalone Metrics server
+* Keycloak if you work with a Hawkular server
 
 |Database
 |The tenant name.
 
+On standalone Metrics servers, this is totally free.
+
+On Hawkular servers, this must be the _Persona_ id of the user, or of one of the organizations he belongs to.
+
+A user can get his _Persona_ id by sending an HTTP requests to Accounts:
+
+[source,shell]
+----
+curl --basic -u user:password http://localhost:8080/hawkular/accounts/personas/current
+----
+
+And the list of possible personas:
+
+[source,shell]
+----
+curl --basic -u user:password http://localhost:8080/hawkular/accounts/personas
+----
+
 |User
-|Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.
+|The Hawkular user name.
+
+Standalone Metrics does not support authentication yet, fill the field with random data to pass form validation.
 
 |Password
-|Hawkular Metrics does not support authentication yet. Fill the field with random data to pass form validation.
+|The Hawkular user password.
+
+Standalone Metrics does not support authentication yet, fill the field with random data to pass form validation.
 |===
 
 [[img-data-source-details]]
