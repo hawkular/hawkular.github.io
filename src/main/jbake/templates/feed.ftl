@@ -4,7 +4,7 @@
     <title>Hawkular Blog</title>
     <link>${config.site_host}</link>
     <atom:link href="${config.site_host}/${config.feed_file}" rel="self" type="application/rss+xml" />
-    <description>Blog posts about Hawkular - the open source monitoring and management platform</description>
+    <description>Blog posts about Hawkular</description>
     <language>en-us</language>
     <pubDate>${published_date?string("EEE, d MMM yyyy HH:mm:ss Z")}</pubDate>
     <lastBuildDate>${published_date?string("EEE, d MMM yyyy HH:mm:ss Z")}</lastBuildDate>
