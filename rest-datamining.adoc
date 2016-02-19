@@ -1,0 +1,358 @@
+
+== Overview
+
+=== Media Type
+
+The API uses *JSON* to communicate with clients.
+
+You _should_ add the following accept header to your requests:
+
+----
+Accept: application/json
+----
+
+When you send JSON data with a `POST` or `PUT` request, you _must_ add the following content type header:
+
+----
+Content-Type: application/json
+----
+
+=== Tenant Header
+
+Hawkular Metrics is a multi-tenant time-series data store. Your requests to tenant-dependent resources must include
+a tenant header:
+
+----
+Hawkular-Tenant: my-tenant
+----
+
+=== Timestamps
+
+The API understands all timestamps as milliseconds since January 1, 1970, 00:00:00 UTC.
+
+
+
+== Base Path
+`/hawkular/datamining/`
+
+== REST APIs
+
+
+=== Info
+. link:#++GET__++[Returns complete list of REST endpoints.]
+
+
+==============================================
+
+[[GET__]]
+*Endpoint GET `/`*
+
+NOTE: *Returns complete list of REST endpoints.* +
+
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+=== Models
+. link:#++GET__models++[Get all models for given tenant.]
+. link:#++POST__models++[Enable prediction for given metric.]
+. link:#++DELETE__models__id_++[Deletes model for given metric.]
+. link:#++GET__models__metricId_++[Get model for given metric.]
+. link:#++POST__models__metricId__learn++[Learn model based on inserted values.]
+. link:#++GET__models__metricId__predict++[Predict future values of given metric.]
+
+
+==============================================
+
+[[GET__models]]
+*Endpoint GET `/models`*
+
+NOTE: *Get all models for given tenant.* +
+
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success|-
+|404|Model for given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__models]]
+*Endpoint POST `/models`*
+
+NOTE: *Enable prediction for given metric.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<RestBlueprint>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Success, Prediction successfully enabled|-
+|400|Missing or invalid payload|<<ApiError>>
+|409|Model for given metric already enabled|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__models__id_]]
+*Endpoint DELETE `/models/{id}`*
+
+NOTE: *Deletes model for given metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|204|Success, Model successfully disabled|-
+|400|Missing or invalid payload|<<ApiError>>
+|404|Model for given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__models__metricId_]]
+*Endpoint GET `/models/{metricId}`*
+
+NOTE: *Get model for given metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success|-
+|404|Model for given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__models__metricId__learn]]
+*Endpoint POST `/models/{metricId}/learn`*
+
+NOTE: *Learn model based on inserted values.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Success, Learning successfully processed|-
+|400|Missing or invalid payload|<<ApiError>>
+|404|Prediction of given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__models__metricId__predict]]
+*Endpoint GET `/models/{metricId}/predict`*
+
+NOTE: *Predict future values of given metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|ahead|No|-|integer|int32|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Predictions returned|-
+|404|Prediction of given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+== Data Types
+
+
+
+[[ApiError]]
+=== ApiError
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|errorMsg|No|-|string|-|-
+
+|=======================
+
+
+[[RestBlueprint]]
+=== RestBlueprint
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|collectionInterval|No|-|integer|int64|-
+|metricId|No|-|string|-|-
+
+|=======================
+
