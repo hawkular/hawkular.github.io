@@ -41,6 +41,9 @@
                       <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-btm.html">Business Transaction Management</a>
                       </li>
+                        <li class="menu-item ">
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-datamining.html">Data Mining</a>
+                        </li>
                       <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-inventory.html">Inventory</a>
                       </li>
