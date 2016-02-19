@@ -87,6 +87,7 @@ downloadAndProcess() {
   # travis has sometimes issue with the call above, so make sure it's not empty
   [[ "x" == "x$FILES" ]] && FILES="https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-btm.adoc \
+https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-datamining.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-inventory.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-metrics.adoc"
 
