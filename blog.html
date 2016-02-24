@@ -154,6 +154,87 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/02/22/hawkular-manage-iq.html"><h1>Integration with ManageIQ</h1></a>
+            <p>23 February 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>When we started Hawkular some time ago, we did it under the slogan of
+<em>"The Open Source Monitoring and Management Platform"</em>. And since then
+we have achieved a lot and built components like our metrics store,
+a powerful graph-oriented inventory or awesome alerting functionality.
+And on top of all that a very nice and snappy Web 2.0 UI.<br>
+<br>
+It also became clear during development that users not only want excellent Middleware
+management, which is the focus of Hawkular, but also need to know if
+for example slowness of the application is coming from other components
+of the stack way below the application server. Which is why we are
+<strong>partnering with the ManageIQ project</strong>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_collaborating_with_manageiq">Collaborating with ManageIQ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p><a href="http://www.manageIQ.org">ManageIQ</a> provides a huge amount of functionality
+to manage and monitor virtual machines and containers on VMWare, EC2,
+OpenStack, OpenShift, Azure, Rhevm and many more, which nicely complements
+the application-centric view of Hawkular.</p>
+</div>
+<div class="paragraph">
+<p>ManageIQ has all the knowledge
+about the OS and infrastructure the Middleware servers are running on,
+where Hawkular only provides some basic information. ManageIQ can be
+used to provision new VMs and containers with Middleware in them, which
+can then be monitored and managed by Hawkular.</p>
+</div>
+<div class="paragraph">
+<p>ManageIQ itself operates as <em>manager of managers</em>, where it does
+not directly talk to a WildFly server, a VM or a container,
+but rather tells Hawkular, oVirt or Kubernetes to act on its behalf.
+ManageIQ then displays the results of these actions in its UI.</p>
+</div>
+<div class="paragraph">
+<p>The Hawkular team will, together with the ManageIQ team, build a
+so called <em>provider integration</em> in ManageIQ. This integration
+lives inside the ManageIQ code base and talks to Hawkular over the
+Hawkular-Ruby-Client gem. This integration brings to
+ManageIQ the infrastructure needed to talk to the Hawkular server
+as manager and thus the connected Middleware servers. This work
+includes work on the ManageIQ UI to show the managed Middleware.</p>
+</div>
+<div id="img-platform-subtab" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawk_miq_arch.png" alt="Hawkular and ManageIQ">
+</div>
+<div class="title">Figure 1. Platform subtab</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_first_results_of_the_new_collaboration">First results of the new collaboration</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>An initial outcome of this work can already be seen in the
+Hawkular-client Ruby gem, that is used by the provider to talk to
+the Hawkular server.</p>
+</div>
+<div class="paragraph">
+<p>Another big milestone is the initial version of the
+Hawkular-Provider-integration inside ManageIQ master.</p>
+</div>
+<div id="img-platform-subtab" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawk_miq.png" alt="Middelware tab in ManageIQ">
+</div>
+<div class="title">Figure 2. Platform subtab</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/02/02/hawkular-metrics-0.12.0.Final-released.html"><h1>Hawkular Metrics 0.12.0 - Release</h1></a>
             <p>02 February 2016, by Stefan Negrea</p>
             <p><div id="preamble">
@@ -525,158 +606,13 @@ Clickin on one then leads to the detail view.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/01/20/hawkular-datamining-demo-hwk-alpha9.html"><h1>Hawkular Data Mining - Predictive Charts</h1></a>
-            <p>20 January 2016, by Pavol Loffay</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>I would like to present you functionality of Hawkular Data Mining module.</p>
-</div>
-<div class="paragraph">
-<p>Hawkular Data Mining module can be deployed in Hawkular and can be used to predict future values of metrics.
-Predicted values are automatically sent to Alerts where conditions are evaluated and an alert can be triggered.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_time_series_models">Time series models</h3>
-<div class="paragraph">
-<p>At the beginning, we <a href="http://www.hawkular.org/blog/2015/10/24/hawkular-datamining.html">started</a> with linear
-regression in Apache Spark. This simple model was a good start. Now we use Holt&#8217;s linear trend method which is
-a variant of exponential smoothing with linear trend. For an alert forecasting it is important to model a trend.
-<a href="https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average">ARIMA</a> models
-were also proposed, however they require stationary time series and periodical recalculation of parameters would
-have to be done. Which requires all historical data in place. For seasonal time series we plan to use Holt Winters
-model which is just an extension of the model which is currently used.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_data_mining_with_hawkular">Data Mining with Hawkular</h3>
-<div class="paragraph">
-<p>Predictions are by default disabled. Enabling can by done by creating Relationship from Tenant to Metric, MetricType
-or Tenant. Relationship to Tenant enables forecasting of all metrics under given Tenant, to MetricType enables all
-metrics of given type. Configuration properties at lower levels override uppers.</p>
-</div>
-<div class="paragraph">
-<p>Configuration has only one property&#8201;&#8212;&#8201;forecasting horizon in seconds. If a new metric data is available
-module predicts future values up to the last timestamp + forecasting horizon. Then, the predicted
-values are sent to Alerts where conditions are evaluated.</p>
-</div>
-<div class="openblock">
-<div class="title">Hawkular with integrated Data Mining:</div><div class="content">
-<div class="literalblock">
-<div class="content">
-<pre>$ git clone -b datamining git@github.com:hawkular/hawkular.git
-$ cd hawkular
-$ mvn clean install -Pdev
-$ dist/target/hawkular-*/bin/standalone.sh</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="openblock">
-<div class="title">Enable prediction for Heap Used Metric, <a href="https://gist.github.com/pavolloffay/5c0a7aea318818f59293">helper functions</a>.</div><div class="content">
-<div class="literalblock">
-<div class="content">
-<pre>$ tenant=$(curl -s GET 'http://jdoe:password@localhost:8080/hawkular/inventory/tenant'| grep --color=never -oP 'path" : "\K/t;[0-9a-z\-]+')
-$ metric=`feed`'/m;MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
-$ curl -ivX POST -H "Content-Type: application/json" 'http://jdoe:password@localhost:8080/hawkular/inventory/tenants/relationships' -d '{
-    "name": "__inPrediction",
-    "source": "'$tenant'",
-    "target": "'$metric'",
-    "properties": {"forecastingHorizon": 150}
-}'</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="paragraph">
-<p>Now, we can query predictions for any time in the future. Of course we cannot get reasonable result for predictions
-of further future. Confidence intervals widen as the forecast horizon increases. The rate at which the
-confidence interval widen is a function of the selected model. The prediction API takes the number of steps to the
-future for which it returns the predicted values. One step is equal to the interval at which given metric is collected.
-So the number of steps intuitively corresponds to n future measurements.</p>
-</div>
-<div class="openblock">
-<div class="title">Get five step ahead predictions for Heap Used metric, <a href="https://gist.github.com/pavolloffay/5c0a7aea318818f59293">helper functions</a></div><div class="content">
-<div class="literalblock">
-<div class="content">
-<pre>$ metricId='MI~R~%5B'`feedId`'%2FLocal~~%5D~MT~WildFly%20Memory%20Metrics~Heap%20Used'
-$ curl -s GET -H 'Hawkular-Tenant:'`tenantId` 'http://localhost:8080/hawkular/datamining/models/'$metricId'/predict?ahead=5'</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/datamining-heap-used-holt.png" alt="Forecast of Heap Used">
-</div>
-<div class="title">Figure 1. Blue dashed line represents forecast of 'Heap Used' metric using Holt&#8217;s linear trend model.</div>
-</div>
-<div class="paragraph">
-<p>Chart in the Figure 1 can be found in Hawkular UI from branch
-<a href="https://github.com/hawkular/hawkular/tree/datamining">datamining</a>.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_as_standalone">As Standalone</h3>
-<div class="paragraph">
-<p>Hawkular Data Mining can be used also as standalone application. Following snippets of code show how to create a new
-model directly through Data Mining REST API, insert data and get predictions.</p>
-</div>
-<div class="openblock">
-<div class="title">Create model</div><div class="content">
-<div class="literalblock">
-<div class="content">
-<pre>$ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models' -d '{
-   "metricId": "metric1",
-   "collectionInterval": "150"
-  }'</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ curl -ivX POST -H 'Content-Type: application/json' -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/learn' -d '[
-  {"timestamp": 1, "value": 1},  {"timestamp": 2, "value": 10}, {"timestamp": 3, "value": 20},
-  {"timestamp": 4, "value": 40}, {"timestamp": 5, "value": 50}]
- ]'</pre>
-</div>
-</div>
-<div class="literalblock">
-<div class="content">
-<pre>$ curl -ivX GET -H 'Hawkular-Tenant: tenant1' 'http://localhost:8080/hawkular/datamining/models/metric1/predict?ahead=5'</pre>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Improve model - estimate smoothing parameters from historical data</p>
-</li>
-<li>
-<p>Holt-Winters seasonal version, model AR process with adaptive filter</p>
-</li>
-<li>
-<p>Select the most important metrics and tune models for them</p>
-</li>
-</ul>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>20 January 2016 - <a href="blog/2016/01/20/hawkular-datamining-demo-hwk-alpha9.html">Hawkular Data Mining - Predictive Charts</a></li>
           <li>12 January 2016 - <a href="blog/2016/01/12/hawkular-metrics-0.11.0.Final-released.html">Hawkular Metrics 0.11.0 - Release</a></li>
           <li>05 January 2016 - <a href="blog/2016/01/05/we-are-hiring.html">We are hiring !</a></li>
           <li>16 December 2015 - <a href="blog/2015/12/16/hawkular-1.0.0.Alpha8-released.html">The eigth milestone of Hawkular released</a></li>
