@@ -151,7 +151,7 @@
         </div>
       </section>
 
-	<!--<p><em>24 March 2016</em></p>-->
+	<!--<p><em>29 March 2016</em></p>-->
 
 	<section>
       <div class="container">
@@ -175,7 +175,7 @@
 <li><a href="#__analytics_hostnames">/analytics/hostnames</a></li>
 <li><a href="#__analytics_node_statistics">/analytics/node/statistics</a></li>
 <li><a href="#__analytics_node_summary">/analytics/node/summary</a></li>
-<li><a href="#__analytics_properties_name">/analytics/properties/{name}</a></li>
+<li><a href="#__analytics_properties">/analytics/properties</a></li>
 <li><a href="#__analytics_unbounduris">/analytics/unbounduris</a></li>
 <li><a href="#__config_businesstxn_full">/config/businesstxn/full</a></li>
 <li><a href="#__config_businesstxn_full_name">/config/businesstxn/full/{name}</a></li>
@@ -2150,11 +2150,11 @@
 </div>
 </div>
 <div class="sect2">
-<h3 id="__analytics_properties_name">/analytics/properties/{name}</h3>
+<h3 id="__analytics_properties">/analytics/properties</h3>
 <div class="sect3">
 <h4 id="_get_13">GET</h4>
 <div class="paragraph">
-<p>Get the properties used by a business transaction</p>
+<p>Get property information</p>
 </div>
 <div class="sect4">
 <h5 id="_request_20">Request</h5>
@@ -2182,8 +2182,8 @@
 </thead>
 <tbody>
 <tr>
-<td class="tableblock halign-left valign-top"><p class="tableblock">name</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">path</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">businessTransaction</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">query</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">business transaction name</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
@@ -2193,7 +2193,7 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">query</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional &#x27;start&#x27; time, default 1 hour before current time</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">business transactions after this time, millisecond since epoch</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">integer (int64)</p></td>
 </tr>
@@ -2201,15 +2201,108 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">query</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">optional &#x27;end&#x27; time, default current time</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">business transactions before this time, millisecond since epoch</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">0</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">integer (int64)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">properties</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">business transactions with these properties, defined as a comma separated list of name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">value pairs</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">faults</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">query</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">no</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">faults</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
 </table>
 </div>
 <div class="sect4">
 <h5 id="_response_20">Response</h5>
+<div class="paragraph">
+<p><strong>Content-Type: </strong> application/json</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33%;">
+<col style="width: 33%;">
+<col style="width: 33%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-left valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Success</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Array[&lt;&lt;,&gt;&gt;]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Internal server error</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><br></p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_post_8">POST</h4>
+<div class="paragraph">
+<p>Get property information</p>
+</div>
+<div class="sect4">
+<h5 id="_request_21">Request</h5>
+<div class="paragraph">
+<p><strong>Content-Type: </strong> application/json</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+<col style="width: 16%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-left valign-top">Located in</th>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-left valign-top">Default</th>
+<th class="tableblock halign-left valign-top">Schema</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">body</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">query criteria</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#Criteria">Criteria</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect4">
+<h5 id="_response_21">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2253,7 +2346,7 @@
 <p>Identify the unbound URIs</p>
 </div>
 <div class="sect4">
-<h5 id="_request_21">Request</h5>
+<h5 id="_request_22">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2305,7 +2398,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_21">Response</h5>
+<h5 id="_response_22">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2349,7 +2442,7 @@
 <p>Retrieve the business transaction configurations, changed since an optional specified time</p>
 </div>
 <div class="sect4">
-<h5 id="_request_22">Request</h5>
+<h5 id="_request_23">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2385,7 +2478,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_22">Response</h5>
+<h5 id="_response_23">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2429,7 +2522,7 @@
 <p>Retrieve the business transaction configuration for the specified name</p>
 </div>
 <div class="sect4">
-<h5 id="_request_23">Request</h5>
+<h5 id="_request_24">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2465,7 +2558,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_23">Response</h5>
+<h5 id="_response_24">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2506,7 +2599,7 @@
 <p>Add or update the business transaction configuration for the specified name</p>
 </div>
 <div class="sect4">
-<h5 id="_request_24">Request</h5>
+<h5 id="_request_25">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2550,7 +2643,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_24">Response</h5>
+<h5 id="_response_25">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2591,7 +2684,7 @@
 <p>Remove the business transaction configuration with the specified name</p>
 </div>
 <div class="sect4">
-<h5 id="_request_25">Request</h5>
+<h5 id="_request_26">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2627,7 +2720,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_25">Response</h5>
+<h5 id="_response_26">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2671,7 +2764,7 @@
 <p>Retrieve the business transaction summaries</p>
 </div>
 <div class="sect4">
-<h5 id="_request_26">Request</h5>
+<h5 id="_request_27">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2697,7 +2790,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_26">Response</h5>
+<h5 id="_response_27">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2736,12 +2829,12 @@
 <div class="sect2">
 <h3 id="__config_businesstxn_validate">/config/businesstxn/validate</h3>
 <div class="sect3">
-<h4 id="_post_8">POST</h4>
+<h4 id="_post_9">POST</h4>
 <div class="paragraph">
 <p>Validate the business transaction configuration</p>
 </div>
 <div class="sect4">
-<h5 id="_request_27">Request</h5>
+<h5 id="_request_28">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2777,7 +2870,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_27">Response</h5>
+<h5 id="_response_28">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2821,7 +2914,7 @@
 <p>Retrieve the collector configuration for the optionally specified host and server</p>
 </div>
 <div class="sect4">
-<h5 id="_request_28">Request</h5>
+<h5 id="_request_29">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2865,7 +2958,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_28">Response</h5>
+<h5 id="_response_29">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2909,7 +3002,7 @@
 <p>Query business transaction fragments associated with criteria</p>
 </div>
 <div class="sect4">
-<h5 id="_request_29">Request</h5>
+<h5 id="_request_30">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -2977,7 +3070,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_29">Response</h5>
+<h5 id="_response_30">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3013,12 +3106,12 @@
 </div>
 </div>
 <div class="sect3">
-<h4 id="_post_9">POST</h4>
+<h4 id="_post_10">POST</h4>
 <div class="paragraph">
 <p>Add a list of business transaction fragments</p>
 </div>
 <div class="sect4">
-<h5 id="_request_30">Request</h5>
+<h5 id="_request_31">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3062,7 +3155,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_30">Response</h5>
+<h5 id="_response_31">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3101,12 +3194,12 @@
 <div class="sect2">
 <h3 id="__fragments_query">/fragments/query</h3>
 <div class="sect3">
-<h4 id="_post_10">POST</h4>
+<h4 id="_post_11">POST</h4>
 <div class="paragraph">
 <p>Query business transaction fragments associated with criteria</p>
 </div>
 <div class="sect4">
-<h5 id="_request_31">Request</h5>
+<h5 id="_request_32">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3142,7 +3235,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_31">Response</h5>
+<h5 id="_response_32">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3186,7 +3279,7 @@
 <p>Retrieve business transaction fragment for specified id</p>
 </div>
 <div class="sect4">
-<h5 id="_request_32">Request</h5>
+<h5 id="_request_33">Request</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
@@ -3222,7 +3315,7 @@
 </table>
 </div>
 <div class="sect4">
-<h5 id="_response_32">Response</h5>
+<h5 id="_response_33">Response</h5>
 <div class="paragraph">
 <p><strong>Content-Type: </strong> application/json</p>
 </div>
