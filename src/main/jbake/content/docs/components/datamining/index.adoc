@@ -1,0 +1,72 @@
+= Data Mining Documentation
+Pavol Loffay
+2016-04-10
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Introduction
+Data Mining currently offers time series prediction engine. This engine can be used for alert prediction or
+predictive charts in the UI.
+
+=== Time series models
+ - Simple exponential smoothing
+ - Double exponential smoothing (Holt's linear trend)
+ - Seasonal triple exponential smoothing (Holt Winters)
+ - Simple moving average
+ - Weighted moving average
+
+All variants of exponential smoothing contains optimizer which finds the best smoothing parameters for given training
+data set. Optimizers minimizes mean squared error of one step ahead prediction using non linear optimization
+algorithm (Nelder-Mead simplex).
+
+AutomaticForecaster can be used for the best model selecting. It selects the best model based on Akaike information
+criterion (AIC and AICc with correction) or Bayesian information criterion (BIC).
+If the time series changes during time, AutomaticForecaster is able to select different model from previously selected,
+therefore it can be used on arbitrary time series stream data which exhibits concept drift over time.
+
+=== Time series manipulation & Statistics
+ - Augmented Dickey-Fuller test
+ - Autocorrelation function (ACF)
+ - Time series decomposition
+ - Time series lagging
+ - Time series differencing
+ - Automatic period identification based on ACF
+
+== Prerequisites
+
+Hawkular Data Mining Git repository is hosted on link:https://github.com/hawkular/hawkular-datamining.git[GitHub].
+To build the repository Maven and Java 8 are needed.
+
+.Data Mining main modules
+|===
+|Artifact | Description
+
+|hawkular-datamining-forecast | Lightweight library for time series modeling and forecasting.
+|hawkular-datamining-rest | Web archive for standalone usage without Hawkular.
+|hawkular-datamining-dist | Distribution web archive with hawkular integration code designed to be deployed with Hawkular.
+
+|===
+
+== Data Mining in Hawkular
+When Data Mining is deployed in Hawkular, predictions can be enabled by creating relationships:
+
+ - from tenant to tenant for forecasting all metrics of given tenant
+ - from tenant to metric type for forecasting all metrics of given type
+ - from tenant to metric for forecasting given metric
+
+Following diagram depicts the interaction with other modules. Numbers denotes order of metric data flow from agent to
+Data Mining and Metrics module.
+
+[[architecture]]
+.Data Mining interaction with other Hawkular modules
+ifndef::env-github[]
+image::/img/docs/components/datamining/hawkular-architecture.png[Architecture, align="center"]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/docs/components/datamining/hawkular-architecture.png[Architecture, align="center"]
+endif::[]
