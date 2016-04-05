@@ -62,6 +62,9 @@
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/btm/index.html">Business Transaction Management</a>
                       </li>
                       <li class="menu-item ">
+                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/datamining/index.html">Data Mining</a>
+                      </li>
+                      <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/inventory/index.html">Inventory</a>
                       </li>
                       <li class="menu-item ">
