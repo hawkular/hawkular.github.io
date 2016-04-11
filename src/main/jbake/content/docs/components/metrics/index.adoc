@@ -4,22 +4,181 @@ Thomas Segismont
 :icons: font
 :jbake-type: page
 :jbake-status: published
+:toc: macro
+:toc-title:
 
-Hawkular Metrics is the metric data store part of the http://www.hawkular.org/[Hawkular] organization.
-It is currently used as the metric storage engine for Hawkular but it can also be used independently. The project relies on https://cassandra.apache.org/[Apache Cassandra] as a backend.
+toc::[]
 
+== Introduction
+Hawkular Metrics is a metrics storage engine built on top of link:http://cassandra.apache.org[Cassandra] that offers
+a rich, growing set of features that includes.
 
-Three types of metrics are currently supported:
+* Multi tenancy
+* Multiple metric types
+* Tagging
+* Automatic data removal
+* REST API
+* Scalability
+* Rich query support
 
- * Availability: metric that represent availability: up or down
- * Counter: numeric value that always goes up; example: the total number of visitors of a web page
-   ** Rates: rate of change can be retrieve for counter rates
- * Gauge: numeric value that can go up or down; example: the response time on an application
-   ** Aggregate buckets (min/max/average on some intervals) can be obtained for gauges when individual datapoints are not needed
+== Identifiers
+All identifiers are stored as variable length, UTF-8 encoded strings. This includes,
 
-Tags are available for easy filtering and querying, along with retention times for automatic pruning of older data.
+* Tenant ids
+* Metric names
+* Tag keys (for both metric and data point tags)
 
+[TIP]
+At present there is no restriction on characters that can be used in identifiers. This may change in the future
+though (See https://issues.jboss.org/browse/HWKMETRICS-208[HWKMETRICS-208] for details). For this reason it is
+recommended to restrict the characters to letters, numbers, underscore, period, and forward slash.
 
+== Multi Tenancy
+Hawkular Metrics provides _virtual_ multi tenancy. All data is mapped to a tenant, but the data on disk is not
+physically partitioned by tenant. From an API perspective though, everything is partitioned by tenant. All requests,
+both reads and writes, must include a tenant id.
+
+A tenant has an id that uniquely identifies it. The id is a variable length, UTF-8 encoded string.
+
+TIP: Tenants do not have to be explicitly created. They will be created when inserting data points.
+
+== Metric Types
+A metric represents a single time series or continuous stream of data points. A data point consists of a timestamp and
+a value. The type of value will vary depending on the metric type. Three types of metrics are currently supported:
+
+* Availability
+* Gauge
+* Counter
+
+TIP: Metrics do not have to be explicitly created. They will be created when inserting data points.
+
+TIP: A string metric type may be added in a future release. See
+https://issues.jboss.org/browse/HWKMETRICS-384(HWKMETRICS-384) for details.
+
+=== Availability
+Represents the availability of a resource such as host machine (physical or virtual) or an application server. There
+are only three supported availability types or values,
+
+* up
+* down
+* unknown
+
+Availability is stored as single, unsigned byte.
+
+=== Gauge
+Has a numeric value that can fluctuate, going up or down. Some examples of gauges include,
+
+* Available heap space in the JVM
+* Number of active HTTP sessions on a web server
+* Disk space used by a database table
+* Execution time for a REST API call
+
+With each of these examples, values can increase or decrease. In some instances, like JVM heap space, there are
+well-defined bounds for the possible values.
+
+A gauge value is stored as a 64-bit floating point number.
+
+=== Counter
+Has a numeric value that monotonically increases or decreases. Some examples include,
+
+* Total number of requests to a REST endpoint
+* Total number of request timeouts for a Cassandra node
+* Total number of request timeouts for a Cassandra cluster
+
+These examples involve values that are always increase. Counters can also be decreasing.
+
+A counter value is stored as a 64-bit signed long.
+
+There are two types of counters commonly uses with time series databases (TSDB). One stores the current count or total with
+each data point. The other stores the delta or increment with each data point. The former is more commonly used with
+counters that can easily be maintained by the client. Tracking the total number of requests to a REST endpoint for a
+specific server can be done easily by the client. Tracking the total number of requests for the endpoint across all
+servers however is more challenging. This can be done more easily by storing the deltas and allowing the TSDB to
+compute and maintain the total count.
+
+Hawkular Metrics only supports the former in which each data point represents the total count; however, we can easily
+simulate counters that store deltas. See the <<Incrementing Counters>> section for more details.
+
+==== Rate
+A rate is a derived metric whose values are computed from counter data points. Rate data points can retrieved for any
+counter. They are stored as 64-bit floating point numbers.
+
+== Metric Ids
+Every metric has an id that uniquely identifies it. The id consists of three parts - the tenant id, the metric type,
+and the metric name. The tenant id is a variable length, UTF-8 encoded string. The metric type is stored as a one byte
+integer. The metric name is stored as a variable length, UTF-8 encoded string.
+
+The parts that comprise the metric id provide name spacing. A metric name only has to be unique for the metric type and
+the tenant. For example, suppose we have a tenant id of com.acme. The com.acme tenant could have a gauge named
+http_request_time and also have a counter named http_request_time.
+
+== Data Retention and Removal
+Metric data is automatically deleted from the system after an amount of time that is determined by data retention
+settings. Data retention can be specified at various levels and is specified in days. There is a system-wide default of
+seven days. This setting will apply to all metrics in the system if no other settings are specified. The system-wide
+setting can be overridden at start up by either setting the `hawkular.metrics.default-ttl` system property or by
+setting the `DEFAULT_TTL` environment variable.
+
+Data retention can also be set per tenant. To do this, you need to explicitly create the tenant as in the following
+example.
+
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/tenants -d @payload.json \
+-H "Content-Type: application/json"
+----
+
+[source,javascript]
+----
+{
+  "id": "com.acme",
+  "retentions": {
+    "gauge": 10,
+    "counter": 5,
+    "availability": 8
+  }
+}
+----
+
+This example uses the curl shell command. The request body is put in a file to improve readability. The `retentions`
+map consists of names of one or more metric types. The value of each is an integer which represents the data retention
+for that metric type in days.
+
+You can also set data retention at the individual metric level. This would override any tenant data retention as well
+as the system-wide default. Here is an example.
+
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/metrics -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+{
+  "id": "request_size",
+  "dataRetention": 10
+}
+----
+
+This request creates a gauge named `request_size` with a data retention of 10 days.
+
+WARNING: Hawkular Metrics currently lacks APIs for changing data retention. See
+https://issues.jboss.org/browse/HWKMETRICS-380[HWKMETRICS-380] for details.
+
+*TODO*
+Add section on how Cassandra handles deletes.
+
+== Tagging
+*TODO*
+
+== Incrementing Counters
+*TODO*
+
+== Querying for data
+*TODO*
+
+== Links
 Please visit the following pages for more details:
 
 * link:../../rest/rest-metrics.html[Metrics - REST API documentation]
