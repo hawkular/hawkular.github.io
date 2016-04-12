@@ -1,2963 +1,2629 @@
 
+== Overview
+
+=== Media Type
+
+The API uses *JSON* to communicate with clients.
+
+You _should_ add the following accept header to your requests:
+
+----
+Accept: application/json
+----
+
+When you send JSON data with a `POST` or `PUT` request, you _must_ add the following content type header:
+
+----
+Content-Type: application/json
+----
 
 == Base Path
-#`http://localhost:8080/hawkular/alerts`#
+`/hawkular/alerts`
 
 == REST APIs
-=== Alert Handling
 
+
+=== actions
+. link:#++GET__actions++[Find all action ids grouped by plugin.]
+. link:#++POST__actions++[Create a new ActionDefinition.]
+. link:#++PUT__actions++[Update an existing ActionDefinition.]
+. link:#++GET__actions_history++[Get actions from history with optional filtering.]
+. link:#++PUT__actions_history_delete++[Delete actions from history with optional filtering.]
+. link:#++GET__actions_plugin__actionPlugin_++[Find all action ids of an specific action plugin.]
+. link:#++DELETE__actions__actionPlugin___actionId_++[Delete an existing ActionDefinition.]
+. link:#++GET__actions__actionPlugin___actionId_++[Get an existing action definition.]
 
 
 ==============================================
-*Endpoint* `/ack/{alertId}`
+
+[[GET__actions]]
+*Endpoint GET `/actions`*
+
+NOTE: *Find all action ids grouped by plugin.* +
+_Return a Map<String, Collection<String>> where key is the plugin id and value a collection if actionIds._
 
 
-NOTE: *Set one alert Acknowledged* 
 
-*Method*
-****
-*PUT* `/ack/{alertId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|alertId to Ack|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes associated with the acknowledgement|string
-|=======================
-
-*Response* +
-void
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched map of action ids grouped by plugin.|object
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/note/{alertId}`
 
 
-NOTE: *Add a note into an existing Alert* 
 
-*Method*
-****
-*PUT* `/note/{alertId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[POST__actions]]
+*Endpoint POST `/actions`*
+
+NOTE: *Create a new ActionDefinition.* +
+_Returns created ActionDefinition_
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Required|Description|Data Type
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|alertId to add the note|string
-|=======================
-*query parameters*
+|Yes|ActionDefinition to be created.|<<ActionDefinition>>
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |user|false|author of the note|string
-    |text|false|text of the note|string
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, ActionDefinition Created.|<<ActionDefinition>>
+|400|Existing ActionDefinition/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/ack`
 
 
-NOTE: *Set one or more alerts Acknowledged* 
 
-*Method*
-****
-*PUT* `/ack`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__actions]]
+*Endpoint PUT `/actions`*
+
+NOTE: *Update an existing ActionDefinition.* +
+_Returns updated ActionDefinition._
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Required|Description|Data Type
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to Ack|string
-    |ackBy|false|user acknowledging the alerts|string
-    |ackNotes|false|additional notes asscoiated with the acknowledgement|string
+|Yes|ActionDefinition to be updated.|<<ActionDefinition>>
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Acknowledged invoked successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, ActionDefinition Updated.|<<ActionDefinition>>
+|404|ActionDefinition not found for update.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/{alertId}`
 
 
-NOTE: *Delete an existing Alert* 
 
-*Method*
-****
-*DELETE* `/{alertId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__actions_history]]
+*Endpoint GET `/actions/history`*
+
+NOTE: *Get actions from history with optional filtering.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|Alert id to be deleted|string
+|startTime|No|Filter out actions created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out actions created after this time, millisecond since epoch.|integer|int64|-
+|actionPlugins|No|Filter out actions for unspecified actionPlugin, comma separated list of plugin names.|string|-|-
+|actionIds|No|Filter out actions for unspecified actionId, comma separated list of action IDs.|string|-|-
+|alertIds|No|Filter out actions for unspecified alertIds, comma separated list of alert IDs.|string|-|-
+|results|No|Filter out alerts for unspecified result, comma separated list of action results.|string|-|-
+|thin|No|Return only thin actions, do not include full alert, only alertId.|boolean|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert deleted | -
-| 500    | Internal server error | -
-| 404    | Alert not found | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of actions.|array of <<Action>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/delete`
 
 
-NOTE: *Delete alerts with optional filtering* 
 
-*Method*
-****
-*PUT* `/delete`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__actions_history_delete]]
+*Endpoint PUT `/actions/history/delete`*
+
+NOTE: *Delete actions from history with optional filtering.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
-    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
-    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
-    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
-    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
-    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
-    |tags|false|filter out alerts for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
+|startTime|No|Filter out actions created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out action created after this time, millisecond since epoch.|integer|int64|-
+|actionPlugins|No|Filter out actions for unspecified actionPlugin, comma separated list of plugin names.|string|-|-
+|actionIds|No|Filter out actions for unspecified actionId, comma separated list of action IDs.|string|-|-
+|alertIds|No|Filter out actions for unspecified alertIds, comma separated list of alert IDs.|string|-|-
+|results|No|Filter out alerts for unspecified result, comma separated list of action results.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, Actions deleted.|array of integer
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/alert/{alertId}`
 
 
-NOTE: *Get an existing Alert* 
 
-*Method*
-****
-*GET* `/alert/{alertId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__actions_plugin__actionPlugin_]]
+*Endpoint GET `/actions/plugin/{actionPlugin}`*
+
+NOTE: *Find all action ids of an specific action plugin.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|Id of alert to be retrieved|string
-|=======================
-*query parameters*
+|actionPlugin|Yes|Action plugin to filter query for action ids.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |thin|false|return only a thin alert, do not include: evalSets, resolvedEvalSets|boolean
 |=======================
 
-*Response* +
-Alert
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alert found | -
-| 404    | Alert not found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of action ids.|array of string
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/resolve/{alertId}`
 
 
-NOTE: *Set one alert Resolved* 
 
-*Method*
-****
-*PUT* `/resolve/{alertId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[DELETE__actions__actionPlugin___actionId_]]
+*Endpoint DELETE `/actions/{actionPlugin}/{actionId}`*
+
+NOTE: *Delete an existing ActionDefinition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertId|true|alertId to set Resolved|string
-|=======================
-*query parameters*
+|actionPlugin|Yes|Action plugin.|string|-|-
+|actionId|Yes|Action id to be deleted.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |resolvedBy|false|user resolving the alerts|string
-    |resolvedNotes|false|additional notes asscoiated with the resolution|string
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Resolution invoked successfully. | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, ActionDefinition Deleted.|-
+|404|ActionDefinition not found for delete.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/resolve`
 
 
-NOTE: *Set one or more alerts Resolved* 
 
-*Method*
-****
-*PUT* `/resolve`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__actions__actionPlugin___actionId_]]
+*Endpoint GET `/actions/{actionPlugin}/{actionId}`*
+
+NOTE: *Get an existing action definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to set Resolved|string
-    |resolvedBy|false|user resolving the alerts|string
-    |resolvedNotes|false|additional notes asscoiated with the resolution|string
+|actionPlugin|Yes|Action plugin.|string|-|-
+|actionId|Yes|Action id to be retrieved.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts Resolution invoked successfully. | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Action found.|<<ActionDefinition>>
+|404|No Action found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/data`
 
 
-NOTE: *Send data for alert processing/condition evaluation.* 
+=== events
+. link:#++GET__events++[Get events with optional filtering.]
+. link:#++POST__events++[Create a new Event.]
+. link:#++PUT__events_delete++[Delete events with optional filtering.]
+. link:#++GET__events_event__eventId_++[Get an existing Event.]
+. link:#++DELETE__events_tags++[Remove tags from existing Events.]
+. link:#++PUT__events_tags++[Add tags to existing Events.]
+. link:#++DELETE__events__eventId_++[Delete an existing Event.]
 
-*Method*
-****
-*POST* `/data`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__events]]
+*Endpoint GET `/events`*
+
+NOTE: *Get events with optional filtering.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|data to be processed by alerting|<<UNKNOWN[Data],UNKNOWN[Data]>>
+|startTime|No|Filter out events created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out events created after this time, millisecond since epoch.|integer|int64|-
+|eventIds|No|Filter out events for unspecified eventIds, comma separated list of event IDs.|string|-|-
+|triggerIds|No|Filter out events for unspecified triggers, comma separated list of trigger IDs.|string|-|-
+|categories|No|Filter out events for unspecified categories, comma separated list of category values.|string|-|-
+|tags|No|Filter out events for unspecified tags, comma separated list of tags, each tag of format 'name|value'. Specify '*' for value to match all values.|string|-|-
+|thin|No|Return only thin events, do not include: evalSets.|boolean|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, data added. | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of events.|array of <<Event>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/`
 
-
-NOTE: *Get alerts with optional filtering* 
-
-*Method*
-****
-*GET* `/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out alerts created before this time, millisecond since epoch|long
-    |endTime|false|filter out alerts created after this time, millisecond since epoch|long
-    |alertIds|false|filter out alerts for unspecified alertIds, comma separated list of alert IDs|string
-    |triggerIds|false|filter out alerts for unspecified triggers, comma separated list of trigger IDs|string
-    |statuses|false|filter out alerts for unspecified lifecycle status, comma separated list of status values|string
-    |severities|false|filter out alerts for unspecified severity, comma separated list of severity values|string
-    |tags|false|filter out events for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
-    |thin|false|return only thin alerts, do not include: evalSets, resolvedEvalSets|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/tags`
 
-
-NOTE: *Add tags to existing Alerts* 
-
-*Method*
-****
-*PUT* `/tags`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to tag|string
-    |tags|true|comma separated list of tags to add, each tag of format &#39;name|value&#39;.|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts tagged successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Remove tags from existing Alerts* 
-
-*Method*
-****
-*DELETE* `/tags`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |alertIds|true|comma separated list of alertIds to untag|string
-    |tagNames|true|comma separated list of tag names to remove|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Alerts untagged successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Action Handling
-
-
-
-==============================================
-*Endpoint* `/actions/`
-
-
-NOTE: *Find all action ids grouped by plugin* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/actions/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success. | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Create a new action* +
-      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
-
-*Method*
-****
-*POST* `/actions/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Created | -
-| 500    | Internal server error | -
-| 400    | Existing action/Invalid Parameters | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/history/delete`
-
-
-NOTE: *Delete actions from history with optional filtering* 
-
-*Method*
-****
-*PUT* `/actions/history/delete`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out actions created before this time, millisecond since epoch|long
-    |endTime|false|filter out action created after this time, millisecond since epoch|long
-    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
-    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
-    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
-    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/plugin/{actionPlugin}`
-
-
-NOTE: *Find all action ids of an specific action plugin* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/actions/plugin/{actionPlugin}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to filter query for action ids|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/{actionPlugin}/{actionId}`
-
-
-NOTE: *Get an existing action* +
-      _Action is represented as a map of properties._
-
-*Method*
-****
-*GET* `/actions/{actionPlugin}/{actionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be retrieved|string
-|=======================
-
-*Response* +
-Map&lt;String, String&gt;[java.lang.String]
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Found | -
-| 404    | No Action Found | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Update an existing action* +
-      _Action properties are variable and depends on the action plugin. A user needs to request previously ActionPlugin API to get the list of properties to fill for a specific type. All actions should have actionId and actionPlugin as mandatory properties_
-
-*Method*
-****
-*PUT* `/actions/{actionPlugin}/{actionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|action id to be updated|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Action properties. Properties depend of specific ActionPlugin.|<<UNKNOWN[string],UNKNOWN[string]>>
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Updated | -
-| 500    | Internal server error | -
-| 404    | Action not found for update | -
-
-|=======================
-
-{empty} +
-
-NOTE: *Delete an existing action* 
-
-*Method*
-****
-*DELETE* `/actions/{actionPlugin}/{actionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin|string
-    |actionId|true|Action id to be deleted|string
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Action Deleted | -
-| 500    | Internal server error | -
-| 404    | ActionId not found for delete | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-
-
-==============================================
-*Endpoint* `/actions/history`
-
-
-NOTE: *Get actions from history with optional filtering* 
-
-*Method*
-****
-*GET* `/actions/history`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out actions created before this time, millisecond since epoch|long
-    |endTime|false|filter out action created after this time, millisecond since epoch|long
-    |actionPlugins|false|filter out actions for unspecified actionPlugin, comma separated list of plugin names|string
-    |actionIds|false|filter out actions for unspecified actionId, comma separated list of action IDs|string
-    |alertIds|false|filter out actions for unspecified alertIds, comma separated list of alert IDs|string
-    |results|false|filter out alerts for unspecified result, comma separated list of action results|string
-    |thin|false|return only thin actions, do not include full alert, only alertId|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Event Handling
-
-
-
-==============================================
-*Endpoint* `/events/`
-
+[[POST__events]]
+*Endpoint POST `/events`*
 
 NOTE: *Create a new Event.* +
-      _Returns created Event_
+_Returns created Event._
 
-*Method*
-****
-*POST* `/events/`
-****
 
-*header parameters*
 
-[options="header"]
+*Body*
+
+[cols="^20,55,^25", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
+|Required|Description|Data Type
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Event to be created. Category and Text fields required|<<Event,Event>>
+|Yes|Event to be created. Category and Text fields required,|<<Event>>
+
 |=======================
 
-*Response* +
-Event
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Event Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Event Created.|<<Event>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Get events with optional filtering* 
-
-*Method*
-****
-*GET* `/events/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out events created before this time, millisecond since epoch|long
-    |endTime|false|filter out events created after this time, millisecond since epoch|long
-    |eventIds|false|filter out events for unspecified eventIds, comma separated list of event IDs|string
-    |triggerIds|false|filter out events for unspecified triggers, comma separated list of trigger IDs|string
-    |categories|false|filter out events for unspecified categories, comma separated list of category values|string
-    |tags|false|filter out events for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
-    |thin|false|return only thin events, do not include: evalSets|boolean
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__events_delete]]
+*Endpoint PUT `/events/delete`*
+
+NOTE: *Delete events with optional filtering.* +
+_Return number of events deleted._
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|startTime|No|Filter out events created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out events created after this time, millisecond since epoch.|integer|int64|-
+|eventIds|No|Filter out events for unspecified eventIds, comma separated list of event IDs.|string|-|-
+|triggerIds|No|Filter out events for unspecified triggers, comma separated list of trigger IDs.|string|-|-
+|categories|No|Filter out events for unspecified categories, comma separated list of category values.|string|-|-
+|tags|No|Filter out events for unspecified tags, comma separated list of tags, each tag of format 'name|value'. Specify '*' for value to match all values.|string|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success.|integer
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/events/tags`
 
 
-NOTE: *Add tags to existing Events* 
 
-*Method*
-****
-*PUT* `/events/tags`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__events_event__eventId_]]
+*Endpoint GET `/events/event/{eventId}`*
+
+NOTE: *Get an existing Event.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |eventIds|true|comma separated list of eventIds to tag|string
-    |tags|true|comma separated list of tags to add, each tag of format &#39;name|value&#39;.|string
+|eventId|Yes|Id of Event to be retrieved.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|thin|No|Return only a thin event, do not include: evalSets, dampening.|boolean|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Events tagged successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Event found.|<<Event>>
+|404|Event not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Remove tags from existing Events* 
-
-*Method*
-****
-*DELETE* `/events/tags`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |eventIds|true|comma separated list of eventIds to untag|string
-    |tagNames|true|comma separated list of tag names to remove|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__events_tags]]
+*Endpoint DELETE `/events/tags`*
+
+NOTE: *Remove tags from existing Events.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|eventIds|Yes|Comma separated list of eventIds to untag.|string|-|-
+|tagNames|Yes|Comma separated list of tag names to remove.|string|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Events untagged successfully | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Events untagged successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/events/{eventId}`
 
 
-NOTE: *Delete an existing Event* 
 
-*Method*
-****
-*DELETE* `/events/{eventId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__events_tags]]
+*Endpoint PUT `/events/tags`*
+
+NOTE: *Add tags to existing Events.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |eventId|true|Event id to be deleted|string
+|eventIds|Yes|Comma separated list of eventIds to tag.|string|-|-
+|tags|Yes|Comma separated list of tags to add, each tag of format 'name|value'.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Event deleted | -
-| 500    | Internal server error | -
-| 404    | Event not found | -
+|Status Code|Reason|Response Model
+
+|200|Success, Events tagged successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/events/delete`
 
 
-NOTE: *Delete events with optional filtering* 
 
-*Method*
-****
-*PUT* `/events/delete`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[DELETE__events__eventId_]]
+*Endpoint DELETE `/events/{eventId}`*
+
+NOTE: *Delete an existing Event.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |startTime|false|filter out events created before this time, millisecond since epoch|long
-    |endTime|false|filter out events created after this time, millisecond since epoch|long
-    |eventIds|false|filter out events for unspecified eventIds, comma separated list of event IDs|string
-    |triggerIds|false|filter out events for unspecified triggers, comma separated list of trigger IDs|string
-    |categories|false|filter out events for unspecified categories, comma separated list of category values|string
-    |tags|false|filter out events for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
+|eventId|Yes|Event id to be deleted.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, Event deleted.|-
+|404|Event not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/events/event/{eventId}`
 
 
-NOTE: *Get an existing Event* 
+=== export
+. link:#++GET__export++[Export a list of full triggers and action definitions.]
 
-*Method*
-****
-*GET* `/events/event/{eventId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+[[GET__export]]
+*Endpoint GET `/export`*
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |eventId|true|Id of Event to be retrieved|string
-|=======================
-*query parameters*
+NOTE: *Export a list of full triggers and action definitions.* +
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |thin|false|return only a thin event, do not include: evalSets, dampening|boolean
-|=======================
 
-*Response* +
-Event
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Event found | -
-| 404    | Event not found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Successfully exported list of full triggers and action definitions.|<<Definitions>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Query operations for action plugins
 
 
 
 ==============================================
-*Endpoint* `/plugins/`
 
 
-NOTE: *Find all action plugins* +
-      _Pagination is not yet implemented_
+=== import
+. link:#++POST__import__strategy_++[Import a list of full triggers and action definitions.]
 
-*Method*
-****
-*GET* `/plugins/`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[POST__import__strategy_]]
+*Endpoint POST `/import/{strategy}`*
+
+NOTE: *Import a list of full triggers and action definitions.* +
+_Return a list of effectively imported full triggers and action definitions._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|strategy|Yes|Import strategy: DELETE, ALL, NEW or OLD (not case sensitive).|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|No|Collection of full triggers and action definitions to import.|<<Definitions>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success. | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Successfully exported list of full triggers and action definitions.|<<Definitions>>
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/plugins/{actionPlugin}`
 
 
-NOTE: *Find list of properties to fill for a specific action plugin* +
-      _Each action plugin can have a different and variable number of properties. This method should be invoked before of a creation of a new action._
+=== plugins
+. link:#++GET__plugins++[Find all action plugins.]
+. link:#++GET__plugins__actionPlugin_++[Find list of properties to fill for a specific action plugin.]
 
-*Method*
-****
-*GET* `/plugins/{actionPlugin}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+[[GET__plugins]]
+*Endpoint GET `/plugins`*
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |actionPlugin|true|Action plugin to query|string
-|=======================
+NOTE: *Find all action plugins.* +
 
-*Response* +
-void
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Action Plugin found. | -
-| 404    | Action Plugin not found. | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of actions plugins.|array of string
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
-
-=== Trigger Handling
 
 
 
 ==============================================
-*Endpoint* `/triggers/trigger`
 
 
-NOTE: *Create a new full trigger (trigger, dampenings and conditions)* +
-      _Returns created full Trigger_
 
-*Method*
-****
-*POST* `/triggers/trigger`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__plugins__actionPlugin_]]
+*Endpoint GET `/plugins/{actionPlugin}`*
+
+NOTE: *Find list of properties to fill for a specific action plugin.* +
+_Each action plugin can have a different and variable number of properties. This method should be invoked before of a creation of a new action._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Full Trigger definition (trigger, dampenings, conditions) to be created|string
+|actionPlugin|Yes|Action plugin to query.|string|-|-
+
 |=======================
 
-*Response* +
-FullTrigger
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-No codes specified
+|Status Code|Reason|Response Model
+
+|200|Action Plugin found.|array of string
+|404|Action Plugin not found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
+
 |=======================
 
-{empty} +
+
 
 ==============================================
 
-{empty} +
 
+=== status
+=== triggers
+. link:#++GET__triggers++[Get triggers with optional filtering.]
+. link:#++POST__triggers++[Create a new trigger.]
+. link:#++POST__triggers_groups++[Create a new group trigger.]
+. link:#++POST__triggers_groups_members++[Create a new member trigger for a parent trigger.]
+. link:#++POST__triggers_groups_members__memberId__orphan++[Make a non-orphan member trigger into an orphan.]
+. link:#++POST__triggers_groups_members__memberId__unorphan++[Make a non-orphan member trigger into an orphan.]
+. link:#++DELETE__triggers_groups__groupId_++[Delete a group trigger.]
+. link:#++PUT__triggers_groups__groupId_++[Update an existing group trigger definition and its member definitions.]
+. link:#++PUT__triggers_groups__groupId__conditions__triggerMode_++[Set the conditions for the group trigger.]
+. link:#++POST__triggers_groups__groupId__dampenings++[Create a new group dampening.]
+. link:#++DELETE__triggers_groups__groupId__dampenings__dampeningId_++[Delete an existing group dampening definition.]
+. link:#++PUT__triggers_groups__groupId__dampenings__dampeningId_++[Update an existing group dampening definition.]
+. link:#++GET__triggers_groups__groupId__members++[Find all Group Member Trigger Definitions.]
+. link:#++POST__triggers_trigger++[Create a new full trigger (trigger, dampenings and conditions).]
+. link:#++GET__triggers_trigger__triggerId_++[Get an existing full trigger definition (trigger, dampenings and conditions).]
+. link:#++DELETE__triggers__triggerId_++[Delete an existing trigger definition.]
+. link:#++GET__triggers__triggerId_++[Get an existing trigger definition.]
+. link:#++PUT__triggers__triggerId_++[Update an existing trigger definition.]
+. link:#++GET__triggers__triggerId__conditions++[Get all conditions for a specific trigger.]
+. link:#++POST__triggers__triggerId__conditions++[@Deprecated : Add a condition.]
+. link:#++DELETE__triggers__triggerId__conditions__conditionId_++[@Deprecated : Delete a condition.]
+. link:#++GET__triggers__triggerId__conditions__conditionId_++[@Deprecated : Get Condition by conditionId.]
+. link:#++PUT__triggers__triggerId__conditions__conditionId_++[@Deprecated : Update an existing Condition.]
+. link:#++PUT__triggers__triggerId__conditions__triggerMode_++[Set the conditions for the trigger.]
+. link:#++GET__triggers__triggerId__dampenings++[Get all Dampenings for a Trigger (1 Dampening per mode).]
+. link:#++POST__triggers__triggerId__dampenings++[Create a new dampening.]
+. link:#++GET__triggers__triggerId__dampenings_mode__triggerMode_++[Get dampening using triggerId and triggerMode.]
+. link:#++DELETE__triggers__triggerId__dampenings__dampeningId_++[Delete an existing dampening definition.]
+. link:#++GET__triggers__triggerId__dampenings__dampeningId_++[Get an existing dampening.]
+. link:#++PUT__triggers__triggerId__dampenings__dampeningId_++[Update an existing dampening definition.]
 
 
 ==============================================
-*Endpoint* `/triggers/groups`
+
+[[GET__triggers]]
+*Endpoint GET `/triggers`*
+
+NOTE: *Get triggers with optional filtering.* +
 
 
-NOTE: *Create a new group trigger* +
-      _Returns created GroupTrigger_
 
-*Method*
-****
-*POST* `/triggers/groups`
-****
 
-*header parameters*
+*Query parameters*
 
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
+|triggerIds|No|Filter out triggers for unspecified triggerIds, comma separated list of trigger IDs.|string|-|-
+|tags|No|Filter out triggers for unspecified tags, comma separated list of tags, each tag of format 'name|value'. Specify '*' for value to match all values.|string|-|-
+|thin|No|Return only thin triggers. Currently Ignored.|boolean|-|-
+
 |=======================
 
-*Response* +
-Trigger
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Group Trigger Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of triggers.|array of <<Trigger>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/members`
 
+
+
+
+==============================================
+
+[[POST__triggers]]
+*Endpoint POST `/triggers`*
+
+NOTE: *Create a new trigger.* +
+_Return created trigger._
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Trigger definition to be created.|<<Trigger>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Trigger created.|<<Trigger>>
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers_groups]]
+*Endpoint POST `/triggers/groups`*
+
+NOTE: *Create a new group trigger.* +
+_Returns created group trigger._
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Trigger definition to be created.|<<Trigger>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Group Trigger Created.|<<Trigger>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers_groups_members]]
+*Endpoint POST `/triggers/groups/members`*
 
 NOTE: *Create a new member trigger for a parent trigger.* +
-      _Returns Member Trigger created if operation finished correctly_
+_Returns Member Trigger created if operation finished correctly._
 
-*Method*
-****
-*POST* `/triggers/groups/members`
-****
 
-*header parameters*
 
-[options="header"]
+*Body*
+
+[cols="^20,55,^25", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
+|Required|Description|Data Type
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Group member trigger to be created|<<GroupMemberInfo,GroupMemberInfo>>
+|Yes|Group member trigger to be created.|<<GroupMemberInfo>>
+
 |=======================
 
-*Response* +
-Trigger
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Member Trigger Created | -
-| 500    | Internal server error | -
-| 404    | Group trigger not found. | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Member Trigger Created.|<<Trigger>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|Group trigger not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}`
 
 
-NOTE: *Get an existing trigger definition* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[POST__triggers_groups_members__memberId__orphan]]
+*Endpoint POST `/triggers/groups/members/{memberId}/orphan`*
+
+NOTE: *Make a non-orphan member trigger into an orphan.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
+|memberId|Yes|Member Trigger id to be made an orphan.|string|-|-
+
 |=======================
 
-*Response* +
-Trigger
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger found | -
-| 404    | Trigger not found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Trigger updated.|-
+|404|Trigger doesn't exist/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Update an existing trigger definition* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be updated|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated trigger definition|<<Trigger,Trigger>>
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers_groups_members__memberId__unorphan]]
+*Endpoint POST `/triggers/groups/members/{memberId}/unorphan`*
+
+NOTE: *Make a non-orphan member trigger into an orphan.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|memberId|Yes|Member Trigger id to be made an orphan.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Only context and dataIdMap are used when changing back to a non-orphan.|<<UnorphanMemberInfo>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger updated | -
-| 500    | Internal server error | -
-| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Trigger updated.|-
+|404|Trigger doesn't exist/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Delete an existing trigger definition* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be deleted|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__triggers_groups__groupId_]]
+*Endpoint DELETE `/triggers/groups/{groupId}`*
+
+NOTE: *Delete a group trigger.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|groupId|Yes|Group Trigger id.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|keepNonOrphans|Yes|Convert the non-orphan member triggers to standard triggers.|boolean|-|-
+|keepOrphans|Yes|Convert the orphan member triggers to standard triggers.|boolean|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger deleted | -
-| 500    | Internal server error | -
-| 404    | Trigger not found | -
+|Status Code|Reason|Response Model
+
+|200|Success, Group Trigger Removed.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|Group Trigger not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/trigger/{triggerId}`
 
 
-NOTE: *Get an existing trigger definition* 
 
-*Method*
-****
-*GET* `/triggers/trigger/{triggerId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__triggers_groups__groupId_]]
+*Endpoint PUT `/triggers/groups/{groupId}`*
+
+NOTE: *Update an existing group trigger definition and its member definitions.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Full Trigger definition id to be retrieved|string
+|groupId|Yes|Group Trigger id to be updated.|string|-|-
+
 |=======================
 
-*Response* +
-Trigger
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Updated group trigger definition.|<<Trigger>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger found | -
-| 404    | Trigger not found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, Group Trigger updated.|-
+|404|Trigger doesn't exist/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}`
 
 
-NOTE: *Update an existing group trigger definition and its member definitions* 
 
-*Method*
-****
-*PUT* `/triggers/groups/{groupId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__triggers_groups__groupId__conditions__triggerMode_]]
+*Endpoint PUT `/triggers/groups/{groupId}/conditions/{triggerMode}`*
+
+NOTE: *Set the conditions for the group trigger.* +
+_This replaces any existing conditions on the group and member conditions. Return the new group conditions._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Group Trigger id to be updated|string
-|=======================
-*body parameters*
+|groupId|Yes|The relevant Group Trigger.|string|-|-
+|triggerMode|Yes|FIRING or AUTORESOLVE (not case sensitive).|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated group trigger definition|<<Trigger,Trigger>>
 |=======================
 
-*Response* +
-void
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|No|Collection of Conditions to set and Map with tokens per dataId on members.|<<GroupConditionsInfo>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Group Trigger updated | -
-| 500    | Internal server error | -
-| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Group Condition Set created.|array of <<Condition>>
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|404|No trigger found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
 
-{empty} +
-
-NOTE: *Delete a group trigger.* 
-
-*Method*
-****
-*DELETE* `/triggers/groups/{groupId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Group Trigger id|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |keepNonOrphans|true|Convert the non-orphan member triggers to standard triggers.|boolean
-    |keepOrphans|true|Convert the orphan member triggers to standard triggers.|boolean
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers_groups__groupId__dampenings]]
+*Endpoint POST `/triggers/groups/{groupId}/dampenings`*
+
+NOTE: *Create a new group dampening.* +
+_Return group Dampening created._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|groupId|Yes|Group Trigger definition id attached to dampening.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Dampening definition to be created.|<<Dampening>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Group Trigger Removed | -
-| 500    | Internal server error | -
-| 404    | Group Trigger not found | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening created.|<<Dampening>>
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/members/{memberId}/orphan`
 
 
-NOTE: *Make a non-orphan member trigger into an orphan.* 
 
-*Method*
-****
-*POST* `/triggers/groups/members/{memberId}/orphan`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[DELETE__triggers_groups__groupId__dampenings__dampeningId_]]
+*Endpoint DELETE `/triggers/groups/{groupId}/dampenings/{dampeningId}`*
+
+NOTE: *Delete an existing group dampening definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |memberId|true|Member Trigger id to be made an orphan.|string
+|groupId|Yes|Trigger definition id to be retrieved.|string|-|-
+|dampeningId|Yes|Dampening id for dampening definition to be deleted.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger updated | -
-| 500    | Internal server error | -
-| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening deleted.|-
+|404|No Dampening found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/members/{memberId}/unorphan`
 
 
-NOTE: *Make a non-orphan member trigger into an orphan.* 
 
-*Method*
-****
-*POST* `/triggers/groups/members/{memberId}/unorphan`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__triggers_groups__groupId__dampenings__dampeningId_]]
+*Endpoint PUT `/triggers/groups/{groupId}/dampenings/{dampeningId}`*
+
+NOTE: *Update an existing group dampening definition.* +
+_Note that the trigger mode can not be changed. Return Dampening updated._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |memberId|true|Member Trigger id to be made an orphan.|string
-|=======================
-*body parameters*
+|groupId|Yes|Trigger definition id to be retrieved.|string|-|-
+|dampeningId|Yes|Dampening id.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Only context and dataIdMap are used when changing back to a non-orphan.|<<UnorphanMemberInfo,UnorphanMemberInfo>>
 |=======================
 
-*Response* +
-void
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Updated dampening definition.|<<Dampening>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger updated | -
-| 500    | Internal server error | -
-| 404    | Trigger doesn&#39;t exist/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening Updated.|<<Dampening>>
+|404|No Dampening Found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings`
 
 
-NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers_groups__groupId__members]]
+*Endpoint GET `/triggers/groups/{groupId}/members`*
+
+NOTE: *Find all Group Member Trigger Definitions.* +
+_Pagination is not yet implemented._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
+|groupId|Yes|Group TriggerId.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|includeOrphans|No|include Orphan members? No if omitted.|boolean|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Successfully fetched list of triggers.|array of <<Trigger>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Create a new dampening* +
-      _Returns Dampening created if operation finishes correctly_
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/dampenings`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id attached to dampening|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers_trigger]]
+*Endpoint POST `/triggers/trigger`*
+
+NOTE: *Create a new full trigger (trigger, dampenings and conditions).* +
+_Return created full trigger._
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|FullTrigger (trigger, dampenings, conditions) to be created.|<<FullTrigger>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, FullTrigger created.|<<FullTrigger>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
 
 
-NOTE: *Get a dampening using triggerId and triggerMode* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/mode/{triggerMode}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers_trigger__triggerId_]]
+*Endpoint GET `/triggers/trigger/{triggerId}`*
+
+NOTE: *Get an existing full trigger definition (trigger, dampenings and conditions).* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |triggerMode|true|Trigger mode|<<org.hawkular.alerts.api.model.trigger.Mode,org.hawkular.alerts.api.model.trigger.Mode>>
+|triggerId|Yes|Full Trigger definition id to be retrieved.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, FullTrigger found.|<<FullTrigger>>
+|404|Trigger not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/dampenings/{dampeningId}`
 
 
-NOTE: *Get an existing dampening* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[DELETE__triggers__triggerId_]]
+*Endpoint DELETE `/triggers/{triggerId}`*
+
+NOTE: *Delete an existing trigger definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
+|triggerId|Yes|Trigger definition id to be deleted.|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Found | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Trigger deleted.|-
+|404|Trigger not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Update an existing dampening definition. Note that the trigger mode can not be changed.* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated dampening definition|<<Dampening,Dampening>>
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__triggers__triggerId_]]
+*Endpoint GET `/triggers/{triggerId}`*
+
+NOTE: *Get an existing trigger definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Updated | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Trigger found.|<<Trigger>>
+|404|Trigger not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Delete an existing dampening definition* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}/dampenings/{dampeningId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be deleted|string
-    |dampeningId|true|Dampening id for dampening definition to be deleted|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__triggers__triggerId_]]
+*Endpoint PUT `/triggers/{triggerId}`*
+
+NOTE: *Update an existing trigger definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be updated.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Updated trigger definition.|<<Trigger>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening deleted | -
-| 404    | No Dampening found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, Trigger updated.|-
+|404|Trigger doesn't exist/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}/dampenings`
 
 
-NOTE: *Create a new group dampening* +
-      _Returns Dampening created if operation finishes correctly_
 
-*Method*
-****
-*POST* `/triggers/groups/{groupId}/dampenings`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers__triggerId__conditions]]
+*Endpoint GET `/triggers/{triggerId}/conditions`*
+
+NOTE: *Get all conditions for a specific trigger.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Group Trigger definition id attached to dampening|string
-|=======================
-*body parameters*
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Dampening definition to be created|<<Dampening,Dampening>>
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of conditions.|array of <<Condition>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}/dampenings/{dampeningId}`
 
 
-NOTE: *Update an existing group dampening definition. Note that trigger mode can not be changed.* 
 
-*Method*
-****
-*PUT* `/triggers/groups/{groupId}/dampenings/{dampeningId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[POST__triggers__triggerId__conditions]]
+*Endpoint POST `/triggers/{triggerId}/conditions`*
+
+NOTE: *@Deprecated : Add a condition.* +
+_Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service. Return the updated collection of Conditions for a trigger._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id|string
-|=======================
-*body parameters*
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Updated dampening definition|<<Dampening,Dampening>>
 |=======================
 
-*Response* +
-void
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|No|Condition to add.|<<Condition>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening Updated | -
-| 404    | No Dampening Found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Successfully fetched list of conditions.|array of <<Condition>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|No trigger found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Delete an existing group dampening definition* 
-
-*Method*
-****
-*DELETE* `/triggers/groups/{groupId}/dampenings/{dampeningId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Trigger definition id to be retrieved|string
-    |dampeningId|true|Dampening id for dampening definition to be deleted|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__triggers__triggerId__conditions__conditionId_]]
+*Endpoint DELETE `/triggers/{triggerId}/conditions/{conditionId}`*
+
+NOTE: *@Deprecated : Delete a condition.* +
+_Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.Return the updated collection of Conditions for a trigger._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be retrieved|string|-|-
+|conditionId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Dampening deleted | -
-| 404    | No Dampening found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
+
+|200|Success, Condition deleted.|array of <<Condition>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|No Condition found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/conditions`
 
 
-NOTE: *Get all conditions for a specific trigger.* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}/conditions`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers__triggerId__conditions__conditionId_]]
+*Endpoint GET `/triggers/{triggerId}/conditions/{conditionId}`*
+
+NOTE: *@Deprecated : Get Condition by conditionId.* +
+_Use GET /alerts/triggers/{triggerId}/conditions ._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+|conditionId|Yes|-|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Condition found.|<<Condition>>
+|404|No Condition found.|<<ApiError>>
+|500|Internal server error,|<<ApiError>>
 
-{empty} +
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*POST* `/triggers/{triggerId}/conditions`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__triggers__triggerId__conditions__conditionId_]]
+*Endpoint PUT `/triggers/{triggerId}/conditions/{conditionId}`*
+
+NOTE: *@Deprecated : Update an existing Condition.* +
+_Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service. Return the updated collection of Conditions for a trigger._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+|conditionId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|No|Condition to update.|<<Condition>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition created | -
-| 404    | No trigger found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Condition updated.|array of <<Condition>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|No Condition found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/conditions/{conditionId}`
 
 
-NOTE: *@Deprecated : Use GET /alerts/triggers/{triggerId}/conditions* 
 
-*Method*
-****
-*GET* `/triggers/{triggerId}/conditions/{conditionId}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[PUT__triggers__triggerId__conditions__triggerMode_]]
+*Endpoint PUT `/triggers/{triggerId}/conditions/{triggerMode}`*
+
+NOTE: *Set the conditions for the trigger.* +
+_This replaces any existing conditions. Returns the new conditions._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
+|triggerId|Yes|The relevant Trigger.|string|-|-
+|triggerMode|Yes|FIRING or AUTORESOLVE (not case sensitive).|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Collection of Conditions to set.|array of <<Condition>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition found | -
-| 404    | No Condition found | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Condition Set created.|array of <<Condition>>
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|404|No trigger found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*PUT* `/triggers/{triggerId}/conditions/{conditionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition|string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__triggers__triggerId__dampenings]]
+*Endpoint GET `/triggers/{triggerId}/dampenings`*
+
+NOTE: *Get all Dampenings for a Trigger (1 Dampening per mode).* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition updated | -
-| 404    | No Condition found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Successfully fetched list of dampenings.|array of <<Dampening>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Deprecated : Use PUT /alerts/triggers/{triggerId}/conditions to set the entire condition set in one service.* 
-
-*Method*
-****
-*DELETE* `/triggers/{triggerId}/conditions/{conditionId}`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|Trigger definition id to be retrieved|string
-    |conditionId|true||string
 |=======================
 
-*Response* +
-void
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__triggers__triggerId__dampenings]]
+*Endpoint POST `/triggers/{triggerId}/dampenings`*
+
+NOTE: *Create a new dampening.* +
+_Return Dampening created._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id attached to dampening.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Dampening definition to be created.|<<Dampening>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition deleted | -
-| 404    | No Condition found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening created.|<<Dampening>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/{triggerId}/conditions/{triggerMode}`
 
 
-NOTE: *Set the conditions for the trigger. This replaces any existing conditions. Returns the new conditions.* 
 
-*Method*
-****
-*PUT* `/triggers/{triggerId}/conditions/{triggerMode}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers__triggerId__dampenings_mode__triggerMode_]]
+*Endpoint GET `/triggers/{triggerId}/dampenings/mode/{triggerMode}`*
+
+NOTE: *Get dampening using triggerId and triggerMode.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerId|true|The relevant Trigger.|string
-    |triggerMode|true|FIRING or AUTORESOLVE (not case sensitive).|string
-|=======================
-*body parameters*
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+|triggerMode|Yes|Trigger mode|string|-|FIRING, AUTORESOLVE
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of a condition list. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Condition Set created | -
-| 404    | No trigger found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of dampenings.|array of <<Dampening>>
+|500|Internal server error.|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}/conditions/{triggerMode}`
 
 
-NOTE: *Set the conditions for the group trigger. This replaces any existing conditions on the group and member conditions.  Returns the new group conditions.* 
 
-*Method*
-****
-*PUT* `/triggers/groups/{groupId}/conditions/{triggerMode}`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[DELETE__triggers__triggerId__dampenings__dampeningId_]]
+*Endpoint DELETE `/triggers/{triggerId}/dampenings/{dampeningId}`*
+
+NOTE: *Delete an existing dampening definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|The relevant Group Trigger.|string
-    |triggerMode|true|FIRING or AUTORESOLVE (not case sensitive).|string
-|=======================
-*body parameters*
+|triggerId|Yes|Trigger definition id to be deleted.|string|-|-
+|dampeningId|Yes|Dampening id for dampening definition to be deleted.|string|-|-
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|false|Json representation of GroupConditionsInfo. For examples of Condition types, See https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/ConditionsITest.groovy|string
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Group Condition Set created | -
-| 404    | No trigger found | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening deleted.|-
+|404|No Dampening found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/`
 
 
-NOTE: *Get triggers with optional filtering* 
 
-*Method*
-****
-*GET* `/triggers/`
-****
 
-*header parameters*
+==============================================
 
-[options="header"]
+[[GET__triggers__triggerId__dampenings__dampeningId_]]
+*Endpoint GET `/triggers/{triggerId}/dampenings/{dampeningId}`*
+
+NOTE: *Get an existing dampening.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*query parameters*
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |triggerIds|false|filter out triggers for unspecified triggerIds, comma separated list of trigger IDs|string
-    |tags|false|filter out triggers for unspecified tags, comma separated list of tags, each tag of format &#39;name|value&#39;. Specify &#39;*&#39; for value to match all values.|string
-    |thin|false|return only thin triggers. Currently Ignored|boolean
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+|dampeningId|Yes|Dampening id|string|-|-
+
 |=======================
 
-*Response* +
-void
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
+|Status Code|Reason|Response Model
 
-|=======================
+|200|Success, Dampening Found.|<<Dampening>>
+|404|No Dampening Found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
 
-{empty} +
-
-NOTE: *Create a new trigger* +
-      _Returns created Trigger_
-
-*Method*
-****
-*POST* `/triggers/`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*body parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |body|true|Trigger definition to be created|<<Trigger,Trigger>>
 |=======================
 
-*Response* +
-Trigger
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__triggers__triggerId__dampenings__dampeningId_]]
+*Endpoint PUT `/triggers/{triggerId}/dampenings/{dampeningId}`*
+
+NOTE: *Update an existing dampening definition.* +
+_Note that the trigger mode can not be changed. Return Dampening updated._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|triggerId|Yes|Trigger definition id to be retrieved.|string|-|-
+|dampeningId|Yes|Dampening id.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Updated dampening definition|<<Dampening>>
+
+|=======================
+
+
+
+*Response*
 
 *Status codes*
-[options="header"]
+[cols="^20,55,^25", options="header"]
 |=======================
-| Status Code | Reason      | Response Model
-| 200    | Success, Trigger Created | -
-| 500    | Internal server error | -
-| 400    | Bad Request/Invalid Parameters | -
+|Status Code|Reason|Response Model
+
+|200|Success, Dampening Updated.|<<Dampening>>
+|404|No Dampening Found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
 
 |=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 
 ==============================================
-*Endpoint* `/triggers/groups/{groupId}/members`
-
-
-NOTE: *Find all Group Member Trigger Definitions* +
-      _Pagination is not yet implemented_
-
-*Method*
-****
-*GET* `/triggers/groups/{groupId}/members`
-****
-
-*header parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |Hawkular-Tenant|false||string
-|=======================
-*path parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |groupId|true|Group TriggerId|string
-|=======================
-*query parameters*
-
-[options="header"]
-|=======================
-|Parameter|Required|Description|Data Type
-    |includeOrphans|false|include Orphan members? No if omitted.|boolean
-|=======================
-
-*Response* +
-void
-
-*Status codes*
-[options="header"]
-|=======================
-| Status Code | Reason      | Response Model
-| 200    | Success | -
-| 500    | Internal server error | -
-
-|=======================
-
-{empty} +
-
-==============================================
-
-{empty} +
 
 
 == Data Types
 
-{empty} +
+
+
+[[Action]]
+=== Action
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|actionId|No|-|string|-|-
+|actionPlugin|No|-|string|-|-
+|calendar|No|-|null|-|-
+|ctime|No|-|integer|int64|-
+|event|No|-|null|-|-
+|eventId|No|-|string|-|-
+|properties|No|-|object|-|-
+|result|No|-|string|-|-
+|states|No|-|array of string|-|-
+|tenantId|No|-|string|-|-
+
+|=======================
+
+
+[[ActionDefinition]]
+=== ActionDefinition
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|actionId|No|-|string|-|-
+|actionPlugin|No|-|string|-|-
+|calendar|No|-|null|-|-
+|properties|No|-|object|-|-
+|states|No|-|array of string|-|-
+|tenantId|No|-|string|-|-
+
+|=======================
+
 
 [[Alert]]
 === Alert
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|resolvedTime|long|optional|-|-
-|text|string|optional|-|-
-|ackBy|string|optional|-|-
-|category|string|optional|-|-
-|ackTime|long|optional|-|-
-|severity|Severity|optional|-|LOW, MEDIUM, HIGH, CRITICAL
-|dataSource|string|optional|-|-
-|resolvedBy|string|optional|-|-
-|dampening|Dampening|optional|-|-
-|trigger|Trigger|optional|-|-
-|resolvedEvalSets|List[Set[ConditionEval]]|optional|-|-
-|status|Status|optional|-|OPEN, ACKNOWLEDGED, RESOLVED
-|evalSets|List[Set[ConditionEval]]|optional|-|-
-|ctime|long|optional|-|-
-|tenantId|string|optional|-|-
-|notes|List[Note]|optional|-|-
-|dataId|string|optional|-|-
-|eventType|string|optional|-|-
-|tags|Map[string,string]|optional|-|-
-|id|string|optional|-|-
-|context|Map[string,string]|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|ackBy|No|-|string|-|-
+|ackTime|No|-|integer|int64|-
+|category|No|-|string|-|-
+|context|No|-|object|-|-
+|ctime|No|-|integer|int64|-
+|dampening|No|-|null|-|-
+|dataId|No|-|string|-|-
+|dataSource|No|-|string|-|-
+|evalSets|No|-|array of array|-|-
+|eventType|No|-|string|-|-
+|id|No|-|string|-|-
+|notes|No|-|array of <<Note>>|-|-
+|resolvedBy|No|-|string|-|-
+|resolvedEvalSets|No|-|array of array|-|-
+|resolvedTime|No|-|integer|int64|-
+|severity|No|-|string|-|LOW, MEDIUM, HIGH, CRITICAL
+|status|No|-|string|-|OPEN, ACKNOWLEDGED, RESOLVED
+|tags|No|-|object|-|-
+|tenantId|No|-|string|-|-
+|text|No|-|string|-|-
+|trigger|No|-|null|-|-
+
+|=======================
+
+
+[[ApiError]]
+=== ApiError
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|errorMsg|No|-|string|-|-
+
 |=======================
 
 
 [[Condition]]
 === Condition
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|conditionSetSize|int|optional|-|-
-|type|Type|optional|-|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE
-|conditionId|string|optional|-|-
-|triggerMode|Mode|optional|-|FIRING, AUTORESOLVE
-|triggerId|string|optional|-|-
-|tenantId|string|optional|-|-
-|conditionSetIndex|int|optional|-|-
-|dataId|string|optional|-|-
-|context|Map[string,string]|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|conditionId|No|-|string|-|-
+|conditionSetIndex|No|-|integer|int32|-
+|conditionSetSize|No|-|integer|int32|-
+|context|No|-|object|-|-
+|dataId|No|-|string|-|-
+|tenantId|No|-|string|-|-
+|triggerId|No|-|string|-|-
+|triggerMode|No|-|string|-|FIRING, AUTORESOLVE
+|type|No|-|string|-|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE
+
+|=======================
+
+
+[[ConditionEval]]
+=== ConditionEval
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|context|No|-|object|-|-
+|dataTimestamp|No|-|integer|int64|-
+|evalTimestamp|No|-|integer|int64|-
+|type|No|-|string|-|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE
+
 |=======================
 
 
 [[Dampening]]
 === Dampening
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|dampeningId|string|optional|-|-
-|type|Type|optional|-|STRICT, RELAXED_COUNT, RELAXED_TIME, STRICT_TIME, STRICT_TIMEOUT
-|evalTrueSetting|int|optional|Number of required true evaluations for STRICT, RELAXED_COUNT, RELAXED_TIME|>= 1
-|evalTimeSetting|long|optional|Time period in milliseconds for RELAXED_TIME, STRICT_TIME, STRICT_TIMEOUT|> 0
-|triggerMode|Mode|optional|-|FIRING, AUTORESOLVE
-|triggerId|string|optional|-|-
-|tenantId|string|optional|-|-
-|evalTotalSetting|int|optional|Number of allowed evaluation attempts for RELAXED_COUNT|> evalTrueSetting
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dampeningId|No|-|string|-|-
+|evalTimeSetting|No|Time period in milliseconds for RELAXED_TIME, STRICT_TIME, STRICT_TIMEOUT|integer|int64|-
+|evalTotalSetting|No|Number of allowed evaluation attempts for RELAXED_COUNT|integer|int32|-
+|evalTrueSetting|No|Number of required true evaluations for STRICT, RELAXED_COUNT, RELAXED_TIME|integer|int32|-
+|tenantId|No|-|string|-|-
+|triggerId|No|-|string|-|-
+|triggerMode|No|-|string|-|FIRING, AUTORESOLVE
+|type|No|-|string|-|STRICT, RELAXED_COUNT, RELAXED_TIME, STRICT_TIME, STRICT_TIMEOUT
+
+|=======================
+
+
+[[Data]]
+=== Data
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|context|No|-|object|-|-
+|id|No|-|string|-|-
+|source|No|-|string|-|-
+|tenantId|No|-|string|-|-
+|timestamp|No|-|integer|int64|-
+|value|No|-|string|-|-
+
+|=======================
+
+
+[[Definitions]]
+=== Definitions
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|actions|No|-|array of <<ActionDefinition>>|-|-
+|triggers|No|-|array of <<FullTrigger>>|-|-
+
 |=======================
 
 
 [[Event]]
 === Event
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|text|string|optional|-|-
-|category|string|optional|-|-
-|dampening|Dampening|optional|-|-
-|dataSource|string|optional|-|-
-|trigger|Trigger|optional|-|-
-|evalSets|List[Set[ConditionEval]]|optional|-|-
-|ctime|long|optional|-|-
-|tenantId|string|optional|-|-
-|dataId|string|optional|-|-
-|eventType|string|optional|-|-
-|tags|Map[string,string]|optional|-|-
-|context|Map[string,string]|optional|-|-
-|id|string|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|category|No|-|string|-|-
+|context|No|-|object|-|-
+|ctime|No|-|integer|int64|-
+|dampening|No|-|null|-|-
+|dataId|No|-|string|-|-
+|dataSource|No|-|string|-|-
+|evalSets|No|-|array of array|-|-
+|eventType|No|-|string|-|-
+|id|No|-|string|-|-
+|tags|No|-|object|-|-
+|tenantId|No|-|string|-|-
+|text|No|-|string|-|-
+|trigger|No|-|null|-|-
+
 |=======================
 
 
 [[FullTrigger]]
 === FullTrigger
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|dampenings|Array[Dampening]|optional|-|-
-|trigger|Trigger|optional|-|-
-|conditions|Array[Condition]|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|conditions|No|-|array of <<Condition>>|-|-
+|dampenings|No|-|array of <<Dampening>>|-|-
+|trigger|No|-|null|-|-
+
+|=======================
+
+
+[[GroupConditionsInfo]]
+=== GroupConditionsInfo
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|conditions|No|-|array of <<Condition>>|-|-
+|dataIdMemberMap|No|-|object|-|-
+
 |=======================
 
 
 [[GroupMemberInfo]]
 === GroupMemberInfo
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|groupId|string|optional|-|-
-|memberName|string|optional|-|-
-|memberContext|Map[string,string]|optional|-|-
-|memberTags|Map[string,string]|optional|-|-
-|memberDescription|string|optional|-|-
-|dataIdMap|Map[string,string]|optional|-|-
-|memberId|string|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataIdMap|No|-|object|-|-
+|groupId|No|-|string|-|-
+|memberContext|No|-|object|-|-
+|memberDescription|No|-|string|-|-
+|memberId|No|-|string|-|-
+|memberName|No|-|string|-|-
+|memberTags|No|-|object|-|-
+
+|=======================
+
+
+[[Note]]
+=== Note
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|ctime|No|-|integer|int64|-
+|text|No|-|string|-|-
+|user|No|-|string|-|-
+
+|=======================
+
+
+[[TimeConstraint]]
+=== TimeConstraint
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|endTime|No|-|string|-|-
+|inRange|No|-|boolean|-|-
+|relative|No|-|boolean|-|-
+|startTime|No|-|string|-|-
+
 |=======================
 
 
 [[Trigger]]
 === Trigger
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|autoResolveAlerts|boolean|optional|-|-
-|autoResolveMatch|Match|optional|-|ALL, ANY
-|actions|Map[string,Set[string]]|optional|-|-
-|autoEnable|boolean|optional|-|-
-|type|TriggerType|optional|-|STANDARD, GROUP, DATA_DRIVEN_GROUP, MEMBER, ORPHAN
-|source|string|optional|-|-
-|description|string|optional|-|-
-|eventCategory|string|optional|-|-
-|severity|Severity|optional|-|LOW, MEDIUM, HIGH, CRITICAL
-|name|string|optional|-|-
-|autoResolve|boolean|optional|-|-
-|eventText|string|optional|-|-
-|tenantId|string|optional|-|-
-|autoDisable|boolean|optional|-|-
-|memberOf|string|optional|-|-
-|eventType|EventType|optional|-|ALERT, EVENT
-|tags|Map[string,string]|optional|-|-
-|firingMatch|Match|optional|-|ALL, ANY
-|enabled|boolean|optional|-|-
-|context|Map[string,string]|optional|-|-
-|id|string|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|actions|No|-|array of <<TriggerAction>>|-|-
+|autoDisable|No|-|boolean|-|-
+|autoEnable|No|-|boolean|-|-
+|autoResolve|No|-|boolean|-|-
+|autoResolveAlerts|No|-|boolean|-|-
+|autoResolveMatch|No|-|string|-|ALL, ANY
+|context|No|-|object|-|-
+|dataIdMap|No|-|object|-|-
+|description|No|-|string|-|-
+|enabled|No|-|boolean|-|-
+|eventCategory|No|-|string|-|-
+|eventText|No|-|string|-|-
+|eventType|No|-|string|-|ALERT, EVENT
+|firingMatch|No|-|string|-|ALL, ANY
+|id|No|-|string|-|-
+|memberOf|No|-|string|-|-
+|name|No|-|string|-|-
+|severity|No|-|string|-|LOW, MEDIUM, HIGH, CRITICAL
+|source|No|-|string|-|-
+|tags|No|-|object|-|-
+|tenantId|No|-|string|-|-
+|type|No|-|string|-|STANDARD, GROUP, DATA_DRIVEN_GROUP, MEMBER, ORPHAN
+
+|=======================
+
+
+[[TriggerAction]]
+=== TriggerAction
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|actionId|No|-|string|-|-
+|actionPlugin|No|-|string|-|-
+|calendar|No|-|null|-|-
+|states|No|-|array of string|-|-
+|tenantId|No|-|string|-|-
+
 |=======================
 
 
 [[UnorphanMemberInfo]]
 === UnorphanMemberInfo
-[options="header"]
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-| Name | Type | Required | Description | Allowable Values
-|memberContext|Map[string,string]|optional|-|-
-|memberTags|Map[string,string]|optional|-|-
-|dataIdMap|Map[string,string]|optional|-|-
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataIdMap|No|-|object|-|-
+|memberContext|No|-|object|-|-
+|memberTags|No|-|object|-|-
+
 |=======================
 
-
-{empty} +
-{empty} +
-{empty} +
