@@ -409,6 +409,9 @@ https://issues.jboss.org/browse/HWKMETRICS-380[HWKMETRICS-380] for details.
 *TODO*
 Add section on how Cassandra handles deletes.
 
+== Creating Tenants and Metrics
+*TODO*
+
 == Tagging
 Tags in Hawkular Metrics are key/value pairs. Tags can be applied to a metric to provide meta data for the time series
 as a whole. Tags can also be applied to individual data points. Tags can be used to perform filtering in queries.
@@ -435,6 +438,8 @@ curl -X POST http://server/hawkular/metrics/gauges -d @payload.json \
 There are similar endpoints for other metric types.
 
 === Updating Metric Tags
+This endpoint is used to add or replace tags.
+
 [source,shell]
 ----
 curl -X PUT http://server/hawkular/metrics/gauges/request_size/tags -d @payload.json \
@@ -449,7 +454,13 @@ curl -X PUT http://server/hawkular/metrics/gauges/request_size/tags -d @payload.
 }
 ----
 
-This endpoint is used to add or replace tags.
+Alternatively, the tags can be specified in the URL.
+
+[source,shell]
+----
+curl -X PUT http://server/hawkulr/metrics/gauges/request_size/tags/datacenter:dc2,hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
 
 === Deleting Metric Tags
 [source,shell]
@@ -466,7 +477,23 @@ curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags -d @paylo
 }
 ----
 
-Note that for deleting tags both the key and the value have to be specified.
+[TIP]
+Note that both the key and value have to have to be specified, but anything can be specified for the tag value.
+In the future, this endpoint might be updated to only require the tag keys. See
+https://issues.jboss.org/browse/HWKMETRICS-385[HWKMETRICS-385] for details.
+
+Alternatively, the tags can be specified in the URL.
+
+[source,shell]
+----
+curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags/env:stage,status:active \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+=== Tag Filtering
+
+Coming soon...
+
 
 == Incrementing Counters
 *TODO*
