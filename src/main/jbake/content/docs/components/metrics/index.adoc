@@ -25,13 +25,18 @@ a rich, growing set of features that includes:
 All identifiers are stored as variable length, UTF-8 encoded strings. This includes:
 
 * Tenant ids
-* Metric names
+* Metric names (see <<Metric Ids>> section below for more details on metric names
 * Tag keys (for both metric and data point tags)
 
 [TIP]
 At present there is no restriction on characters that can be used in identifiers. This may change in the future
 though (See link:https://issues.jboss.org/browse/HWKMETRICS-208[HWKMETRICS-208] for details). For this reason it is
 recommended to restrict the characters to letters, numbers, underscore, period, and forward slash.
+
+[TIP]
+If an identifier uses a character that is defined as special character in the HTTP spec, it must be encoded. Forward
+slashes are no exception. If for example I have a tenant id of `com/acme`, then in HTTP requests it should be encoded
+as `com%2Facme`.
 
 == Multi Tenancy
 Hawkular Metrics provides _virtual_ multi tenancy. All data is mapped to a tenant, but the data on disk is not
@@ -132,12 +137,20 @@ unique.
 Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
 are inserted. On the server side, multiple inserts to the database are done in parallel to achieve higher throughput.
 
+=== Failures
 If there is an error inserting a data point, the operation is aborted and any data in the request not yet written into
-the database will be ignored.
+the database will be ignored. When there is an error, there is no reliable way to determine the remaining data
+points that still need to be persisted. This is due to the fact that writes to the database are asynchronous and are
+done in parallel. This means data points will not necessarily be written in the order received.
 
+[TIP]
+Unless stated otherwise, it can be assumed that writes in Hawkular Metrics are idempotent as is the case with writing
+data points. If there is an error writing data points, the client can simply retry the request.
+
+=== Examples
 There are several operations available for insert data points.
 
-=== Gauge Data
+==== Gauge Data
 [source,shell]
 .Insert data points for a single gauge
 ----
@@ -188,7 +201,7 @@ curl -X POST http://server/hawkular/metrics/gauges/raw -d @payload.json \
 The request body is a bit more complex. Each array element is an object that has `id` and `data` properties. `data`
 contains an array of data points.
 
-=== Counter Data
+==== Counter Data
 [source,shell]
 .Insert data points for a single counter
 ----
@@ -233,7 +246,7 @@ curl -X POST http://server/hawkular/metrics/counters/raw -d @payload.json \
 ]
 ----
 
-=== Availability Data
+==== Availability Data
 [source,shell]
 .Insert data points for a single availability
 ----
@@ -278,7 +291,7 @@ curl -X POST http://server/hawkular/metrics/availability/raw -d @payload.json \
 ]
 ----
 
-=== Mixed Data
+==== Mixed Data
 [source,shell]
 ----
 curl -X POST http://server/hawkular/metrics/metrics/data -d @payload.json \
