@@ -38,9 +38,18 @@ Hawkular Metrics provides _virtual_ multi tenancy. All data is mapped to a tenan
 physically partitioned by tenant. From an API perspective though, everything is partitioned by tenant. All requests,
 both reads and writes, must include a tenant id.
 
-A tenant has an id that uniquely identifies it. The id is a variable length, UTF-8 encoded string.
-
 TIP: Tenants do not have to be explicitly created. They will be created when inserting data points.
+
+=== Tenant Ids
+A tenant has an id that uniquely identifies it. The id is a variable length, UTF-8 encoded string. Hawkular Metrics
+does not perform any validation checks to prevent duplicate ids. This is in large part due to Cassandra's design. Among
+other things, Cassandra is a key/value store. Inserting a row into Cassandra is similar to inserting an entry into a
+map. If the key already exists in the map, it will simply be overwritten with the new value. This is exactly how
+Cassandra behaves.
+
+[IMPORTANT]
+If a duplicate id is used, data will be silently overwritten. Users are responsible for ensuring that tenant ids are
+unique.
 
 == Metric Types
 A metric represents a single time series or continuous stream of data points. A data point consists of a timestamp and
@@ -111,6 +120,224 @@ integer. The metric name is stored as a variable length, UTF-8 encoded string.
 The parts that comprise the metric id provide namespacing. A metric name only has to be unique for the metric type and
 the tenant. For example, suppose we have a tenant id of com.acme. The com.acme tenant could have a gauge named
 http_request_time and also have a counter named http_request_time.
+
+Just like with tenant ids, Hawkular Metrics does not perform any validation checks to ensure metric ids are unique.
+It is also import to remember that the name portion of the id only needs to be unique for the metric type and tenant.
+
+[IMPORTANT]
+If a duplicate id is used, data will be silently overwritten. Users are responsible for ensuring that metric ids are
+unique.
+
+== Inserting Data
+Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
+are inserted. On the server side, multiple inserts to the database are done in parallel to achieve higher throughput.
+
+If there is an error inserting a data point, the operation is aborted and any data in the request not yet written into
+the database will be ignored.
+
+There are several operations available for insert data points.
+
+=== Gauge Data
+[source,shell]
+.Insert data points for a single gauge
+----
+curl -X POST http://server/hawkular/metrics/gauges/request_size/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {"timestamp:" 1460413065369, "value": 3.14},
+  {"timestamp:" 1460413025569, "value": 4.57},
+  {"timestamp:" 1460111065369, "value": 5.056}
+]
+----
+
+The gauge name is `request_size` and the endpoint is `/hawkular/metrics/gauges/$metric/raw`.
+The value of the `timestamp` property should be a unix timestamp. +
+ +
+
+[source,shell]
+.Insert data points for multiple gauges
+----
+curl -X POST http://server/hawkular/metrics/gauges/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {
+    "id": "free_memory",
+    "data": [
+      {"timestamp": 1460111065369, value: 2048},
+      {"timestamp": 1460151065369, value: 2012}
+    ]
+  },
+  {
+    "id": "used_memory",
+    "data": [
+      {"timestamp": 1460111065369, value: 2048},
+      {"timestamp": 1460151065369, value: 2075}
+    ]
+  }
+]
+----
+
+The request body is a bit more complex. Each array element is an object that has `id` and `data` properties. `data`
+contains an array of data points.
+
+=== Counter Data
+[source,shell]
+.Insert data points for a single counter
+----
+curl -X POST http://server/hawkular/metrics/counters/total_requests/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {"timestamp:" 1460413065369, "value": 69},
+  {"timestamp:" 1460413025569, "value": 65},
+  {"timestamp:" 1460111065369, "value": 51}
+]
+----
+
+
+[source,shell]
+.Insert data points for multiple counters
+----
+curl -X POST http://server/hawkular/metrics/counters/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {
+    "id": "page_views",
+    "data": [
+      {"timestamp": 1460111065369, value: 238},
+      {"timestamp": 1460151065369, value: 254}
+    ]
+  },
+  {
+    "id": "error_count",
+    "data": [
+      {"timestamp": 1460111065369, value: 12},
+      {"timestamp": 1460151065369, value: 17}
+    ]
+  }
+]
+----
+
+=== Availability Data
+[source,shell]
+.Insert data points for a single availability
+----
+curl -X POST http://server/hawkular/metrics/availability/server1/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {"timestamp:" 1460413065369, "value": "down"},
+  {"timestamp:" 1460413025569, "value": "down"},
+  {"timestamp:" 1460111065369, "value": "up"}
+]
+----
+
+
+[source,shell]
+.Insert data points for multiple availabilities
+----
+curl -X POST http://server/hawkular/metrics/availability/raw -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+[
+  {
+    "id": "server1",
+    "data": [
+      {"timestamp": 1460111065369, value: "up"},
+      {"timestamp": 1460151065369, value: "up"}
+    ]
+  },
+  {
+    "id": "server2",
+    "data": [
+      {"timestamp": 1460111065369, value: "unknown"},
+      {"timestamp": 1460151065369, value: "up"}
+    ]
+  }
+]
+----
+
+=== Mixed Data
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/metrics/data -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+{
+  "gauges": [
+    {
+      "id": "free_memory",
+      "data": [
+        {"timestamp": 1460111065369, value: 2048},
+        {"timestamp": 1460151065369, value: 2012}
+      ]
+    },
+    {
+      "id": "used_memory",
+      "data": [
+        {"timestamp": 1460111065369, value: 2048},
+        {"timestamp": 1460151065369, value: 2075}
+      ]
+    }
+  ],
+  "counters": [
+    {
+      "id": "page_views",
+      "data": [
+        {"timestamp": 1460111065369, value: 238},
+        {"timestamp": 1460151065369, value: 254}
+      ]
+    },
+    {
+      "id": "error_count",
+      "data": [
+        {"timestamp": 1460111065369, value: 12},
+        {"timestamp": 1460151065369, value: 17}
+      ]
+    }
+  ],
+  "availability": [
+    {
+      "id": "server1",
+      "data": [
+        {"timestamp": 1460111065369, value: "up"},
+        {"timestamp": 1460151065369, value: "up"}
+      ]
+    },
+    {
+      "id": "server2",
+      "data": [
+        {"timestamp": 1460111065369, value: "unknown"},
+        {"timestamp": 1460151065369, value: "up"}
+      ]
+    }
+  ]
+}
+----
 
 == Data Retention and Removal
 Metric data is automatically deleted from the system after an amount of time that is determined by data retention
