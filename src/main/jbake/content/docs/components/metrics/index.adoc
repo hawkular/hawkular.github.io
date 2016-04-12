@@ -397,12 +397,71 @@ https://issues.jboss.org/browse/HWKMETRICS-380[HWKMETRICS-380] for details.
 Add section on how Cassandra handles deletes.
 
 == Tagging
-*TODO*
+Tags in Hawkular Metrics are key/value pairs. Tags can be applied to a metric to provide meta data for the time series
+as a whole. Tags can also be applied to individual data points. Tags can be used to perform filtering in queries.
+
+=== Creating Metric Tags
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/gauges -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+{
+  "id": "request_size",
+  "tags": {
+    "datacenter": "dc1",
+    "env": "stage"
+    "units": "bytes"
+  }
+}
+----
+
+There are similar endpoints for other metric types.
+
+=== Updating Metric Tags
+[source,shell]
+----
+curl -X PUT http://server/hawkular/metrics/gauges/request_size/tags -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+{
+  "datacenter": "dc2",
+  "hostname": "server1"
+}
+----
+
+This endpoint is used to add or replace tags.
+
+=== Deleting Metric Tags
+[source,shell]
+----
+curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags -d @payload.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+----
+{
+  "env": "stage",
+  "status": "active"
+}
+----
+
+Note that for deleting tags both the key and the value have to be specified.
 
 == Incrementing Counters
 *TODO*
 
 == Querying for data
+*TODO*
+
+== Security
 *TODO*
 
 == Links
