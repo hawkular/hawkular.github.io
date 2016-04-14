@@ -38,6 +38,162 @@ The API understands all timestamps as milliseconds since January 1, 1970, 00:00:
 == REST APIs
 
 
+=== Forecaster
+. link:#++PUT__metrics__metricId__forecaster++[Change forecaster configuration.]
+. link:#++GET__metrics__metricId__forecaster_forecast++[Predict future values of given metric.]
+. link:#++POST__metrics__metricId__forecaster_learn++[Learn model based on inserted values.]
+
+
+==============================================
+
+[[PUT__metrics__metricId__forecaster]]
+*Endpoint PUT `/metrics/{metricId}/forecaster`*
+
+NOTE: *Change forecaster configuration.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<Update>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Success, prediction successfully enabled|-
+|400|Missing or invalid payload|<<ApiError>>
+|404|Subscription of given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__metrics__metricId__forecaster_forecast]]
+*Endpoint GET `/metrics/{metricId}/forecaster/forecast`*
+
+NOTE: *Predict future values of given metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|ahead|No|-|integer|int32|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, predictions returned|-
+|404|Subscription of given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__metrics__metricId__forecaster_learn]]
+*Endpoint POST `/metrics/{metricId}/forecaster/learn`*
+
+NOTE: *Learn model based on inserted values.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|metricId|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Success, learning successfully processed|-
+|400|Missing or invalid payload|<<ApiError>>
+|404|Subscription of given metric not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
 === Info
 . link:#++GET__++[Returns complete list of REST endpoints.]
 
@@ -68,21 +224,20 @@ NOTE: *Returns complete list of REST endpoints.* +
 ==============================================
 
 
-=== Models
-. link:#++GET__models++[Get all models for given tenant.]
-. link:#++POST__models++[Enable prediction for given metric.]
-. link:#++DELETE__models__id_++[Deletes model for given metric.]
-. link:#++GET__models__metricId_++[Get model for given metric.]
-. link:#++POST__models__metricId__learn++[Learn model based on inserted values.]
-. link:#++GET__models__metricId__predict++[Predict future values of given metric.]
+=== Subscription
+. link:#++GET__metrics++[Get all subscriptions of tenant.]
+. link:#++POST__metrics++[Subscribe metric for prediction.]
+. link:#++DELETE__metrics__id_++[Deletes subscription of given metric.]
+. link:#++PUT__metrics__id_++[Modify metric metadata.]
+. link:#++GET__metrics__metricId_++[Get a concrete subscription.]
 
 
 ==============================================
 
-[[GET__models]]
-*Endpoint GET `/models`*
+[[GET__metrics]]
+*Endpoint GET `/metrics`*
 
-NOTE: *Get all models for given tenant.* +
+NOTE: *Get all subscriptions of tenant.* +
 
 
 
@@ -95,7 +250,7 @@ NOTE: *Get all models for given tenant.* +
 |Status Code|Reason|Response Model
 
 |200|Success|-
-|404|Model for given metric not found|<<ApiError>>
+|404|Subscription for given metric not found|<<ApiError>>
 |500|Server error|<<ApiError>>
 
 |=======================
@@ -109,10 +264,10 @@ NOTE: *Get all models for given tenant.* +
 
 ==============================================
 
-[[POST__models]]
-*Endpoint POST `/models`*
+[[POST__metrics]]
+*Endpoint POST `/metrics`*
 
-NOTE: *Enable prediction for given metric.* +
+NOTE: *Subscribe metric for prediction.* +
 
 
 
@@ -136,9 +291,9 @@ NOTE: *Enable prediction for given metric.* +
 |=======================
 |Status Code|Reason|Response Model
 
-|201|Success, Prediction successfully enabled|-
+|201|Success, prediction successfully enabled|-
 |400|Missing or invalid payload|<<ApiError>>
-|409|Model for given metric already enabled|<<ApiError>>
+|409|Subscription for given metric already enabled|<<ApiError>>
 |500|Server error|<<ApiError>>
 
 |=======================
@@ -152,10 +307,10 @@ NOTE: *Enable prediction for given metric.* +
 
 ==============================================
 
-[[DELETE__models__id_]]
-*Endpoint DELETE `/models/{id}`*
+[[DELETE__metrics__id_]]
+*Endpoint DELETE `/metrics/{id}`*
 
-NOTE: *Deletes model for given metric.* +
+NOTE: *Deletes subscription of given metric.* +
 
 
 
@@ -195,10 +350,65 @@ NOTE: *Deletes model for given metric.* +
 
 ==============================================
 
-[[GET__models__metricId_]]
-*Endpoint GET `/models/{metricId}`*
+[[PUT__metrics__id_]]
+*Endpoint PUT `/metrics/{id}`*
 
-NOTE: *Get model for given metric.* +
+NOTE: *Modify metric metadata.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<Update>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Success, prediction successfully enabled|-
+|400|Missing or invalid payload|<<ApiError>>
+|409|Subscription for given metric already enabled|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__metrics__metricId_]]
+*Endpoint GET `/metrics/{metricId}`*
+
+NOTE: *Get a concrete subscription.* +
 
 
 
@@ -223,104 +433,7 @@ NOTE: *Get model for given metric.* +
 |Status Code|Reason|Response Model
 
 |200|Success|-
-|404|Model for given metric not found|<<ApiError>>
-|500|Server error|<<ApiError>>
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__models__metricId__learn]]
-*Endpoint POST `/models/{metricId}/learn`*
-
-NOTE: *Learn model based on inserted values.* +
-
-
-
-
-*Path parameters*
-
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Parameter|Required|Description|Type|Format|Allowable Values
-
-|metricId|Yes|-|string|-|-
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Success, Learning successfully processed|-
-|400|Missing or invalid payload|<<ApiError>>
-|404|Prediction of given metric not found|<<ApiError>>
-|500|Server error|<<ApiError>>
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[GET__models__metricId__predict]]
-*Endpoint GET `/models/{metricId}/predict`*
-
-NOTE: *Predict future values of given metric.* +
-
-
-
-
-*Path parameters*
-
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Parameter|Required|Description|Type|Format|Allowable Values
-
-|metricId|Yes|-|string|-|-
-
-|=======================
-
-
-
-*Query parameters*
-
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Parameter|Required|Description|Type|Format|Allowable Values
-
-|ahead|No|-|integer|int32|-
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|200|Success, Predictions returned|-
-|404|Prediction of given metric not found|<<ApiError>>
+|404|Subscription for given metric not found|<<ApiError>>
 |500|Server error|<<ApiError>>
 
 |=======================
@@ -345,6 +458,16 @@ NOTE: *Predict future values of given metric.* +
 |=======================
 
 
+[[ConceptDriftStrategy]]
+=== ConceptDriftStrategy
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+
+|=======================
+
+
 [[RestBlueprint]]
 === RestBlueprint
 [cols="15,^10,35,^15,^10,^15", options="header"]
@@ -353,6 +476,18 @@ NOTE: *Predict future values of given metric.* +
 
 |collectionInterval|No|-|integer|int64|-
 |metricId|No|-|string|-|-
+
+|=======================
+
+
+[[Update]]
+=== Update
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|collectionInterval|No|-|integer|int64|-
+|forecastingHorizon|No|-|integer|int64|-
 
 |=======================
 
