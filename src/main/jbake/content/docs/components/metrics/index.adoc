@@ -565,7 +565,7 @@ tag filtering is supported in various APIs can be found in <<Querying>>.
 [grid="all"]
 |===
 |Expression |Example |Description
-|:* |zone:* |Search for tag named `zone` having any value.
+|tag_name:* |zone:* |Search for tag named `zone` having any value.
 |tag_name:value |zone:us-east-1 |Search for tag named `zone` having value `us-east-1`.
 |tag_name:value1\|value2 |zone:us-east-1\|us-west-1 |Search for tag named `zone` having a value of either `us-east-1`
 or `us-west-1`.
@@ -577,11 +577,84 @@ and tag named `hostname` with value `dbserver01`.
 with value `us-east-1` and tag named `server` having a value of either `server01` or `server01`.
 |===
 
+== Querying
+The examples provided in the following sections are not an exhaustive listing of the full API. For a complete reference
+see the complete link:../../rest/rest-metrics.html[REST API documentation].
+
+=== Querying for Metrics
+These operations do not fetch data points but rather the metric definition itself.
+
+==== Query for Metrics of specific type
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/gauges \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+The response body will look something like,
+
+[source,javascript]
+----
+[
+  {
+    "tenantId": "com.acme",
+    "id": "gauge_1"
+  },
+  {
+    "tenantId": "com.acme",
+    "id": "gauge_2",
+    "dataRetention": 20
+  },
+  {
+    "tenantId": "com.acme",
+    "id": "gauge_3",
+    "dataRetention": 15,
+    "tags": {
+      "datacenter": "dc1",
+      "hostname": "server01"
+    }
+  }
+]
+----
+
+`gauge_1` has neither any tags or data retention defined. Its the tenant data retention. If that is not defined, it
+uses the system default. `gauge_2` has its own data retention of 20 days. `gauge_3` has a data retention of 15 days and
+also defines some tags.
+
+Tag filter queries can be used to filter the list of metrics returned.
+
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/gauges?tags=zone:us-west-1,kernel_version=4.0.9 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+Similar endpoints exist for each of the metric types.
+
+==== Query Across All Metric Types
+You can query across all metric types. The next example illustrates the `type` parameter which filters the results by
+the specified types.
+
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/metrics?type=gauge,counter \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+The next example demonstrates querying across all metric types and filtering the results using tag filters.
+
+[source,shell]
+----
+curl -X POST http://server/hawkular/metrics/metrics?tags=zone:us-west-1,kernel_version=4.0.9 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+=== Querying for Data
+*TODO*
+
 == Incrementing Counters
 *TODO*
 
-== Querying
-*TODO*
 
 == Security
 *TODO*
