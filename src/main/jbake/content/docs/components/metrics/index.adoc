@@ -581,7 +581,7 @@ with value `us-east-1` and tag named `server` having a value of either `server01
 The examples provided in the following sections are not an exhaustive listing of the full API. For a complete reference
 see the complete link:../../rest/rest-metrics.html[REST API documentation].
 
-=== Querying for Metrics
+=== Metric Definitions
 These operations do not fetch data points but rather the metric definition itself.
 
 ==== Query for Metrics of specific type
@@ -649,8 +649,142 @@ curl -X POST http://server/hawkular/metrics/metrics?tags=zone:us-west-1,kernel_v
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
-=== Querying for Data
-*TODO*
+=== Raw Data
+The simplest form of querying for raw data points does not require any parameters and returns a list of data points.
+This API is available for each metric type.
+
+[source,shell]
+.simple request to fetch gauge data points
+----
+curl -X GET http://server/hakwular/metrics/gauges/request_size/raw \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.response with gauge data points
+----
+[
+  {"timestamp:" 1460413065369, "value": 3.14},
+  {"timestamp:" 1460212025569, "value": 4.57},
+  {"timestamp:" 1460111065369, "value": 5.056}
+]
+----
+
+[source,shell]
+.simple request to fetch counter data points
+----
+curl -X GET http://server/hakwular/metrics/counters/request_count/raw \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.response with counter data points
+----
+[
+  {"timestamp:" 1460413065369, "value": 7},
+  {"timestamp:" 1460212025569, "value": 11},
+  {"timestamp:" 1460111065369, "value": 19}
+]
+----
+
+[source,shell]
+.simple request to fetch availability data points
+----
+curl -X GET http://server/hakwular/metrics/availability/server1/raw \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.response with availability data points
+----
+[
+  {"timestamp:" 1460413065369, "value": "up"},
+  {"timestamp:" 1460212025569, "value": "up"},
+  {"timestamp:" 1460111065369, "value": "down"}
+]
+----
+
+==== Date Range
+Every query is bounded by a start and an end time. The end time defaults to _now_, and the start time defaults to 8
+hours ago. These can be overridden with the `start` and `end` parameters respectively. The expected format of their
+values is a unix timestamp.
+
+[source,shell]
+.Override start and end times for gauge
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size?start=1235,end=6789 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Override start and end times for counter
+----
+curl -X GET http://server/hawkular/metrics/counters/request_count?start=1235,end=6789 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Override start and end times for availability
+----
+curl -X GET http://server/hawkular/metrics/availability/server1?start=1235,end=6789 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+If the end time is greater than the start time, an error response will be returned with a 400 status code.
+
+==== Sort Order
+Data is sorted by timestamp and returned in sorted order by default. The order by specified with the `order` parameter.
+Accepted values are `ASC` and `DESC`.
+
+[source,shell]
+.Return results in ascending order for gauge
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size?order=ASC \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Return results in ascending order for counter
+----
+curl -X GET http://server/hawkular/metrics/counters/request_count?order=ASC \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Return results in ascending order for availability
+----
+curl -X GET http://server/hawkular/metrics/availability/server1?order=ASC \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+==== Limiting Results
+By default there is no limit on the number of data points returned. The `limit` parameter will limit the number of data
+points returned.
+
+[source,shell]
+.Limit results for gauge
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size?limit=100 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Limit results for counter
+----
+curl -X GET http://server/hawkular/metrics/counters/request_count?limit=100 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,shell]
+.Limit results for availability
+----
+curl -X GET http://server/hawkular/metrics/availability/server1?limit=100 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+=== Counter Rates
+
+=== Downsampling
 
 == Incrementing Counters
 *TODO*
