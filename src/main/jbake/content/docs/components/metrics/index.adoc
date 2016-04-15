@@ -783,6 +783,73 @@ curl -X GET http://server/hawkular/metrics/availability/server1?limit=100 \
 ----
 
 === Counter Rates
+Often times with counters, particularly with rendering graphs, we are more interested in rates. Hawkular Metrics
+generates rate data points on the server side, freeing the client from that work. This is done at query time by simply
+calculating the delta between raw counter data points. The result is multiplied by a factor of 60,000 in order to give
+us a per-minute rate.
+
+Suppose we have the following counter data points:
+
+[grid="all"]
+.Counter data points
+|===
+|Timestamp |Value
+|60000 |0
+|90000 |200
+|210000 |400
+|300000 |550
+|===
+
+To fetch the rates for the counter:
+
+[source,shell]
+.Fetch rate data points
+----
+curl -X GET http://server/hawkular/metrics/counters/request_count/rate
+----
+
+[source,javascript]
+.Counter rates
+----
+[
+  {"timestamp": 90000, "value": 400.00},
+  {"timestamp": 210000, "value": 100.00},
+  {"timestamp": 300000, "value": 100.00}
+]
+----
+
+Note that the values are returned as floating point numbers.
+
+==== Counter Resets
+Sometimes there are events which occur counters to reset. For instance, suppose we are tracking the total number of
+requests to a server since start up. Whenever the server is restarted, we will have a reset event. Hawkular Metrics
+detects a reset event whenever a counter value is less than the previous value. If resets are not handled, they can
+cause inconsistencies in graphs.
+
+Hawkular Metrics handles resets during rate calculations by excluding the data point where the reset is detected. Let's
+illustrate this with an example.
+
+[grid="all"]
+.Counter data points with a reset event
+|===
+|Timestamp |Value
+|60000 |0
+|90000 |200
+|210000 |130
+|300000 |180
+|===
+
+A reset event occurs some time between 90000 and 210000; consequently, we will get back the following rate data points.
+
+[grid="all"]
+.Rate data points with reset
+|===
+|Timestamp |Value
+|90000 |400
+|300000 |33.33
+|===
+
+Note that we exclude the rate data point between 90000 and 210000 timestamps.
 
 === Downsampling
 
