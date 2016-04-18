@@ -1,0 +1,283 @@
+= Monitoring JVM applications with jmxtrans
+Thomas Segismont
+2016-04-19
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, jmxtrans, hawkular, ptrans
+
+In this post, you'll learn how to monitor applications running on the Java Virtual Machine with jmxtrans and Hakwular Metrics.
+
+https://github.com/hawkular/hawkular-metrics[Hawkular Metrics] is an easy to install, scalable metric storage component.
+
+http://www.jmxtrans.org/[jmxtrans] is a popular monitoring tool for Java based applications. It connects to a JVM via
+JMX, collects metrics, and sends the data to the backend of your choice. Very often a Graphite backend is used.
+As an example, we will monitor a Tomcat 8 server.
+
+Hawkular Metrics can store data sent over the Graphite text protocol, thanks to
+https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator[ptrans]. ptrans is a proxy server
+taking in metrics data in several common formats and emitting them as REST requests into Hawkular Metrics backend for
+storage. The figure below illustrates the process.
+
+[[img-ptrans]]
+.ptrans (Protocol Translator)
+ifndef::env-github[]
+image::/img/blog/2016/ptrans.png[ptrans,align="center"]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2016/ptrans.png[ptrans,align="center"]
+endif::[]
+
+jmxtrans will communicate with ptrans over the Graphite text protocol.
+
+== The setup in details
+
+=== Hawkular Metrics and PTrans
+
+http://www.hawkular.org/docs/components/metrics/installation.html[Hawkular Metrics standalone installation] is
+documented on the Hawkular website. ptrans setup is documented on the same page.
+
+=== Tomcat 8
+
+JMX remote access must be enabled otherwise jmxtrans can't connect. To do this, create (or modify) the `setenv.sh`
+script in the `bin` directory.
+
+[source, bash]
+.setenv.sh
+----
+#!/bin/bash
+
+CATALINA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=35135"
+----
+
+=== jmxtrans
+
+Download the latest https://github.com/jmxtrans/jmxtrans/releases[jmxtrans distribution]. Expand it somewhere on
+your disk.
+
+In the `bin` directory, create a `jmxtrans.conf` file. It will be sourced by the `jmxtrans.sh` script.
+
+[source, bash]
+.jmxtrans.conf
+----
+#!/bin/bash
+
+JAR_FILE="/path/to/jmx-trans/lib/jmxtrans-all.jar" #<1>
+LOG_DIR="/path/to/jmx-trans/bin" #<2>
+LOG_FILE="/path/to/jmx-trans/bin/jmxtrans.out" #<3>
+SECONDS_BETWEEN_RUNS=5 #<4>
+
+----
+<1> Where the script will find the jmxtrans fat JAR
+<2> The directory where log files should be written
+<3> The file where the process output will be redirected
+<4> Instructs jmxtrans to collect metrics and send data every 5 seconds
+
+Then create the main configuration file, `config.json`. The https://github.com/jmxtrans/jmxtrans/wiki[jmxtrans wiki]
+has a detailed reference.
+
+[source, json]
+.config.json
+----
+{
+  "servers": [
+    {
+      "numQueryThreads": "2",
+      "host": "localhost", //<1>
+      "port": "35135", //<2>
+      "queries": [ //<3>
+        {
+          "outputWriters": [ //<4>
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter" //<5>
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter", //<6>
+              "settings": {
+                "host": "127.0.0.1", //<7>
+                "port": "2003" //<8>
+              }
+            }
+          ],
+          "obj": "java.lang:type=OperatingSystem", //<9>
+          "attr": [ //<10>
+            "SystemLoadAverage",
+            "AvailableProcessors",
+            "TotalPhysicalMemorySize",
+            "FreePhysicalMemorySize",
+            "TotalSwapSpaceSize",
+            "FreeSwapSpaceSize",
+            "OpenFileDescriptorCount",
+            "MaxFileDescriptorCount"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "heap",
+          "obj": "java.lang:type=Memory",
+          "attr": [
+            "HeapMemoryUsage",
+            "NonHeapMemoryUsage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "cmsoldgen",
+          "obj": "java.lang:name=CMS Old Gen,type=MemoryPool",
+          "attr": [
+            "Usage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "gc",
+          "obj": "java.lang:type=GarbageCollector,name=*",
+          "attr": [
+            "CollectionCount",
+            "CollectionTime"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter",
+              "settings": {}
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "memorypool",
+          "obj": "java.lang:type=MemoryPool,name=*",
+          "attr": [
+            "Usage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "threads",
+          "obj": "java.lang:type=Threading",
+          "attr": [
+            "DaemonThreadCount",
+            "PeakThreadCount",
+            "ThreadCount",
+            "TotalStartedThreadCount"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "tomcat8-connectors",
+          "obj": "Catalina:type=ThreadPool,name=*",
+          "attr": [
+            "currentThreadCount",
+            "currentThreadsBusy"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "tomcat8-requests",
+          "obj": "Catalina:type=GlobalRequestProcessor,name=*",
+          "attr": [
+            "bytesReceived",
+            "bytesSent",
+            "errorCount",
+            "processingTime",
+            "requestCount"
+          ]
+        }
+      ]
+    }
+  ]
+}
+----
+<1> name of the host where Tomcat is running
+<2> jmx remoting port (must match the value set in `setenv.sh` in Tomcat installation)
+<3> queries item lists the MBeans which should be invoked
+<4> output writers item indicates where data collected should be sent
+<5> StdOutWriter simply prints collected data to the process output stream (useful for configuration debugging)
+<6> GraphiteWriter sends data to a remote server which understands the Graphite protocols; by default, the text protocol
+is used
+<7> graphite remote host (must match the value set in `ptrans.conf`)
+<8> graphite remote port (must match the value set in `ptrans.conf`)
+<9> name of the MBean to invoke
+<10> list of attributes to collect
+
+Eventually, start jmxtrans.
+
+[source, bash]
+.Starting jmxtrans
+----
+./jmxtrans.sh start config.json
+----
+
+That's it!
