@@ -119,23 +119,6 @@ As previously stated all data is partitioned by tenant. Hawkular Metrics enforce
 `Hawkular-Tenant` HTTP header in requests. The value of the header is the tenant id. We saw this already with the
 implicit tenant creation. The `/tenants` endpoint is one exception in that it does not require the header.
 
-== Identifiers
-All identifiers are stored as variable length, UTF-8 encoded strings. This includes:
-
-* Tenant ids
-* Metric names (see <<Metric Ids>> section below for more details on metric names
-* Tag keys (for both metric and data point tags)
-
-[TIP]
-At present there is no restriction on characters that can be used in identifiers. This may change in the future
-though (See link:https://issues.jboss.org/browse/HWKMETRICS-208[HWKMETRICS-208] for details). For this reason it is
-recommended to restrict the characters to letters, numbers, underscore, period, and forward slash.
-
-[TIP]
-If an identifier uses a character that is defined as special character in the HTTP spec, it must be encoded. Forward
-slashes are no exception. If for example I have a tenant id of `com/acme`, then in HTTP requests it should be encoded
-as `com%2Facme`.
-
 === Tenant Ids
 A tenant has an id that uniquely identifies it. The id is a variable length, UTF-8 encoded string. Hawkular Metrics
 does not perform any validation checks to prevent duplicate ids. This is in large part due to Cassandra's design. Among
@@ -289,6 +272,23 @@ curl -X POST http://server/hawkular/metrics/availability -d '{"id": "http_server
 There is an important distinction between the two ways of creating metrics. The `/gauges`, `/counters`, and
 `/availability` endpoints check to see if a metric with the specified id already exists. If one does, Hawkular Metrics
 returns an error response with a 409 status code.
+
+== Identifiers
+All identifiers are stored as variable length, UTF-8 encoded strings. This includes:
+
+* Tenant ids
+* Metric names (see <<Metric Ids>> section below for more details on metric names
+* Tag keys (for both metric and data point tags)
+
+[TIP]
+At present there is no restriction on characters that can be used in identifiers. This may change in the future
+though (See link:https://issues.jboss.org/browse/HWKMETRICS-208[HWKMETRICS-208] for details). For this reason it is
+recommended to restrict the characters to letters, numbers, underscore, period, and forward slash.
+
+[TIP]
+If an identifier uses a character that is defined as special character in the HTTP spec, it must be encoded. Forward
+slashes are no exception. If for example I have a tenant id of `com/acme`, then in HTTP requests it should be encoded
+as `com%2Facme`.
 
 == Inserting Data
 Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
