@@ -208,7 +208,11 @@ servers however is more challenging. This can be done more easily by storing the
 compute and maintain the total count.
 
 Hawkular Metrics only supports the former in which each data point represents the total count; however, we can easily
-simulate counters that store deltas. See the <<Incrementing Counters>> section for more details.
+simulate counters that store deltas using gauges.
+
+NOTE: It is currently not possible to get rate data points for gauges. This will change in an upcoming release so that
+gauges can then be used for incrementing counters. See
+ink:https://issues.jboss.org/browse/HWKMETRICS-365[HWKMETRICS-365] for details.
 
 ===== Rate
 A rate is a derived metric whose values are computed from counter data points. Rate data points can be retrieved for
@@ -293,8 +297,8 @@ throughput.
 
 === Data Points
 A data point in Hawkular Metrics is a tuple that in its simplest form consists of a timestamp and a value.
-Timestamps are link:https://en.wikipedia.org/wiki/Unix_time[unix timestamps] in milliseconds. The value of a data point
-will vary depending on the metric type.
+The value of a data point will vary depending on the metric type. Timestamps are
+link:https://en.wikipedia.org/wiki/Unix_time[unix timestamps] in milliseconds. All
 
 === Examples
 There are several operations available for inserting data points.
@@ -575,10 +579,8 @@ WARNING: Hawkular Metrics currently lacks APIs for changing data retention. See
 https://issues.jboss.org/browse/HWKMETRICS-380[HWKMETRICS-380] for details.
 
 *TODO*
-Add section on how Cassandra handles deletes.
-
-== Creating Tenants and Metrics
-*TODO*
+Add section on how Cassandra handles deletes. (Actually a separate page with some basic info on Cassandra
+administration might be good)
 
 == Tagging
 Tags in Hawkular Metrics are key/value pairs. Tags can be applied to a metric to provide meta data for the time series
@@ -586,6 +588,7 @@ as a whole. Tags can also be applied to individual data points. Tags can be used
 
 === Creating Metric Tags
 [source,shell]
+.Create gauge with tags
 ----
 curl -X POST http://server/hawkular/metrics/gauges -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
@@ -604,18 +607,89 @@ curl -X POST http://server/hawkular/metrics/gauges -d @request.json \
 }
 ----
 
-There are similar endpoints for other metric types.
+[source,shell]
+.Create counter with tags
+----
+curl -X POST http://server/hawkular/metrics/counters -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
 
-=== Updating Metric Tags
-This endpoint is used to add or replace tags.
+[source,javascript]
+.request.json
+----
+{
+  "id": "request_count",
+  "tags": {
+    "datacenter": "dc1",
+    "env": "stage"
+    "units": "bytes"
+  }
+}
+----
 
 [source,shell]
+.Create availability with tags
+----
+curl -X POST http://server/hawkular/metrics/availability -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+{
+  "id": "server1",
+  "tags": {
+    "datacenter": "dc1",
+    "env": "stage"
+  }
+}
+----
+
+=== Updating Metric Tags
+These endpoints are used to add or replace tags.
+
+[source,shell]
+.Update gauge tags
 ----
 curl -X PUT http://server/hawkular/metrics/gauges/request_size/tags -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,javascript]
+.request.json
+----
+{
+  "datacenter": "dc2",
+  "hostname": "server1"
+}
+----
+
+[source,shell]
+.Update counter tags
+----
+curl -X PUT http://server/hawkular/metrics/counters/request_count/tags -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+{
+  "datacenter": "dc2",
+  "hostname": "server1"
+}
+----
+
+[source,shell]
+.Update availability tags
+----
+curl -X PUT http://server/hawkular/metrics/availability/server1/tags -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
 ----
 {
   "datacenter": "dc2",
@@ -625,12 +699,46 @@ curl -X PUT http://server/hawkular/metrics/gauges/request_size/tags -d @request.
 
 === Deleting Metric Tags
 [source,shell]
+.Delete gauge tags
 ----
 curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,javascript]
+.request.json
+----
+{
+  "env": "stage",
+  "status": "active"
+}
+----
+
+[source,shell]
+.Delete counter tags
+----
+curl -X DELETE http://server/hawkular/metrics/counters/request_count/tags -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+{
+  "env": "stage",
+  "status": "active"
+}
+----
+
+[source,shell]
+.Delete availability tags
+----
+curl -X DELETE http://server/hawkular/metrics/availability/server1/tags -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
 ----
 {
   "env": "stage",
@@ -646,9 +754,10 @@ https://issues.jboss.org/browse/HWKMETRICS-385[HWKMETRICS-385] for details.
 === Data Point Tags
 Tags can be added to individual data points. They are a bit different than metric tags because they are immutable.
 Tags cannot be added or updated after a data point is written. The following examples demonstrate how to add
-tags to a data point.
+tags to data points.
 
 [source,shell]
+.Add gauge data points with tags
 ----
 curl -X POST http://server/hawkular/metrics/gauges/raw -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
@@ -703,10 +812,119 @@ curl -X POST http://server/hawkular/metrics/gauges/raw -d @request.json \
 ]
 ----
 
-TIP: Data point tags can be supplied in requests to any of the endpoints that write data points.
+[source,shell]
+.Add counter data points with tags
+----
+curl -X POST http://server/hawkular/metrics/counters/raw -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+[
+  {
+    "id": "request_count",
+    "data": [
+      {
+        "timestamp": 1460111065369,
+        "value": 2048
+        "tags": {
+          "clientId": "1234",
+          "zone": "us-east-1"
+        }
+      },
+      {
+        "timestamp": 1460151065369,
+        "value": 3107,
+        "tags": {
+          "clientId": "5678",
+          "zone": "us-west-1"
+        }
+      }
+    ]
+  },
+  {
+    "id": "request_timeouts",
+    "data": [
+      {
+        "timestamp": 1460111065369,
+        "value": 11,
+        "tags": {
+          "clientId": "1234",
+          "zone": "us-east-1"
+        }
+      },
+      {
+        "timestamp": 1460151065369,
+        "value": 15,
+        "tags": {
+          "clientId": "5678",
+          "zone": "us-west-1"
+        }
+      }
+    ]
+  }
+]
+----
+
+[source,shell]
+.Add availability data points with tags
+----
+curl -X POST http://server/hawkular/metrics/availability/raw -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+[
+  {
+    "id": "server1",
+    "data": [
+      {
+        "timestamp": 1460111065369,
+        "value": "up"
+        "tags": {
+          "clientId": "1234",
+          "zone": "us-east-1"
+        }
+      },
+      {
+        "timestamp": 1460151065369,
+        "value": "up",
+        "tags": {
+          "clientId": "5678",
+          "zone": "us-west-1"
+        }
+      }
+    ]
+  },
+  {
+    "id": "server2",
+    "data": [
+      {
+        "timestamp": 1460111065369,
+        "value": "down",
+        "tags": {
+          "clientId": "1234",
+          "zone": "us-east-1"
+        }
+      },
+      {
+        "timestamp": 1460151065369,
+        "value": "down",
+        "tags": {
+          "clientId": "5678",
+          "zone": "us-west-1"
+        }
+      }
+    ]
+  }
+]
+----
 
 === Tag Filtering
-
 Hawkular Metrics provides a mini tag filtering expression language that is available in several query APIs. It has a
 number of features including:
 
@@ -745,8 +963,9 @@ These operations do not fetch data points but rather the metric definition itsel
 
 ==== Query for Metrics of specific type
 [source,shell]
+.Fetch gauge definitions
 ----
-curl -X POST http://server/hawkular/metrics/gauges \
+curl -X GET http://server/hawkular/metrics/gauges \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
@@ -783,26 +1002,56 @@ also defines some tags.
 Tag filter queries can be used to filter the list of metrics returned.
 
 [source,shell]
+.Fetch counter definitions using tag filters
 ----
-curl -X POST http://server/hawkular/metrics/gauges?tags=zone:us-west-1,kernel_version=4.0.9 \
+curl -X POST http://server/hawkular/metrics/counters?tags=zone:us-west-1,kernel_version=4.0.9 \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
-
-Similar endpoints exist for each of the metric types.
 
 ==== Query Across All Metric Types
 You can query across all metric types. The next example illustrates the `type` parameter which filters the results by
 the specified types.
 
 [source,shell]
+.Fetch all metric definitions
 ----
-curl -X POST http://server/hawkular/metrics/metrics?type=gauge,counter \
+curl -X POST http://server/hawkular/metrics/metrics \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.response body
+----
+[
+  {
+    "tenantId": "com.acme",
+    "id": "gauge_1"
+    "type": "gauge"
+  },
+  {
+    "tenantId": "com.acme"
+    "id": "gauge_2",
+    "type": "gauge"
+    "dataRetention": 20
+  },
+  {
+    "tenantId": "com.acme",
+    "id": "request_count",
+    "type": "counter"
+  },
+  {
+    "tenantId": "com.acme",
+    "id": "request_timeouts",
+    "type": "counter",
+    "dataRetention": 20
+  }
+]
 ----
 
 The next example demonstrates querying across all metric types and filtering the results using tag filters.
 
 [source,shell]
+.Fetch all metric definitions with tag filters
 ----
 curl -X POST http://server/hawkular/metrics/metrics?tags=zone:us-west-1,kernel_version=4.0.9 \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
@@ -1011,10 +1260,7 @@ A reset event occurs some time between 90000 and 210000; consequently, we will g
 Note that we exclude the rate data point between 90000 and 210000 timestamps.
 
 === Downsampling
-
-== Incrementing Counters
 *TODO*
-
 
 == Security
 *TODO*
