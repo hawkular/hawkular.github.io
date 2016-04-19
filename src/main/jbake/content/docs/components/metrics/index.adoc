@@ -1062,14 +1062,14 @@ The simplest form of querying for raw data points does not require any parameter
 This API is available for each metric type.
 
 [source,shell]
-.simple request to fetch gauge data points
+.Simple request to fetch gauge data points
 ----
 curl -X GET http://server/hakwular/metrics/gauges/request_size/raw \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,javascript]
-.response with gauge data points
+.Response with gauge data points
 ----
 [
   {"timestamp:" 1460413065369, "value": 3.14},
@@ -1079,14 +1079,14 @@ curl -X GET http://server/hakwular/metrics/gauges/request_size/raw \
 ----
 
 [source,shell]
-.simple request to fetch counter data points
+.Simple request to fetch counter data points
 ----
 curl -X GET http://server/hakwular/metrics/counters/request_count/raw \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,javascript]
-.response with counter data points
+.Response with counter data points
 ----
 [
   {"timestamp:" 1460413065369, "value": 7},
@@ -1096,7 +1096,7 @@ curl -X GET http://server/hakwular/metrics/counters/request_count/raw \
 ----
 
 [source,shell]
-.simple request to fetch availability data points
+.Simple request to fetch availability data points
 ----
 curl -X GET http://server/hakwular/metrics/availability/server1/raw \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
@@ -1145,21 +1145,21 @@ Data is sorted by timestamp and returned in sorted order by default. The order b
 Accepted values are `ASC` and `DESC`.
 
 [source,shell]
-.Return results in ascending order for gauge
+.Return results in ascending order for a gauge
 ----
 curl -X GET http://server/hawkular/metrics/gauges/request_size?order=ASC \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,shell]
-.Return results in ascending order for counter
+.Return results in ascending order for a counter
 ----
 curl -X GET http://server/hawkular/metrics/counters/request_count?order=ASC \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
 [source,shell]
-.Return results in ascending order for availability
+.Return results in ascending order for an availability
 ----
 curl -X GET http://server/hawkular/metrics/availability/server1?order=ASC \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
@@ -1193,8 +1193,8 @@ curl -X GET http://server/hawkular/metrics/availability/server1?limit=100 \
 === Counter Rates
 Often times with counters, particularly with rendering graphs, we are more interested in rates. Hawkular Metrics
 generates rate data points on the server side, freeing the client from that work. This is done at query time by simply
-calculating the delta between raw counter data points. The result is multiplied by a factor of 60,000 in order to give
-us a per-minute rate.
+calculating the delta between raw counter data points. The result is multiplied by a factor of 60,000 milliseconds in
+order to give us a per-minute rate.
 
 Suppose we have the following counter data points:
 
@@ -1232,10 +1232,8 @@ Note that the values are returned as floating point numbers.
 Sometimes there are events which occur counters to reset. For instance, suppose we are tracking the total number of
 requests to a server since start up. Whenever the server is restarted, we will have a reset event. Hawkular Metrics
 detects a reset event whenever a counter value is less than the previous value. If resets are not handled, they can
-cause inconsistencies in graphs.
-
-Hawkular Metrics handles resets during rate calculations by excluding the data point where the reset is detected. Let's
-illustrate this with an example.
+cause inconsistencies in graphs. Hawkular Metrics handles resets during rate calculations by excluding the data point
+where the reset is detected. Let's illustrate this with an example.
 
 [grid="all"]
 .Counter data points with a reset event
@@ -1247,7 +1245,7 @@ illustrate this with an example.
 |300000 |180
 |===
 
-A reset event occurs some time between 90000 and 210000; consequently, we will get back the following rate data points.
+A reset event occurs some time between 90000 and 210000; consequently, we will get back the following rate data points:
 
 [grid="all"]
 .Rate data points with reset
