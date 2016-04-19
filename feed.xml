@@ -6,9 +6,362 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Sat, 16 Apr 2016 12:41:20 +0000</pubDate>
-    <lastBuildDate>Sat, 16 Apr 2016 12:41:20 +0000</lastBuildDate>
+    <pubDate>Tue, 19 Apr 2016 06:37:01 +0000</pubDate>
+    <lastBuildDate>Tue, 19 Apr 2016 06:37:01 +0000</lastBuildDate>
 
+    <item>
+      <title>Monitoring JVM applications with jmxtrans</title>
+      <link>http://www.hawkular.org/blog/2016/04/19/jmxtrans-to-hawkular-metrics.html</link>
+      <author>noreply@hawkular.org (Thomas Segismont)</author>
+      <pubDate>Tue, 19 Apr 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/04/19/jmxtrans-to-hawkular-metrics.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this post, you&amp;#8217;ll learn how to monitor applications running on the Java Virtual Machine with jmxtrans and Hakwular Metrics.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-metrics&quot;&gt;Hawkular Metrics&lt;/a&gt; is an easy to install, scalable metric storage component.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;http://www.jmxtrans.org/&quot;&gt;jmxtrans&lt;/a&gt; is a popular monitoring tool for Java based applications. It connects to a JVM via
+JMX, collects metrics, and sends the data to the backend of your choice. Very often a Graphite backend is used.
+As an example, we will monitor a Tomcat 8 server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Metrics can store data sent over the Graphite text protocol, thanks to
+&lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator&quot;&gt;ptrans&lt;/a&gt;. ptrans is a proxy server
+taking in metrics data in several common formats and emitting them as REST requests into Hawkular Metrics backend for
+storage. The figure below illustrates the process.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-ptrans&quot; class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/ptrans.png&quot; alt=&quot;ptrans&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. ptrans (Protocol Translator)&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;jmxtrans will communicate with ptrans over the Graphite text protocol.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_setup_in_details&quot;&gt;The setup in details&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_metrics_and_ptrans&quot;&gt;Hawkular Metrics and PTrans&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;http://www.hawkular.org/docs/components/metrics/installation.html&quot;&gt;Hawkular Metrics standalone installation&lt;/a&gt; is
+documented on the Hawkular website. ptrans setup is documented on the same page.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_tomcat_8&quot;&gt;Tomcat 8&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;JMX remote access must be enabled otherwise jmxtrans can&amp;#8217;t connect. To do this, create (or modify) the &lt;code&gt;setenv.sh&lt;/code&gt;
+script in the &lt;code&gt;bin&lt;/code&gt; directory.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;setenv.sh&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;#!/bin/bash
+
+CATALINA_OPTS=&quot;-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=35135&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_jmxtrans&quot;&gt;jmxtrans&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Download the latest &lt;a href=&quot;https://github.com/jmxtrans/jmxtrans/releases&quot;&gt;jmxtrans distribution&lt;/a&gt;. Expand it somewhere on
+your disk.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the &lt;code&gt;bin&lt;/code&gt; directory, create a &lt;code&gt;jmxtrans.conf&lt;/code&gt; file. It will be sourced by the &lt;code&gt;jmxtrans.sh&lt;/code&gt; script.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;jmxtrans.conf&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;#!/bin/bash
+
+JAR_FILE=&quot;/path/to/jmx-trans/lib/jmxtrans-all.jar&quot; &lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;(1)&lt;/b&gt;
+LOG_DIR=&quot;/path/to/jmx-trans/bin&quot; &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+LOG_FILE=&quot;/path/to/jmx-trans/bin/jmxtrans.out&quot; &lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;(3)&lt;/b&gt;
+SECONDS_BETWEEN_RUNS=5 &lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;(4)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;1&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;Where the script will find the jmxtrans fat JAR&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;2&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;The directory where log files should be written&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;3&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;The file where the process output will be redirected&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;4&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;Instructs jmxtrans to collect metrics and send data every 5 seconds&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Then create the main configuration file, &lt;code&gt;config.json&lt;/code&gt;. The &lt;a href=&quot;https://github.com/jmxtrans/jmxtrans/wiki&quot;&gt;jmxtrans wiki&lt;/a&gt;
+has a detailed reference.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;config.json&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;{
+  &quot;servers&quot;: [
+    {
+      &quot;numQueryThreads&quot;: &quot;2&quot;,
+      &quot;host&quot;: &quot;localhost&quot;, &lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;(1)&lt;/b&gt;
+      &quot;port&quot;: &quot;35135&quot;, &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+      &quot;queries&quot;: [ &lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;(3)&lt;/b&gt;
+        {
+          &quot;outputWriters&quot;: [ &lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;(4)&lt;/b&gt;
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot; &lt;i class=&quot;conum&quot; data-value=&quot;5&quot;&gt;&lt;/i&gt;&lt;b&gt;(5)&lt;/b&gt;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;, &lt;i class=&quot;conum&quot; data-value=&quot;6&quot;&gt;&lt;/i&gt;&lt;b&gt;(6)&lt;/b&gt;
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;, &lt;i class=&quot;conum&quot; data-value=&quot;7&quot;&gt;&lt;/i&gt;&lt;b&gt;(7)&lt;/b&gt;
+                &quot;port&quot;: &quot;2003&quot; &lt;i class=&quot;conum&quot; data-value=&quot;8&quot;&gt;&lt;/i&gt;&lt;b&gt;(8)&lt;/b&gt;
+              }
+            }
+          ],
+          &quot;obj&quot;: &quot;java.lang:type=OperatingSystem&quot;, &lt;i class=&quot;conum&quot; data-value=&quot;9&quot;&gt;&lt;/i&gt;&lt;b&gt;(9)&lt;/b&gt;
+          &quot;attr&quot;: [ &lt;i class=&quot;conum&quot; data-value=&quot;10&quot;&gt;&lt;/i&gt;&lt;b&gt;(10)&lt;/b&gt;
+            &quot;SystemLoadAverage&quot;,
+            &quot;AvailableProcessors&quot;,
+            &quot;TotalPhysicalMemorySize&quot;,
+            &quot;FreePhysicalMemorySize&quot;,
+            &quot;TotalSwapSpaceSize&quot;,
+            &quot;FreeSwapSpaceSize&quot;,
+            &quot;OpenFileDescriptorCount&quot;,
+            &quot;MaxFileDescriptorCount&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;heap&quot;,
+          &quot;obj&quot;: &quot;java.lang:type=Memory&quot;,
+          &quot;attr&quot;: [
+            &quot;HeapMemoryUsage&quot;,
+            &quot;NonHeapMemoryUsage&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;cmsoldgen&quot;,
+          &quot;obj&quot;: &quot;java.lang:name=CMS Old Gen,type=MemoryPool&quot;,
+          &quot;attr&quot;: [
+            &quot;Usage&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;gc&quot;,
+          &quot;obj&quot;: &quot;java.lang:type=GarbageCollector,name=*&quot;,
+          &quot;attr&quot;: [
+            &quot;CollectionCount&quot;,
+            &quot;CollectionTime&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;,
+              &quot;settings&quot;: {}
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;memorypool&quot;,
+          &quot;obj&quot;: &quot;java.lang:type=MemoryPool,name=*&quot;,
+          &quot;attr&quot;: [
+            &quot;Usage&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;threads&quot;,
+          &quot;obj&quot;: &quot;java.lang:type=Threading&quot;,
+          &quot;attr&quot;: [
+            &quot;DaemonThreadCount&quot;,
+            &quot;PeakThreadCount&quot;,
+            &quot;ThreadCount&quot;,
+            &quot;TotalStartedThreadCount&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;tomcat8-connectors&quot;,
+          &quot;obj&quot;: &quot;Catalina:type=ThreadPool,name=*&quot;,
+          &quot;attr&quot;: [
+            &quot;currentThreadCount&quot;,
+            &quot;currentThreadsBusy&quot;
+          ]
+        },
+        {
+          &quot;outputWriters&quot;: [
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.StdOutWriter&quot;
+            },
+            {
+              &quot;@class&quot;: &quot;com.googlecode.jmxtrans.model.output.GraphiteWriter&quot;,
+              &quot;settings&quot;: {
+                &quot;host&quot;: &quot;127.0.0.1&quot;,
+                &quot;port&quot;: &quot;2003&quot;
+              }
+            }
+          ],
+          &quot;resultAlias&quot;: &quot;tomcat8-requests&quot;,
+          &quot;obj&quot;: &quot;Catalina:type=GlobalRequestProcessor,name=*&quot;,
+          &quot;attr&quot;: [
+            &quot;bytesReceived&quot;,
+            &quot;bytesSent&quot;,
+            &quot;errorCount&quot;,
+            &quot;processingTime&quot;,
+            &quot;requestCount&quot;
+          ]
+        }
+      ]
+    }
+  ]
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;1&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;name of the host where Tomcat is running&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;2&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;jmx remoting port (must match the value set in &lt;code&gt;setenv.sh&lt;/code&gt; in Tomcat installation)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;3&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;queries item lists the MBeans which should be invoked&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;4&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;output writers item indicates where data collected should be sent&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;5&quot;&gt;&lt;/i&gt;&lt;b&gt;5&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;StdOutWriter simply prints collected data to the process output stream (useful for configuration debugging)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;6&quot;&gt;&lt;/i&gt;&lt;b&gt;6&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;GraphiteWriter sends data to a remote server which understands the Graphite protocols; by default, the text protocol
+is used&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;7&quot;&gt;&lt;/i&gt;&lt;b&gt;7&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;graphite remote host (must match the value set in &lt;code&gt;ptrans.conf&lt;/code&gt;)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;8&quot;&gt;&lt;/i&gt;&lt;b&gt;8&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;graphite remote port (must match the value set in &lt;code&gt;ptrans.conf&lt;/code&gt;)&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;9&quot;&gt;&lt;/i&gt;&lt;b&gt;9&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;name of the MBean to invoke&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;10&quot;&gt;&lt;/i&gt;&lt;b&gt;10&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;list of attributes to collect&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Eventually, start jmxtrans.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Starting jmxtrans&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;./jmxtrans.sh start config.json&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That&amp;#8217;s it!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular in ManageIQ sprint demo(s)</title>
       <link>http://www.hawkular.org/blog/2016/04/08/hawkular-manage-iq-sprint-demo.html</link>

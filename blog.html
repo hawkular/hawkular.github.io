@@ -157,6 +157,355 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/04/19/jmxtrans-to-hawkular-metrics.html"><h1>Monitoring JVM applications with jmxtrans</h1></a>
+            <p>19 April 2016, by Thomas Segismont</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this post, you&#8217;ll learn how to monitor applications running on the Java Virtual Machine with jmxtrans and Hakwular Metrics.</p>
+</div>
+<div class="paragraph">
+<p><a href="https://github.com/hawkular/hawkular-metrics">Hawkular Metrics</a> is an easy to install, scalable metric storage component.</p>
+</div>
+<div class="paragraph">
+<p><a href="http://www.jmxtrans.org/">jmxtrans</a> is a popular monitoring tool for Java based applications. It connects to a JVM via
+JMX, collects metrics, and sends the data to the backend of your choice. Very often a Graphite backend is used.
+As an example, we will monitor a Tomcat 8 server.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular Metrics can store data sent over the Graphite text protocol, thanks to
+<a href="https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator">ptrans</a>. ptrans is a proxy server
+taking in metrics data in several common formats and emitting them as REST requests into Hawkular Metrics backend for
+storage. The figure below illustrates the process.</p>
+</div>
+<div id="img-ptrans" class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/ptrans.png" alt="ptrans">
+</div>
+<div class="title">Figure 1. ptrans (Protocol Translator)</div>
+</div>
+<div class="paragraph">
+<p>jmxtrans will communicate with ptrans over the Graphite text protocol.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_setup_in_details">The setup in details</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_hawkular_metrics_and_ptrans">Hawkular Metrics and PTrans</h3>
+<div class="paragraph">
+<p><a href="http://www.hawkular.org/docs/components/metrics/installation.html">Hawkular Metrics standalone installation</a> is
+documented on the Hawkular website. ptrans setup is documented on the same page.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_tomcat_8">Tomcat 8</h3>
+<div class="paragraph">
+<p>JMX remote access must be enabled otherwise jmxtrans can&#8217;t connect. To do this, create (or modify) the <code>setenv.sh</code>
+script in the <code>bin</code> directory.</p>
+</div>
+<div class="listingblock">
+<div class="title">setenv.sh</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">#!/bin/bash
+
+CATALINA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=35135"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jmxtrans">jmxtrans</h3>
+<div class="paragraph">
+<p>Download the latest <a href="https://github.com/jmxtrans/jmxtrans/releases">jmxtrans distribution</a>. Expand it somewhere on
+your disk.</p>
+</div>
+<div class="paragraph">
+<p>In the <code>bin</code> directory, create a <code>jmxtrans.conf</code> file. It will be sourced by the <code>jmxtrans.sh</code> script.</p>
+</div>
+<div class="listingblock">
+<div class="title">jmxtrans.conf</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">#!/bin/bash
+
+JAR_FILE="/path/to/jmx-trans/lib/jmxtrans-all.jar" <i class="conum" data-value="1"></i><b>(1)</b>
+LOG_DIR="/path/to/jmx-trans/bin" <i class="conum" data-value="2"></i><b>(2)</b>
+LOG_FILE="/path/to/jmx-trans/bin/jmxtrans.out" <i class="conum" data-value="3"></i><b>(3)</b>
+SECONDS_BETWEEN_RUNS=5 <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>Where the script will find the jmxtrans fat JAR</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>The directory where log files should be written</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>The file where the process output will be redirected</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>Instructs jmxtrans to collect metrics and send data every 5 seconds</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Then create the main configuration file, <code>config.json</code>. The <a href="https://github.com/jmxtrans/jmxtrans/wiki">jmxtrans wiki</a>
+has a detailed reference.</p>
+</div>
+<div class="listingblock">
+<div class="title">config.json</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "servers": [
+    {
+      "numQueryThreads": "2",
+      "host": "localhost", <i class="conum" data-value="1"></i><b>(1)</b>
+      "port": "35135", <i class="conum" data-value="2"></i><b>(2)</b>
+      "queries": [ <i class="conum" data-value="3"></i><b>(3)</b>
+        {
+          "outputWriters": [ <i class="conum" data-value="4"></i><b>(4)</b>
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter" <i class="conum" data-value="5"></i><b>(5)</b>
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter", <i class="conum" data-value="6"></i><b>(6)</b>
+              "settings": {
+                "host": "127.0.0.1", <i class="conum" data-value="7"></i><b>(7)</b>
+                "port": "2003" <i class="conum" data-value="8"></i><b>(8)</b>
+              }
+            }
+          ],
+          "obj": "java.lang:type=OperatingSystem", <i class="conum" data-value="9"></i><b>(9)</b>
+          "attr": [ <i class="conum" data-value="10"></i><b>(10)</b>
+            "SystemLoadAverage",
+            "AvailableProcessors",
+            "TotalPhysicalMemorySize",
+            "FreePhysicalMemorySize",
+            "TotalSwapSpaceSize",
+            "FreeSwapSpaceSize",
+            "OpenFileDescriptorCount",
+            "MaxFileDescriptorCount"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "heap",
+          "obj": "java.lang:type=Memory",
+          "attr": [
+            "HeapMemoryUsage",
+            "NonHeapMemoryUsage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "cmsoldgen",
+          "obj": "java.lang:name=CMS Old Gen,type=MemoryPool",
+          "attr": [
+            "Usage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "gc",
+          "obj": "java.lang:type=GarbageCollector,name=*",
+          "attr": [
+            "CollectionCount",
+            "CollectionTime"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter",
+              "settings": {}
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "memorypool",
+          "obj": "java.lang:type=MemoryPool,name=*",
+          "attr": [
+            "Usage"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "threads",
+          "obj": "java.lang:type=Threading",
+          "attr": [
+            "DaemonThreadCount",
+            "PeakThreadCount",
+            "ThreadCount",
+            "TotalStartedThreadCount"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "tomcat8-connectors",
+          "obj": "Catalina:type=ThreadPool,name=*",
+          "attr": [
+            "currentThreadCount",
+            "currentThreadsBusy"
+          ]
+        },
+        {
+          "outputWriters": [
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
+            },
+            {
+              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
+              "settings": {
+                "host": "127.0.0.1",
+                "port": "2003"
+              }
+            }
+          ],
+          "resultAlias": "tomcat8-requests",
+          "obj": "Catalina:type=GlobalRequestProcessor,name=*",
+          "attr": [
+            "bytesReceived",
+            "bytesSent",
+            "errorCount",
+            "processingTime",
+            "requestCount"
+          ]
+        }
+      ]
+    }
+  ]
+}</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>name of the host where Tomcat is running</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>jmx remoting port (must match the value set in <code>setenv.sh</code> in Tomcat installation)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="3"></i><b>3</b></td>
+<td>queries item lists the MBeans which should be invoked</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="4"></i><b>4</b></td>
+<td>output writers item indicates where data collected should be sent</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="5"></i><b>5</b></td>
+<td>StdOutWriter simply prints collected data to the process output stream (useful for configuration debugging)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="6"></i><b>6</b></td>
+<td>GraphiteWriter sends data to a remote server which understands the Graphite protocols; by default, the text protocol
+is used</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="7"></i><b>7</b></td>
+<td>graphite remote host (must match the value set in <code>ptrans.conf</code>)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="8"></i><b>8</b></td>
+<td>graphite remote port (must match the value set in <code>ptrans.conf</code>)</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="9"></i><b>9</b></td>
+<td>name of the MBean to invoke</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="10"></i><b>10</b></td>
+<td>list of attributes to collect</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Eventually, start jmxtrans.</p>
+</div>
+<div class="listingblock">
+<div class="title">Starting jmxtrans</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">./jmxtrans.sh start config.json</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s it!</p>
+</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/04/08/hawkular-manage-iq-sprint-demo.html"><h1>Hawkular in ManageIQ sprint demo(s)</h1></a>
             <p>08 April 2016, by Heiko W. Rupp</p>
             <p><div class="paragraph">
@@ -526,193 +875,13 @@ Tokens are great to be used as we can revoke it from the server without affectin
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/03/15/hawkular-1.0.0.Alpha11-released.html"><h1>The eleventh milestone of Hawkular released</h1></a>
-            <p>15 March 2016, by Heiko W.Rupp</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular, the monitoring platform, is happy to announce milestone release 1.0.0.Alpha11.
-You may perhaps wonder if you have missed Alpha 10. Don&#8217;t worry, you did not miss anything.
-We had an Alpha 10 build ready, but then decided to withdraw it and to bring you more features.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_running_on_wildfly_10_final">Running on WildFly 10 final</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>As announced in the last release we have rebased to WildFly 10 Final.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_tokens_and_qr_codes">Tokens and QR Codes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>It is now possible to generate tokens (combination of key and secret), that can be used
-instead of username/password as credentials. Those tokens are great to be used in the
-agent configuration so that no username/password is visible.</p>
-</div>
-<div class="paragraph">
-<p>For future usage (e.g. for the Android client) it is possible to obtain a QR code, that
-can be scanned and which contains the token information.</p>
-</div>
-<div id="img-token-screen" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/1alpha11_token_qr.png" alt="Token screen">
-</div>
-<div class="title">Figure 1. Token screen with QR code</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_apm_and_btm_included">APM and BTM included</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_application_performance_management_apm">Application Performance Management (APM)</h3>
-<div class="paragraph">
-<p>The new Application Performance tab provides a breakdown of the execution performance of each component
-within applications deployed to the monitored servers.</p>
-</div>
-<div class="paragraph">
-<p>The graph provides a summary per component type. The table provides a breakdown of the activity by component type,
-URI and optionally operation. Each row shows the elapsed and actual time spent in the component, where the elapsed
-time also incorporates any time spent in sub (i.e. called) components.</p>
-</div>
-<div id="img-apm-subtab" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/hawka11-apm.png" alt="APM tab">
-</div>
-<div class="title">Figure 2. Tab for APM</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_business_transaction_management_btm">Business Transaction Management (BTM)</h3>
-<div class="paragraph">
-<p>The “Business Transaction Management” capability is used to classify and monitor specific paths of execution through an
-organisation’s applications and services. Rather than viewing application performance just at the component level, it
-is possible to view information about end to end transactions.</p>
-</div>
-<div id="img-btm-subtab" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/hawka11-btm-overview.png" alt="BTM Overview">
-</div>
-<div class="title">Figure 3. Tab for BTM</div>
-</div>
-<div class="paragraph">
-<p>The Managed tab provides an overview of any configured business transactions, such as the “Booking Service” and “Events
-Service” above. It shows the number of transactions per hour, completion times and the number of transactions that
-ended with a fault.</p>
-</div>
-<div class="paragraph">
-<p>Selecting a particular business transaction will provide a more detailed view.</p>
-</div>
-<div id="img-btm-detail" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/hawka11-btm-details.png" alt="BTM Details">
-</div>
-<div class="title">Figure 4. BTM detail view</div>
-</div>
-<div class="paragraph">
-<p>The top graph shows statistics, aggregated over a selected time interval, related to the business transaction instances.
-The details displayed are the transaction and fault counts as a bar chart, with the min, average and max completion
-times as a line chart.</p>
-</div>
-<div class="paragraph">
-<p>The left hand pie chart represents the breakdown of specific fault types associated with the completed business
-transaction instances that ended in fault.</p>
-</div>
-<div class="paragraph">
-<p>The right hand pie chart is used to display information about properties extracted from the business transaction
-instances (defined when setting up a business transaction configuration). In this specific example, the
-“performance id” values are being displayed.</p>
-</div>
-<div class="paragraph">
-<p>The segments of the pie charts (fault and different properties) can be selected to filter the business transaction
-instances, to refine the information being viewed.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_inventory_explorer">Inventory explorer</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We have added a generic inventoy explorer, that allows you to browse through
-inventory in a hierarchical way and to pick metrics that then are displayed
-on the page. The metrics to be shown are stored in the browser internal database.</p>
-</div>
-<div id="img-explorer-screen" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/1alpha11_explorer.png" alt="Generic Inventory explorer">
-</div>
-<div class="title">Figure 5. Screen with inventory explorer</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_release_notes">Release notes</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Full list of Jira issues fixed in this release:
-<a href="/releasenotes/1.0.0.Alpha11.html">Release Notes - Hawkular - Version 1.0.0.Alpha11</a></p>
-</div>
-<div class="sect2">
-<h3 id="_notes_for_windows_users">Notes for Windows users</h3>
-<div class="paragraph">
-<p>To run successfully you must start Hawkular like:</p>
-</div>
-<div class="openblock">
-<div class="content">
-<div class="quoteblock">
-<blockquote>
-<div class="paragraph">
-<p>standalone.bat -Dorg.hawkular.data.dir=&lt;HawkulaInstallDirUsingFORWARDSlashes&gt;/standalone/data</p>
-</div>
-</blockquote>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_downloads">Downloads</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>You can download the release here:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha11/hawkular-dist-1.0.0.Alpha11.zip">Hawkular 1.0.0.Alpha11 (zip)</a></p>
-</li>
-<li>
-<p><a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha11/hawkular-dist-1.0.0.Alpha11.tar.gz">Hawkular 1.0.0.Alpha11 (tar.gz)</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_next">What&#8217;s next?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>You have probably seen
-that <a href="http://www.hawkular.org/blog/2016/02/22/hawkular-manage-iq.html">Hawkular and ManageIQ are now working together</a>.
-Activities in the next time will be around that goal.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>15 March 2016 - <a href="blog/2016/03/15/hawkular-1.0.0.Alpha11-released.html">The eleventh milestone of Hawkular released</a></li>
           <li>02 March 2016 - <a href="blog/2016/03/02/hawkular-metrics-0.13.0.Final-released.html">Hawkular Metrics 0.13.0 - Release</a></li>
           <li>23 February 2016 - <a href="blog/2016/02/22/hawkular-manage-iq.html">Integration with ManageIQ</a></li>
           <li>02 February 2016 - <a href="blog/2016/02/02/hawkular-metrics-0.12.0.Final-released.html">Hawkular Metrics 0.12.0 - Release</a></li>
