@@ -21,9 +21,28 @@ Hawkular Metrics is all about scalability. You can run a single instance backed 
 also scale out Cassandra to multiple nodes to handle increasing loads. The Hawkular Metrics server employs a stateless
 architecture, which makes it easy to scale out as well.
 
-image::metrics_scalability.png[]
+ifndef::env-github[]
+image::/img/metrics_scalability.png[width=]
+endif::[]
 
-This diagram illustrates the various deployment options made possible with scalable and flexible architecture.
+This diagram illustrates the various deployment options made possible with Hawkular Metrics' scalable architecture. The
+upper left shows the simplest deployment with a single Cassandra node and single Hawkular Metrics node.
+
+The bottom right picture shows that it is possible to run more Hawkular Metrics nodes than Cassandra nodes. In reality
+this scenario may be somewhat unlikely; however, this example. The Cassandra node is running on a machine with long
+term persistent storage, but the Hawkular Metrics nodes are running in containers that can come or go at any time.
+Running multiple nodes provides fault tolerance.
+
+The upper right picture has a single Hawkular Metrics node with multiple Cassandra nodes. As load increases and there
+is a need to scale out from the simple deployment in the upper left, this is the next logical step. Because of its
+asynchronous, stateless design, a single Hawkular Metrics node can handle large numbers of requests. As the Cassandra
+cluster expands that single Hawkular Metrics instance will be able to handle a larger load because it distributes the
+requests across Cassandra nodes.
+
+The bottom right picture has multiple Cassandra nodes as well as multiple Hawkular Metrics nodes. Multiple Hawkular
+Metrics nodes are deployed in order to distribute load and to provide fault tolerance. Note that Hawkular Metrics
+itself does not provide load balancing. A separate load balance would have to be put in front of the Hawkular Metrics
+nodes.
 
 *REST* +
 JSON over REST is the primary interface of Hawkular Metrics. This makes it easier for users to get started and also
@@ -269,20 +288,16 @@ returns an error response with a 409 status code.
 
 == Inserting Data
 Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
-are inserted. On the server side, multiple inserts to the database are done in parallel to achieve higher throughput.
+are inserted. On the server side however, multiple inserts to the database are done in parallel to achieve higher
+throughput.
 
-=== Failures
-If there is an error inserting a data point, the operation is aborted and any data in the request not yet written into
-the database will be ignored. When there is an error, there is no reliable way to determine the remaining data
-points that still need to be persisted. This is due to the fact that writes to the database are asynchronous and are
-done in parallel. This means data points will not necessarily be written in the order received.
-
-[TIP]
-Unless stated otherwise, it can be assumed that writes in Hawkular Metrics are idempotent as is the case with writing
-data points. If there is an error writing data points, the client can simply retry the request.
+=== Data Points
+A data point in Hawkular Metrics is a tuple that in its simplest form consists of a timestamp and a value.
+Timestamps are link:https://en.wikipedia.org/wiki/Unix_time[unix timestamps] in milliseconds. The value of a data point
+will vary depending on the metric type.
 
 === Examples
-There are several operations available for insert data points.
+There are several operations available for inserting data points.
 
 ==== Gauge Data
 [source,shell]
@@ -492,6 +507,16 @@ curl -X POST http://server/hawkular/metrics/metrics/data -d @request.json \
   ]
 }
 ----
+
+=== Failures
+If there is an error inserting a data point, the operation is aborted and any data in the request not yet written into
+the database will be ignored. When there is an error, there is no reliable way to determine the remaining data
+points that still need to be persisted. This is due to the fact that writes to the database are asynchronous and are
+done in parallel. This means data points will not necessarily be written in the order received.
+
+[TIP]
+Unless stated otherwise, it can be assumed that writes in Hawkular Metrics are idempotent as is the case with writing
+data points. If there is an error writing data points, the client can simply retry the request.
 
 == Data Retention and Removal
 Metric data is automatically deleted from the system after an amount of time that is determined by data retention
