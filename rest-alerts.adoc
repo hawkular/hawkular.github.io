@@ -23,6 +23,594 @@ Content-Type: application/json
 == REST APIs
 
 
+=== /
+. link:#++GET__++[Get alerts with optional filtering.]
+. link:#++PUT__ack++[Set one or more alerts Acknowledged.]
+. link:#++PUT__ack__alertId_++[Set one alert Acknowledged.]
+. link:#++GET__alert__alertId_++[Get an existing Alert.]
+. link:#++POST__data++[Send data for alert processing/condition evaluation.]
+. link:#++PUT__delete++[Delete alerts with optional filtering.]
+. link:#++PUT__note__alertId_++[Add a note into an existing Alert.]
+. link:#++PUT__resolve++[Set one or more alerts resolved.]
+. link:#++PUT__resolve__alertId_++[Set one alert Resolved.]
+. link:#++DELETE__tags++[Remove tags from existing Alerts.]
+. link:#++PUT__tags++[Add tags to existing Alerts.]
+. link:#++DELETE___alertId_++[Delete an existing Alert.]
+
+
+==============================================
+
+[[GET__]]
+*Endpoint GET `/`*
+
+NOTE: *Get alerts with optional filtering.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|startTime|No|Filter out alerts created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out alerts created after this time, millisecond since epoch.|integer|int64|-
+|alertIds|No|Filter out alerts for unspecified alertIds, comma separated list of alert IDs.|string|-|-
+|triggerIds|No|Filter out alerts for unspecified triggers, comma separated list of trigger IDs.|string|-|-
+|statuses|No|Filter out alerts for unspecified lifecycle status, comma separated list of status values.|string|-|-
+|severities|No|Filter out alerts for unspecified severity, comma separated list of severity values.|string|-|-
+|tags|No|Filter out events for unspecified tags, comma separated list of tags, each tag of format 'name|value'. Specify '*' for value to match all values.|string|-|-
+|thin|No|Return only thin alerts, do not include: evalSets, resolvedEvalSets.|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched list of alerts.|array of <<Alert>>
+|400|Bad Request/Invalid Parameters|-
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__ack]]
+*Endpoint PUT `/ack`*
+
+NOTE: *Set one or more alerts Acknowledged.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertIds|Yes|Comma separated list of alertIds to Ack.|string|-|-
+|ackBy|No|User acknowledging the alerts.|string|-|-
+|ackNotes|No|Additional notes asscoiated with the acknowledgement.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts Acknowledged invoked successfully.|-
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__ack__alertId_]]
+*Endpoint PUT `/ack/{alertId}`*
+
+NOTE: *Set one alert Acknowledged.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertId|Yes|The alertId to Ack.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|ackBy|No|User acknowledging the alerts.|string|-|-
+|ackNotes|No|Additional notes associated with the acknowledgement.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alert Acknowledged invoked successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__alert__alertId_]]
+*Endpoint GET `/alert/{alertId}`*
+
+NOTE: *Get an existing Alert.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertId|Yes|Id of alert to be retrieved|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|thin|No|Return only a thin alert, do not include: evalSets, resolvedEvalSets.|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alert found.|<<Alert>>
+|404|Alert not found.|<<ApiError>>
+|500|Internal server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__data]]
+*Endpoint POST `/data`*
+
+NOTE: *Send data for alert processing/condition evaluation.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Data to be processed by alerting.|array of <<Data>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, data added.|-
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__delete]]
+*Endpoint PUT `/delete`*
+
+NOTE: *Delete alerts with optional filtering.* +
+_Return number of alerts deleted._
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|startTime|No|Filter out alerts created before this time, millisecond since epoch.|integer|int64|-
+|endTime|No|Filter out alerts created after this time, millisecond since epoch.|integer|int64|-
+|alertIds|No|Filter out alerts for unspecified alertIds, comma separated list of alert IDs.|string|-|-
+|triggerIds|No|Filter out alerts for unspecified triggers, comma separated list of trigger IDs.|string|-|-
+|statuses|No|Filter out alerts for unspecified lifecycle status, comma separated list of status values.|string|-|-
+|severities|No|Filter out alerts for unspecified severity, comma separated list of severity values.|string|-|-
+|tags|No|Filter out alerts for unspecified tags, comma separated list of tags, each tag of format 'name|value'. Specify '*' for value to match all values.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts deleted.|integer
+|400|Bad Request/Invalid Parameters|-
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__note__alertId_]]
+*Endpoint PUT `/note/{alertId}`*
+
+NOTE: *Add a note into an existing Alert.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertId|Yes|The alertId to add the note.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|user|No|Author of the note.|string|-|-
+|text|No|Text of the note.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alert Acknowledged invoked successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__resolve]]
+*Endpoint PUT `/resolve`*
+
+NOTE: *Set one or more alerts resolved.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertIds|Yes|Comma separated list of alertIds to set resolved.|string|-|-
+|resolvedBy|No|User resolving the alerts.|string|-|-
+|resolvedNotes|No|Additional notes associated with the resolution.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts Resolution invoked successfully.|-
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__resolve__alertId_]]
+*Endpoint PUT `/resolve/{alertId}`*
+
+NOTE: *Set one alert Resolved.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertId|Yes|The alertId to set resolved.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|resolvedBy|No|User resolving the alerts.|string|-|-
+|resolvedNotes|No|Additional notes associated with the resolution.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts Resolution invoked successfully.|-
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__tags]]
+*Endpoint DELETE `/tags`*
+
+NOTE: *Remove tags from existing Alerts.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertIds|Yes|Comma separated list of alertIds to untag.|string|-|-
+|tagNames|Yes|Comma separated list of tag names to remove.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts untagged successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__tags]]
+*Endpoint PUT `/tags`*
+
+NOTE: *Add tags to existing Alerts.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertIds|Yes|Comma separated list of alertIds to tag.|string|-|-
+|tags|Yes|Comma separated list of tags to add, each tag of format 'name|value'.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alerts tagged successfully.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE___alertId_]]
+*Endpoint DELETE `/{alertId}`*
+
+NOTE: *Delete an existing Alert.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|alertId|Yes|Alert id to be deleted.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Success, Alert deleted.|-
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|Alert not found.|<<ApiError>>
+|500|Internal server error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
 === actions
 . link:#++GET__actions++[Find all action ids grouped by plugin.]
 . link:#++POST__actions++[Create a new ActionDefinition.]
@@ -2373,6 +2961,27 @@ _Note that the trigger mode can not be changed. Return Dampening updated._
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|ackBy|No|-|string|-|-
+|ackTime|No|-|integer|int64|-
+|category|No|-|string|-|-
+|context|No|-|object|-|-
+|ctime|No|-|integer|int64|-
+|dampening|No|-|null|-|-
+|dataId|No|-|string|-|-
+|dataSource|No|-|string|-|-
+|evalSets|No|-|array of array|-|-
+|eventType|No|-|string|-|-
+|id|No|-|string|-|-
+|notes|No|-|array of <<Note>>|-|-
+|resolvedBy|No|-|string|-|-
+|resolvedEvalSets|No|-|array of array|-|-
+|resolvedTime|No|-|integer|int64|-
+|severity|No|-|string|-|LOW, MEDIUM, HIGH, CRITICAL
+|status|No|-|string|-|OPEN, ACKNOWLEDGED, RESOLVED
+|tags|No|-|object|-|-
+|tenantId|No|-|string|-|-
+|text|No|-|string|-|-
+|trigger|No|-|null|-|-
 
 |=======================
 
