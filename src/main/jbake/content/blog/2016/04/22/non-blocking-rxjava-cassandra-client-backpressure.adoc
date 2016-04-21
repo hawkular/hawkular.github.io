@@ -1,0 +1,332 @@
+= How we built a fully non-blocking RxJava Cassandra client with backpressure support
+Thomas Segismont
+2016-04-22
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, hawkular, rxjava, cassandra, non-blocking, asynchronous, reactive, backpressure
+
+As a https://github.com/ReactiveX/RxJava[RxJava] user, you certainly had to decorate many of your project's APIs
+and libraries. In the https://github.com/hawkular/hawkular-metrics[Hawkular Metrics] team, we did this with the DataStax
+Java Driver for Apache Cassandra.
+
+It is not always easy, especially if your goal is to build a reactive application, maximizing resource utilization
+through fully non-blocking communication. Want to know how we built a RxJava Cassandra client with backpressure support? Read on.
+
+== What is Hawkular Metrics?
+
+Hawkular Metrics is a time series database, offering a REST API to store and retrieve metric data in
+https://cassandra.apache.org/[Apache Cassandra]. It is being adopted by different Red Hat projects,
+such as https://www.openshift.org/[Openshift Origin], and a component of http://www.hawkular.org[Hawkular],
+an opensource monitoring suite sponsored by Red Hat.
+
+If you don't know Apache Cassandra yet, it is a NoSQL columnar database, particularly suited to storing large amounts of
+historical data.
+
+== Decorating Session methods with RxJava
+
+The DataStax Java driver provides methods to execute statements asynchronously. To make this work nicely with RxJava, we
+have a `Session` wrapper https://git.io/vwGfw[in our repository], exposing methods like the following:
+
+[source,java]
+.RxSession
+----
+/**
+ * Asynchronously execute a query and emit the corresponding {@link ResultSet} on the
+ * {@link Schedulers#computation()} scheduler.
+ *
+ * @param statement the CQL query to execute, of any {@link Statement} type
+ *
+ * @return an {@link Observable} emitting just one {@link ResultSet} item
+ */
+Observable<ResultSet> execute(Statement statement);
+----
+
+The implementation is quite straightforward, it simply converts the `ListenableFuture` returned by `Session#executeAsync`
+to an `Observable` with https://github.com/ReactiveX/RxJavaGuava[RxJavaGuava].
+
+[source,java]
+.RxSession implementation
+----
+@Override
+public Observable<ResultSet> execute(Statement statement) {
+    ResultSetFuture future = session.executeAsync(statement);
+    return ListenableFutureObservable.from(future, Schedulers.computation());
+}
+----
+
+NOTE: Here the `ResultSet` item will be emitted on the computation scheduler.
+This is what we want for data manipulation operations.
+
+From there we can chain the usual methods of `Observable` to transform the `ResultSet`. For example, if we want to
+determine whether a conditional update statement was successfully applied:
+
+[source,java]
+.Checking if conditional update was successfully applied
+----
+Observable<Boolean> wasApplied = rxSession.execute(conditionalUpdateStatement).map(ResultSet::wasApplied);
+----
+
+So far, so good.
+
+== Illegal ResultSet traversal
+
+A more frequent use case is to fetch the rows returned by a `SELECT` statement.
+Because a `ResultSet` extends `Iterable<Row>`, we initially simply combined `Observable#from` with `Observable#flatMap`:
+
+[source,java]
+.Wrong transformation of result to row items
+----
+Observable<Row> rows = rxSession.execute(selectStatement).flatMap(Observable::from);
+----
+
+It worked but broke the computation scheduler rule: it is meant for computation-bound work,
+and so should not be used to make blocking calls. You may wonder when is the blocking method called?
+In fact, if the `ResultSet` is not fully-fetched, the driver will block when calling `Iterator#next`, at the end of the
+page currently loaded.
+
+We could have fixed this by iterating over the `ResultSet` with a thread from the IO scheduler.
+That is a perfectly valid usage of RxJava. However we try to avoid calling blocking APIs, remember?
+
+== Non-blocking access of a ResultSet
+
+To traverse completely a `ResultSet` without blocking, we can take advantage of three methods exposed by its interface:
+
+1. `ResultSet#getAvailableWithoutFetching`:
+tells us how many times `ResultSet#one` can be called without blocking;
+2. `ResultSet#isFullyFetched`:
+when it returns `true`, then `ResultSet#getAvailableWithoutFetching` returns the number of rows available before the `ResultSet` is exhausted;
+3. `ResultSet#fetchMoreResults`:
+its name is self-explaining; it returns a `ListenableFuture<ResultSet>`, indicating completion of the operation.
+
+== Building a row sequence
+
+Given a `ResultSet`, we need to create an `Observable<Row>` which will emit rows available without fetching, fetch more
+rows when needed, and repeat until no row is available and the `ResultSet` is fully fetched.
+
+But flow control must be taken into account. Indeed, if the subscriber (or one of the operators in the chain) tries to
+activate backpressure, it will receive a `MissingBackpressureException` as `onError` notification.
+Obviously we can't just add an operator to sample or drop some of the rows... We have to implement a `Producer`.
+
+=== RowProducer implementation
+
+`Producer` implementation is unfortunately not a well covered topic in the RxJava documentation.
+Nevertheless, Dávid Karnok (https://twitter.com/akarnokd[@akarnokd]) wrote on his http://akarnokd.blogspot.fr[Advanced RxJava blog]
+an excellent series of articles about producers.
+
+Our `RowProducer` is based on the `RangeProducer` described in his
+http://akarnokd.blogspot.fr/2015/05/operator-concurrency-primitives_12.html[Operator concurrency primitives: producers part 1],
+so you must understand the concepts explained there before reading further.
+
+A `ResultSet` can be seen as a range in the sense that it holds a finite sequence of items.
+The difference is that the `ResultSet` may not have all rows available upfront, and that fetching more rows is not a
+synchronous operation. With this in mind, we can have a look at the code.
+
+Let's start with initialization.
+
+[source,java]
+.RowProducer initialization
+----
+private static class RowProducer implements Producer {
+    final ResultSet resultSet;//<1>
+    final Subscriber<? super Row> subscriber;//<2>
+    final Scheduler scheduler;//<3>
+    final AtomicLong requested = new AtomicLong();//<4>
+
+    RowProducer(ResultSet resultSet, Subscriber<? super Row> subscriber, Scheduler scheduler) {
+        this.resultSet = resultSet;
+        this.subscriber = subscriber;
+        this.scheduler = scheduler;
+    }
+----
+<1> the `ResultSet` to fetch rows from
+<2> the subscribing child
+<3> the `Scheduler` we want to operate on (from which items will be emitted)
+<4> stores the number of items requested
+
+Now the `RowProducer#request` method.
+
+[source,java]
+.RowProducer "request" method
+----
+@Override
+public void request(long n) {
+    if (n < 0) {
+        throw new IllegalArgumentException();
+    }
+    if (n == 0) {
+        return;
+    }
+    if (BackpressureUtils.getAndAddRequest(requested, n) != 0) {
+        return;
+    }
+    execute(this::produce);
+}
+
+void produce() {
+    //...
+}
+
+void execute(Runnable command) {
+    Worker worker = scheduler.createWorker();
+    worker.schedule(() -> {
+        try {
+            command.run();
+        } finally {
+            worker.unsubscribe();
+        }
+    });
+}
+----
+
+The first part of the method works the same as for the range producer. But instead of starting emission in this thread,
+the execution of the `RowProducer#produce` method is submitted to the chosen scheduler.
+Then what does `RowProducer#produce` do when executed?
+
+[source,java]
+.RowProducer "produce" method
+----
+long r = requested.get();
+long a = resultSet.getAvailableWithoutFetching();
+for (; ; ) {
+    long e = Math.min(r, a);
+    for (long i = 0; i < e; i++) {
+        subscriber.onNext(resultSet.one());
+        if (subscriber.isUnsubscribed()) {
+            return;
+        }
+    }
+
+    r = requested.addAndGet(-e);
+    if (r == 0) {
+        return;
+    }
+
+    a = resultSet.getAvailableWithoutFetching();
+    if (a == 0) {
+        break;//<1>
+    }
+}
+
+if (resultSet.isFullyFetched()) {
+    subscriber.onCompleted();//<2>
+    return;
+}
+
+Futures.addCallback(resultSet.fetchMoreResults(), new FutureCallback<ResultSet>() {//<3>
+    @Override
+    public void onSuccess(ResultSet result) {
+        if (!subscriber.isUnsubscribed()) {
+            produce();//<5>
+        }
+    }
+
+    @Override
+    public void onFailure(Throwable t) {
+        if (!subscriber.isUnsubscribed()) {
+            subscriber.onError(t);
+        }
+    }
+}, this::execute);//<4>
+----
+
+It is similar to the second part of the `RangeProducer#request` method. Notice that:
+
+1. we must get out of the for-loop in case no rows are available anymore;
+2. `onCompleted` signal is sent when all available rows have been emitted and `ResultSet` is fully fetched;
+3. more rows are fetched if none is available and `ResultSet` is not fully fetched;
+4. the fetch callback execution needs to be submitted to the chosen scheduler;
+5. `RowProducer#produce` method execution is resumed when more rows were fetched;
+
+Almost there!
+
+=== Linking the subscriber with a producer
+
+When creating the `Observable<Row>`, the producer has to be linked with the subscriber in the `OnSubscribe<Row>` callback.
+`OnSubscribe<Row>` is one-argument action interface so let's use the lambda form:
+
+[source,java]
+.Set the producer
+----
+Scheduler scheduler = myPreferredScheduler;
+Observable.create(subscriber -> {
+    subscriber.setProducer(new RowProducer(resultSet, subscriber, scheduler));
+});
+----
+
+== Encapsulating the ResultSet to Rows transformation
+
+We are now able to create an Observable<Row>, but `RxSession` methods return `ResultSet` observables, not plain `ResultSet`.
+
+[source,java]
+.ResultSet to Rows observable with flatMap
+----
+Observable<ResultSet> resultSetObservable = rxSession.execute(selectStatement);
+Scheduler scheduler = myPreferredScheduler;
+Observable<Row> rowsObservable = resultSetObservable.flatMap(resultSet -> {
+    return Observable.create(subscriber -> {
+        subscriber.setProducer(new RowProducer(resultSet, subscriber, scheduler));
+    });
+});
+----
+
+The construct is all right but cumbersome. Let's encapsulate it.
+
+[source,java]
+.ResultSetToRowsTransformer implementation
+----
+public class ResultSetToRowsTransformer implements Transformer<ResultSet, Row> {
+    private final Scheduler scheduler;
+
+    /**
+     * Creates a new transformer operating on the {@link Schedulers#computation()} scheduler.
+     */
+    public ResultSetToRowsTransformer() {
+        this(Schedulers.computation());
+    }
+
+    /**
+     * Creates a new transformer operating on the specified scheduler.
+     *
+     * @param scheduler the scheduler on which this transformer must operate
+     */
+    public ResultSetToRowsTransformer(Scheduler scheduler) {
+        this.scheduler = scheduler;
+    }
+
+    @Override
+    public Observable<Row> call(Observable<ResultSet> resultSetObservable) {
+        return resultSetObservable.flatMap(resultSet -> {
+            return Observable.create(subscriber -> {
+                subscriber.setProducer(new RowProducer(resultSet, subscriber, scheduler));
+            });
+        });
+    }
+}
+----
+
+The `ResultSetToRowsTransformer` can now be applied with `Observable#compose`:
+
+[source,java]
+.Compose with ResultSetToRowsTransformer
+----
+Observable<Row> observable = rxSession.execute(selectStatement).compose(new ResultSetToRowsTransformer());
+----
+
+Actually, to make things even simpler, `RxSession` now offers a direct method:
+
+[source,java]
+.Execute and fetch rows
+----
+Observable<Row> observable = rxSession.executeAndFetch(selectStatement);
+----
+
+== Conclusion
+
+That's it! We have been able to enhance our RxJava utilities so that traversing a Cassandra ResultSet is now a fully
+non-blocking process, with flow control support.
+
+If you're interested in using the code in your own project, it is available as a module independent of the Hawkular
+Metrics stack: http://search.maven.org/#artifactdetails|org.hawkular.metrics|hawkular-metrics-rx-java-driver|0.14.0.Final|jar[hawkular-metrics-rx-java-driver].
+
+Comments and questions are welcome, here or in http://webchat.freenode.net/?channels=hawkular[#hawkular] room on freenode.
