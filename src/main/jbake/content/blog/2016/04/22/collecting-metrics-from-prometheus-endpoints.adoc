@@ -1,0 +1,77 @@
+= Collecting Metrics from Prometheus Endpoints
+John Mazzitelli
+2016-04-22
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, hawkular, agent, prometheus
+
+Hawkular WildFly Agent 0.17.2.Final has just been released. This new release introduces a very interesting feature.
+
+== Prometheus Metrics
+
+The agent now has the ability to monitor Prometheus endpoints and store their metrics to Hawkular Metrics. This means any
+component that exports Prometheus metric data via either the Prometheus binary or text
+formats[https://prometheus.io/docs/instrumenting/exposition_formats/] can have those metric data collected by the agent
+and pushed up into Hawkular Metrics.
+
+=== Configuration
+
+It is very easy to configure the Hawkular WildFly Agent to collect Prometheus metric data. In the WildFly container
+that houses the agent, edit its standalone.xml configuration file and add one or more <remote-prometheus> elements
+in the <managed-servers> section of the agent subsystem:
+
+````
+<remote-prometheus name="My Remote Prometheus Endpoint"
+                   enabled="true"
+                   url="http://my-prometheus-endpoint:9090/metrics"
+                   interval="30"
+                   timeUnits="seconds" />
+````
+
+This tells the agent to periodically scrape the metric data from that remote PRometheus endpoint and whatever metrics
+it finds will be pushed to Hawkular Metrics.
+
+In fact, if you only want to collect Prometheus metric data (and not collect any other kind of metric data,
+like those from DMR endpoints or Jolokia/JMX endpoints) you need only those <remote-prometheus> declarations. You
+do not have to also collect from <remote-dmr> or <remote-jmx> servers (though you are free to do so if you want to monitor
+types of those components, too).
+
+Some Prometheus endpoints expose a lot of metrics, some of which you may not be interested in collecting and storing. In
+this case, you have the option to define metric sets which tell the agent which metrics to collect and store (any others
+will be ignored).
+
+Here is an example of a full agent subsystem configuration that defines a remote Prometheus endpoint and the metrics
+to be collected from that endpoint:
+
+
+````
+<subsystem xmlns="urn:org.hawkular.agent:agent:1.0" enabled="true">
+    <diagnostics enabled="true" interval="1" reportTo="LOG" timeUnits="minutes"/>
+    <storage-adapter type="HAWKULAR" serverOutboundSocketBindingRef="hawkular" username="jdoe" password="password"/>
+
+    <metric-set-prometheus name="Important Metrics">
+        <metric-prometheus name="http_.*"/>
+        <metric-prometheus name="evaluation_failures_total" />
+    </metric-set-prometheus>
+
+    <managed-servers>
+        <remote-prometheus enabled="true"
+                           name="My Remote Prometheus Endpoint"
+                           url="http://my-remote-prometheus-endpoint:9090/metrics"
+                           metricSets="Important Metrics"
+                           interval="30"
+                           timeUnits="seconds" />
+    </managed-servers>
+</subsystem>
+
+````
+
+The above configuration tells the agent to scrape the given Prometheus endpoint URL every 30 seconds and
+store all the metrics with the name "evaluation_failures_total" or with a name that matches
+the regular expression "http_.*". Any other metrics exported by that remote Prometheus endpoint will be
+ignored.
+
+Information about this release can be found on Github here:
+ - https://github.com/hawkular/hawkular-agent/tree/0.17.2.Final
+ - https://github.com/hawkular/hawkular-agent/releases/tag/0.17.2.Final
