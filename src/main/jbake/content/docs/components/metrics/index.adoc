@@ -1561,6 +1561,78 @@ curl -X GET http://server/hawkular/metrics/counters/rate/stats?start=1235&end=67
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
+==== Availability Bucket Data Points
+Availability bucket data points are used with availability metrics. When data points are grouped into a bucket, several
+aggregation functions are applied to produce a data point that consists of several of statistics.
+
+[source,javascript]
+.Availability bucket data point
+----
+{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "downtimeDuration": 29311,
+  "lastDowntime": 12367,
+  "uptimeRatio": 0.78,
+  "downtimeCount": 12
+}
+----
+
+`start` and `end` correspond to the bucket's start and end times respectively.
+
+`empty` is a boolean flag that indicates whether or not the bucket has any data points in it. We will see an example of
+an empty bucket next.
+
+`downtimeDuration` is the total time in milliseconds that the metric was reported down. Note that this is the total
+time within the bucket's stat and end times.
+
+`lastDowntime` is the last time within the bucket's time range that the metric was reported down. The value is in
+milliseconds.
+
+`uptimeRatio` is basically a percentage of the time for the duration of the bucket that the metric is up. The value
+will be a floating point number between zero and one.
+
+`downtimeCount` is the number of times within the duration of the bucket that the metric was reported down.
+
+Now let's look at what an empty data point looks like.
+
+[source,javascript]
+.Empty availability bucket data point
+----
+{
+  "start": 12345,
+  "end": 6789,
+  "empty": true,
+  "downtimeDuration": 0,
+  "lastDowntime": 0,
+  "uptimeRatio": "NaN",
+  "downtimeCount": 0
+}
+----
+
+==== Querying Availability
+[source,shell]
+.Fetch availability stats using buckets parameter
+----
+curl -X GET http://server/hawkular/metrics/gauges/server1/stats?start=1235&end=6789&buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request queries an availability metric named `server1` and specifies that 60 buckets be used. An array of
+availability bucket data points is returned.
+
+[source,shell]
+.Fetch availability stats using bucketDuration parameter
+----
+curl -X GET http://server/hawkular/metrics/availability/server1/stats?start=1235&end=6789&bucketDuration=60000 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request uses the `bucketDuration` parameter and specifies that each bucket is a minute wide.
+
+WARNING: There is currently no API for fetching bucket data points across multiple availability metrics.
+
 == Security
 *TODO*
 
