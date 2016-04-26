@@ -257,10 +257,15 @@ Throughout this document, this string format is identified as `duration`.
 === Availability
 . link:#++GET__availability++[Find tenant's metric definitions.]
 . link:#++POST__availability++[Create availability metric.]
-. link:#++POST__availability_data++[Add metric data for multiple availability metrics in a single call.]
+. link:#++POST__availability_data++[Deprecated. Please use /raw endpoint.]
+. link:#++POST__availability_raw++[Add metric data for multiple availability metrics in a single call.]
+. link:#++GET__availability_tags__tags_++[Retrieve gauge type's tag values]
 . link:#++GET__availability__id_++[Retrieve single metric definition.]
-. link:#++GET__availability__id__data++[Retrieve availability data.]
-. link:#++POST__availability__id__data++[Add data for a single availability metric.]
+. link:#++GET__availability__id__data++[Deprecated. Please use /raw or /stats endpoints.]
+. link:#++POST__availability__id__data++[Deprecated. Please use /raw endpoint.]
+. link:#++GET__availability__id__raw++[Retrieve availability data.]
+. link:#++POST__availability__id__raw++[Add data for a single availability metric.]
+. link:#++GET__availability__id__stats++[Retrieve availability data.]
 . link:#++GET__availability__id__tags++[Retrieve tags associated with the metric definition.]
 . link:#++PUT__availability__id__tags++[Update tags associated with the metric definition.]
 . link:#++DELETE__availability__id__tags__tags_++[Delete tags associated with the metric definition.]
@@ -357,6 +362,46 @@ _Same notes as creating gauge metric apply._
 [[POST__availability_data]]
 *Endpoint POST `/availability/data`*
 
+NOTE: *Deprecated. Please use /raw endpoint.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of availability metrics|array of <<MetricAvailabilityType>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__availability_raw]]
+*Endpoint POST `/availability/raw`*
+
 NOTE: *Add metric data for multiple availability metrics in a single call.* +
 
 
@@ -384,6 +429,48 @@ NOTE: *Add metric data for multiple availability metrics in a single call.* +
 |200|Adding data succeeded.|-
 |400|Missing or invalid payload|<<ApiError>>
 |500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__availability_tags__tags_]]
+*Endpoint GET `/availability/tags/{tags}`*
+
+NOTE: *Retrieve gauge type's tag values* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|tags|Yes|Tag query|string|tag-list|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Tags successfully retrieved.|object
+|204|No matching tags were found|-
+|500|Unexpected error occurred while fetching tags.|<<ApiError>>
 
 |=======================
 
@@ -441,8 +528,8 @@ NOTE: *Retrieve single metric definition.* +
 [[GET__availability__id__data]]
 *Endpoint GET `/availability/{id}/data`*
 
-NOTE: *Retrieve availability data.* +
-_When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and availability statistics will be computed for each bucket._
+NOTE: *Deprecated. Please use /raw or /stats endpoints.* +
+
 
 
 
@@ -483,6 +570,114 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
+|200|successful operation|array of <<DataPoint>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__availability__id__data]]
+*Endpoint POST `/availability/{id}/data`*
+
+NOTE: *Deprecated. Please use /raw endpoint.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of availability datapoints|array of <<DataPointAvailabilityType>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__availability__id__raw]]
+*Endpoint GET `/availability/{id}/raw`*
+
+NOTE: *Retrieve availability data.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|distinct|No|Set to true to return only distinct, contiguous values|boolean|-|-
+|limit|No|Limit the number of data points returned|integer|int32|-
+|order|No|Data point sort order, based on timestamp|string|-|ASC, DESC
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
 |200|Successfully fetched availability data.|array of <<DataPoint>>
 |204|No availability data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
@@ -499,8 +694,8 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 
 ==============================================
 
-[[POST__availability__id__data]]
-*Endpoint POST `/availability/{id}/data`*
+[[POST__availability__id__raw]]
+*Endpoint POST `/availability/{id}/raw`*
 
 NOTE: *Add data for a single availability metric.* +
 
@@ -541,6 +736,64 @@ NOTE: *Add data for a single availability metric.* +
 |200|Adding data succeeded.|-
 |400|Missing or invalid payload|<<ApiError>>
 |500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__availability__id__stats]]
+*Endpoint GET `/availability/{id}/stats`*
+
+NOTE: *Retrieve availability data.* +
+_Based on buckets or bucketDuration query parameter, the time range between start and end will be divided in buckets of equal duration, and availability statistics will be computed for each bucket._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched availability data.|array of <<DataPoint>>
+|204|No availability data was found.|-
+|400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching availability data.|<<ApiError>>
 
 |=======================
 
@@ -690,13 +943,22 @@ NOTE: *Delete tags associated with the metric definition.* +
 === Counter
 . link:#++GET__counters++[Find tenant's counter metric definitions.]
 . link:#++POST__counters++[Create counter metric.]
-. link:#++GET__counters_data++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.]
-. link:#++POST__counters_data++[Add data points for multiple counters.]
-. link:#++GET__counters_rate++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.]
+. link:#++GET__counters_data++[Deprecated. Please use /stats endpoint.]
+. link:#++POST__counters_data++[Deprecated. Please use /raw endpoint.]
+. link:#++GET__counters_rate++[Deprecated. Please use /rate/stats endpoint.]
+. link:#++GET__counters_rate_stats++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.]
+. link:#++POST__counters_raw++[Add data points for multiple counters.]
+. link:#++GET__counters_stats++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.]
+. link:#++GET__counters_tags__tags_++[Retrieve gauge type's tag values]
 . link:#++GET__counters__id_++[Retrieve a counter definition.]
-. link:#++GET__counters__id__data++[Retrieve counter data points.]
-. link:#++POST__counters__id__data++[Add data for a single counter.]
+. link:#++GET__counters__id__data++[Deprecated. Please use /raw or /stats endpoints]
+. link:#++POST__counters__id__data++[Deprecated. Please use /raw endpoint.]
 . link:#++GET__counters__id__rate++[Retrieve counter rate data points.]
+. link:#++GET__counters__id__rate_stats++[Retrieve stats for counter rate data points.]
+. link:#++GET__counters__id__raw++[Retrieve counter data points.]
+. link:#++POST__counters__id__raw++[Add data for a single counter.]
+. link:#++GET__counters__id__stats++[Retrieve counter data points.]
+. link:#++GET__counters__id__stats_tags__tags_++[Fetches data points and groups them into buckets based on one or more tag filters. The data points in each bucket are then transformed into aggregated (i.e., bucket) data points.]
 . link:#++GET__counters__id__tags++[Retrieve tags associated with the metric definition.]
 . link:#++PUT__counters__id__tags++[Update tags associated with the metric definition.]
 . link:#++DELETE__counters__id__tags__tags_++[Delete tags associated with the metric definition.]
@@ -793,6 +1055,232 @@ _This operation also causes the rate to be calculated and persisted periodically
 [[GET__counters_data]]
 *Endpoint GET `/counters/data`*
 
+NOTE: *Deprecated. Please use /stats endpoint.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|successful operation|array of <<NumericBucketPoint>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__counters_data]]
+*Endpoint POST `/counters/data`*
+
+NOTE: *Deprecated. Please use /raw endpoint.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of metrics|array of <<MetricLong>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters_rate]]
+*Endpoint GET `/counters/rate`*
+
+NOTE: *Deprecated. Please use /rate/stats endpoint.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|successful operation|array of <<NumericBucketPoint>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters_rate_stats]]
+*Endpoint GET `/counters/rate/stats`*
+
+NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<NumericBucketPoint>>
+|204|No metric data was found.|-
+|400|The tags parameter is required. Either the buckets or the bucketDuration parameter is required but not both.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__counters_raw]]
+*Endpoint POST `/counters/raw`*
+
+NOTE: *Add data points for multiple counters.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of metrics|array of <<MetricLong>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data points succeeded.|-
+|400|Missing or invalid payload|<<ApiError>>
+|500|Unexpected error happened while storing the data points|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters_stats]]
+*Endpoint GET `/counters/stats`*
+
 NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.* +
 
 
@@ -840,70 +1328,21 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 
 ==============================================
 
-[[POST__counters_data]]
-*Endpoint POST `/counters/data`*
+[[GET__counters_tags__tags_]]
+*Endpoint GET `/counters/tags/{tags}`*
 
-NOTE: *Add data points for multiple counters.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|List of metrics|array of <<MetricLong>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|200|Adding data points succeeded.|-
-|400|Missing or invalid payload|<<ApiError>>
-|500|Unexpected error happened while storing the data points|<<ApiError>>
-
-|=======================
-
-
-
-==============================================
+NOTE: *Retrieve gauge type's tag values* +
 
 
 
 
-==============================================
-
-[[GET__counters_rate]]
-*Endpoint GET `/counters/rate`*
-
-NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.* +
-
-
-
-
-*Query parameters*
+*Path parameters*
 
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
-|start|No|Defaults to now - 8 hours|integer|int64|-
-|end|No|Defaults to now|integer|int64|-
-|buckets|No|Total number of buckets|integer|int32|-
-|bucketDuration|No|Bucket duration|string|duration|-
-|percentiles|No|Percentiles to calculate|string|-|-
-|tags|No|List of tags filters|string|tag-list|-
-|metrics|No|List of metric names|array|-|-
-|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+|tags|Yes|Tag query|string|tag-list|-
 
 |=======================
 
@@ -916,10 +1355,9 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Successfully fetched metric data.|array of <<NumericBucketPoint>>
-|204|No metric data was found.|-
-|400|The tags parameter is required. Either the buckets or the bucketDuration parameter is required but not both.|<<ApiError>>
-|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+|200|Tags successfully retrieved.|object
+|204|No matching tags were found|-
+|500|Unexpected error occurred while fetching tags.|<<ApiError>>
 
 |=======================
 
@@ -977,8 +1415,8 @@ NOTE: *Retrieve a counter definition.* +
 [[GET__counters__id__data]]
 *Endpoint GET `/counters/{id}/data`*
 
-NOTE: *Retrieve counter data points.* +
-_When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket._
+NOTE: *Deprecated. Please use /raw or /stats endpoints* +
+
 
 
 
@@ -1020,6 +1458,114 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |=======================
 |Status Code|Reason|Response Model
 
+|200|successful operation|array of <<DataPoint>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__counters__id__data]]
+*Endpoint POST `/counters/{id}/data`*
+
+NOTE: *Deprecated. Please use /raw endpoint.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of data points containing timestamp and value|array of <<DataPointLong>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters__id__rate]]
+*Endpoint GET `/counters/{id}/rate`*
+
+NOTE: *Retrieve counter rate data points.* +
+_Bucket related parameters as well as percentiles are deprecated, please use rate/stats for bucketed results. When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket. Reset events are detected and data points that immediately follow such events are filtered out prior to calculating the rates. This avoid misleading or inaccurate rates when resets occur._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
 |200|Successfully fetched metric data.|array of <<DataPoint>>
 |204|No metric data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
@@ -1036,8 +1582,125 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 
 ==============================================
 
-[[POST__counters__id__data]]
-*Endpoint POST `/counters/{id}/data`*
+[[GET__counters__id__rate_stats]]
+*Endpoint GET `/counters/{id}/rate/stats`*
+
+NOTE: *Retrieve stats for counter rate data points.* +
+_The time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket. Reset events are detected and data points that immediately follow such events are filtered out prior to calculating the rates. This avoid misleading or inaccurate rates when resets occur._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters__id__raw]]
+*Endpoint GET `/counters/{id}/raw`*
+
+NOTE: *Retrieve counter data points.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|limit|No|Limit the number of data points returned|integer|int32|-
+|order|No|Data point sort order, based on timestamp|string|-|ASC, DESC
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__counters__id__raw]]
+*Endpoint POST `/counters/{id}/raw`*
 
 NOTE: *Add data for a single counter.* +
 
@@ -1090,11 +1753,11 @@ NOTE: *Add data for a single counter.* +
 
 ==============================================
 
-[[GET__counters__id__rate]]
-*Endpoint GET `/counters/{id}/rate`*
+[[GET__counters__id__stats]]
+*Endpoint GET `/counters/{id}/stats`*
 
-NOTE: *Retrieve counter rate data points.* +
-_When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket. Reset events are detected and data points that immediately follow such events are filtered out prior to calculating the rates. This avoid misleading or inaccurate rates when resets occur._
+NOTE: *Retrieve counter data points.* +
+_When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket._
 
 
 
@@ -1118,6 +1781,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 
 |start|No|Defaults to now - 8 hours|integer|int64|-
 |end|No|Defaults to now|integer|int64|-
+|fromEarliest|No|Use data from earliest received, subject to retention period|boolean|-|-
 |buckets|No|Total number of buckets|integer|int32|-
 |bucketDuration|No|Bucket duration|string|duration|-
 |percentiles|No|Percentiles to calculate|string|-|-
@@ -1136,6 +1800,64 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 |200|Successfully fetched metric data.|array of <<DataPoint>>
 |204|No metric data was found.|-
 |400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__counters__id__stats_tags__tags_]]
+*Endpoint GET `/counters/{id}/stats/tags/{tags}`*
+
+NOTE: *Fetches data points and groups them into buckets based on one or more tag filters. The data points in each bucket are then transformed into aggregated (i.e., bucket) data points.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+|tags|Yes|Tags|string|tag-list|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|object
+|204|No metric data was found.|-
+|400|Tags are invalid|<<ApiError>>
 |500|Unexpected error occurred while fetching metric data.|<<ApiError>>
 
 |=======================
@@ -1286,12 +2008,19 @@ NOTE: *Delete tags associated with the metric definition.* +
 === Gauge
 . link:#++GET__gauges++[Find tenant's metric definitions.]
 . link:#++POST__gauges++[Create gauge metric.]
-. link:#++GET__gauges_data++[Find stats for multiple metrics.]
-. link:#++POST__gauges_data++[Add data for multiple gauge metrics in a single call.]
+. link:#++GET__gauges_data++[Deprecated. Please use /stast endpoint.]
+. link:#++POST__gauges_data++[Deprecated. Please use /raw endpoint.]
+. link:#++POST__gauges_raw++[Add data for multiple gauge metrics in a single call.]
+. link:#++GET__gauges_stats++[Find stats for multiple metrics.]
+. link:#++GET__gauges_tags__tags_++[Retrieve gauge type's tag values]
 . link:#++GET__gauges__id_++[Retrieve single metric definition.]
-. link:#++GET__gauges__id__data++[Retrieve gauge data.]
-. link:#++POST__gauges__id__data++[Add data for a single gauge metric.]
+. link:#++GET__gauges__id__data++[Deprecated. Please use /raw or /stats endpoints.]
+. link:#++POST__gauges__id__data++[Deprecated. Please use /raw endpoint.]
 . link:#++GET__gauges__id__periods++[Find condition periods.]
+. link:#++GET__gauges__id__raw++[Retrieve raw gauge data.]
+. link:#++POST__gauges__id__raw++[Add data for a single gauge metric.]
+. link:#++GET__gauges__id__stats++[Retrieve gauge data.]
+. link:#++GET__gauges__id__stats_tags__tags_++[Fetches data points and groups them into buckets based on one or more tag filters. The data points in each bucket are then transformed into aggregated (i.e., bucket) data points.]
 . link:#++GET__gauges__id__tags++[Retrieve tags associated with the metric definition.]
 . link:#++PUT__gauges__id__tags++[Update tags associated with the metric definition.]
 . link:#++DELETE__gauges__id__tags__tags_++[Delete tags associated with the metric definition.]
@@ -1388,6 +2117,135 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 [[GET__gauges_data]]
 *Endpoint GET `/gauges/data`*
 
+NOTE: *Deprecated. Please use /stast endpoint.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|successful operation|array of <<NumericBucketPoint>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__gauges_data]]
+*Endpoint POST `/gauges/data`*
+
+NOTE: *Deprecated. Please use /raw endpoint.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of metrics|array of <<MetricDouble>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__gauges_raw]]
+*Endpoint POST `/gauges/raw`*
+
+NOTE: *Add data for multiple gauge metrics in a single call.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of metrics|array of <<MetricDouble>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data succeeded.|-
+|400|Missing or invalid payload|<<ApiError>>
+|500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges_stats]]
+*Endpoint GET `/gauges/stats`*
+
 NOTE: *Find stats for multiple metrics.* +
 _Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics._
 
@@ -1435,21 +2293,21 @@ _Fetches data points from one or more metrics that are determined using either a
 
 ==============================================
 
-[[POST__gauges_data]]
-*Endpoint POST `/gauges/data`*
+[[GET__gauges_tags__tags_]]
+*Endpoint GET `/gauges/tags/{tags}`*
 
-NOTE: *Add data for multiple gauge metrics in a single call.* +
-
-
+NOTE: *Retrieve gauge type's tag values* +
 
 
-*Body*
 
-[cols="^20,55,^25", options="header"]
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
-|Required|Description|Data Type
+|Parameter|Required|Description|Type|Format|Allowable Values
 
-|Yes|List of metrics|array of <<MetricDouble>>
+|tags|Yes|Tag query|string|tag-list|-
 
 |=======================
 
@@ -1462,9 +2320,9 @@ NOTE: *Add data for multiple gauge metrics in a single call.* +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Adding data succeeded.|-
-|400|Missing or invalid payload|<<ApiError>>
-|500|Unexpected error happened while storing the data|<<ApiError>>
+|200|Tags successfully retrieved.|object
+|204|No matching tags were found|-
+|500|Unexpected error occurred while fetching tags.|<<ApiError>>
 
 |=======================
 
@@ -1522,8 +2380,8 @@ NOTE: *Retrieve single metric definition.* +
 [[GET__gauges__id__data]]
 *Endpoint GET `/gauges/{id}/data`*
 
-NOTE: *Retrieve gauge data.* +
-_When buckets or bucketDuration query parameter is used, the time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket._
+NOTE: *Deprecated. Please use /raw or /stats endpoints.* +
+
 
 
 
@@ -1584,7 +2442,7 @@ _When buckets or bucketDuration query parameter is used, the time range between 
 [[POST__gauges__id__data]]
 *Endpoint POST `/gauges/{id}/data`*
 
-NOTE: *Add data for a single gauge metric.* +
+NOTE: *Deprecated. Please use /raw endpoint.* +
 
 
 
@@ -1620,9 +2478,7 @@ NOTE: *Add data for a single gauge metric.* +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Adding data succeeded.|-
-|400|Missing or invalid payload|<<ApiError>>
-|500|Unexpected error happened while storing the data|<<ApiError>>
+|default|successful operation|-
 
 |=======================
 
@@ -1680,6 +2536,236 @@ _Retrieve periods for which the condition holds true for each consecutive data p
 |200|Successfully fetched periods.|array of object
 |204|No data was found.|-
 |400|Missing or invalid query parameters|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges__id__raw]]
+*Endpoint GET `/gauges/{id}/raw`*
+
+NOTE: *Retrieve raw gauge data.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|fromEarliest|No|Use data from earliest received, subject to retention period|boolean|-|-
+|limit|No|Limit the number of data points returned|integer|int32|-
+|order|No|Data point sort order, based on timestamp|string|-|ASC, DESC
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__gauges__id__raw]]
+*Endpoint POST `/gauges/{id}/raw`*
+
+NOTE: *Add data for a single gauge metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of datapoints containing timestamp and value|array of <<DataPointDouble>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data succeeded.|-
+|400|Missing or invalid payload|<<ApiError>>
+|500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges__id__stats]]
+*Endpoint GET `/gauges/{id}/stats`*
+
+NOTE: *Retrieve gauge data.* +
+_The time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|fromEarliest|No|Use data from earliest received, subject to retention period|boolean|-|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges__id__stats_tags__tags_]]
+*Endpoint GET `/gauges/{id}/stats/tags/{tags}`*
+
+NOTE: *Fetches data points and groups them into buckets based on one or more tag filters. The data points in each bucket are then transformed into aggregated (i.e., bucket) data points.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+|tags|Yes|Tags|string|tag-list|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|object
+|204|No metric data was found.|-
+|400|Tags are invalid|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
 
 |=======================
 
@@ -1829,7 +2915,8 @@ NOTE: *Delete tags associated with the metric definition.* +
 === Metric
 . link:#++GET__metrics++[Find tenant's metric definitions.]
 . link:#++POST__metrics++[Create metric.]
-. link:#++POST__metrics_data++[Add data for multiple metrics in a single call.]
+. link:#++POST__metrics_data++[Deprecated. Please use /raw endpoint.]
+. link:#++POST__metrics_raw++[Add data points for multiple metrics in a single call.]
 
 
 ==============================================
@@ -1925,7 +3012,7 @@ _Clients are not required to explicitly create a metric before storing data. Doi
 [[POST__metrics_data]]
 *Endpoint POST `/metrics/data`*
 
-NOTE: *Add data for multiple metrics in a single call.* +
+NOTE: *Deprecated. Please use /raw endpoint.* +
 
 
 
@@ -1949,7 +3036,47 @@ NOTE: *Add data for multiple metrics in a single call.* +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Adding data succeeded.|-
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__metrics_raw]]
+*Endpoint POST `/metrics/raw`*
+
+NOTE: *Add data points for multiple metrics in a single call.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of metrics|<<MixedMetricsRequest>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data points succeeded.|-
 |400|Missing or invalid payload.|<<ApiError>>
 |500|Unexpected error happened while storing the data|<<ApiError>>
 
@@ -2057,6 +3184,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|tags|No|-|object|-|-
 |timestamp|Yes|-|integer|int64|-
 |value|Yes|-|object|-|-
 
@@ -2069,6 +3197,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|tags|No|-|object|-|-
 |timestamp|Yes|-|integer|int64|-
 |value|Yes|-|string|-|UP, DOWN, UNKNOWN
 
@@ -2081,6 +3210,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|tags|No|-|object|-|-
 |timestamp|Yes|-|integer|int64|-
 |value|Yes|-|number|double|-
 
@@ -2093,6 +3223,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|tags|No|-|object|-|-
 |timestamp|Yes|-|integer|int64|-
 |value|Yes|-|integer|int64|-
 
@@ -2105,6 +3236,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+|tags|No|-|object|-|-
 |timestamp|Yes|-|integer|int64|-
 |value|Yes|-|object|-|-
 
@@ -2219,6 +3351,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |percentiles|No|-|array of <<Percentile>>|-|-
 |samples|No|-|integer|int32|-
 |start|No|-|integer|int64|-
+|sum|No|-|number|double|-
 
 |=======================
 
