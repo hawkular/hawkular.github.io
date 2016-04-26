@@ -1115,7 +1115,7 @@ curl -X GET http://server/hakwular/metrics/availability/server1/raw \
 ==== Date Range
 Every query is bounded by a start and an end time. The end time defaults to _now_, and the start time defaults to 8
 hours ago. These can be overridden with the `start` and `end` parameters respectively. The expected format of their
-values is a unix timestamp.
+values is a unix timestamp. The start of the range is inclusive while the end is exclusive.
 
 [source,shell]
 .Override start and end times for gauge
@@ -1258,7 +1258,308 @@ A reset event occurs some time between 90000 and 210000; consequently, we will g
 Note that we exclude the rate data point between 90000 and 210000 timestamps.
 
 === Downsampling
-*TODO*
+Downsampling is a query technique for reducing the number of data points that are sent back to the client. Why is this
+done? When a request is made to render a graph, the client specifies a date range. The number of data points that fall
+within that range can and will vary. We want to avoid sending back too many data points because an excessive number of
+data points does little to improve the visualization, slows down the rendering, and makes the UI less response which in
+turn makes the user experience worse overall. Downsampling is a way to return a predictable or fixed number of data
+points which facilitates better graphs and a better overall user experience.
+
+Hawkular Metrics provides several `/stats` endpoints that use downsampling.
+
+==== Buckets
+Data points are first grouped into buckets. A bucket can have zero or more data points, and a data point will be in at
+most one bucket. Aggregation functions are then applied to the data points in each bucket to produce a single,
+_bucketed_ data point.
+
+Let's look at a simple example to illustrate how data points are grouped.
+
+[grid="all"]
+.Data points
+|===
+|Data point |Timestamp
+|P~1~ |15:00
+|P~2~ |15:10
+|P~3~ |15:20
+|P~4~ |15:30
+|P~5~ |15:40
+|P~6~ |15:50
+|===
+
+We have six data points. The values are irrelevant for the example. We query with a date range of 15:00 to 16:00.
+We use for buckets to end up with:
+
+[grid="all"]
+.Buckets
+|===
+|Bucket |Data points
+|15:00 - 15:15 |P~1~, P~2~
+|15:15 - 15:30 |P~3~
+|15:30 - 15:45 |P~4~, P~5~
+|15:45 - 16:00 |P~6~
+|===
+
+The first thing to note is that a bucket expressed as a date range or duration in which the start time is inclusive and
+the end time is exclusive. If a data point's timestamp falls within that range, then the data point is grouped into
+that bucket. Different aggregation functions are applied depending on the metric type.
+
+===== Bucket Query Parameters
+There are two query parameters that are available with all `/stats` endpoints - `buckets` and `bucketDuration`. One and
+only one of them can be specified in a request. For the preceding example, we could end up with four buckets using
+either one these parameters.
+
+`buckets` specifies the exact number of buckets to use. For the preceding example, `buckets=4` will divide the time
+range into four buckets. A higher value increases the number of buckets which in turn reduces the number of data points
+per bucket.
+
+`bucketDuration` is a duration in milliseconds that specifies how wide or large each bucket is. For the preceding
+example, `bucketDuration=900000` specifies that each bucket is 15 minutes wide, which again yields four buckets. A
+larger duration results in fewer buckets with more data points per bucket. A smaller duration results in more buckets
+with less data points per bucket.
+
+==== Numeric Bucket Data Points
+Numeric bucket data points are used with gauges, counters, and rates. When data points are grouped into a bucket,
+several aggregation functions are applied to produce a data point that consists of a number of statistics.
+
+[source,javascript]
+.Numeric bucket data point
+----
+{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "min": 100.01,
+  "avg": 107.5,
+  "max": 115.32,
+  "median": 109.0,
+  "sum": 215.0,
+  "samples": 5
+}
+----
+
+`start` and `end` correspond to the bucket's start and end times respectively.
+
+`empty` is a boolean flag that indicates whether or not the bucket has any data points in it. We will see an example of
+an empty bucket next.
+
+The `min`, `max`, `avg`, `median`, and `sum` properties should be self-explanatory. They hold the results of the
+aggregation functions applied over all the data points in the bucket.
+
+`samples` is the total number of data points in the bucket.
+
+The properties in a numeric data point are fixed and are the same for gauges, counters, and rates.
+
+NOTE: In the future, Hawkular Metrics may allow the client to specify which aggregation functions to use in the bucket
+data points. See link:https://issues.jboss.org/browse/HWKMETRICS-374[HWMKETRICS-374] for details.
+
+Now let's see what an empty bucket data point looks like.
+
+[source,javascript]
+.Empty numeric bucket data point
+----
+{
+  "start": 12345,
+  "end": 6789,
+  "empty": true,
+  "min": "NaN",
+  "avg": "NaN",
+  "max": "NaN",
+  "median": "NaN",
+  "sum": "NaN",
+  "samples": 0
+}
+----
+
+The `empty` property is true indicating that there were no data points in the bucket. The `NaN` values correspond to
+Java's link:https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html#NaN[Double.NaN].
+
+A bucket data point can also have an optional set of percentiles.
+
+[source,javascript]
+.Bucket data point with percentiles
+----
+{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "min": 100.01,
+  "avg": 107.5,
+  "max": 115.32,
+  "median": 109.0,
+  "sum": 215.0,
+  "percentiles": [
+    {
+      "quantile": 0.90,
+      "value": 100.01
+    },
+    {
+      "quantile": 0.95
+      "value": 108.42
+    },
+    {
+      "quantile": 0.99
+      "value": 115.25
+    }
+  ]
+  "samples": 5
+}
+----
+
+This data point includes the 90th, 95th, and 99th percentiles. Unless the request explicitly asks for percentiles, they
+will be omitted.
+
+==== Querying Gauges
+[source,shell]
+.Fetch gauge stats using buckets parameter
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request queries a gauge named `request_size` and specifies that 60 buckets be used. An array of numeric bucket
+data points is returned.
+
+[source,shell]
+.Fetch gauge stats using bucketDuration parameter
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&bucketDuration=60000 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request uses the `bucketDuration` parameter and specifies that each bucket is a minute wide.
+
+The next example demonstrates the `percentiles` query parameter.
+
+[source,shell]
+.Fetch gauge stats that include percentiles
+----
+curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&buckets=30&percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+The `percentiles` parameter takes a comma-delimited list of numeric values in which each value must be between 0 and
+100.
+
+You can also query across multiple gauges. The set of metrics to query is determined by using either tag filters or by
+specifying a list of metric names.
+
+[source,shell]
+.Fetch stats from multiple gauges by name
+----
+curl -X GET http://server/hawkular/metrics/gauges/stats?start=12345&end=56789&buckets=100&metrics=G1,G2,G3
+----
+
+This request fetches data points from gauges G1, G2, and G3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.
+
+Next we use tag filters to select the set of metrics to query.
+
+[source,shell]
+.Fetch stats from gauges using tag filters
+----
+curl -X GET http://server/hawkular/metrics/gauges/stats?start=1235&end=6789&buckets=30&tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+==== Querying Counters
+Now we look at the `/stats` endpoints for counter which are virtually the same as those for gauges.
+
+[source,shell]
+.Fetch counter stats using buckets parameter
+----
+curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&end=6789&buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request queries a counter named `total_requests` and specifies that 60 buckets be used. An array of numeric bucket
+data points is returned.
+
+[source,shell]
+.Fetch counter stats using bucketDuration parameter
+----
+curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&end=6789&bucketDuration=60000 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request uses the `bucketDuration` parameter and specifies that each bucket is a minute wide.
+
+[source,shell]
+.Fetch counter stats that include percentiles
+----
+curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&end=6789&buckets=30&percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+You can also query across multiple counter. The set of metrics to query is determined by using either tag filters or by
+specifying a list of metric names.
+
+[source,shell]
+.Fetch stats from multiple counters by name
+----
+curl -X GET http://server/hawkular/metrics/counters/stats?start=12345&end=56789&buckets=100&metrics=C1,C2,C3
+----
+
+This request fetches data points from counters C1, C2, and C3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.
+
+Next we use tag filters to select the set of metrics to query.
+
+[source,shell]
+.Fetch stats from counters using tag filters
+----
+curl -X GET http://server/hawkular/metrics/counters/stats?start=1235&end=6789&buckets=30&tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+==== Querying Counter Rates
+Downsampling can be done with rates as well.
+
+[source,shell]
+.Fetch rates stats using buckets parameter
+----
+curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&end=6789&buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request queries the rate for a counter named `total_requests` and specifies that 60 buckets be used. An array of
+numeric bucket data points is returned.
+
+[source,shell]
+.Fetch rate stats using bucketDuration parameter
+----
+curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&end=6789&bucketDuration=60000 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+This request uses the `bucketDuration` parameter and specifies that each bucket is a minute wide.
+
+[source,shell]
+.Fetch rate stats that include percentiles
+----
+curl -X GET http://server/hawkular/metrics/total_requests/rate/stats?start=1235&end=6789&buckets=30&percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+You can also query for rates across multiple counter. The set of metrics to query is determined by using either tag
+filters or by specifying a list of metric names.
+
+[source,shell]
+.Fetch rate stats from multiple counters by name
+----
+curl -X GET http://server/hawkular/metrics/counters/rate/stats?start=12345&end=56789&buckets=100&metrics=C1,C2,C3
+----
+
+This request fetches rate data points from counters C1, C2, and C3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.
+
+Next we use tag filters to select the set of metrics to query.
+
+[source,shell]
+.Fetch rate stats from counters using tag filters
+----
+curl -X GET http://server/hawkular/metrics/counters/rate/stats?start=1235&end=6789&buckets=30&tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
 
 == Security
 *TODO*
