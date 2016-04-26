@@ -18,6 +18,19 @@
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/overview.html">Overview</a></li>
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quick Start</a></li>
                 <li class=""><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Downloads</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/metrics/index.html">User Guide</a>
+                    </li>
+                    <li>
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">REST API</a>
+                    </li>
+                  </ul>
+                </li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                   Documentation
                   <span class="caret"></span>
