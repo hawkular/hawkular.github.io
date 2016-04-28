@@ -1261,11 +1261,12 @@ Note that we exclude the rate data point between 90000 and 210000 timestamps.
 Downsampling is a query technique for reducing the number of data points that are sent back to the client. Why is this
 done? When a request is made to render a graph, the client specifies a date range. The number of data points that fall
 within that range can and will vary. We want to avoid sending back too many data points because an excessive number of
-data points does little to improve the visualization, slows down the rendering, and makes the UI less response which in
-turn makes the user experience worse overall. Downsampling is a way to return a predictable or fixed number of data
+data points does little to improve the visualization, slows down the rendering, and makes the UI less responsive which
+in turn makes the user experience worse overall. Downsampling is a way to return a predictable or fixed number of data
 points which facilitates better graphs and a better overall user experience.
 
-Hawkular Metrics provides several `/stats` endpoints that use downsampling.
+Hawkular Metrics provides several `/stats` endpoints that use downsampling. These endpoints are available for all
+metric types. Examples are provided in <<Querying Stats>>.
 
 ==== Buckets
 Data points are first grouped into buckets. A bucket can have zero or more data points, and a data point will be in at
@@ -1287,7 +1288,7 @@ Let's look at a simple example to illustrate how data points are grouped.
 |===
 
 We have six data points. The values are irrelevant for the example. We query with a date range of 15:00 to 16:00.
-We use for buckets to end up with:
+We use four buckets to end up with:
 
 [grid="all"]
 .Buckets
@@ -1312,10 +1313,28 @@ either one these parameters.
 range into four buckets. A higher value increases the number of buckets which in turn reduces the number of data points
 per bucket.
 
-`bucketDuration` is a duration in milliseconds that specifies how wide or large each bucket is. For the preceding
-example, `bucketDuration=900000` specifies that each bucket is 15 minutes wide, which again yields four buckets. A
-larger duration results in fewer buckets with more data points per bucket. A smaller duration results in more buckets
-with less data points per bucket.
+`bucketDuration` is a duration specified in one of:
+
+* milliseconds
+* seconds
+* minutes
+* hours
+* days
+
+The value must match the regular expression `(+d)(ms|s|mn|h|d)`.
+
+For the preceding example, `bucketDuration=900000ms` specifies a duration of 900,000 milliseconds or 15 minutes to
+yield four buckets.
+
+Alternatively, we could do `bucketDuration=900s` which is 900 seconds or 15 minutes.
+
+We could also do `bucketDuration=15mn` which is 15 minutes.
+
+Suppose our date range spanned a 7 day period and we want a bucket per day. We could accomplish this with
+`bucketDuration=168h` which is 168 hours or 7 days. Alternatively we could do `bucketDuration=1d` which is 1 day.
+
+TIP: A larger duration results in fewer buckets with more data points per bucket. A smaller duration results in more
+buckets with less data points per bucket.
 
 ==== Numeric Bucket Data Points
 Numeric bucket data points are used with gauges, counters, and rates. When data points are grouped into a bucket,
@@ -1406,7 +1425,11 @@ A bucket data point can also have an optional set of percentiles.
 ----
 
 This data point includes the 90th, 95th, and 99th percentiles. Unless the request explicitly asks for percentiles, they
-will be omitted.
+will be omitted. See <<percentiles-param-with-gauge,this example below>> to see how the `percentiles` query parameter
+is used..
+
+==== Querying Stats
+This section provides examples of all the `/stats` endpoints for the different metric types.
 
 ==== Querying Gauges
 [source,shell]
@@ -1422,7 +1445,7 @@ data points is returned.
 [source,shell]
 .Fetch gauge stats using bucketDuration parameter
 ----
-curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&bucketDuration=60000 \
+curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&bucketDuration=60000ms \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
@@ -1431,6 +1454,7 @@ This request uses the `bucketDuration` parameter and specifies that each bucket 
 The next example demonstrates the `percentiles` query parameter.
 
 [source,shell]
+[[percentiles-param-with-gauge]]
 .Fetch gauge stats that include percentiles
 ----
 curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&end=6789&buckets=30&percentiles=75,90,99 \
@@ -1477,7 +1501,7 @@ data points is returned.
 [source,shell]
 .Fetch counter stats using bucketDuration parameter
 ----
-curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&end=6789&bucketDuration=60000 \
+curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&end=6789&bucketDuration=60s \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
@@ -1527,7 +1551,7 @@ numeric bucket data points is returned.
 [source,shell]
 .Fetch rate stats using bucketDuration parameter
 ----
-curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&end=6789&bucketDuration=60000 \
+curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&end=6789&bucketDuration=1mn \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
@@ -1585,7 +1609,7 @@ aggregation functions are applied to produce a data point that consists of sever
 an empty bucket next.
 
 `downtimeDuration` is the total time in milliseconds that the metric was reported down. Note that this is the total
-time within the bucket's stat and end times.
+time within the bucket's start and end times.
 
 `lastDowntime` is the last time within the bucket's time range that the metric was reported down. The value is in
 milliseconds.
@@ -1593,7 +1617,9 @@ milliseconds.
 `uptimeRatio` is basically a percentage of the time for the duration of the bucket that the metric is up. The value
 will be a floating point number between zero and one.
 
-`downtimeCount` is the number of times within the duration of the bucket that the metric was reported down.
+`downtimeCount` is the number of periods in which a resource is reported down. In this context a period is a range of
+consecutive data points in which the availability does not change. For example, if a resource reports down twice in a
+row, then up, and then down again, `downtimeCount` will be 2.
 
 Now let's look at what an empty data point looks like.
 
@@ -1625,7 +1651,7 @@ availability bucket data points is returned.
 [source,shell]
 .Fetch availability stats using bucketDuration parameter
 ----
-curl -X GET http://server/hawkular/metrics/availability/server1/stats?start=1235&end=6789&bucketDuration=60000 \
+curl -X GET http://server/hawkular/metrics/availability/server1/stats?start=1235&end=6789&bucketDuration=60s \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
