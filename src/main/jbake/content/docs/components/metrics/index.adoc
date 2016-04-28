@@ -701,55 +701,25 @@ curl -X PUT http://server/hawkular/metrics/availability/server1/tags -d @request
 [source,shell]
 .Delete gauge tags
 ----
-curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags -d @request.json \
+curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags/env,status
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
 
-[source,javascript]
-.request.json
-----
-{
-  "env": "stage",
-  "status": "active"
-}
-----
+The request specifies a comma-delimited list of tag names. This request deletes the tags named `env` and `status`.
 
 [source,shell]
 .Delete counter tags
 ----
-curl -X DELETE http://server/hawkular/metrics/counters/request_count/tags -d @request.json \
+curl -X DELETE http://server/hawkular/metrics/counters/request_count/tags/env,status
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
-----
-
-[source,javascript]
-.request.json
-----
-{
-  "env": "stage",
-  "status": "active"
-}
 ----
 
 [source,shell]
 .Delete availability tags
 ----
-curl -X DELETE http://server/hawkular/metrics/availability/server1/tags -d @request.json \
+curl -X DELETE http://server/hawkular/metrics/availability/server1/tags/env,status -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
 ----
-
-[source,javascript]
-.request.json
-----
-{
-  "env": "stage",
-  "status": "active"
-}
-----
-
-[TIP]
-Note that both the key and value have to have to be specified, but anything can be specified for the tag value.
-In the future, this endpoint might be updated to only require the tag keys. See
-https://issues.jboss.org/browse/HWKMETRICS-385[HWKMETRICS-385] for details.
 
 === Data Point Tags
 Tags can be added to individual data points. They are a bit different than metric tags because they are immutable.
@@ -1141,8 +1111,8 @@ curl -X GET http://server/hawkular/metrics/availability/server1?start=1235,end=6
 If the end time is greater than the start time, an error response will be returned with a 400 status code.
 
 ==== Sort Order
-Data is sorted by timestamp and returned in sorted order by default. The order by specified with the `order` parameter.
-Accepted values are `ASC` and `DESC`.
+Data is sorted by timestamp and returned in sorted order by default. The order is specified with the `order` parameter.
+Accepted values are `asc` and `desc`. The parameter value is case-insensitive.
 
 [source,shell]
 .Return results in ascending order for a gauge
@@ -1380,17 +1350,11 @@ Now let's see what an empty bucket data point looks like.
   "start": 12345,
   "end": 6789,
   "empty": true,
-  "min": "NaN",
-  "avg": "NaN",
-  "max": "NaN",
-  "median": "NaN",
-  "sum": "NaN",
-  "samples": 0
 }
 ----
 
-The `empty` property is true indicating that there were no data points in the bucket. The `NaN` values correspond to
-Java's link:https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html#NaN[Double.NaN].
+The `empty` property is true indicating that there were no data points in the bucket. Note that the statistics related
+properties are excluded when the bucket is empty.
 
 A bucket data point can also have an optional set of percentiles.
 
@@ -1630,12 +1594,10 @@ Now let's look at what an empty data point looks like.
   "start": 12345,
   "end": 6789,
   "empty": true,
-  "downtimeDuration": 0,
-  "lastDowntime": 0,
-  "uptimeRatio": "NaN",
-  "downtimeCount": 0
 }
 ----
+
+Note that the statistics related properties are omitted when the bucket is empty.
 
 ==== Querying Availability
 [source,shell]
