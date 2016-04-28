@@ -170,6 +170,261 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/04/28/new-packaging.html"><h1>New Hawkular packaging</h1></a>
+            <p>28 April 2016, by Heiko W. Rupp, Stefan Negrea</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>[ This blog post has been sent before to the hawkular-dev mailing list ]</em></p>
+</div>
+<div class="paragraph">
+<p>With a growing community and an increasingly large number of sub-projects, it is the perfect time to rethink the
+packaging of Hawkular. This post is a blueprint for changes to come to Hawkular as well as establish some patterns
+for futures decisions.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_motivation">Motivation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>So far we have created Hawkular "All-in-one" releases that contain everything, Hawkular server components, UI,
+the agent and also embedded versions of Cassandra and KeyCloak.</p>
+</div>
+<div class="paragraph">
+<p>It&#8217;s certainly the case that for community we will still deliver an all-in-one package.
+We also need to consider separate distributions for other projects that integrate with Hawkular.</p>
+</div>
+<div class="paragraph">
+<p>The recent effort to integrate with <a href="blog/2016/02/22/hawkular-manage-iq.html">ManageIQ</a> comes with
+its own set of requirements for services.
+Not all of the Hawkular components are needed and required components may be configured differently.
+For example the UI is supplied from within ManageIQ side and Hawkular is to be run headless. Other
+components like Cassandra will not be run in embedded mode, so that there is no need to supply it in the package.
+Likewise KeyCloak will not be shipped and probably not even needed because we only have technical
+users that will access Hawkular services.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_existing_components_services">Existing Components / Services</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Here a list of projects that are part of Hawkular project</p>
+</div>
+<div class="hdlist">
+<table>
+<tr>
+<td class="hdlist1">
+Metrics
+</td>
+<td class="hdlist2">
+<p>scalable, asynchronous, multi tenant, long term metrics storage engine</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Inventory
+</td>
+<td class="hdlist2">
+<p>registry of "things" that contains info about your applications, servers, etc. and also keeps track of
+their relationships with each other</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Alerts
+</td>
+<td class="hdlist2">
+<p>alerting engine that allows trigger definitions to evaluate incoming data, generate alerts (or events), and
+react with flexible actions ond lifecycle management</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+CommandGW
+</td>
+<td class="hdlist2">
+<p>messaging framework for communicating between components</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Bus+Nest
+</td>
+<td class="hdlist2">
+<p>messaging framework used for communicating between components</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+BTM
+</td>
+<td class="hdlist2">
+<p>provide capabilities to monitor the flow of a business transaction instance and enable performance analysis of
+the individual components that make up an application</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Agent
+</td>
+<td class="hdlist2">
+<p>used to monitor WildFly and related projects</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Accounts
+</td>
+<td class="hdlist2">
+<p>is the user/organization module that provides authentication, authorization and configuration for user accounts</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Data Mining
+</td>
+<td class="hdlist2">
+<p>alert predictions based on time series data</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Hawkular UI
+</td>
+<td class="hdlist2">
+<p>The current UI</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Hawkular Charts
+</td>
+<td class="hdlist2">
+<p>Angular Directives for Metrics Visualization used by the current UI</p>
+</td>
+</tr>
+<tr>
+<td class="hdlist1">
+Embedded Cassandra
+</td>
+<td class="hdlist2">
+<p>embedded Cassandra server specifically configured for project use</p>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>There are also various clients like the Ruby Gem or the Android client. Those are not part of this discussion.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_options_for_packages">Options for Packages</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The distribution packages need to follow product integrations with a special distribution for community.
+The community package could potentially include every single package from the Hawkular organization. However,
+the rest of the packages need to be created along the lines of product use and include only the minimal amount of
+components, services and third-party libraries to satisfy integration requirements.</p>
+</div>
+<div class="paragraph">
+<p>The distributions should be seen as funels, the Hawkular community creates a set of sub-projects that then get
+combined into few distributions that in turn get consumed. Following this analogy, the number of packaged distributions
+should also be kept to a minimum possible. For now we settled on 3 packages detailed below, all will be available
+for download on JBoss.org.</p>
+</div>
+<div class="paragraph">
+<p>With the exception of the community distribution:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>the QA team will be engaged in testing the package.</p>
+</li>
+<li>
+<p>the sub-components will strive to be aligned in terms of tech stack and maturity</p>
+</li>
+<li>
+<p>an automated test suite is required for packages that combine more than one project</p>
+</li>
+</ol>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_community_distribution">Hawkular - Community Distribution</h3>
+<div class="paragraph">
+<p>Will include every single service listed above. The UI is a requirement because some services are very hard to
+understand or use without a friendly interface. The UI will be a community only effort at this point since there
+are no plans for productization.</p>
+</div>
+<div class="paragraph">
+<p>The current Hawkular repository will be adjusted to reflect this new mission; the current UI will be moved
+to a separate repository. This package builds on Hawkular Core Services as described next.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_core_services">Hawkular Core Services</h3>
+<div class="paragraph">
+<p>Geared towards ManageIQ integrations and will include only the components needed for the MiQ provider.
+This package uses the Metrics Distribution as described below.</p>
+</div>
+<div class="paragraph">
+<p>Components included: Metrics, Alerts, Inventory, CommandGW, Nest and Bus as well as the agent.</p>
+</div>
+<div class="paragraph">
+<p>Reasons for some exclusions: Keycloak (different security model), Embedded Cassandra
+(only full C* deployments will be supported), and no Hawkular UI because it will use a special purpose UI for ManageIQ</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_metrics_distribution">Metrics Distribution</h3>
+<div class="paragraph">
+<p>Geared towards usage as a pure Time Series Database (TSDB) and will be exclusively made of Hawkular Metrics service.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_graphical_overview">Graphical overview</h3>
+<div class="paragraph">
+<p>This graphic visualizes the 3 packages again</p>
+</div>
+<div id="img-packages" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkular-packaging-new.png" alt="Packages and components">
+</div>
+<div class="title">Figure 1. Packages and components</div>
+</div>
+<div class="paragraph">
+<p>Orange is the Metrics distribution, green+orange (with the red box around it) is Hawkular-core-services and
+everything in the blue box is the all-in-one community distribution</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_expansion_and_contraction">Expansion and Contraction</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Since its inception Hawkular has been growing by all metrics: projects, lines of code, binary downloads,
+contributors, etc. But uncontrolled increase in some metrics can be detrimental to the organization.
+This is especially true for the number of projects. We will always need new projects to experiment, but the
+reverse might be true for mature and established projects.
+As the packaging and requirements for each package mature we need to consider the reverse, combining projects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_packaging_format">Packaging Format</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This post did not touch one important aspect: physical packaging formats (rpm, zip, war, jar) for the 3 distributions.
+We will follow-up with additional details in the coming weeks.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/04/27/hawkular-inventory-0.15.0.Final-released.html"><h1>Hawkular Inventory 0.15.0.Final - Release</h1></a>
             <p>27 April 2016, by Lukas Krejci</p>
             <p><div id="preamble">
@@ -869,35 +1124,13 @@ is used</td>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/04/08/hawkular-manage-iq-sprint-demo.html"><h1>Hawkular in ManageIQ sprint demo(s)</h1></a>
-            <p>08 April 2016, by Heiko W. Rupp</p>
-            <p><div class="paragraph">
-<p>Like Hawkular, ManageIQ is also doing Sprint reviews at regular intervals.
-Those reviews are announced on the <a href="https://calendar.google.com/calendar/embed?src=contact%40manageiq.org">ManageIQ calendar</a>
-and also on the <a href="https://twitter.com/manageiq">ManageIQ Twitter feed</a>. Reviews usually happen every third week on Wednesday.</p>
-</div>
-<div class="paragraph">
-<p>The Hawkular provider integration that we <a href="blog/2016/02/22/hawkular-manage-iq.html">talked about before</a> was now
-part of the <a href="http://manageiq.org/blog/2016/03/sprint-38-review-march-30-2016/">Sprint 38 demo</a>. Check the recording at around minute 10:</p>
-</div>
-<div class="videoblock">
-<div class="content">
-<iframe width="600" height="400" src="https://www.youtube.com/embed/ImKCajLxUn8?rel=0&amp;start=612" frameborder="0" allowfullscreen></iframe>
-</div>
-</div>
-<div class="paragraph">
-<p>The next sprint review will be on April 20, 2016 @ 7:30am PDT/10:30am EDT/14:30 GMT and I expect more Hawkular goodies
-being present.</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>08 April 2016 - <a href="blog/2016/04/08/hawkular-manage-iq-sprint-demo.html">Hawkular in ManageIQ sprint demo(s)</a></li>
           <li>29 March 2016 - <a href="blog/2016/03/29/hawkular-metrics-0.14.0.Final-released.html">Hawkular Metrics 0.14.0 - Release</a></li>
           <li>21 March 2016 - <a href="blog/2016/03/20/qr-android.html">QR Code support for Android Client</a></li>
           <li>16 March 2016 - <a href="blog/2016/03/16/hawkular-metrics-roadmap.html">Hawkular Metrics - Roadmap</a></li>

@@ -6,9 +6,268 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 27 Apr 2016 17:00:38 +0000</pubDate>
-    <lastBuildDate>Wed, 27 Apr 2016 17:00:38 +0000</lastBuildDate>
+    <pubDate>Thu, 28 Apr 2016 14:07:22 +0000</pubDate>
+    <lastBuildDate>Thu, 28 Apr 2016 14:07:22 +0000</lastBuildDate>
 
+    <item>
+      <title>New Hawkular packaging</title>
+      <link>http://www.hawkular.org/blog/2016/04/28/new-packaging.html</link>
+      <author>noreply@hawkular.org (Heiko W. Rupp, Stefan Negrea)</author>
+      <pubDate>Thu, 28 Apr 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/04/28/new-packaging.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;[ This blog post has been sent before to the hawkular-dev mailing list ]&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With a growing community and an increasingly large number of sub-projects, it is the perfect time to rethink the
+packaging of Hawkular. This post is a blueprint for changes to come to Hawkular as well as establish some patterns
+for futures decisions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_motivation&quot;&gt;Motivation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So far we have created Hawkular &quot;All-in-one&quot; releases that contain everything, Hawkular server components, UI,
+the agent and also embedded versions of Cassandra and KeyCloak.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s certainly the case that for community we will still deliver an all-in-one package.
+We also need to consider separate distributions for other projects that integrate with Hawkular.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The recent effort to integrate with &lt;a href=&quot;blog/2016/02/22/hawkular-manage-iq.html&quot;&gt;ManageIQ&lt;/a&gt; comes with
+its own set of requirements for services.
+Not all of the Hawkular components are needed and required components may be configured differently.
+For example the UI is supplied from within ManageIQ side and Hawkular is to be run headless. Other
+components like Cassandra will not be run in embedded mode, so that there is no need to supply it in the package.
+Likewise KeyCloak will not be shipped and probably not even needed because we only have technical
+users that will access Hawkular services.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_existing_components_services&quot;&gt;Existing Components / Services&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Here a list of projects that are part of Hawkular project&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;hdlist&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Metrics
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;scalable, asynchronous, multi tenant, long term metrics storage engine&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Inventory
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;registry of &quot;things&quot; that contains info about your applications, servers, etc. and also keeps track of
+their relationships with each other&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Alerts
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;alerting engine that allows trigger definitions to evaluate incoming data, generate alerts (or events), and
+react with flexible actions ond lifecycle management&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+CommandGW
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;messaging framework for communicating between components&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Bus+Nest
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;messaging framework used for communicating between components&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+BTM
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;provide capabilities to monitor the flow of a business transaction instance and enable performance analysis of
+the individual components that make up an application&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Agent
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;used to monitor WildFly and related projects&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Accounts
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;is the user/organization module that provides authentication, authorization and configuration for user accounts&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Data Mining
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;alert predictions based on time series data&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Hawkular UI
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;The current UI&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Hawkular Charts
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;Angular Directives for Metrics Visualization used by the current UI&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td class=&quot;hdlist1&quot;&gt;
+Embedded Cassandra
+&lt;/td&gt;
+&lt;td class=&quot;hdlist2&quot;&gt;
+&lt;p&gt;embedded Cassandra server specifically configured for project use&lt;/p&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are also various clients like the Ruby Gem or the Android client. Those are not part of this discussion.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_options_for_packages&quot;&gt;Options for Packages&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The distribution packages need to follow product integrations with a special distribution for community.
+The community package could potentially include every single package from the Hawkular organization. However,
+the rest of the packages need to be created along the lines of product use and include only the minimal amount of
+components, services and third-party libraries to satisfy integration requirements.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The distributions should be seen as funels, the Hawkular community creates a set of sub-projects that then get
+combined into few distributions that in turn get consumed. Following this analogy, the number of packaged distributions
+should also be kept to a minimum possible. For now we settled on 3 packages detailed below, all will be available
+for download on JBoss.org.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With the exception of the community distribution:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;the QA team will be engaged in testing the package.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;the sub-components will strive to be aligned in terms of tech stack and maturity&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;an automated test suite is required for packages that combine more than one project&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_community_distribution&quot;&gt;Hawkular - Community Distribution&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Will include every single service listed above. The UI is a requirement because some services are very hard to
+understand or use without a friendly interface. The UI will be a community only effort at this point since there
+are no plans for productization.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The current Hawkular repository will be adjusted to reflect this new mission; the current UI will be moved
+to a separate repository. This package builds on Hawkular Core Services as described next.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_core_services&quot;&gt;Hawkular Core Services&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Geared towards ManageIQ integrations and will include only the components needed for the MiQ provider.
+This package uses the Metrics Distribution as described below.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Components included: Metrics, Alerts, Inventory, CommandGW, Nest and Bus as well as the agent.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Reasons for some exclusions: Keycloak (different security model), Embedded Cassandra
+(only full C* deployments will be supported), and no Hawkular UI because it will use a special purpose UI for ManageIQ&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_metrics_distribution&quot;&gt;Metrics Distribution&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Geared towards usage as a pure Time Series Database (TSDB) and will be exclusively made of Hawkular Metrics service.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_graphical_overview&quot;&gt;Graphical overview&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This graphic visualizes the 3 packages again&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-packages&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/hawkular-packaging-new.png&quot; alt=&quot;Packages and components&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Packages and components&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Orange is the Metrics distribution, green+orange (with the red box around it) is Hawkular-core-services and
+everything in the blue box is the all-in-one community distribution&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_expansion_and_contraction&quot;&gt;Expansion and Contraction&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Since its inception Hawkular has been growing by all metrics: projects, lines of code, binary downloads,
+contributors, etc. But uncontrolled increase in some metrics can be detrimental to the organization.
+This is especially true for the number of projects. We will always need new projects to experiment, but the
+reverse might be true for mature and established projects.
+As the packaging and requirements for each package mature we need to consider the reverse, combining projects.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_packaging_format&quot;&gt;Packaging Format&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This post did not touch one important aspect: physical packaging formats (rpm, zip, war, jar) for the 3 distributions.
+We will follow-up with additional details in the coming weeks.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Inventory 0.15.0.Final - Release</title>
       <link>http://www.hawkular.org/blog/2016/04/27/hawkular-inventory-0.15.0.Final-released.html</link>
