@@ -1190,64 +1190,26 @@ as a whole. Tags can also be applied to individual data points. Tags can be used
 <div class="listingblock">
 <div class="title">Delete gauge tags</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags -d @request.json \
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/gauges/request_size/tags/env,status
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
 </div>
 </div>
-<div class="listingblock">
-<div class="title">request.json</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
-  "env": "stage",
-  "status": "active"
-}</code></pre>
-</div>
+<div class="paragraph">
+<p>The request specifies a comma-delimited list of tag names. This request deletes the tags named <code>env</code> and <code>status</code>.</p>
 </div>
 <div class="listingblock">
 <div class="title">Delete counter tags</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/counters/request_count/tags -d @request.json \
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/counters/request_count/tags/env,status
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
-</div>
-</div>
-<div class="listingblock">
-<div class="title">request.json</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
-  "env": "stage",
-  "status": "active"
-}</code></pre>
 </div>
 </div>
 <div class="listingblock">
 <div class="title">Delete availability tags</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/availability/server1/tags -d @request.json \
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X DELETE http://server/hawkular/metrics/availability/server1/tags/env,status -d @request.json \
 -H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
 </div>
-</div>
-<div class="listingblock">
-<div class="title">request.json</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
-  "env": "stage",
-  "status": "active"
-}</code></pre>
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-Note that both the key and value have to have to be specified, but anything can be specified for the tag value.
-In the future, this endpoint might be updated to only require the tag keys. See
-<a href="https://issues.jboss.org/browse/HWKMETRICS-385">HWKMETRICS-385</a> for details.
-</td>
-</tr>
-</table>
 </div>
 </div>
 <div class="sect2">
@@ -1700,7 +1662,7 @@ This API is available for each metric type.</p>
 <div class="paragraph">
 <p>Every query is bounded by a start and an end time. The end time defaults to <em>now</em>, and the start time defaults to 8
 hours ago. These can be overridden with the <code>start</code> and <code>end</code> parameters respectively. The expected format of their
-values is a unix timestamp.</p>
+values is a unix timestamp. The start of the range is inclusive while the end is exclusive.</p>
 </div>
 <div class="listingblock">
 <div class="title">Override start and end times for gauge</div>
@@ -1730,8 +1692,8 @@ values is a unix timestamp.</p>
 <div class="sect3">
 <h4 id="_sort_order">Sort Order</h4>
 <div class="paragraph">
-<p>Data is sorted by timestamp and returned in sorted order by default. The order by specified with the <code>order</code> parameter.
-Accepted values are <code>ASC</code> and <code>DESC</code>.</p>
+<p>Data is sorted by timestamp and returned in sorted order by default. The order is specified with the <code>order</code> parameter.
+Accepted values are <code>asc</code> and <code>desc</code>. The parameter value is case-insensitive.</p>
 </div>
 <div class="listingblock">
 <div class="title">Return results in ascending order for a gauge</div>
@@ -1916,7 +1878,556 @@ where the reset is detected. Let&#8217;s illustrate this with an example.</p>
 <div class="sect2">
 <h3 id="_downsampling">Downsampling</h3>
 <div class="paragraph">
-<p><strong>TODO</strong></p>
+<p>Downsampling is a query technique for reducing the number of data points that are sent back to the client. Why is this
+done? When a request is made to render a graph, the client specifies a date range. The number of data points that fall
+within that range can and will vary. We want to avoid sending back too many data points because an excessive number of
+data points does little to improve the visualization, slows down the rendering, and makes the UI less responsive which
+in turn makes the user experience worse overall. Downsampling is a way to return a predictable or fixed number of data
+points which facilitates better graphs and a better overall user experience.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular Metrics provides several <code>/stats</code> endpoints that use downsampling. These endpoints are available for all
+metric types. Examples are provided in <a href="#_querying_stats">Querying Stats</a>.</p>
+</div>
+<div class="sect3">
+<h4 id="_buckets">Buckets</h4>
+<div class="paragraph">
+<p>Data points are first grouped into buckets. A bucket can have zero or more data points, and a data point will be in at
+most one bucket. Aggregation functions are then applied to the data points in each bucket to produce a single,
+<em>bucketed</em> data point.</p>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s look at a simple example to illustrate how data points are grouped.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 4. Data points</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data point</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Timestamp</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>1</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:00</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>2</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:10</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>3</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:20</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>4</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:30</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>5</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:40</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>6</sub></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:50</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>We have six data points. The values are irrelevant for the example. We query with a date range of 15:00 to 16:00.
+We use four buckets to end up with:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 5. Buckets</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bucket</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data points</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:00 - 15:15</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>1</sub>, P<sub>2</sub></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:15 - 15:30</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>3</sub></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:30 - 15:45</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>4</sub>, P<sub>5</sub></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">15:45 - 16:00</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">P<sub>6</sub></p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The first thing to note is that a bucket expressed as a date range or duration in which the start time is inclusive and
+the end time is exclusive. If a data point&#8217;s timestamp falls within that range, then the data point is grouped into
+that bucket. Different aggregation functions are applied depending on the metric type.</p>
+</div>
+<div class="sect4">
+<h5 id="_bucket_query_parameters">Bucket Query Parameters</h5>
+<div class="paragraph">
+<p>There are two query parameters that are available with all <code>/stats</code> endpoints - <code>buckets</code> and <code>bucketDuration</code>. One and
+only one of them can be specified in a request. For the preceding example, we could end up with four buckets using
+either one these parameters.</p>
+</div>
+<div class="paragraph">
+<p><code>buckets</code> specifies the exact number of buckets to use. For the preceding example, <code>buckets=4</code> will divide the time
+range into four buckets. A higher value increases the number of buckets which in turn reduces the number of data points
+per bucket.</p>
+</div>
+<div class="paragraph">
+<p><code>bucketDuration</code> is a duration specified in one of:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>milliseconds</p>
+</li>
+<li>
+<p>seconds</p>
+</li>
+<li>
+<p>minutes</p>
+</li>
+<li>
+<p>hours</p>
+</li>
+<li>
+<p>days</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>The value must match the regular expression <code>(+d)(ms|s|mn|h|d)</code>.</p>
+</div>
+<div class="paragraph">
+<p>For the preceding example, <code>bucketDuration=900000ms</code> specifies a duration of 900,000 milliseconds or 15 minutes to
+yield four buckets.</p>
+</div>
+<div class="paragraph">
+<p>Alternatively, we could do <code>bucketDuration=900s</code> which is 900 seconds or 15 minutes.</p>
+</div>
+<div class="paragraph">
+<p>We could also do <code>bucketDuration=15mn</code> which is 15 minutes.</p>
+</div>
+<div class="paragraph">
+<p>Suppose our date range spanned a 7 day period and we want a bucket per day. We could accomplish this with
+<code>bucketDuration=24h</code> which is 24 hours or 1 day. Alternatively we could do <code>bucketDuration=1d</code> which is 1 day.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+A larger duration results in fewer buckets with more data points per bucket. A smaller duration results in more
+buckets with less data points per bucket.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_numeric_bucket_data_points">Numeric Bucket Data Points</h4>
+<div class="paragraph">
+<p>Numeric bucket data points are used with gauges, counters, and rates. When data points are grouped into a bucket,
+several aggregation functions are applied to produce a data point that consists of a number of statistics.</p>
+</div>
+<div class="listingblock">
+<div class="title">Numeric bucket data point</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "min": 100.01,
+  "avg": 107.5,
+  "max": 115.32,
+  "median": 109.0,
+  "sum": 215.0,
+  "samples": 5
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>start</code> and <code>end</code> correspond to the bucket&#8217;s start and end times respectively.</p>
+</div>
+<div class="paragraph">
+<p><code>empty</code> is a boolean flag that indicates whether or not the bucket has any data points in it. We will see an example of
+an empty bucket next.</p>
+</div>
+<div class="paragraph">
+<p>The <code>min</code>, <code>max</code>, <code>avg</code>, <code>median</code>, and <code>sum</code> properties should be self-explanatory. They hold the results of the
+aggregation functions applied over all the data points in the bucket.</p>
+</div>
+<div class="paragraph">
+<p><code>samples</code> is the total number of data points in the bucket.</p>
+</div>
+<div class="paragraph">
+<p>The properties in a numeric data point are fixed and are the same for gauges, counters, and rates.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+In the future, Hawkular Metrics may allow the client to specify which aggregation functions to use in the bucket
+data points. See <a href="https://issues.jboss.org/browse/HWKMETRICS-374">HWMKETRICS-374</a> for details.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s see what an empty bucket data point looks like.</p>
+</div>
+<div class="listingblock">
+<div class="title">Empty numeric bucket data point</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
+  "start": 12345,
+  "end": 6789,
+  "empty": true,
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>empty</code> property is true indicating that there were no data points in the bucket. Note that the statistics related
+properties are excluded when the bucket is empty.</p>
+</div>
+<div class="paragraph">
+<p>A bucket data point can also have an optional set of percentiles.</p>
+</div>
+<div class="listingblock">
+<div class="title">Bucket data point with percentiles</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "min": 100.01,
+  "avg": 107.5,
+  "max": 115.32,
+  "median": 109.0,
+  "sum": 215.0,
+  "percentiles": [
+    {
+      "quantile": 0.90,
+      "value": 100.01
+    },
+    {
+      "quantile": 0.95
+      "value": 108.42
+    },
+    {
+      "quantile": 0.99
+      "value": 115.25
+    }
+  ]
+  "samples": 5
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This data point includes the 90th, 95th, and 99th percentiles. Unless the request explicitly asks for percentiles, they
+will be omitted. See <a href="#percentiles-param-with-gauge">this example below</a> to see how the <code>percentiles</code> query parameter
+is used..</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_stats">Querying Stats</h4>
+<div class="paragraph">
+<p>This section provides examples of all the <code>/stats</code> endpoints for the different metric types.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_gauges">Querying Gauges</h4>
+<div class="listingblock">
+<div class="title">Fetch gauge stats using buckets parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&amp;end=6789&amp;buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request queries a gauge named <code>request_size</code> and specifies that 60 buckets be used. An array of numeric bucket
+data points is returned.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch gauge stats using bucketDuration parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&amp;end=6789&amp;bucketDuration=60000ms \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request uses the <code>bucketDuration</code> parameter and specifies that each bucket is a minute wide.</p>
+</div>
+<div class="paragraph">
+<p>The next example demonstrates the <code>percentiles</code> query parameter.</p>
+</div>
+<div id="percentiles-param-with-gauge" class="listingblock">
+<div class="title">Fetch gauge stats that include percentiles</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/request_size/stats?start=1235&amp;end=6789&amp;buckets=30&amp;percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>percentiles</code> parameter takes a comma-delimited list of numeric values in which each value must be between 0 and
+100.</p>
+</div>
+<div class="paragraph">
+<p>You can also query across multiple gauges. The set of metrics to query is determined by using either tag filters or by
+specifying a list of metric names.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch stats from multiple gauges by name</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/stats?start=12345&amp;end=56789&amp;buckets=100&amp;metrics=G1,G2,G3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request fetches data points from gauges G1, G2, and G3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.</p>
+</div>
+<div class="paragraph">
+<p>Next we use tag filters to select the set of metrics to query.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch stats from gauges using tag filters</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/stats?start=1235&amp;end=6789&amp;buckets=30&amp;tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_counters">Querying Counters</h4>
+<div class="paragraph">
+<p>Now we look at the <code>/stats</code> endpoints for counter which are virtually the same as those for gauges.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch counter stats using buckets parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&amp;end=6789&amp;buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request queries a counter named <code>total_requests</code> and specifies that 60 buckets be used. An array of numeric bucket
+data points is returned.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch counter stats using bucketDuration parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&amp;end=6789&amp;bucketDuration=60s \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request uses the <code>bucketDuration</code> parameter and specifies that each bucket is a minute wide.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch counter stats that include percentiles</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/total_requests/stats?start=1235&amp;end=6789&amp;buckets=30&amp;percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also query across multiple counter. The set of metrics to query is determined by using either tag filters or by
+specifying a list of metric names.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch stats from multiple counters by name</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/stats?start=12345&amp;end=56789&amp;buckets=100&amp;metrics=C1,C2,C3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request fetches data points from counters C1, C2, and C3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.</p>
+</div>
+<div class="paragraph">
+<p>Next we use tag filters to select the set of metrics to query.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch stats from counters using tag filters</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/stats?start=1235&amp;end=6789&amp;buckets=30&amp;tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_counter_rates">Querying Counter Rates</h4>
+<div class="paragraph">
+<p>Downsampling can be done with rates as well.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch rates stats using buckets parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&amp;end=6789&amp;buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request queries the rate for a counter named <code>total_requests</code> and specifies that 60 buckets be used. An array of
+numeric bucket data points is returned.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch rate stats using bucketDuration parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/total_requests/rate/stats?start=1235&amp;end=6789&amp;bucketDuration=1mn \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request uses the <code>bucketDuration</code> parameter and specifies that each bucket is a minute wide.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch rate stats that include percentiles</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/total_requests/rate/stats?start=1235&amp;end=6789&amp;buckets=30&amp;percentiles=75,90,99 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can also query for rates across multiple counter. The set of metrics to query is determined by using either tag
+filters or by specifying a list of metric names.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch rate stats from multiple counters by name</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/rate/stats?start=12345&amp;end=56789&amp;buckets=100&amp;metrics=C1,C2,C3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request fetches rate data points from counters C1, C2, and C3. The only difference from previous examples is that each
+bucket will contain data points from multiple metrics.</p>
+</div>
+<div class="paragraph">
+<p>Next we use tag filters to select the set of metrics to query.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch rate stats from counters using tag filters</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/counters/rate/stats?start=1235&amp;end=6789&amp;buckets=30&amp;tags=hostname:server1 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_availability_bucket_data_points">Availability Bucket Data Points</h4>
+<div class="paragraph">
+<p>Availability bucket data points are used with availability metrics. When data points are grouped into a bucket, several
+aggregation functions are applied to produce a data point that consists of several of statistics.</p>
+</div>
+<div class="listingblock">
+<div class="title">Availability bucket data point</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
+  "start": 12345,
+  "end": 6789,
+  "empty": false,
+  "downtimeDuration": 29311,
+  "lastDowntime": 12367,
+  "uptimeRatio": 0.78,
+  "downtimeCount": 12
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>start</code> and <code>end</code> correspond to the bucket&#8217;s start and end times respectively.</p>
+</div>
+<div class="paragraph">
+<p><code>empty</code> is a boolean flag that indicates whether or not the bucket has any data points in it. We will see an example of
+an empty bucket next.</p>
+</div>
+<div class="paragraph">
+<p><code>downtimeDuration</code> is the total time in milliseconds that the metric was reported down. Note that this is the total
+time within the bucket&#8217;s start and end times.</p>
+</div>
+<div class="paragraph">
+<p><code>lastDowntime</code> is the last time within the bucket&#8217;s time range that the metric was reported down. The value is in
+milliseconds.</p>
+</div>
+<div class="paragraph">
+<p><code>uptimeRatio</code> is basically a percentage of the time for the duration of the bucket that the metric is up. The value
+will be a floating point number between zero and one.</p>
+</div>
+<div class="paragraph">
+<p><code>downtimeCount</code> is the number of periods in which a resource is reported down. In this context a period is a range of
+consecutive data points in which the availability does not change. For example, if a resource reports down twice in a
+row, then up, and then down again, <code>downtimeCount</code> will be 2.</p>
+</div>
+<div class="paragraph">
+<p>Now let&#8217;s look at what an empty data point looks like.</p>
+</div>
+<div class="listingblock">
+<div class="title">Empty availability bucket data point</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-javascript" data-lang="javascript">{
+  "start": 12345,
+  "end": 6789,
+  "empty": true,
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that the statistics related properties are omitted when the bucket is empty.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_querying_availability">Querying Availability</h4>
+<div class="listingblock">
+<div class="title">Fetch availability stats using buckets parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/gauges/server1/stats?start=1235&amp;end=6789&amp;buckets=60 \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request queries an availability metric named <code>server1</code> and specifies that 60 buckets be used. An array of
+availability bucket data points is returned.</p>
+</div>
+<div class="listingblock">
+<div class="title">Fetch availability stats using bucketDuration parameter</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">curl -X GET http://server/hawkular/metrics/availability/server1/stats?start=1235&amp;end=6789&amp;bucketDuration=60s \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This request uses the <code>bucketDuration</code> parameter and specifies that each bucket is a minute wide.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+There is currently no API for fetching bucket data points across multiple availability metrics.
+</td>
+</tr>
+</table>
+</div>
 </div>
 </div>
 </div>
