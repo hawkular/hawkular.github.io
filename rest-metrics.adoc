@@ -3193,6 +3193,164 @@ NOTE: *Retrieve metrics' tag values* +
 ==============================================
 
 
+=== String
+. link:#++POST__strings_raw++[Add metric data for multiple string metrics in a single call.]
+. link:#++GET__strings__id__raw++[Retrieve string data.]
+. link:#++POST__strings__id__raw++[Add data for a single string metric.]
+
+
+==============================================
+
+[[POST__strings_raw]]
+*Endpoint POST `/strings/raw`*
+
+NOTE: *Add metric data for multiple string metrics in a single call.* +
+
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of string metrics|array of <<MetricString>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data succeeded.|-
+|400|Missing or invalid payload|<<ApiError>>
+|500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__strings__id__raw]]
+*Endpoint GET `/strings/{id}/raw`*
+
+NOTE: *Retrieve string data.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|distinct|No|Set to true to return only distinct, contiguous values|boolean|-|-
+|limit|No|Limit the number of data points returned|integer|int32|-
+|order|No|Data point sort order, based on timestamp|string|-|ASC, DESC
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched string data.|array of <<DataPoint>>
+|204|No string data was found.|-
+|500|Unexpected error occurred while fetching string data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__strings__id__raw]]
+*Endpoint POST `/strings/{id}/raw`*
+
+NOTE: *Add data for a single string metric.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|List of string datapoints|array of <<DataPointString>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Adding data succeeded.|-
+|400|Missing or invalid payload|<<ApiError>>
+|500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
 === Tenant
 . link:#++GET__tenants++[Returns a list of tenants.]
 . link:#++POST__tenants++[Create a new tenant.]
@@ -3361,6 +3519,19 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 
 
+[[DataPointString]]
+=== DataPointString
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|tags|No|-|object|-|-
+|timestamp|Yes|-|integer|int64|-
+|value|Yes|-|string|-|-
+
+|=======================
+
+
 [[Metric]]
 === Metric
 [cols="15,^10,35,^15,^10,^15", options="header"]
@@ -3441,6 +3612,22 @@ _Clients are not required to create explicitly create a tenant before starting t
 |=======================
 
 
+[[MetricString]]
+=== MetricString
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataPoints|No|Metric data points|array of <<DataPointString>>|-|-
+|dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
+|id|No|-|string|-|-
+|tags|No|Metric tags|object|-|-
+|tenantId|No|-|string|-|-
+|type|No|Metric type|string|-|gauge, availability, counter
+
+|=======================
+
+
 [[MixedMetricsRequest]]
 === MixedMetricsRequest
 [cols="15,^10,35,^15,^10,^15", options="header"]
@@ -3450,6 +3637,7 @@ _Clients are not required to create explicitly create a tenant before starting t
 |availabilities|No|-|array of <<MetricAvailabilityType>>|-|-
 |counters|No|-|array of <<MetricLong>>|-|-
 |gauges|No|-|array of <<MetricDouble>>|-|-
+|strings|No|-|array of <<MetricString>>|-|-
 
 |=======================
 
