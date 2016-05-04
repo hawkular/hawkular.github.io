@@ -36,7 +36,7 @@ Here is a list of major changes:
     - Deleting tags only requires the tag keys and not the values, this simplifies the process for tag deletion. For backwards compatibility, the API will still accept name value pairs but will not take the value into account [HWKMETRICS-385](https://issues.jboss.org/browse/HWKMETRICS-385)
     - A new endpoint was added to query for the available values contained in a tag [HWKMETRICS-197](https://issues.jboss.org/browse/HWKMETRICS-197)
       - Endpoint: `GET hawkular/metrics/gauge/tags/{tags}`
-      - Example: `GET hawkular/metrics/gauge/tags/hostname:*01` returns `hostname: ["web01prod", "web01qa", "backend01prod", "backend01qa" ]`
+      - Example: `GET hawkular/metrics/gauge/tags/hostname:*01*` returns `hostname: ["web01prod", "web01qa", "backend01prod", "backend01qa" ]`
 1. **String Metric Type (Experimental)**
     - Hawkular Metrics now provides a string metric type. This release introduces new endpoints for reading and writing string data points [HWKMETRICS-384](https://issues.jboss.org/browse/HWKMETRICS-384)
     - There is a 2 KB size limit for each data point. That limit may be configurable in future releases.
