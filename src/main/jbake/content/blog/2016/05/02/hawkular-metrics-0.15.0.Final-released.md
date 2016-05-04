@@ -11,7 +11,7 @@ I am happy to announce release 0.15.0 of Hawkular Metrics. This is one of the la
 
 Here is a list of major changes:
 
-1. **Cassandra 3.5**
+1. **Cassandra 3.5 Support**
     - Cassandra 3.5 is now the supported version of Cassandra
     - Cassandra 2.2.x support is deprecated
 1. **Schema Management Tools**
@@ -20,10 +20,10 @@ Here is a list of major changes:
     - Going forward new versions of Hawkular Metrics can be installed without the need to start with a fresh database or manually update existing database even if the schema has been modified in the new version
     - For more details: [HWKMETRICS-361](https://issues.jboss.org/browse/HWKMETRICS-361), [Cassalog](https://github.com/jsanda/cassalog)
 1. **`*/stats` & `*/raw` Replace `*/data`**
-    - `*/data` has been **deprecated* and functionality split into two single purpose endpoints, this is applicable for all metric types (gauge, counter, availability, and string)
+    - `*/data` has been **deprecated* and its functionality split into two single purpose endpoints, `*/raw` and `*/stats`. This is applicable for all metric types (gauge, counter, availability, and string)
+    - `*/data` will not receive any updates going forward, and will be removed in future releases. There is no clear timeline for the removal since a lot of clients use it; it will be around at least for another two releases.
     - `*/stats` endpoints return bucketed, statistical or query-time aggregated data
     - `*/raw` endpoints accept and return raw data for a metric
-    - `*/data` is being deprecated, will not receive any updates going forward, and will be removed in future releases. There is no clear timeline for the removal since a lot of clients use it; it will be around at least for another two releases.
     - Please update your code to use the new endpoints and follow the release notes for more details regarding removal.
     - For more details: [HWKMETRICS-24](https://issues.jboss.org/browse/HWKMETRICS-24), [HWKMETRICS-57](https://issues.jboss.org/browse/HWKMETRICS-57)
 1. **Data Point Tags**
