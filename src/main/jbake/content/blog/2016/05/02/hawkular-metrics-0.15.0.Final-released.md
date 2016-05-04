@@ -9,7 +9,7 @@ status=published
 I am happy to announce release 0.15.0 of Hawkular Metrics. This is one of the largest ever Hawkular Metrics releases with a lot of new features and changes.
 
 
- Here is a list of major changes:
+Here is a list of major changes:
 
 1. **Cassandra 3.5**
     - Cassandra 3.5 is now the supported version of Cassandra
@@ -52,26 +52,29 @@ I am happy to announce release 0.15.0 of Hawkular Metrics. This is one of the la
     - The status page can now be loaded over HTTPS without errors [HWKMETRICS-388](https://issues.jboss.org/browse/HWKMETRICS-388)
     - Added overwrite param to tenant and metric creation. This will only overwrite the configuration (such as retention settings or tags) of the metric or tenant and not the actual data stored. Also overwrite the retention will only affect new data points added and not existing data already stored [HWKMETRICS-148](https://issues.jboss.org/browse/HWKMETRICS-148)
 
-**Updated Documentation**
+
+### Updated Documentation
 
 The entire [Hawkular Metrics User Guide](http://www.hawkular.org/docs/components/metrics/index.html) has been rewritten and it is now accessible from the top menu of [Hawkular.org](https://hawkular.org). The new guide has extensive documentation about metric types, query and tagging capabilities along lots of examples. Thank you [@jsanda](https://github.com/jsanda) for this amazing update!
 
-**Java Client (Experimental)**
+
+### Java Client (Experimental)
 
 Thanks to an effort started by the [Hawkular QE](https://github.com/hawkular-qe) organization, Hawkular Metrics now has an official [Java client](https://github.com/hawkular/hawkular-client-java). The repository has been fully transferred to Hawkular community where will be maintained going forward. The client is now at an experimental alpha stage and we expect to polish the API and internals in the coming months.
 
-A big thank you goes to @jkandasa  and @vnugent for creating and the maintaining the project until now. @jkandasa will continue to serve as an active contributor and core member.
+A big thank you goes to [@jkandasa](https://github.com/jkandasa)  and [@vnugent](https://github.com/vnugent) for creating and the maintaining the project until now. [@jkandasa](https://github.com/jkandasa) will continue to serve as an active contributor and core member.
 
 
-**Blog Posts & Articles**
+### Blog Posts & Articles
 
 Here are some recently published Metrics related blog posts and articles from around the Hawkular community:
 
-1. [Monitoring JVM applications with jmxtrans](http://www.hawkular.org/blog/2016/04/19/jmxtrans-to-hawkular-metrics.html) by @tsegismont
-1. [Collecting Metrics from Prometheus Endpoints](http://www.hawkular.org/blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html) by @jmazzitelli
-1. [Hawkular Data Mining 0.1.0.Final Released](http://www.hawkular.org/blog/2016/04/21/datamining-first-release.html) by @pavolloffay
+1. [Monitoring JVM applications with jmxtrans](http://www.hawkular.org/blog/2016/04/19/jmxtrans-to-hawkular-metrics.html) by [@tsegismont](https://github.com/tsegismont)
+1. [Collecting Metrics from Prometheus Endpoints](http://www.hawkular.org/blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html) by [@jmazzitelli](https://github.com/jmazzitelli)
+1. [Hawkular Data Mining 0.1.0.Final Released](http://www.hawkular.org/blog/2016/04/21/datamining-first-release.html) by [@pavolloffay](https://github.com/pavolloffay)
 
-**Hawkular Metrics Clients**
+
+### Hawkular Metrics Clients
 
 * Python: https://github.com/hawkular/hawkular-client-python
 * Go: https://github.com/hawkular/hawkular-client-go
@@ -79,7 +82,7 @@ Here are some recently published Metrics related blog posts and articles from ar
 * Java: https://github.com/hawkular/hawkular-client-java
 
 
-**Release Links**
+### Release Links
 
 * Github Release: https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0
 * JBoss Nexus Maven artifacts: http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/
