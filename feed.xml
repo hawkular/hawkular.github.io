@@ -6,9 +6,94 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 9 May 2016 08:43:05 +0000</pubDate>
-    <lastBuildDate>Mon, 9 May 2016 08:43:05 +0000</lastBuildDate>
+    <pubDate>Mon, 9 May 2016 09:56:46 +0000</pubDate>
+    <lastBuildDate>Mon, 9 May 2016 09:56:46 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular Metrics 0.15.0 - Release</title>
+      <link>http://www.hawkular.org/blog/2016/05/02/hawkular-metrics-0.15.0.Final-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Mon, 2 May 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/05/02/hawkular-metrics-0.15.0.Final-released.html</guid>
+      	<description>
+	&lt;p&gt;I am happy to announce release 0.15.0 of Hawkular Metrics. This is one of the largest ever Hawkular Metrics releases with a lot of new features and changes.&lt;/p&gt;&lt;p&gt;Here is a list of major changes:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;strong&gt;Cassandra 3.5 Support&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Cassandra 3.5 is now the supported version of Cassandra&lt;/li&gt;
+    &lt;li&gt;Cassandra 2.2.x support is deprecated&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Schema Management Tools&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;First release with tooling for schema change management&lt;/li&gt;
+    &lt;li&gt;Only upgrades are supported; incremental schema changes are installed when Hawkular Metrics starts&lt;/li&gt;
+    &lt;li&gt;Going forward new versions of Hawkular Metrics can be installed without the need to start with a fresh database or manually update existing database even if the schema has been modified in the new version&lt;/li&gt;
+    &lt;li&gt;For more details: &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-361&quot;&gt;HWKMETRICS-361&lt;/a&gt;, &lt;a href=&quot;https://github.com/jsanda/cassalog&quot;&gt;Cassalog&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;&lt;code&gt;*/stats&lt;/code&gt; &amp;amp; &lt;code&gt;*/raw&lt;/code&gt; Replace &lt;code&gt;*/data&lt;/code&gt;&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;code&gt;*/data&lt;/code&gt; has been **deprecated* and its functionality split into two single purpose endpoints, &lt;code&gt;*/raw&lt;/code&gt; and &lt;code&gt;*/stats&lt;/code&gt;. This is applicable for all metric types (gauge, counter, availability, and string)
+&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;*/data&lt;/code&gt; will not receive any updates going forward, and will be removed in future releases. There is no clear timeline for the removal since a lot of clients use it; it will be around at least for another two releases.&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;*/stats&lt;/code&gt; endpoints return bucketed, statistical or query-time aggregated data&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;*/raw&lt;/code&gt; endpoints accept and return raw data for a metric&lt;/li&gt;
+    &lt;li&gt;Please update your code to use the new endpoints and follow the release notes for more details regarding removal.&lt;/li&gt;
+    &lt;li&gt;For more details: &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-24&quot;&gt;HWKMETRICS-24&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-57&quot;&gt;HWKMETRICS-57&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Data Point Tags&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;An optional set of tags can be supplied with each data point when inserting data. Unlike metric definition tags, data point tags cannot be modified. &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-368&quot;&gt;HWKMETRICS-368&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-54&quot;&gt;HWKMETRICS-54&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Tag based bucketing for data points is supported for counters and gauges &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-377&quot;&gt;HWKMETRICS-377&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-373&quot;&gt;HWKMETRICS-373&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;New endpoints for filtering and grouping data by tags:&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;GET /hawkular/metrics/gauges/{id}/stats/tags/{tags}&lt;/code&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;GET /hawkular/metrics/counters/{id}/stats/tags/{tags}&lt;/code&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Tags&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Deleting tags only requires the tag keys and not the values, this simplifies the process for tag deletion. For backwards compatibility, the API will still accept name value pairs but will not take the value into account &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-385&quot;&gt;HWKMETRICS-385&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;A new endpoint was added to query for the available values contained in a tag &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-197&quot;&gt;HWKMETRICS-197&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Endpoint: &lt;code&gt;GET hawkular/metrics/gauge/tags/{tags}&lt;/code&gt;&lt;/li&gt;
+    &lt;li&gt;Example: &lt;code&gt;GET hawkular/metrics/gauge/tags/hostname:*01*&lt;/code&gt; returns &lt;code&gt;hostname: [&amp;quot;web01prod&amp;quot;, &amp;quot;web01qa&amp;quot;, &amp;quot;backend01prod&amp;quot;, &amp;quot;backend01qa&amp;quot; ]&lt;/code&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;String Metric Type (Experimental)&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Hawkular Metrics now provides a string metric type. This release introduces new endpoints for reading and writing string data points &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-384&quot;&gt;HWKMETRICS-384&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;There is a 2 KB size limit for each data point. That limit may be configurable in future releases.&lt;/li&gt;
+    &lt;li&gt;New endpoints under &lt;code&gt;/strings&lt;/code&gt; are experimental, so changes which break backwards compatibility could be introduced in future releases. The experimental tag allows time for feedback to better determine what the API should be.&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Asynchronous authentication for Openshift Metrics&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Important performance improvement: the authentication code now uses a non blocking HTTP Client (Undertow Client) to validate authentication tokens calling Kubernetes&apos; master&lt;/li&gt;
+    &lt;li&gt;Performance improvements details: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/pull/481#issue-148320027&quot;&gt;https://github.com/hawkular/hawkular-metrics/pull/481#issue-148320027&lt;/a&gt;, &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/pull/481#issuecomment-209876952&quot;&gt;https://github.com/hawkular/hawkular-metrics/pull/481#issuecomment-209876952&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;For more details: &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-330&quot;&gt;HWKMETRICS-330&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;API Updates&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Stats are excluded from empty bucket data points rather than returning the string NaN and zero for the samples property &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-396&quot;&gt;HWKMETRICS-396&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Endpoints that use the order param also accept lower case values &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-389&quot;&gt;HWKMETRICS-389&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Sum is included in bucket output for gauges and counters &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-370&quot;&gt;HWKMETRICS-370&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;The status page can now be loaded over HTTPS without errors &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-388&quot;&gt;HWKMETRICS-388&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Added overwrite param to tenant and metric creation. This will only overwrite the configuration (such as retention settings or tags) of the metric or tenant and not the actual data stored. Also overwrite the retention will only affect new data points added and not existing data already stored &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-148&quot;&gt;HWKMETRICS-148&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;h3&gt;Updated Documentation&lt;/h3&gt;&lt;p&gt;The entire &lt;a href=&quot;http://www.hawkular.org/docs/components/metrics/index.html&quot;&gt;Hawkular Metrics User Guide&lt;/a&gt; has been rewritten and it is now accessible from the top menu of &lt;a href=&quot;https://hawkular.org&quot;&gt;Hawkular.org&lt;/a&gt;. The new guide has extensive documentation about metric types, query and tagging capabilities along lots of examples. Thank you &lt;a href=&quot;https://github.com/jsanda&quot;&gt;@jsanda&lt;/a&gt; for this amazing update!&lt;/p&gt;&lt;h3&gt;Java Client (Experimental)&lt;/h3&gt;&lt;p&gt;Thanks to an effort started by the &lt;a href=&quot;https://github.com/hawkular-qe&quot;&gt;Hawkular QE&lt;/a&gt; organization, Hawkular Metrics now has an official &lt;a href=&quot;https://github.com/hawkular/hawkular-client-java&quot;&gt;Java client&lt;/a&gt;. The repository has been fully transferred to Hawkular community where will be maintained going forward. The client is now at an experimental alpha stage and we expect to polish the API and internals in the coming months.&lt;/p&gt;&lt;p&gt;A big thank you goes to &lt;a href=&quot;https://github.com/jkandasa&quot;&gt;@jkandasa&lt;/a&gt; and &lt;a href=&quot;https://github.com/vnugent&quot;&gt;@vnugent&lt;/a&gt; for creating and the maintaining the project until now. &lt;a href=&quot;https://github.com/jkandasa&quot;&gt;@jkandasa&lt;/a&gt; will continue to serve as an active contributor and core member.&lt;/p&gt;&lt;h3&gt;Blog Posts &amp;amp; Articles&lt;/h3&gt;&lt;p&gt;Here are some recently published Metrics related blog posts and articles from around the Hawkular community:&lt;/p&gt;
+&lt;ol&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.hawkular.org/blog/2016/04/19/jmxtrans-to-hawkular-metrics.html&quot;&gt;Monitoring JVM applications with jmxtrans&lt;/a&gt; by &lt;a href=&quot;https://github.com/tsegismont&quot;&gt;@tsegismont&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.hawkular.org/blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html&quot;&gt;Collecting Metrics from Prometheus Endpoints&lt;/a&gt; by &lt;a href=&quot;https://github.com/jmazzitelli&quot;&gt;@jmazzitelli&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;http://www.hawkular.org/blog/2016/04/21/datamining-first-release.html&quot;&gt;Hawkular Data Mining 0.1.0.Final Released&lt;/a&gt; by &lt;a href=&quot;https://github.com/pavolloffay&quot;&gt;@pavolloffay&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;h3&gt;Hawkular Metrics Clients&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Python: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-python&quot;&gt;https://github.com/hawkular/hawkular-client-python&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Go: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-go&quot;&gt;https://github.com/hawkular/hawkular-client-go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ruby: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-ruby&quot;&gt;https://github.com/hawkular/hawkular-client-ruby&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Java: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-java&quot;&gt;https://github.com/hawkular/hawkular-client-java&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;h3&gt;Release Links&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Github Release: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;JBoss Nexus Maven artifacts: &lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jira release tracker: &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12329846&quot;&gt;https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12329846&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;A big &quot;Thank you&quot; goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.&lt;/p&gt;
+	</description>
+    </item>
     <item>
       <title>New Hawkular packaging</title>
       <link>http://www.hawkular.org/blog/2016/04/28/new-packaging.html</link>

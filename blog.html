@@ -170,6 +170,87 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/05/02/hawkular-metrics-0.15.0.Final-released.html"><h1>Hawkular Metrics 0.15.0 - Release</h1></a>
+            <p>02 May 2016, by Stefan Negrea</p>
+            <p><p>I am happy to announce release 0.15.0 of Hawkular Metrics. This is one of the largest ever Hawkular Metrics releases with a lot of new features and changes.</p><p>Here is a list of major changes:</p>
+<ol>
+  <li><strong>Cassandra 3.5 Support</strong>
+  <ul>
+    <li>Cassandra 3.5 is now the supported version of Cassandra</li>
+    <li>Cassandra 2.2.x support is deprecated</li>
+  </ul></li>
+  <li><strong>Schema Management Tools</strong>
+  <ul>
+    <li>First release with tooling for schema change management</li>
+    <li>Only upgrades are supported; incremental schema changes are installed when Hawkular Metrics starts</li>
+    <li>Going forward new versions of Hawkular Metrics can be installed without the need to start with a fresh database or manually update existing database even if the schema has been modified in the new version</li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-361">HWKMETRICS-361</a>, <a href="https://github.com/jsanda/cassalog">Cassalog</a></li>
+  </ul></li>
+  <li><strong><code>*/stats</code> &amp; <code>*/raw</code> Replace <code>*/data</code></strong>
+  <ul>
+    <li><code>*/data</code> has been **deprecated* and its functionality split into two single purpose endpoints, <code>*/raw</code> and <code>*/stats</code>. This is applicable for all metric types (gauge, counter, availability, and string)
+</li>
+    <li><code>*/data</code> will not receive any updates going forward, and will be removed in future releases. There is no clear timeline for the removal since a lot of clients use it; it will be around at least for another two releases.</li>
+    <li><code>*/stats</code> endpoints return bucketed, statistical or query-time aggregated data</li>
+    <li><code>*/raw</code> endpoints accept and return raw data for a metric</li>
+    <li>Please update your code to use the new endpoints and follow the release notes for more details regarding removal.</li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-24">HWKMETRICS-24</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-57">HWKMETRICS-57</a></li>
+  </ul></li>
+  <li><strong>Data Point Tags</strong>
+  <ul>
+    <li>An optional set of tags can be supplied with each data point when inserting data. Unlike metric definition tags, data point tags cannot be modified. <a href="https://issues.jboss.org/browse/HWKMETRICS-368">HWKMETRICS-368</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-54">HWKMETRICS-54</a></li>
+    <li>Tag based bucketing for data points is supported for counters and gauges <a href="https://issues.jboss.org/browse/HWKMETRICS-377">HWKMETRICS-377</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-373">HWKMETRICS-373</a></li>
+    <li>New endpoints for filtering and grouping data by tags:</li>
+    <li><code>GET /hawkular/metrics/gauges/{id}/stats/tags/{tags}</code></li>
+    <li><code>GET /hawkular/metrics/counters/{id}/stats/tags/{tags}</code></li>
+  </ul></li>
+  <li><strong>Tags</strong>
+  <ul>
+    <li>Deleting tags only requires the tag keys and not the values, this simplifies the process for tag deletion. For backwards compatibility, the API will still accept name value pairs but will not take the value into account <a href="https://issues.jboss.org/browse/HWKMETRICS-385">HWKMETRICS-385</a></li>
+    <li>A new endpoint was added to query for the available values contained in a tag <a href="https://issues.jboss.org/browse/HWKMETRICS-197">HWKMETRICS-197</a></li>
+    <li>Endpoint: <code>GET hawkular/metrics/gauge/tags/{tags}</code></li>
+    <li>Example: <code>GET hawkular/metrics/gauge/tags/hostname:*01*</code> returns <code>hostname: [&quot;web01prod&quot;, &quot;web01qa&quot;, &quot;backend01prod&quot;, &quot;backend01qa&quot; ]</code></li>
+  </ul></li>
+  <li><strong>String Metric Type (Experimental)</strong>
+  <ul>
+    <li>Hawkular Metrics now provides a string metric type. This release introduces new endpoints for reading and writing string data points <a href="https://issues.jboss.org/browse/HWKMETRICS-384">HWKMETRICS-384</a></li>
+    <li>There is a 2 KB size limit for each data point. That limit may be configurable in future releases.</li>
+    <li>New endpoints under <code>/strings</code> are experimental, so changes which break backwards compatibility could be introduced in future releases. The experimental tag allows time for feedback to better determine what the API should be.</li>
+  </ul></li>
+  <li><strong>Asynchronous authentication for Openshift Metrics</strong>
+  <ul>
+    <li>Important performance improvement: the authentication code now uses a non blocking HTTP Client (Undertow Client) to validate authentication tokens calling Kubernetes' master</li>
+    <li>Performance improvements details: <a href="https://github.com/hawkular/hawkular-metrics/pull/481#issue-148320027">https://github.com/hawkular/hawkular-metrics/pull/481#issue-148320027</a>, <a href="https://github.com/hawkular/hawkular-metrics/pull/481#issuecomment-209876952">https://github.com/hawkular/hawkular-metrics/pull/481#issuecomment-209876952</a></li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-330">HWKMETRICS-330</a></li>
+  </ul></li>
+  <li><strong>API Updates</strong>
+  <ul>
+    <li>Stats are excluded from empty bucket data points rather than returning the string NaN and zero for the samples property <a href="https://issues.jboss.org/browse/HWKMETRICS-396">HWKMETRICS-396</a></li>
+    <li>Endpoints that use the order param also accept lower case values <a href="https://issues.jboss.org/browse/HWKMETRICS-389">HWKMETRICS-389</a></li>
+    <li>Sum is included in bucket output for gauges and counters <a href="https://issues.jboss.org/browse/HWKMETRICS-370">HWKMETRICS-370</a></li>
+    <li>The status page can now be loaded over HTTPS without errors <a href="https://issues.jboss.org/browse/HWKMETRICS-388">HWKMETRICS-388</a></li>
+    <li>Added overwrite param to tenant and metric creation. This will only overwrite the configuration (such as retention settings or tags) of the metric or tenant and not the actual data stored. Also overwrite the retention will only affect new data points added and not existing data already stored <a href="https://issues.jboss.org/browse/HWKMETRICS-148">HWKMETRICS-148</a></li>
+  </ul></li>
+</ol><h3>Updated Documentation</h3><p>The entire <a href="http://www.hawkular.org/docs/components/metrics/index.html">Hawkular Metrics User Guide</a> has been rewritten and it is now accessible from the top menu of <a href="https://hawkular.org">Hawkular.org</a>. The new guide has extensive documentation about metric types, query and tagging capabilities along lots of examples. Thank you <a href="https://github.com/jsanda">@jsanda</a> for this amazing update!</p><h3>Java Client (Experimental)</h3><p>Thanks to an effort started by the <a href="https://github.com/hawkular-qe">Hawkular QE</a> organization, Hawkular Metrics now has an official <a href="https://github.com/hawkular/hawkular-client-java">Java client</a>. The repository has been fully transferred to Hawkular community where will be maintained going forward. The client is now at an experimental alpha stage and we expect to polish the API and internals in the coming months.</p><p>A big thank you goes to <a href="https://github.com/jkandasa">@jkandasa</a> and <a href="https://github.com/vnugent">@vnugent</a> for creating and the maintaining the project until now. <a href="https://github.com/jkandasa">@jkandasa</a> will continue to serve as an active contributor and core member.</p><h3>Blog Posts &amp; Articles</h3><p>Here are some recently published Metrics related blog posts and articles from around the Hawkular community:</p>
+<ol>
+  <li><a href="http://www.hawkular.org/blog/2016/04/19/jmxtrans-to-hawkular-metrics.html">Monitoring JVM applications with jmxtrans</a> by <a href="https://github.com/tsegismont">@tsegismont</a></li>
+  <li><a href="http://www.hawkular.org/blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html">Collecting Metrics from Prometheus Endpoints</a> by <a href="https://github.com/jmazzitelli">@jmazzitelli</a></li>
+  <li><a href="http://www.hawkular.org/blog/2016/04/21/datamining-first-release.html">Hawkular Data Mining 0.1.0.Final Released</a> by <a href="https://github.com/pavolloffay">@pavolloffay</a></li>
+</ol><h3>Hawkular Metrics Clients</h3>
+<ul>
+  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
+  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
+  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
+  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
+</ul><h3>Release Links</h3>
+<ul>
+  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0</a></li>
+  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
+  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12329846">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12329846</a></li>
+</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.</p></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/04/28/new-packaging.html"><h1>New Hawkular packaging</h1></a>
             <p>28 April 2016, by Heiko W. Rupp, Stefan Negrea</p>
             <p><div id="preamble">
@@ -775,361 +856,13 @@ some time to collect data (or increase collection interval). This will be fixed 
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/04/19/jmxtrans-to-hawkular-metrics.html"><h1>Monitoring JVM applications with jmxtrans</h1></a>
-            <p>19 April 2016, by Thomas Segismont</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>In this post, you&#8217;ll learn how to monitor applications running on the Java Virtual Machine with jmxtrans and Hakwular Metrics.</p>
-</div>
-<div class="paragraph">
-<p><a href="https://github.com/hawkular/hawkular-metrics">Hawkular Metrics</a> is an easy to install, scalable metric storage component.</p>
-</div>
-<div class="paragraph">
-<p><a href="http://www.jmxtrans.org/">jmxtrans</a> is a popular monitoring tool for Java based applications. It connects to a JVM via
-JMX, collects metrics, and sends the data to the backend of your choice. Very often a Graphite backend is used.
-As an example, we will monitor a Tomcat 8 server.</p>
-</div>
-<div class="paragraph">
-<p>Hawkular Metrics can store data sent over the Graphite text protocol, thanks to
-<a href="https://github.com/hawkular/hawkular-metrics/tree/master/clients/ptranslator">ptrans</a>. ptrans is a proxy server
-taking in metrics data in several common formats and emitting them as REST requests into Hawkular Metrics backend for
-storage. The figure below illustrates the process.</p>
-</div>
-<div id="img-ptrans" class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/ptrans.png" alt="ptrans">
-</div>
-<div class="title">Figure 1. ptrans (Protocol Translator)</div>
-</div>
-<div class="paragraph">
-<p>jmxtrans will communicate with ptrans over the Graphite text protocol.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_setup_in_details">The setup in details</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_hawkular_metrics_and_ptrans">Hawkular Metrics and PTrans</h3>
-<div class="paragraph">
-<p><a href="http://www.hawkular.org/docs/components/metrics/installation.html">Hawkular Metrics standalone installation</a> is
-documented on the Hawkular website. ptrans setup is documented on the same page.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_tomcat_8">Tomcat 8</h3>
-<div class="paragraph">
-<p>JMX remote access must be enabled otherwise jmxtrans can&#8217;t connect. To do this, create (or modify) the <code>setenv.sh</code>
-script in the <code>bin</code> directory.</p>
-</div>
-<div class="listingblock">
-<div class="title">setenv.sh</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">#!/bin/bash
-
-CATALINA_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.port=35135"</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_jmxtrans">jmxtrans</h3>
-<div class="paragraph">
-<p>Download the latest <a href="https://github.com/jmxtrans/jmxtrans/releases">jmxtrans distribution</a>. Expand it somewhere on
-your disk.</p>
-</div>
-<div class="paragraph">
-<p>In the <code>bin</code> directory, create a <code>jmxtrans.conf</code> file. It will be sourced by the <code>jmxtrans.sh</code> script.</p>
-</div>
-<div class="listingblock">
-<div class="title">jmxtrans.conf</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">#!/bin/bash
-
-JAR_FILE="/path/to/jmx-trans/lib/jmxtrans-all.jar" <i class="conum" data-value="1"></i><b>(1)</b>
-LOG_DIR="/path/to/jmx-trans/bin" <i class="conum" data-value="2"></i><b>(2)</b>
-LOG_FILE="/path/to/jmx-trans/bin/jmxtrans.out" <i class="conum" data-value="3"></i><b>(3)</b>
-SECONDS_BETWEEN_RUNS=5 <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Where the script will find the jmxtrans fat JAR</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>The directory where log files should be written</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>The file where the process output will be redirected</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>Instructs jmxtrans to collect metrics and send data every 5 seconds</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Then create the main configuration file, <code>config.json</code>. The <a href="https://github.com/jmxtrans/jmxtrans/wiki">jmxtrans wiki</a>
-has a detailed reference.</p>
-</div>
-<div class="listingblock">
-<div class="title">config.json</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-  "servers": [
-    {
-      "numQueryThreads": "2",
-      "host": "localhost", <i class="conum" data-value="1"></i><b>(1)</b>
-      "port": "35135", <i class="conum" data-value="2"></i><b>(2)</b>
-      "queries": [ <i class="conum" data-value="3"></i><b>(3)</b>
-        {
-          "outputWriters": [ <i class="conum" data-value="4"></i><b>(4)</b>
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter" <i class="conum" data-value="5"></i><b>(5)</b>
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter", <i class="conum" data-value="6"></i><b>(6)</b>
-              "settings": {
-                "host": "127.0.0.1", <i class="conum" data-value="7"></i><b>(7)</b>
-                "port": "2003" <i class="conum" data-value="8"></i><b>(8)</b>
-              }
-            }
-          ],
-          "obj": "java.lang:type=OperatingSystem", <i class="conum" data-value="9"></i><b>(9)</b>
-          "attr": [ <i class="conum" data-value="10"></i><b>(10)</b>
-            "SystemLoadAverage",
-            "AvailableProcessors",
-            "TotalPhysicalMemorySize",
-            "FreePhysicalMemorySize",
-            "TotalSwapSpaceSize",
-            "FreeSwapSpaceSize",
-            "OpenFileDescriptorCount",
-            "MaxFileDescriptorCount"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "heap",
-          "obj": "java.lang:type=Memory",
-          "attr": [
-            "HeapMemoryUsage",
-            "NonHeapMemoryUsage"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "cmsoldgen",
-          "obj": "java.lang:name=CMS Old Gen,type=MemoryPool",
-          "attr": [
-            "Usage"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "gc",
-          "obj": "java.lang:type=GarbageCollector,name=*",
-          "attr": [
-            "CollectionCount",
-            "CollectionTime"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter",
-              "settings": {}
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "memorypool",
-          "obj": "java.lang:type=MemoryPool,name=*",
-          "attr": [
-            "Usage"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "threads",
-          "obj": "java.lang:type=Threading",
-          "attr": [
-            "DaemonThreadCount",
-            "PeakThreadCount",
-            "ThreadCount",
-            "TotalStartedThreadCount"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "tomcat8-connectors",
-          "obj": "Catalina:type=ThreadPool,name=*",
-          "attr": [
-            "currentThreadCount",
-            "currentThreadsBusy"
-          ]
-        },
-        {
-          "outputWriters": [
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.StdOutWriter"
-            },
-            {
-              "@class": "com.googlecode.jmxtrans.model.output.GraphiteWriter",
-              "settings": {
-                "host": "127.0.0.1",
-                "port": "2003"
-              }
-            }
-          ],
-          "resultAlias": "tomcat8-requests",
-          "obj": "Catalina:type=GlobalRequestProcessor,name=*",
-          "attr": [
-            "bytesReceived",
-            "bytesSent",
-            "errorCount",
-            "processingTime",
-            "requestCount"
-          ]
-        }
-      ]
-    }
-  ]
-}</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>name of the host where Tomcat is running</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>jmx remoting port (must match the value set in <code>setenv.sh</code> in Tomcat installation)</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>queries item lists the MBeans which should be invoked</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>output writers item indicates where data collected should be sent</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="5"></i><b>5</b></td>
-<td>StdOutWriter simply prints collected data to the process output stream (useful for configuration debugging)</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="6"></i><b>6</b></td>
-<td>GraphiteWriter sends data to a remote server which understands the Graphite protocols; by default, the text protocol
-is used</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="7"></i><b>7</b></td>
-<td>graphite remote host (must match the value set in <code>ptrans.conf</code>)</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="8"></i><b>8</b></td>
-<td>graphite remote port (must match the value set in <code>ptrans.conf</code>)</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="9"></i><b>9</b></td>
-<td>name of the MBean to invoke</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="10"></i><b>10</b></td>
-<td>list of attributes to collect</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Eventually, start jmxtrans.</p>
-</div>
-<div class="listingblock">
-<div class="title">Starting jmxtrans</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">./jmxtrans.sh start config.json</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>That&#8217;s it!</p>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>19 April 2016 - <a href="blog/2016/04/19/jmxtrans-to-hawkular-metrics.html">Monitoring JVM applications with jmxtrans</a></li>
           <li>08 April 2016 - <a href="blog/2016/04/08/hawkular-manage-iq-sprint-demo.html">Hawkular in ManageIQ sprint demo(s)</a></li>
           <li>29 March 2016 - <a href="blog/2016/03/29/hawkular-metrics-0.14.0.Final-released.html">Hawkular Metrics 0.14.0 - Release</a></li>
           <li>21 March 2016 - <a href="blog/2016/03/20/qr-android.html">QR Code support for Android Client</a></li>
