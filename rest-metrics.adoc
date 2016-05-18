@@ -964,7 +964,7 @@ NOTE: *Delete tags associated with the metric definition.* +
 . link:#++GET__counters_rate_stats++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.]
 . link:#++POST__counters_raw++[Add data points for multiple counters.]
 . link:#++GET__counters_stats++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions   are applied tothe data points in each bucket to produce statistics or aggregated metrics.]
-. link:#++GET__counters_tags__tags_++[Retrieve gauge type's tag values]
+. link:#++GET__counters_tags__tags_++[Retrieve counter type's tag values]
 . link:#++GET__counters__id_++[Retrieve a counter definition.]
 . link:#++GET__counters__id__data++[Deprecated. Please use /raw or /stats endpoints]
 . link:#++POST__counters__id__data++[Deprecated. Please use /raw endpoint.]
@@ -1358,7 +1358,7 @@ NOTE: *Fetches data points from one or more metrics that are determined using ei
 [[GET__counters_tags__tags_]]
 *Endpoint GET `/counters/tags/{tags}`*
 
-NOTE: *Retrieve gauge type's tag values* +
+NOTE: *Retrieve counter type's tag values* +
 
 
 
@@ -2039,6 +2039,7 @@ NOTE: *Delete tags associated with the metric definition.* +
 . link:#++POST__gauges++[Create gauge metric.]
 . link:#++GET__gauges_data++[Deprecated. Please use /stast endpoint.]
 . link:#++POST__gauges_data++[Deprecated. Please use /raw endpoint.]
+. link:#++GET__gauges_rate_stats++[Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.]
 . link:#++POST__gauges_raw++[Add data for multiple gauge metrics in a single call.]
 . link:#++GET__gauges_stats++[Find stats for multiple metrics.]
 . link:#++GET__gauges_tags__tags_++[Retrieve gauge type's tag values]
@@ -2046,6 +2047,8 @@ NOTE: *Delete tags associated with the metric definition.* +
 . link:#++GET__gauges__id__data++[Deprecated. Please use /raw or /stats endpoints.]
 . link:#++POST__gauges__id__data++[Deprecated. Please use /raw endpoint.]
 . link:#++GET__gauges__id__periods++[Find condition periods.]
+. link:#++GET__gauges__id__rate++[Retrieve gauge rate data points.]
+. link:#++GET__gauges__id__rate_stats++[Retrieve stats for gauge rate data points.]
 . link:#++GET__gauges__id__raw++[Retrieve raw gauge data.]
 . link:#++POST__gauges__id__raw++[Add data for a single gauge metric.]
 . link:#++GET__gauges__id__stats++[Retrieve gauge data.]
@@ -2230,6 +2233,56 @@ NOTE: *Deprecated. Please use /raw endpoint.* +
 |Status Code|Reason|Response Model
 
 |default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges_rate_stats]]
+*Endpoint GET `/gauges/rate/stats`*
+
+NOTE: *Fetches data points from one or more metrics that are determined using either a tags filter or a list of metric names. The time range between start and end is divided into buckets of equal size (i.e., duration) using either the buckets or bucketDuration parameter. Functions are applied to the data points in each bucket to produce statistics or aggregated metrics.* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+|tags|No|List of tags filters|string|tag-list|-
+|metrics|No|List of metric names|array|-|-
+|stacked|No|Downsample method (if true then sum of stacked individual stats; defaults to false)|boolean|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<NumericBucketPoint>>
+|204|No metric data was found.|-
+|400|The tags parameter is required. Either the buckets or the bucketDuration parameter is required but not both.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
 
 |=======================
 
@@ -2577,6 +2630,123 @@ _Retrieve periods for which the condition holds true for each consecutive data p
 |200|Successfully fetched periods.|array of object
 |204|No data was found.|-
 |400|Missing or invalid query parameters|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges__id__rate]]
+*Endpoint GET `/gauges/{id}/rate`*
+
+NOTE: *Retrieve gauge rate data points.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|limit|No|Limit the number of data points returned|integer|int32|-
+|order|No|Data point sort order, based on timestamp|string|-|ASC, DESC
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|400|Time range is invalid.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__gauges__id__rate_stats]]
+*Endpoint GET `/gauges/{id}/rate/stats`*
+
+NOTE: *Retrieve stats for gauge rate data points.* +
+_The time range between start and end will be divided in buckets of equal duration, and metric statistics will be computed for each bucket._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|start|No|Defaults to now - 8 hours|integer|int64|-
+|end|No|Defaults to now|integer|int64|-
+|buckets|No|Total number of buckets|integer|int32|-
+|bucketDuration|No|Bucket duration|string|duration|-
+|percentiles|No|Percentiles to calculate|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully fetched metric data.|array of <<DataPoint>>
+|204|No metric data was found.|-
+|400|buckets or bucketDuration parameter is invalid, or both are used.|<<ApiError>>
+|500|Unexpected error occurred while fetching metric data.|<<ApiError>>
 
 |=======================
 
@@ -3543,6 +3713,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointObject>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
@@ -3559,6 +3731,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointAvailabilityType>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
@@ -3575,6 +3749,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointDouble>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
@@ -3591,6 +3767,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointLong>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
@@ -3607,6 +3785,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointObject>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
@@ -3623,6 +3803,8 @@ _Clients are not required to create explicitly create a tenant before starting t
 |dataPoints|No|Metric data points|array of <<DataPointString>>|-|-
 |dataRetention|No|How long, in days, a data point of this metric stays in the system after it is stored|integer|int32|-
 |id|No|-|string|-|-
+|maxTimestamp|No|Timestamp of the metric's most recent data point|integer|int64|-
+|minTimestamp|No|Timestamp of the metric's oldest data point|integer|int64|-
 |tags|No|Metric tags|object|-|-
 |tenantId|No|-|string|-|-
 |type|No|Metric type|string|-|gauge, availability, counter
