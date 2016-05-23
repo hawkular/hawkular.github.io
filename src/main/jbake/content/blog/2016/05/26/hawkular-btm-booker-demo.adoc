@@ -1,0 +1,66 @@
+= Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions
+Gary Brown
+2016-05-26
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, btm, apm, distributed tracing, application performance, business transactions
+
+
+Although distributed systems and the concept of services have been around for a long time, the current trend towards microservices has added some new dimensions to the management problem.
+
+The architectural approach leads to business applications comprised of a larger number of simple interacting services, each focused on specific business capabilities, and being responsible for their own data management. This has the benefit of allowing each service to be independently deployable, generally using automated continuous delivery. When used in a cloud environment, it facilitates dynamic scaling of individual services as required, and enables parts of the business application to be upgraded independently with minimal impact, allowing faster turnaround for fixing bugs and adding new features.
+
+The downside of this dynamic, scalable and flexible architecture is being able to understand how your business application is operating, and when necessary tracing the execution path of a particular invocation through the multitude of services potentially geographically distributed.
+
+From a management perspective we need to understand:
+
+* Application Performance
+
+How is a particular service performing, understanding the internal components and how the implementation can be improved. This is of interest to the development team responsible for the service, but also for business and IT managers who need to understand how use of particular services is impacting a business.
+
+* Distributed Tracing
+
+Isolating the path of execution across communicating services - identifying which service instances were actually interacting, what was the latency between service invocations, were particular regions impacted by problems, etc. This information can be used during development and testing, to identify performance issues, but also in production to understand what runtime issues may have impacted an individual or set of invocations of the system.
+
+* Business Transactions
+
+How different business transaction types, that may span across multiple shared services, are impacted when service failures/performance issues occur. We also want to extract business metrics from the information being exchanged between services, to help business analysts gain insight into how their systems are being used and therefore improve how their business operates.
+
+*The demo*
+
+The following demo will show how _Hawkular BTM_ can present these three different views of information captured (in a non-intrusive manner) from a microservices example. _Hawkular BTM_ requires no changes to the services (or frameworks) being monitored, to allow the information to be captured, as it uses a http://byteman.jboss.org[Byteman] based javaagent to instrument the services.
+
+video::167714637[vimeo]
+
+*The example being monitored*
+
+.https://github.com/wildfly-swarm/booker[Swarm booker example]
+ifndef::env-github[]
+image::/img/blog/2016/2016-05-26-btm-swarm-booker.png[Swarm Booker Example]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2016/2016-05-26-btm-swarm-booker.png[Swarm Booker Example]
+endif::[]
+
+The example includes the following services:
+
+* Keycloak - Provides authentication and authorization.
+
+* Web client - Provides the web UI for the application.
+
+* Library - Tracks which items are bought by a user, communicating with the _Store_ service to associate details with a given book ID.
+
+* Store - Provides a book inventory, and uses the _Pricing_ service to obtain a price for each the item in the store.
+
+* Pricing - Simple pricing service that indicates everything is $10 if you're browsing anonymously, or $9 if you're logged in.
+
+
+In the demo, two business tranactions are configured to represent business relevant activities that may be performed by, or on behalf of, a customer. These are:
+
+* Add Book - This business transaction is triggered by an invocation on the *_Library_ POST /items* endpoint, and only involves the _Library_ service.
+
+* Get Books - This business transaction is triggered by an invocation on the *_Library_ GET /items* endpoint, and results in a call to the _Store_ service to obtain information about the books contained in the user's library, which in turn calls the _Pricing_ service to obtain the price of each of the books.
+
+Categorizing the activities that the user may perform on your business applications in this way enables business analysts to understand patterns, and where appropriate, extract additional business metrics from those interactions for further more detailed analysis.
+
+
