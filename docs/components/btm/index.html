@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Business Transaction Management Documentation</title>
+    <title>Hawkular - Hawkular BTM Documentation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -162,12 +162,12 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Business Transaction Management Documentation</h1>
+          <h1>Hawkular BTM Documentation</h1>
           <p></p>
         </div>
       </section>
 
-	<!--<p><em>30 June 2015</em></p>-->
+	<!--<p><em>24 May 2016</em></p>-->
 
 	<section>
       <div class="container">
@@ -176,7 +176,13 @@
 <div id="toc" class="toc">
 <div id="toctitle" class="title"></div>
 <ul class="sectlevel1">
-<li><a href="#_what_is">What is &#8230;&#8203;?</a></li>
+<li><a href="#_what_is">What is &#8230;&#8203;?</a>
+<ul class="sectlevel3">
+<li><a href="#_application_performance_management">Application Performance Management</a></li>
+<li><a href="#_distributed_tracing">Distributed Tracing</a></li>
+<li><a href="#_business_transaction_management">Business Transaction Management</a></li>
+</ul>
+</li>
 <li><a href="#_overview">Overview</a>
 <ul class="sectlevel2">
 <li><a href="#_the_clients">The Clients</a></li>
@@ -187,8 +193,9 @@
 <li><a href="#_console">Console</a>
 <ul class="sectlevel2">
 <li><a href="#_application_performance">Application Performance</a></li>
+<li><a href="#_distributed_tracing_2">Distributed Tracing</a></li>
+<li><a href="#_filter_sidebar">Filter Sidebar</a></li>
 <li><a href="#_business_transactions">Business Transactions</a></li>
-<li><a href="#_business_transaction_configuration">Business Transaction Configuration</a></li>
 </ul>
 </li>
 <li><a href="#_properties">Properties</a></li>
@@ -201,29 +208,40 @@
 <h2 id="_what_is">What is &#8230;&#8203;?</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Firstly let us start with what is a <strong>Business Transaction</strong> - according to one website <sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup>, <em>"The accounting definition of a business transaction, according to the online Business Dictionary, is "an economic event that initiates the accounting process of recording it in a company&#8217;s accounting system." This is the official definition. However, selling an item at a garage sale where no accounting system is in place also can be a business transaction"</em>.</p>
+<p>Since the project began, with the initial focus on "Business Transaction Management" (hence the name), the scope has expanded to include Application Performance Management and more recently Distributed Tracing. So it is worth initially explaining the different areas:</p>
+</div>
+<div class="sect3">
+<h4 id="_application_performance_management">Application Performance Management</h4>
+<div class="paragraph">
+<p>As defined on <a href="https://en.wikipedia.org/wiki/Application_performance_management">wikipedia</a>, "application performance management  (APM)  is the monitoring and management of performance and availability of software applications. APM strives to detect and diagnose complex application performance problems to maintain an expected level of service".</p>
 </div>
 <div class="paragraph">
-<p>I would be even more general, and say that a Business Transaction can be any interactions within a business, or between a business and its customers/partners, to achieve some necessary business objective.</p>
+<p>The focus of this area is on the performance of the parts, whether at the application, service, resource or internal component level. So can be viewed as equivalent to a profiling tool for distributed systems.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_distributed_tracing">Distributed Tracing</h4>
+<div class="paragraph">
+<p>Distributed tracing is concerned with recording and analysing the path(s) taken from an initial invocation as it cascades across a distributed system, primarily as a diagnostic aid to developers and operation teams.</p>
+</div>
+<div class="paragraph">
+<p>The focus of this area is on the communication paths of individual or multiple (aggregated) invocations across a distributed system, to view the performance profile of the various components along those paths.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_business_transaction_management">Business Transaction Management</h4>
+<div class="paragraph">
+<p>Business Transaction Management can actually be considered an extension of Distributed Tracing. Both are concerned with the tracing of invocations across potentially multiple distributed services. The difference is that Business Transaction Management is more concerned with the business relevance of the paths taken, and the business metrics that can be obtained and analysed.</p>
+</div>
+<div class="paragraph">
+<p>It is also worth clarifying the term <strong>Business Transaction</strong> - according to one website <sup class="footnote">[<a id="_footnoteref_1" class="footnote" href="#_footnote_1" title="View footnote.">1</a>]</sup>, <em>"The accounting definition of a business transaction, according to the online Business Dictionary, is "an economic event that initiates the accounting process of recording it in a company&#8217;s accounting system." This is the official definition. However, selling an item at a garage sale where no accounting system is in place also can be a business transaction"</em>.</p>
+</div>
+<div class="paragraph">
+<p>We prefer to use a more general definition of a Business Transaction. It can be any interactions within a business, or between a business and its customers/partners, that results in direct or indirect value. For example, making an enquiry to obtain information about a item, such as its description or stock level, has no associated economic event. However it may be a necessary precursor to someone considering a purchase, and provide invaluable insight into the browsing patterns of its customer base.</p>
 </div>
 <div class="paragraph">
 <p>Once we have a definition for a Business Transaction, the next thing to understand is a <strong>Business Transaction Instance</strong>. This is a single occurrance of what is understood to be a Business Transaction. So for example, a person buying a item (e.g. a computer), on a particular day and time, would result in a Business Transaction Instance.</p>
 </div>
-<div class="paragraph">
-<p><strong>Business Transaction Management</strong> (BTM), also known as <strong>Application Performance Management</strong>, is the monitoring and analysis of the Business Transaction Instances. By recording the individual transaction instances that occur, users are able to:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>visualise any particular instance to understand which path it took through the Business Transaction,</p>
-</li>
-<li>
-<p>analyse the response and latency times associated with the individual transaction instance, which may be necessary to determine if specific Service Level Agreements (SLAs) have been violated</p>
-</li>
-<li>
-<p>aggregate a set of instances, based on various criteria, to understand how the Business Transaction operates in different situations, thus helping to make the Business Transaction more efficient</p>
-</li>
-</ul>
 </div>
 </div>
 </div>
@@ -231,15 +249,15 @@
 <h2 id="_overview">Overview</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>The architecture of the Business Transaction Management (BTM) solution is very simple. It comprises of clients that are being monitored, reporting information to a server for analysis, where the results are then presented to users via a User Interface.</p>
+<p>The architecture of Hawkular BTM is very simple. It comprises of clients that are being monitored, reporting information to a server for analysis, where the results are then presented to users via a User Interface.</p>
 </div>
 <div class="sect2">
 <h3 id="_the_clients">The Clients</h3>
 <div class="paragraph">
-<p>Execution environments (clients), that are responsible for executing business applications, are instrumented to allow a trace of those business transaction instances to be recorded to the Business Transaction Management Server.</p>
+<p>Execution environments (clients), that are responsible for executing business applications, are instrumented to collect information about the service invocations and report it to the Hawkular BTM Server.</p>
 </div>
 <div class="paragraph">
-<p>Our BTM solution uses the fantastic <a href="http://byteman.jboss.org">ByteMan</a> project to instrument any JVM based application to obtain the information required, <strong>without any changes to the application being monitored</strong>.</p>
+<p>The instrumentation mechanism uses the fantastic <a href="http://byteman.jboss.org">ByteMan</a> project to instrument any JVM based application to obtain the information required, <strong>without any changes to the application or frameworks being monitored</strong>.</p>
 </div>
 <div class="paragraph">
 <p>Typically a business application will involve more than one server, executing different parts of the application - and therefore a single business transaction instance may be comprised of multiple trace fragments collected from different locations. It is the responsibility of the client instrumentation to describe both the structure of the business transaction instance fragment executing in a particular server, and also capture information that will enable the transaction instance to be traced across servers.</p>
@@ -270,7 +288,7 @@
 <div class="sect2">
 <h3 id="_the_server">The Server</h3>
 <div class="paragraph">
-<p>The Business Transaction Management (BTM) Server supports reporting and analysis of the business transaction data. These capabilities can be access through a set of REST services, more information can be found here: <a href="../../rest/rest-btm.html">BTM REST services</a></p>
+<p>The Hawkular BTM Server supports reporting and analysis of the business transaction data. These capabilities can be accessed through a set of REST services, more information can be found here: <a href="../../rest/rest-btm.html">BTM REST services</a></p>
 </div>
 <div class="paragraph">
 <p>The instructions for installing the server can be found here: <a href="serverinstall.html">Server Installation</a></p>
@@ -279,18 +297,31 @@
 <div class="sect2">
 <h3 id="_the_user_interface">The User Interface</h3>
 <div class="paragraph">
-<p>The BTM User Interface provides the capability to:</p>
+<p>The Hawkular BTM User Interface provides the capability to:</p>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Configure business transactions</p>
+<p>View Application Performance information</p>
+</li>
+<li>
+<p>View Distributed Tracing</p>
+</li>
+<li>
+<p>Manage Business Transactions</p>
+<div class="ulist">
+<ul>
+<li>
+<p>Configure business transaction definitions</p>
 </li>
 <li>
 <p>View a list of business transactions, with summary statistics</p>
 </li>
 <li>
 <p>Access more detailed analytics for the business transactions</p>
+</li>
+</ul>
+</div>
 </li>
 </ul>
 </div>
@@ -304,7 +335,7 @@
 <h2 id="_console">Console</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: <a href="http://localhost:&lt;port&gt;/hawkular-ui/btm" class="bare">http://localhost:&lt;port&gt;/hawkular-ui/btm</a></p>
+<p>Once the server has been installed, and started, you will be able to start up the user interface by pointing a browser to: <a href="http://localhost:&lt;port&gt" class="bare">http://localhost:&lt;port&gt</a>;</p>
 </div>
 <div class="paragraph">
 <p><em>Where 'port' is the port used by the server (e.g. 8180 if port offset of 100 has been used).</em></p>
@@ -318,19 +349,10 @@
 <p>This page shows Application Performance Management information related to the applications and their components being monitored.</p>
 </div>
 <div class="paragraph">
-<p>At the very top of the page are drop down menus to select the aggregation interval and time span for the information to be viewed.</p>
+<p>The lefthand side of the page provides a collapsible sidebar with various filters that can be applied to the information being viewed. This is explained in more detail in a later section.</p>
 </div>
 <div class="paragraph">
-<p>The graph shows aggregated durations for the component types being monitored, at the defined intervals.</p>
-</div>
-<div class="paragraph">
-<p>On the left hand side below the graph is an area for specifying filters that can be used to limit the information being viewed. The <em>Search</em> field focuses the table rows on entries that contain the specified text.</p>
-</div>
-<div class="paragraph">
-<p>The <em>Business Transaction</em> drop down will include any business transactions that have been defined. This can be used to focus the Application Performance information just on a specific business transaction to help identify performance bottlenecks.</p>
-</div>
-<div class="paragraph">
-<p>The <em>Host Name</em> filter can be used to focus on application performance data associated with a particular host.</p>
+<p>The graph shows aggregated durations for the component types being monitored, at the defined intervals. The interval can be changed using the dropdown at the top of the graph.</p>
 </div>
 <div class="paragraph">
 <p>The table presents the performance information aggregated based on the component type (e.g. Database, EJB, Consumer, etc), URI and (if relevant) operation name.</p>
@@ -343,17 +365,67 @@
 </div>
 </div>
 <div class="sect2">
+<h3 id="_distributed_tracing_2">Distributed Tracing</h3>
+<div class="paragraph">
+<p>This page shows a graphical representation of the path taken by interactions through a set of distributed services.</p>
+</div>
+<div class="paragraph">
+<p>The lefthand side of the page provides a collapsible sidebar with various filters that can be applied to the information being viewed. This is explained in more detail in a later section.</p>
+</div>
+<div class="paragraph">
+<p>At the top of the graph is a dropdown providing a list of initial (root) nodes for the paths that can be displayed. Once a path is selected, the invocation path will be displayed as a set of connected nodes.</p>
+</div>
+<div class="paragraph">
+<p>Each node reflects its severity as a colour, ranging from <em>green</em> meaning performing well, up to <em>red</em> indicating an area for further investigation.</p>
+</div>
+<div class="paragraph">
+<p>The nodes also provide information about the average duration spent in the node, the number of times the node has been invoked, and provides a tooltip with more detailed stats.</p>
+</div>
+<div class="paragraph">
+<p>The links also provide information about the number of invocations, and a tooltip with more detailed stats.</p>
+</div>
+<div class="paragraph">
+<p>The graph can be zoomed and scrolled to view the relevant parts of the information. There is a 'reset zoom' button to return to the original (initial) version of the graph.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_filter_sidebar">Filter Sidebar</h3>
+<div class="paragraph">
+<p>On the lefthand side of some of the UI pages (Application Performance and Distributed Tracing currently) is an area for specifying filters that can be used to limit the information being viewed.</p>
+</div>
+<div class="paragraph">
+<p>The <em>Business Transaction</em> list will include any business transactions that have been defined. This can be used to focus the Application Performance information just on a specific business transaction to help identify performance bottlenecks.</p>
+</div>
+<div class="paragraph">
+<p>The <em>Properties</em> section enables properties associated with business transactions to be used to define inclusion or exclusion filters. The name of the property can be selected from a dropdown.</p>
+</div>
+<div class="paragraph">
+<p>The <em>Faults</em> section enables the data to be limited based on the inclusion or exclusion of a particular fault within the observed data.</p>
+</div>
+<div class="paragraph">
+<p>The <em>Text</em> field is only applicable to the Application Performance page, and focuses the table rows on entries that contain the specified text.</p>
+</div>
+<div class="paragraph">
+<p>The <em>Host Name</em> filter can be used to focus on data associated with a particular host.</p>
+</div>
+</div>
+<div class="sect2">
 <h3 id="_business_transactions">Business Transactions</h3>
+<div class="sect3">
+<h4 id="_overview_2">Overview</h4>
 <div class="paragraph">
 <p>This page shows information about the business transactions, separated into tabs for the following categories.</p>
 </div>
-<div class="sect3">
-<h4 id="_active">Active</h4>
+<div class="sect4">
+<h5 id="_managed">Managed</h5>
 <div class="paragraph">
-<p>This tab shows summary statistics for a list of actively managed business transactions.</p>
+<p>This tab shows summary statistics for a list of actively managed or disabled business transactions.</p>
 </div>
 <div class="paragraph">
-<p>The statistics include:</p>
+<p>On the left of the page is two pie charts representing the transaction and fault counts across the business transactions.</p>
+</div>
+<div class="paragraph">
+<p>Each business transaction is further presented with the following statistics:</p>
 </div>
 <div class="ulist">
 <ul>
@@ -366,22 +438,7 @@
 <li>
 <p>The number of instances that completed with faults (per hour)</p>
 </li>
-<li>
-<p>The number of alerts associated with this business transaction</p>
-</li>
 </ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-The alerts count is currently a placeholder, awaiting integration with the Alerts mechanism (currently planned for version 0.7.0.Final)
-</td>
-</tr>
-</table>
 </div>
 <div class="paragraph">
 <p>For each business transaction:</p>
@@ -400,8 +457,8 @@ The alerts count is currently a placeholder, awaiting integration with the Alert
 </ul>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_candidates">Candidates</h4>
+<div class="sect4">
+<h5 id="_candidates">Candidates</h5>
 <div class="paragraph">
 <p>The candidates tab is used to identify interactions (associated with URIs) that have not currently be associated with a business transaction. When new URIs are detected, a red flag symbol will appear next to the <em>Candidates</em> tab name.</p>
 </div>
@@ -424,41 +481,32 @@ The alerts count is currently a placeholder, awaiting integration with the Alert
 <p>Whichever button is selected, the user will be taken to the configuration page for the business transaction. See the following section for information on how to configure the business transaction.</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_disabled">Disabled</h4>
+<div class="sect4">
+<h5 id="_ignored">Ignored</h5>
 <div class="paragraph">
-<p>This tab lists the business transactions that have a reporting level of <em>None</em>.</p>
-</div>
-<div class="paragraph">
-<p>When in this mode, reporting of instance information about the business transaction will be suspended. This is considered to be a temporary state, unlike the following 'Ignored' state which is generally reserved for transactions that will never be of interest.</p>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_ignored">Ignored</h4>
-<div class="paragraph">
-<p>This tab lists the business transactoins that are being ignored.</p>
+<p>This tab lists the business transactions that are being ignored.</p>
 </div>
 <div class="paragraph">
 <p>This state exists to enable business transaction instances to be categorised, and permanently marked as not being of interest. By explicitly identifying even business interactions that are not of interest, it is possible to detect any new traffic that may occur that has not previously be categorised, which informs the administrators that attention is required to investigate the unfamilar interactions.</p>
 </div>
 </div>
 </div>
-<div class="sect2">
-<h3 id="_business_transaction_configuration">Business Transaction Configuration</h3>
+<div class="sect3">
+<h4 id="_configuration">Configuration</h4>
 <div class="paragraph">
-<p>At the top of the page are buttons for saving or cancelling changes to the business transaction configuration. Whenever changes are saved, or the form is initially displayed, any validation errors will be displayed. Errors will also be highlighted on the form, by the appropriate field labels being displayed in red.</p>
+<p>Whenever changes are saved, or the form is initially displayed, any validation errors will be displayed. Errors will also be highlighted on the form, by the appropriate field labels being displayed in red.</p>
 </div>
 <div class="paragraph">
 <p>The configuration for a business transaction is separated into three sections.</p>
 </div>
-<div class="sect3">
-<h4 id="_description">Description</h4>
+<div class="sect4">
+<h5 id="_description">Description</h5>
 <div class="paragraph">
 <p>Simply enables the user to provide a description of the business transaction and its scope (in case it incorporates a number of different invocations).</p>
 </div>
 </div>
-<div class="sect3">
-<h4 id="_filters">Filters</h4>
+<div class="sect4">
+<h5 id="_filters">Filters</h5>
 <div class="paragraph">
 <p>The filters section defines the link between the transaction instances, performed on specific URIs, and the business transaction name.</p>
 </div>
@@ -496,10 +544,10 @@ The alerts count is currently a placeholder, awaiting integration with the Alert
 </tbody>
 </table>
 </div>
-<div class="sect3">
-<h4 id="_processors">Processors</h4>
+<div class="sect4">
+<h5 id="_processors">Processors</h5>
 <div class="paragraph">
-<p>Out of the box, BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.</p>
+<p>Out of the box, Hawkular BTM is configured with instrumentation rules for a selection of technologies, that can used to monitor generic information about business transaction instances executing over those technologies.</p>
 </div>
 <div class="paragraph">
 <p>However, to make this information more useful in a business context, it is important to also be able to extract relevant details from the business messages, to aid future analysis. This section will explain how the additional "business transaction specific configuration" can be provided.</p>
@@ -632,6 +680,7 @@ The alerts count is currently a placeholder, awaiting integration with the Alert
 </tr>
 </tbody>
 </table>
+</div>
 </div>
 </div>
 </div>
