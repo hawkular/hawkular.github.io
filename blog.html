@@ -170,6 +170,111 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/05/26/hawkular-btm-booker-demo.html"><h1>Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions</h1></a>
+            <p>26 May 2016, by Gary Brown</p>
+            <p><div class="videoblock">
+<div class="content">
+<iframe src="https://player.vimeo.com/video/167714637" frameborder="0" allowfullscreen></iframe>
+</div>
+</div>
+<div class="paragraph">
+<p>Although distributed systems and the concept of services have been around for a long time, the current trend towards microservices has added some new dimensions to the management problem.</p>
+</div>
+<div class="paragraph">
+<p>The architectural approach leads to business applications comprised of a larger number of simple interacting services, each focused on specific business capabilities, and being responsible for their own data management. This has the benefit of allowing each service to be independently deployable, generally using automated continuous delivery. When used in a cloud environment, it facilitates dynamic scaling of individual services as required, and enables parts of the business application to be upgraded independently with minimal impact, allowing faster turnaround for fixing bugs and adding new features.</p>
+</div>
+<div class="paragraph">
+<p>The downside of this dynamic, scalable and flexible architecture is being able to understand how your business application is operating, and when necessary tracing the execution path of a particular invocation through the multitude of services potentially geographically distributed.</p>
+</div>
+<div class="paragraph">
+<p>From a management perspective we need to understand:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Application Performance</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>How is a particular service performing, understanding the internal components and how the implementation can be improved. This is of interest to the development team responsible for the service, but also for business and IT managers who need to understand how use of particular services is impacting a business.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Distributed Tracing</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Isolating the path of execution across communicating services - identifying which service instances were actually interacting, what was the latency between service invocations, were particular regions impacted by problems, etc. This information can be used during development and testing, to identify performance issues, but also in production to understand what runtime issues may have impacted an individual or set of invocations of the system.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Business Transactions</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>How different business transaction types, that may span across multiple shared services, are impacted when service failures/performance issues occur. We also want to extract business metrics from the information being exchanged between services, to help business analysts gain insight into how their systems are being used and therefore improve how their business operates.</p>
+</div>
+<div class="paragraph">
+<p><strong>The demo</strong></p>
+</div>
+<div class="paragraph">
+<p>The demo shows how <em>Hawkular BTM</em> can present these three different views of information captured (in a non-intrusive manner) from a microservices example. <em>Hawkular BTM</em> requires no changes to the services (or frameworks) being monitored, to allow the information to be captured, as it uses a <a href="http://byteman.jboss.org">Byteman</a> based javaagent to instrument the services.</p>
+</div>
+<div class="paragraph">
+<p>The architecture of the microservices example being monitored is:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-05-26-btm-swarm-booker.png" alt="Swarm Booker Example">
+</div>
+<div class="title">Figure 1. <a href="https://github.com/wildfly-swarm/booker">Swarm booker example</a></div>
+</div>
+<div class="paragraph">
+<p>The example includes the following services:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Keycloak - Provides authentication and authorization.</p>
+</li>
+<li>
+<p>Web client - Provides the web UI for the application.</p>
+</li>
+<li>
+<p>Library - Tracks which items are bought by a user, communicating with the <em>Store</em> service to associate details with a given book ID.</p>
+</li>
+<li>
+<p>Store - Provides a book inventory, and uses the <em>Pricing</em> service to obtain a price for each the item in the store.</p>
+</li>
+<li>
+<p>Pricing - Simple pricing service that indicates everything is $10 if you&#8217;re browsing anonymously, or $9 if you&#8217;re logged in.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>In the demo, two business tranactions are configured to represent business relevant activities that may be performed by, or on behalf of, a customer. These are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Add Book - This business transaction is triggered by an invocation on the <strong><em>Library</em> POST /items</strong> endpoint, and only involves the <em>Library</em> service.</p>
+</li>
+<li>
+<p>Get Books - This business transaction is triggered by an invocation on the <strong><em>Library</em> GET /items</strong> endpoint, and results in a call to the <em>Store</em> service to obtain information about the books contained in the user&#8217;s library, which in turn calls the <em>Pricing</em> service to obtain the price of each of the books.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Categorizing the activities that the user may perform on your business applications in this way enables business analysts to understand patterns, and where appropriate, extract additional business metrics from those interactions for further more detailed analysis.</p>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/05/24/hawkular-btm-ticketmonster-demo.html"><h1>Obtaining business metrics without the need to instrument your application</h1></a>
             <p>24 May 2016, by Gary Brown</p>
             <p><div class="sect3">
@@ -645,111 +750,13 @@ Loffay and Peter Palaga for their contributions to the release.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html"><h1>Collecting Metrics from Prometheus Endpoints</h1></a>
-            <p>22 April 2016, by John Mazzitelli</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular WildFly Agent 0.17.2.Final has just been released. This new release introduces a very interesting feature.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_prometheus_metrics">Prometheus Metrics</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The agent now has the ability to monitor Prometheus endpoints and store their metrics to Hawkular Metrics. This means any
-component that exports Prometheus metric data via either <a href="https://prometheus.io/docs/instrumenting/exposition_formats/">the Prometheus binary or text formats</a> can have those metric data collected by the agent
-and pushed up into Hawkular Metrics.</p>
-</div>
-<div class="sect2">
-<h3 id="_configuration">Configuration</h3>
-<div class="paragraph">
-<p>It is very easy to configure the Hawkular WildFly Agent to collect Prometheus metric data. In the WildFly container
-that houses the agent, edit its standalone.xml configuration file and add one or more &lt;remote-prometheus&gt; elements
-in the &lt;managed-servers&gt; section of the agent subsystem:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;remote-prometheus name="My Remote Prometheus Endpoint"
-                   enabled="true"
-                   url="http://my-prometheus-endpoint:9090/metrics"
-                   interval="30"
-                   timeUnits="seconds" /&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This tells the agent to periodically scrape the metric data from that remote Prometheus endpoint and whatever metrics
-it finds will be pushed to Hawkular Metrics.</p>
-</div>
-<div class="paragraph">
-<p>In fact, if you only want to collect Prometheus metric data (and not collect any other kind of metric data,
-like those from DMR endpoints or Jolokia/JMX endpoints) you need only those &lt;remote-prometheus&gt; declarations. You
-do not have to also collect from &lt;remote-dmr&gt; or &lt;remote-jmx&gt; servers (though you are free to do so if you want to monitor
-types of those components, too).</p>
-</div>
-<div class="paragraph">
-<p>Some Prometheus endpoints expose a lot of metrics, some of which you may not be interested in collecting and storing. In
-this case, you have the option to define metric sets which tell the agent which metrics to collect and store (any others
-will be ignored).</p>
-</div>
-<div class="paragraph">
-<p>Here is an example of a full agent subsystem configuration that defines a remote Prometheus endpoint and the metrics
-to be collected from that endpoint:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;subsystem xmlns="urn:org.hawkular.agent:agent:1.0" enabled="true"&gt;
-    &lt;diagnostics enabled="true" interval="1" reportTo="LOG" timeUnits="minutes"/&gt;
-    &lt;storage-adapter type="HAWKULAR" serverOutboundSocketBindingRef="hawkular" username="jdoe" password="password"/&gt;
-
-    &lt;metric-set-prometheus name="Important Metrics"&gt;
-        &lt;metric-prometheus name="http_.*"/&gt;
-        &lt;metric-prometheus name="evaluation_failures_total" /&gt;
-    &lt;/metric-set-prometheus&gt;
-
-    &lt;managed-servers&gt;
-        &lt;remote-prometheus enabled="true"
-                           name="My Remote Prometheus Endpoint"
-                           url="http://my-remote-prometheus-endpoint:9090/metrics"
-                           metricSets="Important Metrics"
-                           interval="30"
-                           timeUnits="seconds" /&gt;
-    &lt;/managed-servers&gt;
-&lt;/subsystem&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The above configuration tells the agent to scrape the given Prometheus endpoint URL every 30 seconds and
-store all the metrics with the name "evaluation_failures_total" or with a name that matches
-the regular expression "http_.*". Any other metrics exported by that remote Prometheus endpoint will be
-ignored.</p>
-</div>
-<div class="paragraph">
-<p>Information about this release can be found on Github here:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-agent/tree/0.17.2.Final" class="bare">https://github.com/hawkular/hawkular-agent/tree/0.17.2.Final</a></p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-agent/releases/tag/0.17.2.Final" class="bare">https://github.com/hawkular/hawkular-agent/releases/tag/0.17.2.Final</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>22 April 2016 - <a href="blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html">Collecting Metrics from Prometheus Endpoints</a></li>
           <li>21 April 2016 - <a href="blog/2016/04/21/datamining-first-release.html">Hawkular Data Mining 0.1.0.Final Released</a></li>
           <li>19 April 2016 - <a href="blog/2016/04/19/jmxtrans-to-hawkular-metrics.html">Monitoring JVM applications with jmxtrans</a></li>
           <li>08 April 2016 - <a href="blog/2016/04/08/hawkular-manage-iq-sprint-demo.html">Hawkular in ManageIQ sprint demo(s)</a></li>
