@@ -190,6 +190,51 @@
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2016/06/01/hawkular-metrics-0.16.0.Final-released.html"><h1>Hawkular Metrics 0.16.0 - Release</h1></a>
+            <p>01 June 2016, by Stefan Negrea</p>
+            <p><p>I am happy to announce release 0.16.0 of Hawkular Metrics. This release is anchored by overall enhancements in the API and updates to String metric type.</p><p>Here is a list of major changes:</p>
+<ol>
+  <li><strong>String Metric Type - Enhancements</strong>
+  <ul>
+    <li><code>/strings</code> endpoint was enhanced with querying capabilities similar to other metric types, including tag related features (<a href="https://issues.jboss.org/browse/HWKMETRICS-402">HWKMETRICS-402</a>)</li>
+    <li>The endpoints under <code>/strings</code> are still experimental, so changes which break backwards compatibility could be introduced in future releases. The experimental tag allows time for feedback to better determine what the API should be.</li>
+  </ul></li>
+  <li><strong><code>*/stats</code> &amp; <code>*/raw</code> Replace <code>*/data</code></strong> - <strong>second deprecation warning!</strong>
+  <ul>
+    <li><code>*/data</code> has been <strong>deprecated</strong> and functionality split into two single purpose endpoints, this is applicable for all metric types (gauge, counter, availability, and string)</li>
+    <li><code>*/stats</code> endpoints return bucketed, statistical or query-time aggregated data</li>
+    <li><code>*/raw</code> endpoints accept and return raw data for a metric</li>
+    <li>Please update your code to use the new endpoints and follow the release notes for more details regarding removal.</li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-24">HWKMETRICS-24</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-57">HWKMETRICS-57</a></li>
+  </ul></li>
+  <li><strong>REST API Updates</strong>
+  <ul>
+    <li>Empty buckets are now reported with default values and no samples (<a href="https://issues.jboss.org/browse/HWKMETRICS-345">HWKMETRICS-345</a>)</li>
+    <li>Rate of change stats can be retrieved for Gauge metrics. This feature was exclusive for Counter metrics but was expanded to Gauge metrics. The rates are computed at query time based on stored data (<a href="https://issues.jboss.org/browse/HWKMETRICS-365">HWKMETRICS-365</a>)</li>
+    <li>Min and max timestamps of stored datapoints are now returned when querying for metric definitions (<a href="https://issues.jboss.org/browse/HWKMETRICS-383">HWKMETRICS-383</a>)</li>
+    <li>The endpoint for fetching rates now supports standard query parameters and sort behavior (<a href="https://issues.jboss.org/browse/HWKMETRICS-390">HWKMETRICS-390</a>)</li>
+  </ul></li>
+  <li><strong>Hawkular Metrics - Hawkular Services distribution</strong>
+  <ul>
+    <li>Hawkular Metrics distribution build for inclusion in Hawkular Services is now independent of Hawkular Accounts.</li>
+    <li>Only for this distribution, the authentication is done at container level and tenant id header becomes required.</li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-399">HWKMETRICS-399</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-401">HWKMETRICS-401</a></li>
+  </ul></li>
+</ol><h3>Hawkular Metrics Clients</h3>
+<ul>
+  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
+  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
+  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
+  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
+</ul><h3>Release Links</h3>
+<ul>
+  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.16.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.16.0</a></li>
+  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
+  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330316">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330316</a></li>
+</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.</p></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/05/26/hawkular-btm-booker-demo.html"><h1>Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions</h1></a>
             <p>26 May 2016, by Gary Brown</p>
             <p><div class="videoblock">
@@ -425,267 +470,13 @@
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/04/28/new-packaging.html"><h1>New Hawkular packaging</h1></a>
-            <p>28 April 2016, by Heiko W. Rupp, Stefan Negrea</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p><em>[ This blog post has been sent before to the hawkular-dev mailing list ]</em></p>
-</div>
-<div class="paragraph">
-<p>With a growing community and an increasingly large number of sub-projects, it is the perfect time to rethink the
-packaging of Hawkular. This post is a blueprint for changes to come to Hawkular as well as establish some patterns
-for futures decisions.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_motivation">Motivation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>So far we have created Hawkular "All-in-one" releases that contain everything, Hawkular server components, UI,
-the agent and also embedded versions of Cassandra and KeyCloak.</p>
-</div>
-<div class="paragraph">
-<p>It&#8217;s certainly the case that for community we will still deliver an all-in-one package.
-We also need to consider separate distributions for other projects that integrate with Hawkular.</p>
-</div>
-<div class="paragraph">
-<p>The recent effort to integrate with <a href="blog/2016/02/22/hawkular-manage-iq.html">ManageIQ</a> comes with
-its own set of requirements for services.
-Not all of the Hawkular components are needed and required components may be configured differently.
-For example the UI is supplied from within ManageIQ side and Hawkular is to be run headless. Other
-components like Cassandra will not be run in embedded mode, so that there is no need to supply it in the package.
-Likewise KeyCloak will not be shipped and probably not even needed because we only have technical
-users that will access Hawkular services.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_existing_components_services">Existing Components / Services</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Here a list of projects that are part of Hawkular project</p>
-</div>
-<div class="hdlist">
-<table>
-<tr>
-<td class="hdlist1">
-Metrics
-</td>
-<td class="hdlist2">
-<p>scalable, asynchronous, multi tenant, long term metrics storage engine</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Inventory
-</td>
-<td class="hdlist2">
-<p>registry of "things" that contains info about your applications, servers, etc. and also keeps track of
-their relationships with each other</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Alerts
-</td>
-<td class="hdlist2">
-<p>alerting engine that allows trigger definitions to evaluate incoming data, generate alerts (or events), and
-react with flexible actions ond lifecycle management</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-CommandGW
-</td>
-<td class="hdlist2">
-<p>messaging framework for communicating between components</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Bus+Nest
-</td>
-<td class="hdlist2">
-<p>messaging framework used for communicating between components</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-BTM
-</td>
-<td class="hdlist2">
-<p>provide capabilities to monitor the flow of a business transaction instance and enable performance analysis of
-the individual components that make up an application</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Agent
-</td>
-<td class="hdlist2">
-<p>used to monitor WildFly and related projects</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Accounts
-</td>
-<td class="hdlist2">
-<p>is the user/organization module that provides authentication, authorization and configuration for user accounts</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Data Mining
-</td>
-<td class="hdlist2">
-<p>alert predictions based on time series data</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Hawkular UI
-</td>
-<td class="hdlist2">
-<p>The current UI</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Hawkular Charts
-</td>
-<td class="hdlist2">
-<p>Angular Directives for Metrics Visualization used by the current UI</p>
-</td>
-</tr>
-<tr>
-<td class="hdlist1">
-Embedded Cassandra
-</td>
-<td class="hdlist2">
-<p>embedded Cassandra server specifically configured for project use</p>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>There are also various clients like the Ruby Gem or the Android client. Those are not part of this discussion.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_options_for_packages">Options for Packages</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The distribution packages need to follow product integrations with a special distribution for community.
-The community package could potentially include every single package from the Hawkular organization. However,
-the rest of the packages need to be created along the lines of product use and include only the minimal amount of
-components, services and third-party libraries to satisfy integration requirements.</p>
-</div>
-<div class="paragraph">
-<p>The distributions should be seen as funels, the Hawkular community creates a set of sub-projects that then get
-combined into few distributions that in turn get consumed. Following this analogy, the number of packaged distributions
-should also be kept to a minimum possible. For now we settled on 3 packages detailed below, all will be available
-for download on JBoss.org.</p>
-</div>
-<div class="paragraph">
-<p>With the exception of the community distribution:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>the QA team will be engaged in testing the package.</p>
-</li>
-<li>
-<p>the sub-components will strive to be aligned in terms of tech stack and maturity</p>
-</li>
-<li>
-<p>an automated test suite is required for packages that combine more than one project</p>
-</li>
-</ol>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_community_distribution">Hawkular - Community Distribution</h3>
-<div class="paragraph">
-<p>Will include every single service listed above. The UI is a requirement because some services are very hard to
-understand or use without a friendly interface. The UI will be a community only effort at this point since there
-are no plans for productization.</p>
-</div>
-<div class="paragraph">
-<p>The current Hawkular repository will be adjusted to reflect this new mission; the current UI will be moved
-to a separate repository. This package builds on Hawkular Core Services as described next.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_core_services">Hawkular Core Services</h3>
-<div class="paragraph">
-<p>Geared towards ManageIQ integrations and will include only the components needed for the MiQ provider.
-This package uses the Metrics Distribution as described below.</p>
-</div>
-<div class="paragraph">
-<p>Components included: Metrics, Alerts, Inventory, CommandGW, Nest and Bus as well as the agent.</p>
-</div>
-<div class="paragraph">
-<p>Reasons for some exclusions: Keycloak (different security model), Embedded Cassandra
-(only full C* deployments will be supported), and no Hawkular UI because it will use a special purpose UI for ManageIQ</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_metrics_distribution">Metrics Distribution</h3>
-<div class="paragraph">
-<p>Geared towards usage as a pure Time Series Database (TSDB) and will be exclusively made of Hawkular Metrics service.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_graphical_overview">Graphical overview</h3>
-<div class="paragraph">
-<p>This graphic visualizes the 3 packages again</p>
-</div>
-<div id="img-packages" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/hawkular-packaging-new.png" alt="Packages and components">
-</div>
-<div class="title">Figure 1. Packages and components</div>
-</div>
-<div class="paragraph">
-<p>Orange is the Metrics distribution, green+orange (with the red box around it) is Hawkular-core-services and
-everything in the blue box is the all-in-one community distribution</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_expansion_and_contraction">Expansion and Contraction</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Since its inception Hawkular has been growing by all metrics: projects, lines of code, binary downloads,
-contributors, etc. But uncontrolled increase in some metrics can be detrimental to the organization.
-This is especially true for the number of projects. We will always need new projects to experiment, but the
-reverse might be true for mature and established projects.
-As the packaging and requirements for each package mature we need to consider the reverse, combining projects.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_packaging_format">Packaging Format</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This post did not touch one important aspect: physical packaging formats (rpm, zip, war, jar) for the 3 distributions.
-We will follow-up with additional details in the coming weeks.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>28 April 2016 - <a href="blog/2016/04/28/new-packaging.html">New Hawkular packaging</a></li>
           <li>27 April 2016 - <a href="blog/2016/04/27/hawkular-inventory-0.15.0.Final-released.html">Hawkular Inventory 0.15.0.Final - Release</a></li>
           <li>22 April 2016 - <a href="blog/2016/04/22/collecting-metrics-from-prometheus-endpoints.html">Collecting Metrics from Prometheus Endpoints</a></li>
           <li>21 April 2016 - <a href="blog/2016/04/21/datamining-first-release.html">Hawkular Data Mining 0.1.0.Final Released</a></li>
