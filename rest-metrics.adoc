@@ -3366,9 +3366,114 @@ NOTE: *Retrieve metrics' tag values* +
 
 
 === String
+. link:#++GET__strings++[Find tenant's metric definitions.]
+. link:#++POST__strings++[Create string metric.]
 . link:#++POST__strings_raw++[Add metric data for multiple string metrics in a single call.]
+. link:#++GET__strings_tags__tags_++[Retrieve string type's tag values]
+. link:#++GET__strings__id_++[Retrieve single metric definition.]
 . link:#++GET__strings__id__raw++[Retrieve string data.]
 . link:#++POST__strings__id__raw++[Add data for a single string metric.]
+. link:#++GET__strings__id__tags++[Retrieve tags associated with the metric definition.]
+. link:#++PUT__strings__id__tags++[Update tags associated with the metric definition.]
+. link:#++DELETE__strings__id__tags__tags_++[Delete tags associated with the metric definition.]
+
+
+==============================================
+
+[[GET__strings]]
+*Endpoint GET `/strings`*
+
+NOTE: *Find tenant's metric definitions.* +
+_Does not include any metric values._
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|tags|No|List of tags filters|string|tag-list|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully retrieved at least one metric definition.|array of <<Metric>>
+|204|No metrics found.|-
+|400|Invalid type parameter type.|<<ApiError>>
+|500|Failed to retrieve metrics due to unexpected error.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__strings]]
+*Endpoint POST `/strings`*
+
+NOTE: *Create string metric.* +
+_Clients are not required to explicitly create a metric before storing data. Doing so however allows clients to prevent naming collisions and to specify tags and data retention._
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|overwrite|No|Overwrite previously created metric configuration if it exists. Only data retention and tags are overwriten; existing data points are unnafected. Defaults to false.|boolean|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<MetricString>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Metric created successfully|-
+|400|Missing or invalid payload|<<ApiError>>
+|409|String metric with given id already exists|<<ApiError>>
+|500|Metric creation failed due to an unexpected error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
 
 
 ==============================================
@@ -3403,6 +3508,90 @@ NOTE: *Add metric data for multiple string metrics in a single call.* +
 |200|Adding data succeeded.|-
 |400|Missing or invalid payload|<<ApiError>>
 |500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__strings_tags__tags_]]
+*Endpoint GET `/strings/tags/{tags}`*
+
+NOTE: *Retrieve string type's tag values* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|tags|Yes|Tag query|string|tag-list|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Tags successfully retrieved.|object
+|204|No matching tags were found|-
+|500|Unexpected error occurred while fetching tags.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__strings__id_]]
+*Endpoint GET `/strings/{id}`*
+
+NOTE: *Retrieve single metric definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Metric's definition was successfully retrieved.|<<Metric>>
+|204|Query was successful, but no metrics definition is set.|-
+|500|Unexpected error occurred while fetching metric's definition.|<<ApiError>>
 
 |=======================
 
@@ -3515,6 +3704,144 @@ NOTE: *Add data for a single string metric.* +
 |200|Adding data succeeded.|-
 |400|Missing or invalid payload|<<ApiError>>
 |500|Unexpected error happened while storing the data|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__strings__id__tags]]
+*Endpoint GET `/strings/{id}/tags`*
+
+NOTE: *Retrieve tags associated with the metric definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Metric's tags were successfully retrieved.|object
+|204|Query was successful, but no metrics were found.|-
+|500|Unexpected error occurred while fetching metric's tags.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[PUT__strings__id__tags]]
+*Endpoint PUT `/strings/{id}/tags`*
+
+NOTE: *Update tags associated with the metric definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|object
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Metric's tags were successfully updated.|-
+|500|Unexpected error occurred while updating metric's tags.|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[DELETE__strings__id__tags__tags_]]
+*Endpoint DELETE `/strings/{id}/tags/{tags}`*
+
+NOTE: *Delete tags associated with the metric definition.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|id|Yes|-|string|-|-
+|tags|Yes|Tag names|string|-|Comma-separated list of tag names
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Metric's tags were successfully deleted.|-
+|400|Invalid tags|<<ApiError>>
+|500|Unexpected error occurred while trying to delete metric's tags.|<<ApiError>>
 
 |=======================
 
