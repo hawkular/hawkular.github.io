@@ -11,8 +11,17 @@ $(document).ready(function(){
         $('#toc').removeClass('sticky');
       }
     });
-
   }
+
+  $(window).on("scroll", function() {
+  	var scrollHeight = $(document).height();
+  	var scrollPosition = $(window).height() + $(window).scrollTop();
+    if ((scrollHeight - scrollPosition - 101) <= 0) {
+      $('#toc').addClass('sticky-bottom');
+    } else {
+      $('#toc').removeClass('sticky-bottom');
+    }
+  });
 
   /* clicking on an item with sub-menu arrow doesn't close the navigation menu */
   $('.dropdown-submenu').click(function(e){
@@ -23,7 +32,7 @@ $(document).ready(function(){
   $(document).delegate('*[data-toggle="lightbox"]', 'click', function(event) {
     event.preventDefault();
     $(this).ekkoLightbox();
-  }); 
+  });
   $("img[src*='/img/docs/'], img[src*='/img/blog/'], img[src*='/img/dev-docs/']").each(function(){
     $(this).wrap("<a href='" + $(this).attr('src') + "' data-toggle='lightbox' data-gallery='foo'></a>");
   })
