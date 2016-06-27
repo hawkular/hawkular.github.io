@@ -52,7 +52,7 @@
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts.html">Alerts</a>
                       </li>
                       <li class="menu-item ">
-                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-btm.html">Business Transaction Management</a>
+                        <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/apiref/rest-apm.html">Application Performance Management</a>
                       </li>
                         <li class="menu-item ">
                             <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-datamining.html">Data Mining</a>
@@ -72,7 +72,7 @@
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/alerts/index.html">Alerts</a>
                       </li>
                       <li class="menu-item ">
-                        <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/btm/index.html">Business Transaction Management</a>
+                        <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Application Performance Management</a>
                       </li>
                       <li class="menu-item ">
                         <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/datamining/index.html">Data Mining</a>
