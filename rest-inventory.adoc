@@ -433,6 +433,7 @@ _The response body contains details about results of creation of individual enti
 |=======================
 |Required|Description|Data Type
 
+|Yes|This is a map where keys are paths to the parents under which entities should be created. The values are again maps where keys are one of [environment, resourceType, metricType, operationType, feed, resource, metric, dataEntity, relationship] and values are arrays of blueprints of entities of the corresponding types.|object
 |No|This is a map where keys are paths to the parents under which entities should be created. The values are again maps where keys are one of [environment, resourceType, metricType, operationType, feed, resource, metric, dataEntity, relationship] and values are arrays of blueprints of entities of the corresponding types.|object
 
 |=======================
@@ -7394,16 +7395,28 @@ NOTE: *Updates a relationship* +
 
 
 === Entity Graph Traversal
-. link:#++GET__traversal__path.*_++[Retrieves a list of entities]
+. link:#++GET__traversal__traversal_++[Retrieves a list of entities]
 
 
 ==============================================
 
-[[GET__traversal__path.*_]]
-*Endpoint GET `/traversal/{path.*}`*
+[[GET__traversal__traversal_]]
+*Endpoint GET `/traversal/{traversal}`*
 
 NOTE: *Retrieves a list of entities* +
 _Given the traversal of inventory expressed in the URL, this will return a (possibly empty) list of entities that the traversal found. The results can be paged. See above for a thorough description of the format of the URL. The type of the returned elements is determined by the URL._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|traversal|Yes|See the documentation above for the format of the traversal.|string|-|-
+
+|=======================
 
 
 
@@ -7582,946 +7595,17 @@ NOTE: *Gets the graph.* +
 
 
 === Single Entity
-. link:#++PUT__entity_m;_id_++[Updates a metric. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity_rl;_id_++[Updates a relationship. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__d;_id_++[Updates a data entity. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__e;_id_++[Updates an environment. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__f;_id_++[Updates a feed. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__mp;_id_++[Updates a metadata pack. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__mt;_id_++[Updates a metric type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__ot;_id_++[Updates an operation type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__r;_id_++[Updates a resource. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++PUT__entity__path.*__rt;_id_++[Updates a resource type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.]
-. link:#++GET__entity__path.*__treeHash++[Obtains the identity tree hash of the entity.]
-. link:#++POST__entity__path.*___type:(mp|metadataPack)_++[Creates a new metadata pack]
-. link:#++POST__entity__path.*___type:(mt|metricType)_++[Creates a new metric type]
-. link:#++POST__entity__path.*___type:(op|operationType)_++[Creates a new operation type]
-. link:#++POST__entity__path.*___type:(rl|relationship)_++[Creates a new relationship]
-. link:#++POST__entity__path.*___type:(rt|resourceType)_++[Creates a new resource type]
-. link:#++POST__entity__path.*___type:d(ata)?_++[Creates a new data entity]
-. link:#++POST__entity__path.*___type:e(nvironment)?_++[Creates a new environment]
-. link:#++POST__entity__path.*___type:f(eed)?_++[Creates a new feed]
-. link:#++POST__entity__path.*___type:m(etric)?_++[Creates a new metric]
-. link:#++POST__entity__path.*___type:r(esource)?_++[Creates a new resource]
-. link:#++DELETE__entity__path:.+_++[Deletes an inventory entity on the given location.]
-. link:#++GET__entity__path:.+_++[Reads an inventory entity on the given location.]
+. link:#++DELETE__entity__path_++[Deletes an inventory entity on the given location.]
+. link:#++GET__entity__path_++[Reads an inventory entity on the given location.]
+. link:#++PUT__entity__path_++[Updates an entity. The path is actually a canonical path. The format of the accepted JSON object is governed by the type of the entity being updated. If you're updating an environment, look for EnvironmentUpdate type, etc.]
+. link:#++GET__entity__path__treeHash++[Obtains the identity tree hash of the entity.]
+. link:#++POST__entity__path___type_++[Creates a new entity]
 
 
 ==============================================
 
-[[PUT__entity_m;_id_]]
-*Endpoint PUT `/entity/m;{id}`*
-
-NOTE: *Updates a metric. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetricUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Metric updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Metric not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity_rl;_id_]]
-*Endpoint PUT `/entity/rl;{id}`*
-
-NOTE: *Updates a relationship. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<RelationshipUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Relationship updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Relationship not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__d;_id_]]
-*Endpoint PUT `/entity/{path.*}/d;{id}`*
-
-NOTE: *Updates a data entity. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<DataEntityUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Data entity updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Data entity not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__e;_id_]]
-*Endpoint PUT `/entity/{path.*}/e;{id}`*
-
-NOTE: *Updates an environment. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<EnvironmentUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Environment updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Environment not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__f;_id_]]
-*Endpoint PUT `/entity/{path.*}/f;{id}`*
-
-NOTE: *Updates a feed. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<FeedUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Feed updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Feed not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__mp;_id_]]
-*Endpoint PUT `/entity/{path.*}/mp;{id}`*
-
-NOTE: *Updates a metadata pack. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetadataPackUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Metadata pack updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Metadata pack not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__mt;_id_]]
-*Endpoint PUT `/entity/{path.*}/mt;{id}`*
-
-NOTE: *Updates a metric type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetricTypeUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Metric type updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Metric type not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__ot;_id_]]
-*Endpoint PUT `/entity/{path.*}/ot;{id}`*
-
-NOTE: *Updates an operation type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<OperationTypeUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Operation type updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Operation type not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__r;_id_]]
-*Endpoint PUT `/entity/{path.*}/r;{id}`*
-
-NOTE: *Updates a resource. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<ResourceUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Resoure updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Resource not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[PUT__entity__path.*__rt;_id_]]
-*Endpoint PUT `/entity/{path.*}/rt;{id}`*
-
-NOTE: *Updates a resource type. The URL is actually a canonical path. The path identifier used here is just to distinguish it from the rest of canonical paths so that we can reference the correct type of the expected payload.* +
-
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<ResourceTypeUpdate>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Resource type updated.|-
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|Resource type not found.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[GET__entity__path.*__treeHash]]
-*Endpoint GET `/entity/{path.*}/treeHash`*
-
-NOTE: *Obtains the identity tree hash of the entity.* +
-
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|200|Tree hash returned.|<<IdentityHashTree>>
-|400|The entity doesn't support identity hashing.|-
-|404|No entity found on given traversal URI.|-
-|500|Internal server error|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:(mp|metadataPack)_]]
-*Endpoint POST `/entity/{path.*}/{type:(mp|metadataPack)}`*
-
-NOTE: *Creates a new metadata pack* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 metadata pack at a time. Please consult the docs for what entities can contain a metadata pack._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetadataPackBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Metadata pack(s) created.|<<MetadataPack>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:(mt|metricType)_]]
-*Endpoint POST `/entity/{path.*}/{type:(mt|metricType)}`*
-
-NOTE: *Creates a new metric type* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 metric type at a time. Please consult the docs for what entities can contain a metric type._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetricTypeBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Metric type(s) created.|<<MetricType>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:(op|operationType)_]]
-*Endpoint POST `/entity/{path.*}/{type:(op|operationType)}`*
-
-NOTE: *Creates a new operation type* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 operation type at a time. Please consult the docs for what entities can contain an operation type._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<OperationTypeBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Operation type(s) created.|<<OperationType>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:(rl|relationship)_]]
-*Endpoint POST `/entity/{path.*}/{type:(rl|relationship)}`*
-
-NOTE: *Creates a new relationship* +
-_Creates a new relationship with one end being the entity on the path and the other end specified by the relationship blueprint. The blueprint also defines the direction in which the relationship is created as well as its name. As all POSTs, this can also accept an array of blueprints to create more than 1 relationship at a time._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<RelationshipBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Relationship(s) created.|<<Relationship>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:(rt|resourceType)_]]
-*Endpoint POST `/entity/{path.*}/{type:(rt|resourceType)}`*
-
-NOTE: *Creates a new resource type* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 resource type at a time. Please consult the docs for what entities can contain a resource type._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<ResourceTypeBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Resource type(s) created.|<<ResourceType>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:d(ata)?_]]
-*Endpoint POST `/entity/{path.*}/{type:d(ata)?}`*
-
-NOTE: *Creates a new data entity* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 data entity at a time. Please consult the docs for what entities can contain a data entity._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<DataEntityBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Data entity(ies) created.|<<DataEntity>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:e(nvironment)?_]]
-*Endpoint POST `/entity/{path.*}/{type:e(nvironment)?}`*
-
-NOTE: *Creates a new environment* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 environment at a time. Please consult the docs for what entities can contain an environment._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<EnvironmentBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Environments(s) created.|<<Environment>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:f(eed)?_]]
-*Endpoint POST `/entity/{path.*}/{type:f(eed)?}`*
-
-NOTE: *Creates a new feed* +
-_Pay attention to the returned entity/entities as the IDs assigned to the feeds might be different from what you passed in. As all POSTs, this can also accept an array of blueprints to create more than 1 feed at a time. Please consult the docs for what entities can contain a feed._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<FeedBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Feed(s) created.|<<Feed>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:m(etric)?_]]
-*Endpoint POST `/entity/{path.*}/{type:m(etric)?}`*
-
-NOTE: *Creates a new metric* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 metric at a time. Please consult the docs for what entities can contain a metric._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<MetricBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Metric(s) created.|<<Metric>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[POST__entity__path.*___type:r(esource)?_]]
-*Endpoint POST `/entity/{path.*}/{type:r(esource)?}`*
-
-NOTE: *Creates a new resource* +
-_As all POSTs, this can also accept an array of blueprints to create more than 1 resource at a time. Please consult the docs for what entities can contain a resource._
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|-|<<ResourceBlueprint>>
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|201|Resource(s) created.|<<Resource>>
-|400|Data in wrong format|-
-|403|Unauthorized access|-
-|404|One of the related entities doesn't exist.|-
-|500|Server error.|-
-
-|=======================
-
-
-
-==============================================
-
-
-
-
-==============================================
-
-[[DELETE__entity__path:.+_]]
-*Endpoint DELETE `/entity/{path:.+}`*
+[[DELETE__entity__path_]]
+*Endpoint DELETE `/entity/{path}`*
 
 NOTE: *Deletes an inventory entity on the given location.* +
 
@@ -8534,7 +7618,7 @@ NOTE: *Deletes an inventory entity on the given location.* +
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
-|path|Yes|See the documentation above for the format of the path.|null|-|-
+|path|Yes|See the documentation above for the format of the path.|string|-|-
 
 |=======================
 
@@ -8562,8 +7646,8 @@ NOTE: *Deletes an inventory entity on the given location.* +
 
 ==============================================
 
-[[GET__entity__path:.+_]]
-*Endpoint GET `/entity/{path:.+}`*
+[[GET__entity__path_]]
+*Endpoint GET `/entity/{path}`*
 
 NOTE: *Reads an inventory entity on the given location.* +
 
@@ -8576,7 +7660,7 @@ NOTE: *Reads an inventory entity on the given location.* +
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
-|path|Yes|See the documentation above for the format of the path.|null|-|-
+|path|Yes|See the documentation above for the format of the path.|string|-|-
 
 |=======================
 
@@ -8589,7 +7673,7 @@ NOTE: *Reads an inventory entity on the given location.* +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|A single entity found and returned.|<<Entity>>
+|200|A single entity found and returned.|<<AbstractElement>>
 |404|No entity found on given path.|-
 |500|Internal server error|-
 
@@ -8600,17 +7684,14 @@ NOTE: *Reads an inventory entity on the given location.* +
 ==============================================
 
 
-=== Sync
-. link:#++POST__sync__path.*_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
-. link:#++POST__sync__path_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
 
 
 ==============================================
 
-[[POST__sync__path.*_]]
-*Endpoint POST `/sync/{path.*}`*
+[[PUT__entity__path_]]
+*Endpoint PUT `/entity/{path}`*
 
-NOTE: *Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.* +
+NOTE: *Updates an entity. The path is actually a canonical path. The format of the accepted JSON object is governed by the type of the entity being updated. If you're updating an environment, look for EnvironmentUpdate type, etc.* +
 
 
 
@@ -8621,7 +7702,19 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
-|path|Yes|-|array|-|-
+|path|Yes|See the documentation above for the format of the path.|string|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<AbstractElementUpdate>>
 
 |=======================
 
@@ -8634,10 +7727,11 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 |=======================
 |Status Code|Reason|Response Model
 
-|204|Synchronization success|-
-|400|If the entity to be synchronized doesn't support synchronization|<<ApiError>>
-|404|Authorization problem|<<ApiError>>
-|500|Internal server error|<<ApiError>>
+|204|Entity updated.|-
+|400|Data in wrong format|-
+|403|Unauthorized access|-
+|404|Entity not found.|-
+|500|Server error.|-
 
 |=======================
 
@@ -8646,6 +7740,108 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 ==============================================
 
 
+
+
+==============================================
+
+[[GET__entity__path__treeHash]]
+*Endpoint GET `/entity/{path}/treeHash`*
+
+NOTE: *Obtains the identity tree hash of the entity.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|path|Yes|See the documentation above for the format of the path.|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Tree hash returned.|<<IdentityHashTree>>
+|400|The entity doesn't support identity hashing.|-
+|404|No entity found on given traversal URI.|-
+|500|Internal server error|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__entity__path___type_]]
+*Endpoint POST `/entity/{path}/{type}`*
+
+NOTE: *Creates a new entity* +
+_As all POSTs, this can also accept an array of blueprints to create more than 1 entity at a time._
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|path|Yes|See the documentation above for the format of the path.|string|-|-
+|type|Yes|The type is either a camel-cased full name of the entity type or its short identifier as used in canonical path.|string|-|environment, e, resourceType, rt, metricType, mt, operationType, ot, metadataPack, mp, feed, f, resource, r, metric, m, data, d
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<AbstractElementBlueprint>>
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Entity(ies) created.|<<AbstractElement>>
+|400|Data in wrong format|-
+|403|Unauthorized access|-
+|404|One of the related entities doesn't exist.|-
+|500|Server error.|-
+
+|=======================
+
+
+
+==============================================
+
+
+=== Sync
+. link:#++POST__sync__path_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
 
 
 ==============================================
@@ -8664,7 +7860,20 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
+|path|Yes|The canonical path to the synced entity.|string|-|-
 |path|Yes|-|array|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<InventoryStructure>>
 
 |=======================
 
@@ -8690,51 +7899,7 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 
 
 === Sync
-. link:#++POST__sync__path.*_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
 . link:#++POST__sync__path_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
-
-
-==============================================
-
-[[POST__sync__path.*_]]
-*Endpoint POST `/sync/{path.*}`*
-
-NOTE: *Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.* +
-
-
-
-
-*Path parameters*
-
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Parameter|Required|Description|Type|Format|Allowable Values
-
-|path|Yes|-|array|-|-
-
-|=======================
-
-
-
-*Response*
-
-*Status codes*
-[cols="^20,55,^25", options="header"]
-|=======================
-|Status Code|Reason|Response Model
-
-|204|Synchronization success|-
-|400|If the entity to be synchronized doesn't support synchronization|<<ApiError>>
-|404|Authorization problem|<<ApiError>>
-|500|Internal server error|<<ApiError>>
-
-|=======================
-
-
-
-==============================================
-
-
 
 
 ==============================================
@@ -8753,7 +7918,20 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 |=======================
 |Parameter|Required|Description|Type|Format|Allowable Values
 
+|path|Yes|The canonical path to the synced entity.|string|-|-
 |path|Yes|-|array|-|-
+
+|=======================
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|-|<<InventoryStructure>>
 
 |=======================
 
@@ -8928,7 +8106,7 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |Name|Required|Description|Type|Format|Allowable Values
 
 |id|No|-|string|-|-
-|path|No|-|null|-|-
+|path|Yes|-|null|-|-
 |properties|No|-|object|-|-
 
 |=======================
@@ -8984,13 +8162,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
-|role|No|-|null|-|-
-|value|No|-|null|-|-
 
 |=======================
 
@@ -9005,77 +8176,12 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 
 
-[[DataEntityBlueprintOperationType]]
-=== DataEntityBlueprintOperationType
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
-|role|No|-|string|-|returnType, parameterTypes
-|value|No|-|null|-|-
-
-|=======================
-
-
-[[DataEntityBlueprintResource]]
-=== DataEntityBlueprintResource
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
-|role|No|-|string|-|configuration, connectionConfiguration
-|value|No|-|null|-|-
-
-|=======================
-
-
-[[DataEntityBlueprintResourceType]]
-=== DataEntityBlueprintResourceType
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
-|role|No|-|string|-|configurationSchema, connectionConfigurationSchema
-|value|No|-|null|-|-
-
-|=======================
-
-
 [[DataEntityUpdate]]
 === DataEntityUpdate
 [cols="15,^10,35,^15,^10,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
-|value|No|-|null|-|-
-
-|=======================
-
-
-[[DataRole]]
-=== DataRole
-[cols="15,^10,35,^15,^10,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Format|Allowable Values
-
-|schema|No|-|boolean|-|-
 
 |=======================
 
@@ -9086,10 +8192,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9130,11 +8232,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9145,8 +8242,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9157,11 +8252,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9193,8 +8283,8 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |Name|Required|Description|Type|Format|Allowable Values
 
 |children|No|-|array of <<IdentityHashTree>>|-|-
-|hash|No|-|string|-|-
-|path|No|-|null|-|-
+|hash|Yes|-|string|-|-
+|path|Yes|-|null|-|-
 
 |=======================
 
@@ -9205,6 +8295,48 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
+
+|=======================
+
+
+[[InventoryStructure]]
+=== InventoryStructure
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|children|No|-|array of <<InventoryStructureMap>>|-|-
+|data|Yes|-|null|-|-
+|type|Yes|-|string|-|feed, resourceType, metricType, operationType, metric, resource, dataEntity
+
+|=======================
+
+
+[[InventoryStructureChild]]
+=== InventoryStructureChild
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|children|No|-|array of <<InventoryStructureMap>>|-|-
+|data|Yes|-|null|-|-
+
+|=======================
+
+
+[[InventoryStructureMap]]
+=== InventoryStructureMap
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|dataEntity|No|-|array of <<InventoryStructureChild>>|-|-
+|feed|No|-|array of <<InventoryStructureChild>>|-|-
+|metric|No|-|array of <<InventoryStructureChild>>|-|-
+|metricType|No|-|array of <<InventoryStructureChild>>|-|-
+|operationType|No|-|array of <<InventoryStructureChild>>|-|-
+|resource|No|-|array of <<InventoryStructureChild>>|-|-
+|resourceType|No|-|array of <<InventoryStructureChild>>|-|-
 
 |=======================
 
@@ -9235,9 +8367,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|members|No|-|array of <<CanonicalPath>>|-|-
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9248,8 +8377,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9260,13 +8387,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|collectionInterval|No|-|integer|int64|-
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
-|type|No|-|null|-|-
 
 |=======================
 
@@ -9277,13 +8397,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|collectionInterval|No|-|integer|int64|-
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|metricTypePath|No|-|string|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9294,14 +8407,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|collectionInterval|No|-|integer|int64|-
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
-|type|No|-|string|-|GAUGE, AVAILABILITY, COUNTER, COUNTER_RATE
-|unit|No|-|string|-|NONE, PERCENTAGE, BYTES, KILOBYTES, MEGABYTES, GIGABYTES, TERABYTES, PETABYTES, BITS, KILOBITS, MEGABITS, GIGABITS, TERABITS, PETABITS, EPOCH_MILLISECONDS, EPOCH_SECONDS, JIFFYS, NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS, PER_JIFFY, PER_NANOSECOND, PER_MICROSECOND, PER_MILLISECOND, PER_SECOND, PER_MINUTE, PER_HOUR, PER_DAY, CELSIUS, KELVIN, FAHRENHEIGHT
 
 |=======================
 
@@ -9312,14 +8417,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|collectionInterval|No|-|integer|int64|-
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
-|type|No|-|string|-|GAUGE, AVAILABILITY, COUNTER, COUNTER_RATE
-|unit|No|-|string|-|NONE, PERCENTAGE, BYTES, KILOBYTES, MEGABYTES, GIGABYTES, TERABYTES, PETABYTES, BITS, KILOBITS, MEGABITS, GIGABITS, TERABITS, PETABITS, EPOCH_MILLISECONDS, EPOCH_SECONDS, JIFFYS, NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS, PER_JIFFY, PER_NANOSECOND, PER_MICROSECOND, PER_MILLISECOND, PER_SECOND, PER_MINUTE, PER_HOUR, PER_DAY, CELSIUS, KELVIN, FAHRENHEIGHT
 
 |=======================
 
@@ -9330,10 +8427,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|collectionInterval|No|-|integer|int64|-
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
-|unit|No|-|string|-|NONE, PERCENTAGE, BYTES, KILOBYTES, MEGABYTES, GIGABYTES, TERABYTES, PETABYTES, BITS, KILOBITS, MEGABITS, GIGABITS, TERABITS, PETABITS, EPOCH_MILLISECONDS, EPOCH_SECONDS, JIFFYS, NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS, PER_JIFFY, PER_NANOSECOND, PER_MICROSECOND, PER_MILLISECOND, PER_SECOND, PER_MINUTE, PER_HOUR, PER_DAY, CELSIUS, KELVIN, FAHRENHEIGHT
 
 |=======================
 
@@ -9364,11 +8457,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9379,8 +8467,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9401,12 +8487,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
-|source|No|-|null|-|-
-|target|No|-|null|-|-
 
 |=======================
 
@@ -9447,12 +8527,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
-|type|No|-|null|-|-
 
 |=======================
 
@@ -9463,12 +8537,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
-|resourceTypePath|No|-|string|-|-
 
 |=======================
 
@@ -9479,11 +8547,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|identityHash|No|-|string|-|-
-|name|No|-|string|-|-
-|path|No|-|null|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9494,11 +8557,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|id|No|-|string|-|-
-|incomingRelationships|No|-|object|-|-
-|name|No|-|string|-|-
-|outgoingRelationships|No|-|object|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9509,8 +8567,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9521,8 +8577,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
@@ -9543,8 +8597,6 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 |Name|Required|Description|Type|Format|Allowable Values
 
-|name|No|-|string|-|-
-|properties|No|-|object|-|-
 
 |=======================
 
