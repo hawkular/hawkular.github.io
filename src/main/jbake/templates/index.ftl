@@ -52,8 +52,8 @@
                     </li>
                     <li class="col-md-3 col-sm-4">
                         <i class="fa fa-briefcase"></i>
-                        <h4>Business Transaction Management</h4>
-                        <p>Capture information about the business transaction instances being executed across your servers. <a href="/docs/overview.html#_business_transaction_management">More...</a></p>
+                        <h4>Application Performance Management</h4>
+                        <p>Capture information about the application invocations being executed across your servers. <a href="/docs/overview.html#_application_performance_management">More...</a></p>
                     </li>
                     <li class="col-md-3 col-sm-4">
                         <img src="http://avatars0.githubusercontent.com/ManageIQ?&s=48" alt="ManageIQ logo"></img>
