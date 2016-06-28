@@ -187,6 +187,7 @@
 <li><a href="#metric-type">Metric Type</a></li>
 <li><a href="#operation-type">Operation Type</a></li>
 <li><a href="#feed">Feed</a></li>
+<li><a href="#data-entity">Data Entity</a></li>
 <li><a href="#metadata-pack">Metadata Pack</a></li>
 </ul>
 </li>
@@ -195,6 +196,7 @@
 <li><a href="#basic-principles">Basic Principles</a></li>
 </ul>
 </li>
+<li><a href="#identity-hashing">Identity Hashing</a></li>
 <li><a href="#configuration">Configuration</a>
 <ul class="sectlevel2">
 <li><a href="#locating-config-file">Locating Configuration File</a></li>
@@ -364,9 +366,14 @@ performs management operations. Feeds also report on the metrics and resources
 (along with their types) it found in the place they are running.</p>
 </div>
 <div class="paragraph">
-<p>[[data-entity]
-=== Data Entity</p>
+<p>In other words, the feeds are supposed to "own" both their data and metadata.
+Inventory is clever enough to figure out if 2 feeds declare the same metadata
+and consider it the same. On the other hand, the 2 feeds are not required to
+synchronize their data and metadata in any way.</p>
 </div>
+</div>
+<div class="sect2">
+<h3 id="data-entity">Data Entity</h3>
 <div class="paragraph">
 <p>A data entity holds a JSON value. It can be contained in a variety of other
 entities (resource types, resource, operation types) and the ID of the data
@@ -395,6 +402,214 @@ in a way the user expects.</p>
 <img src="/img/docs/components/inventory/index/inventory-entity-diagram.png" alt="Inventory Organization">
 </div>
 <div class="title">Figure 1. Inventory Organization</div>
+</div>
+<div class="paragraph">
+<p>For the textually inclined, here&#8217;s a description of the above diagram as a tree (frankly, this is now more readable than the above
+automatically generated diagram):</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code><a href="#tenant">Tenant</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>contains</code> 0..N <code><a href="#environment">Environment</a></code>, <code><a href="#feed">Feed</a></code>, <code><a href="#resource-type">Resource Type</a></code>, <code><a href="#metric-type">Metric Type</a></code>,
+<code><a href="#metadata-pack">Metadata Pack</a></code></p>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#environment">Environment</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>contains</code> 0..N <code><a href="#resource">Resource</a></code>, <code><a href="#metric">Metric</a></code></p>
+<div class="paragraph">
+<p>Resources and metrics can exist at 2 places. Either directly under an environment, which is where custom user-defined resources and
+metric can live. Resources and metrics can also live under feed entities where they are placed by the connecting feeds when they
+report the data they have discovered.</p>
+</div>
+</li>
+<li>
+<p>0..1 <code>incorporates</code> 0..N <code><a href="#feed">Feed</a></code></p>
+<div class="paragraph">
+<p>Environment can express that it is composed of a number of feeds. A feed on the other hand can only be incorporated in at most 1
+environment at a time.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#feed">Feed</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>contains</code> 0..N <code><a href="#resource-type">Resource Type</a></code>, <code><a href="#metric-type">Metric Type</a></code>, <code><a href="#resource">Resource</a></code>, <code><a href="#metric">Metric</a></code></p>
+<div class="paragraph">
+<p>Feeds represent the "things" that report data and metadata. Feeds can be associated with (at most 1 at a time) environment but they
+don&#8217;t have to. To move a feed from one environment to another, simply remove the "incorporates" association with the first enviroment
+and create a new one with another environment.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#resource-type">Resource Type</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>contains</code> 0..2 <code><a href="#data-entity">Data Entity</a></code></p>
+<div class="paragraph">
+<p>A resource type can contain a data entity with ID <code>configurationSchema</code> defining a JSON schema for <code>configuration</code> of resources that
+are defined by this resource type or <code>connectionConfigurationSchema</code> which is a JSON schema for <code>connectionConfiguration</code> of the
+resources (which defines how the feed connects to the resource in question, whatever that may mean for a given resource and feed).</p>
+</div>
+</li>
+<li>
+<p>1 <code>contains</code> 0..N <code><a href="#operation-type">Operation Type</a></code></p>
+<div class="paragraph">
+<p>Resource types define the types of operations that should be executable on the resources of the type.</p>
+</div>
+</li>
+<li>
+<p>1 <code>defines</code> 0..N <code><a href="#resource">Resource</a></code></p>
+<div class="paragraph">
+<p>A resource type defines resources. This means that the users can reasonably assume that the data on the resource correspond to the
+metadata defined at the resource type (i.e. that the configurations on the resource correspond to the schemas defined at the resource
+type and that the resource incorporates the metrics with the metric types that are incorporated by the resource type.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+A resource MUST be defined by exactly 1 resource type. It is not possible to "re-declare" a resource type of a resource.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Conformance of the resource data to the schemas is currently not enforced, so it&#8217;s only informational.
+</td>
+</tr>
+</table>
+</div>
+</li>
+<li>
+<p>1 <code>incorporates</code> 0..N <code><a href="#metric-type">Metric Type</a></code></p>
+<div class="paragraph">
+<p>By incorporating a metric type, the resource type declares that the users can expect the resources of this type to incorporate metrics
+of the metric type.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+This is currently not enforced, so its only informational.
+</td>
+</tr>
+</table>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#metric-type">Metric Type</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>defines</code> 0..N <code><a href="#metric">Metric</a></code></p>
+<div class="paragraph">
+<p>Similarly to how a resource must have a resource type, each metric must have a single metric type. The metric type defines the unit
+of the metric as well as default collection interval and other metadata about the metric.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#operation-type">Operation Type</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>1 <code>contains</code> 0..2 <code><a href="#data-entity">Data Entity</a></code></p>
+<div class="paragraph">
+<p>Similarly to how resource type defines the <code>configurationSchema</code> and <code>connectionConfigurationSchema</code>, the operation type defines 2
+schemas for a return type (the data entity has ID <code>returnType</code>) and parameter types (the data entity has ID <code>parameterTypes</code>).</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#resource">Resource</a></code></p>
+<div class="ulist">
+<ul>
+<li>
+<p>0..1 <code>contains</code> 0..N <code><a href="#resource">Resource</a></code></p>
+<div class="paragraph">
+<p>A resource can contain other resources. This is a "existential" relationship meaning that if a parent resource is deleted, so are
+its child resources.</p>
+</div>
+</li>
+<li>
+<p>0..M <code>isParentOf</code> 0..N <code><a href="#resource">Resource</a></code></p>
+<div class="paragraph">
+<p>In addition to defining the resource hierarchy using the existential containment of resources in each other, there can exist other
+more free form hierarchies realized using the <code>isParentOf</code> relationship (each contained resource is also "parented" using this
+relationship automagically). This enables the users to create "alternative hierarchies" across feeds or environments, etc.</p>
+</div>
+<div class="paragraph">
+<p>As opposed to <code>contains</code> relationship which forms a strict tree in the Inventory, <code>isParentOf</code> is allowed to create "diamonds", i.e. 1
+resource is allowed to have 2 or more parents. It is not allowed to form loops using the <code>isParentOf</code> relationship though.</p>
+</div>
+</li>
+<li>
+<p>0..M <code>incorporates</code> 0..N <code><a href="#metric">Metric</a></code></p>
+<div class="paragraph">
+<p>A resource can be associated with metrics. This essentially means that there exists a "causal" relationship between the existence
+of the resource and the metric. I.e. the metric is emmitted because it "tells something about" the resource or the resource
+logically represents some quality monitored by a metric, etc.</p>
+</div>
+</li>
+<li>
+<p>0..1 <code>contains</code> 0..N <code><a href="#metric">Metric</a></code></p>
+<div class="paragraph">
+<p>In addition to incorporating a metric to a resource, a resource can also outright contain a metric. As explained in the resource
+description in the previous chapter, this can be used by the feeds to declare that a metric cannot exist without a resource. I.e.
+this is a stronger form of the <code>incorporates</code> between a resource and a metric. Each contained resource is automatically incorporated
+by the resource, too.</p>
+</div>
+</li>
+</ul>
+</div>
+</li>
+<li>
+<p><code><a href="#metadata-pack">Metadata Pack</a></code></p>
+<div class="paragraph">
+<p>Metadata packs group and "freeze" metadata so that users can be sure they exists in a state they expect.
+Metadata packs can associate <strong>GLOBAL</strong> resource types and metric types only. By incorporating a resource/metric type in a metadata pack
+it essentially becomes read-only. A membership in a metadata pack ensures that the resource type cannot be modified or deleted.
+This can be used to ensure the users that a certain resource/metric type is present in the inventory.</p>
+</div>
+</li>
+</ul>
 </div>
 <div class="sect2">
 <h3 id="basic-principles">Basic Principles</h3>
@@ -466,32 +681,30 @@ is located in environment <code>env-id</code> which is inside a tenant <code>ten
 </ul>
 </div>
 </dd>
-<dt class="hdlist1">Globally Unique Feeds</dt>
-<dd>
-<p>The only thing that needs to be globally unique in inventory are the feeds.</p>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Currently this fact is not taken advantage of, but in future, new APIs
-will be added specifically for feeds so that the only piece of information they
-need will be their ID and inventory will store the data in the correct place.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Therefore, feeds need to register with inventory prior to their normal
-operation. The feeds can propose their ID and inventory will accept it if it is
-unique, otherwise inventory will assign a new unique ID to the feed and the feed
-is expected to make note of it and use it from that point on.</p>
-</div>
-</dd>
 </dl>
 </div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="identity-hashing">Identity Hashing</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Inventory is able to establish "identity hashes" of several types of entities (namely resource, metric, resource type,
+metric type, operation type, data entity and feed) to enable automatic "linking" of identical entities across the
+tenant. This enables the inventory to tell that 2 resource types in 2 feeds are identical or that 2 feeds report
+the same resources.</p>
+</div>
+<div class="paragraph">
+<p>Generically, an identity hash is a Merkle tree-hash composed of the ID of the entity (i.e. NOT its canonical path but only its
+ID) and the hashes of its child entities (as established by the <code>contains</code> relationship). In addition, data entities
+include their ID and the contents of their JSON data in their identity hash.</p>
+</div>
+<div class="paragraph">
+<p>Note that because of the inclusion of the entity&#8217;s ID in the hash an identity hash is more restrictive
+than a "content hash". A content hash would be able to tell if 2 otherwise different resources have the same configurations
+but an identity hash will tell that the 2 resources have the same ID and the configurations. This is based on
+an assumption that like resources should be likely detected and therefore should have the same ID.</p>
 </div>
 </div>
 </div>
