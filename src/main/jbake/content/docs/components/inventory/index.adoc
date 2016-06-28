@@ -131,7 +131,12 @@ A feed is a representation of an "agent" that collects monitoring data and
 performs management operations. Feeds also report on the metrics and resources
 (along with their types) it found in the place they are running.
 
-[[data-entity]
+In other words, the feeds are supposed to "own" both their data and metadata.
+Inventory is clever enough to figure out if 2 feeds declare the same metadata
+and consider it the same. On the other hand, the 2 feeds are not required to
+synchronize their data and metadata in any way.
+
+[[data-entity]]
 === Data Entity
 
 A data entity holds a JSON value. It can be contained in a variety of other
@@ -159,6 +164,93 @@ endif::[]
 ifdef::env-github[]
 image::../../../../assets/img/docs/components/inventory/index/inventory-entity-diagram.png[Inventory Organization, align="center"]
 endif::[]
+
+For the textually inclined, here's a description of the above diagram as a tree (frankly, this is now more readable than the above
+automatically generated diagram):
+
+* `<<tenant, Tenant>>`
+** 1 `contains` 0..N `<<environment, Environment>>`, `<<feed, Feed>>`, `<<resource-type, Resource Type>>`, `<<metric-type, Metric Type>>`,
+   `<<metadata-pack, Metadata Pack>>`
+* `<<environment, Environment>>`
+** 1 `contains` 0..N `<<resource, Resource>>`, `<<metric, Metric>>`
++
+Resources and metrics can exist at 2 places. Either directly under an environment, which is where custom user-defined resources and
+metric can live. Resources and metrics can also live under feed entities where they are placed by the connecting feeds when they
+report the data they have discovered.
+** 0..1 `incorporates` 0..N `<<feed, Feed>>`
++
+Environment can express that it is composed of a number of feeds. A feed on the other hand can only be incorporated in at most 1
+environment at a time.
+* `<<feed, Feed>>`
+** 1 `contains` 0..N `<<resource-type, Resource Type>>`, `<<metric-type, Metric Type>>`, `<<resource, Resource>>`, `<<metric, Metric>>`
++
+Feeds represent the "things" that report data and metadata. Feeds can be associated with (at most 1 at a time) environment but they 
+don't have to. To move a feed from one environment to another, simply remove the "incorporates" association with the first enviroment
+and create a new one with another environment.
+* `<<resource-type, Resource Type>>`
+** 1 `contains` 0..2 `<<data-entity, Data Entity>>`
++
+A resource type can contain a data entity with ID `configurationSchema` defining a JSON schema for `configuration` of resources that
+are defined by this resource type or `connectionConfigurationSchema` which is a JSON schema for `connectionConfiguration` of the
+resources (which defines how the feed connects to the resource in question, whatever that may mean for a given resource and feed).
+** 1 `contains` 0..N `<<operation-type, Operation Type>>`
++
+Resource types define the types of operations that should be executable on the resources of the type.
+** 1 `defines` 0..N `<<resource, Resource>>`
++
+A resource type defines resources. This means that the users can reasonably assume that the data on the resource correspond to the
+metadata defined at the resource type (i.e. that the configurations on the resource correspond to the schemas defined at the resource
+type and that the resource incorporates the metrics with the metric types that are incorporated by the resource type.
++
+NOTE: A resource MUST be defined by exactly 1 resource type. It is not possible to "re-declare" a resource type of a resource.
++
+NOTE: Conformance of the resource data to the schemas is currently not enforced, so it's only informational.
+** 1 `incorporates` 0..N `<<metric-type, Metric Type>>`
++
+By incorporating a metric type, the resource type declares that the users can expect the resources of this type to incorporate metrics
+of the metric type.
++
+NOTE: This is currently not enforced, so its only informational.
+* `<<metric-type, Metric Type>>`
+** 1 `defines` 0..N `<<metric, Metric>>`
++
+Similarly to how a resource must have a resource type, each metric must have a single metric type. The metric type defines the unit
+of the metric as well as default collection interval and other metadata about the metric.
+* `<<operation-type, Operation Type>>`
+** 1 `contains` 0..2 `<<data-entity, Data Entity>>`
++
+Similarly to how resource type defines the `configurationSchema` and `connectionConfigurationSchema`, the operation type defines 2
+schemas for a return type (the data entity has ID `returnType`) and parameter types (the data entity has ID `parameterTypes`).
+* `<<resource, Resource>>`
+** 0..1 `contains` 0..N `<<resource, Resource>>`
++
+A resource can contain other resources. This is a "existential" relationship meaning that if a parent resource is deleted, so are
+its child resources.
+** 0..M `isParentOf` 0..N `<<resource, Resource>>`
++
+In addition to defining the resource hierarchy using the existential containment of resources in each other, there can exist other
+more free form hierarchies realized using the `isParentOf` relationship (each contained resource is also "parented" using this 
+relationship automagically). This enables the users to create "alternative hierarchies" across feeds or environments, etc.
++
+As opposed to `contains` relationship which forms a strict tree in the Inventory, `isParentOf` is allowed to create "diamonds", i.e. 1
+resource is allowed to have 2 or more parents. It is not allowed to form loops using the `isParentOf` relationship though.
+** 0..M `incorporates` 0..N `<<metric, Metric>>`
++
+A resource can be associated with metrics. This essentially means that there exists a "causal" relationship between the existence
+of the resource and the metric. I.e. the metric is emmitted because it "tells something about" the resource or the resource
+logically represents some quality monitored by a metric, etc.
+** 0..1 `contains` 0..N `<<metric, Metric>>`
++
+In addition to incorporating a metric to a resource, a resource can also outright contain a metric. As explained in the resource 
+description in the previous chapter, this can be used by the feeds to declare that a metric cannot exist without a resource. I.e.
+this is a stronger form of the `incorporates` between a resource and a metric. Each contained resource is automatically incorporated
+by the resource, too.
+* `<<metadata-pack, Metadata Pack>>`
++
+Metadata packs group and "freeze" metadata so that users can be sure they exists in a state they expect.
+Metadata packs can associate *GLOBAL* resource types and metric types only. By incorporating a resource/metric type in a metadata pack
+it essentially becomes read-only. A membership in a metadata pack ensures that the resource type cannot be modified or deleted.
+This can be used to ensure the users that a certain resource/metric type is present in the inventory.
 
 [[basic-principles]]
 === Basic Principles
@@ -196,18 +288,23 @@ The type specifiers in the individual path segments can be these:
   * *ot* - operation type
   * *d* - data entity
   * *mp* - metadata pack
+    
+[[identity-hashing]]
+== Identity Hashing
 
-Globally Unique Feeds::
-The only thing that needs to be globally unique in inventory are the feeds.
-+
-NOTE: Currently this fact is not taken advantage of, but in future, new APIs
-will be added specifically for feeds so that the only piece of information they
-need will be their ID and inventory will store the data in the correct place.
-+
-Therefore, feeds need to register with inventory prior to their normal
-operation. The feeds can propose their ID and inventory will accept it if it is
-unique, otherwise inventory will assign a new unique ID to the feed and the feed
-is expected to make note of it and use it from that point on.
+Inventory is able to establish "identity hashes" of several types of entities (namely resource, metric, resource type, 
+metric type, operation type, data entity and feed) to enable automatic "linking" of identical entities across the 
+tenant. This enables the inventory to tell that 2 resource types in 2 feeds are identical or that 2 feeds report
+the same resources.
+
+Generically, an identity hash is a Merkle tree-hash composed of the ID of the entity (i.e. NOT its canonical path but only its
+ID) and the hashes of its child entities (as established by the `contains` relationship). In addition, data entities
+include their ID and the contents of their JSON data in their identity hash.
+
+Note that because of the inclusion of the entity's ID in the hash an identity hash is more restrictive
+than a "content hash". A content hash would be able to tell if 2 otherwise different resources have the same configurations
+but an identity hash will tell that the 2 resources have the same ID and the configurations. This is based on 
+an assumption that like resources should be likely detected and therefore should have the same ID.
 
 [[configuration]]
 == Configuration
