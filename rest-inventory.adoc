@@ -457,11 +457,14 @@ _The response body contains details about results of creation of individual enti
 
 
 === Deprecated
+. link:#++GET__deprecated++[List Endpoints]
+. link:#++POST__deprecated_bulk++[Bulk creation of new entities.]
 . link:#++GET__deprecated_environments++[Returns all environments under given tenant. Accepts paging query parameters.]
 . link:#++POST__deprecated_environments++[Creates a new environment in given tenant.]
 . link:#++DELETE__deprecated_environments__environmentId_++[Deletes the environment from the tenant]
 . link:#++GET__deprecated_environments__environmentId_++[Retrieves a single environment]
 . link:#++PUT__deprecated_environments__environmentId_++[Updates properties of the environment]
+. link:#++GET__deprecated_events++[Listen on stream of the events]
 . link:#++GET__deprecated_feeds++[Return all the feeds registered with the inventory]
 . link:#++POST__deprecated_feeds++[Registers a feed with the inventory, giving it a unique ID.]
 . link:#++DELETE__deprecated_feeds__feedId_++[Deletes a feed]
@@ -558,6 +561,7 @@ _The response body contains details about results of creation of individual enti
 . link:#++POST__deprecated_resourceTypes__resourceTypeId__operationTypes__operationTypeId__data++[Creates the configuration for pre-existing resource type]
 . link:#++PUT__deprecated_resourceTypes__resourceTypeId__operationTypes__operationTypeId__data++[Updates the configuration of a resource type]
 . link:#++GET__deprecated_resourceTypes__resourceTypeId__resources++[Retrieves all resources with given resource types. Accepts paging query parameters.]
+. link:#++POST__deprecated_sync__path_++[Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.]
 . link:#++DELETE__deprecated_tenant++[Deletes the tenant and all its data. Be careful!]
 . link:#++GET__deprecated_tenant++[Retrieves the tenant of the currently logged in persona]
 . link:#++PUT__deprecated_tenant++[Updates properties of the current tenant]
@@ -595,6 +599,74 @@ _The response body contains details about results of creation of individual enti
 . link:#++GET__deprecated__path__relationships++[Retrieves relationships]
 . link:#++POST__deprecated__path__relationships++[Creates a relationship]
 . link:#++PUT__deprecated__path__relationships++[Updates a relationship]
+
+
+==============================================
+
+[[GET__deprecated]]
+*Endpoint GET `/deprecated`*
+
+NOTE: *List Endpoints* +
+_Lists all the REST API endpoints available_
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|default|successful operation|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__deprecated_bulk]]
+*Endpoint POST `/deprecated/bulk`*
+
+NOTE: *Bulk creation of new entities.* +
+_The response body contains details about results of creation of individual entities. The return value is a map where keys are types of entities created and values are again maps where keys are the canonical paths of the entities to be created and values are HTTP status codes - 201 OK, 400 if invalid path is supplied, 409 if the entity already exists on given path or 500 in case of internal error._
+
+
+
+*Body*
+
+[cols="^20,55,^25", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|No|This is a map where keys are paths to the parents under which entities should be created. The values are again maps where keys are one of [environment, resourceType, metricType, operationType, feed, resource, metric, dataEntity, relationship] and values are arrays of blueprints of entities of the corresponding types.|object
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|201|Entities successfully created|-
+
+|=======================
+
+
+
+==============================================
+
+
 
 
 ==============================================
@@ -803,6 +875,50 @@ NOTE: *Updates properties of the environment* +
 |400|Properties invalid|<<ApiError>>
 |401|Unauthorized access|-
 |404|Tenant or environment not found|<<ApiError>>
+|500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__deprecated_events]]
+*Endpoint GET `/deprecated/events`*
+
+NOTE: *Listen on stream of the events* +
+
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|type|No|-|string|-|-
+|action|No|-|string|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|OK|-
+|401|Unauthorized access|-
+|404|Tenant doesn't exist|<<ApiError>>
 |500|Server error|<<ApiError>>
 
 |=======================
@@ -5506,6 +5622,49 @@ NOTE: *Retrieves all resources with given resource types. Accepts paging query p
 |200|the list of resources|-
 |404|Tenant or resource type doesn't exist|<<ApiError>>
 |500|Server error|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[POST__deprecated_sync__path_]]
+*Endpoint POST `/deprecated/sync/{path}`*
+
+NOTE: *Make the inventory under given path match the provided inventory structure. Note that the relationships specified in the provided entities will be ignored and will not be applied.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|path|Yes|-|array|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|204|Synchronization success|-
+|400|If the entity to be synchronized doesn't support synchronization|<<ApiError>>
+|404|Authorization problem|<<ApiError>>
+|500|Internal server error|<<ApiError>>
 
 |=======================
 
