@@ -6,9 +6,168 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Tue, 28 Jun 2016 14:19:14 +0000</pubDate>
-    <lastBuildDate>Tue, 28 Jun 2016 14:19:14 +0000</lastBuildDate>
+    <pubDate>Tue, 5 Jul 2016 16:27:57 +0000</pubDate>
+    <lastBuildDate>Tue, 5 Jul 2016 16:27:57 +0000</lastBuildDate>
 
+    <item>
+      <title>Scaling stateful services: an example in Hawkular Alerting</title>
+      <link>http://www.hawkular.org/blog/2016/07/05/scaling-hawkular-alerting.html</link>
+      <author>noreply@hawkular.org (Lucas Ponce)</author>
+      <pubDate>Tue, 5 Jul 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/07/05/scaling-hawkular-alerting.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Today stateless service architectures have the benefit to simplify the design of distributed scenarios.
+With no state in the logic and a common backend, scaling could be implemented with simple additions of new nodes in the topology and distributing incoming requests with load balancer solutions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;But a stateless design can not be applied to every scenario, there are computational problems that have a stateful behaviour by nature.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Scaling distributed systems with stateful scenario is both a complex but thrilling task for a software engineer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this post we are going to expose some highlights of the design included in Hawkular Alerting.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_hawkular_alerting&quot;&gt;Hawkular Alerting&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting is the component responsible for detecting behaviours within hawkular system by defining rules.
+These rules can generate events or alerts that can also be used in additional rules to detect complex scenarios and to respond with customized actions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This highlevel process is stateful by nature in the sense that rules might depend on the past and future data received.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_scaling_fault_tolerance_vs_distributed_computation&quot;&gt;Scaling: fault tolerance vs distributed computation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A first (non trivial) question is what is meant by &apos;scaling&apos; in our problem domain.
+For example, &apos;scaling&apos; in some traditional databases scenarios could mean to add more resources in a big backend machine, on the contrary scaling in a network means to have more nodes to distribute load and increase the computational power.
+Also another preliminary point is that we add more nodes to increase the fault tolerance of our system, meaning that we add more nodes to replicate our load, but not necessary to increase the capacity of the system.
+For example, some networks should be able to support more than one concurrent failure of the system.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For our specific Hawkular Alerting domain scaling means to have more computational capacity but also offering a minimal fault tolerance capacity.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_partitionmanager_interface&quot;&gt;PartitionManager interface&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting implements its main logic in the engine service, the engine is responsible for managing the rules definitions and matching the data and events within the rules to update its internal state.
+The engine is the main actor to use the scaling services and in this context the scaling/clustering services have been designed from an abstract interface API called PartitionManager.
+Main benefit of this abstraction layer is that we can improve in the future the implementation of the distributed scenarios without bringing technical debt into the main logic of Hawkular Alerting.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The main strategy of the design is to partition and distribute the rules across all the nodes of the topology following a consistent hashing algorithm.
+This means that when topology changes the PartitionManager minimizes the tasks needed to reconfigure the state.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So, at a high level, the PartitionManager interface is responsible for the following clustering services:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Notify when a new rule (called Trigger in Hawkular Alerting context) has been added, modified or removed in order to update the engine state.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Detect changes to the topology to re-calculate and re-distribute the triggers in a transparent way when a node is added/removed from the cluster.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Notify when a new data/event has been received in order to route it to the engine node responsible for its processing.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_some_implementation_details&quot;&gt;Some implementation details&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The goal of a scaling design is efficiency, it should distribute the rules in a way that minimize the changes and cost of re-distribution when cluster changes.
+In our PartitionManagerImpl we have used the hashing functions provided by the &lt;strong&gt;guava&lt;/strong&gt; library to implement a shared topology as it is shown in the next example.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;    /**
+     * Distribute triggers on nodes using a consistent hashing strategy.
+     * This strategy allows to scale and minimize changes and re-distribution when cluster changes.
+     *
+     * @param entries a list of entries to distribute
+     * @param buckets a table of nodes
+     * @return a map of entries distributed across nodes
+     */
+    public Map&amp;lt;PartitionEntry, Integer&amp;gt; calculatePartition(List&amp;lt;PartitionEntry&amp;gt; entries,
+                                                           Map&amp;lt;Integer, Integer&amp;gt; buckets) {
+        if (entries == null) {
+            throw new IllegalArgumentException(&quot;entries must be not null&quot;);
+        }
+        if (buckets == null || buckets.isEmpty()) {
+            throw new IllegalArgumentException(&quot;entries must be not null&quot;);
+        }
+        HashFunction md5 = Hashing.md5();
+        int numBuckets = buckets.size();
+        Map&amp;lt;PartitionEntry, Integer&amp;gt; newPartition = new HashMap&amp;lt;&amp;gt;();
+        for (PartitionEntry entry : entries) {
+            newPartition.put(entry, buckets.get(Hashing.consistentHash(md5.hashInt(entry.hashCode()), numBuckets)));
+        }
+        return newPartition;
+    }
+[source,java]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The backbone of the PartitionManagerImpl is based on &lt;strong&gt;Infinispan&lt;/strong&gt; services and its eventing architecture.
+Infinispan let us define small caches used to share minimal topology information about the rules distribution.
+The infinispan eventing architecture let us add our own listeners implementations to provide a high level API that the Hawkular Alerting engine can consume.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Further details can be found under the following examples.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Consistent hashing algorithm tests applied to topology&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Consistent hashing algorithm tests applied to rules distribution&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;PartitionManager high level interface&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Implementation of PartitionManager interface&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion_and_future_work&quot;&gt;Conclusion and future work&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Today we have a clustering profile in Hawkular Alerting project where we can test and run these distributed scenarios.
+In our future work we will increase the coverage of distributed scenario and refine our design accordingly.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We hope this small intro could help to share the main decisions points to build our distributed design for Hawkular Alerting.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Comments and questions are welcome, here or in &lt;a href=&quot;http://webchat.freenode.net/?channels=hawkular&quot;&gt;#hawkular&lt;/a&gt; room on freenode.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular APM 0.9.0.Final Released</title>
       <link>http://www.hawkular.org/blog/2016/06/27/hawkular-apm-0.9-released.html</link>

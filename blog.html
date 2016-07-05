@@ -170,6 +170,161 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/07/05/scaling-hawkular-alerting.html"><h1>Scaling stateful services: an example in Hawkular Alerting</h1></a>
+            <p>05 July 2016, by Lucas Ponce</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Today stateless service architectures have the benefit to simplify the design of distributed scenarios.
+With no state in the logic and a common backend, scaling could be implemented with simple additions of new nodes in the topology and distributing incoming requests with load balancer solutions.</p>
+</div>
+<div class="paragraph">
+<p>But a stateless design can not be applied to every scenario, there are computational problems that have a stateful behaviour by nature.</p>
+</div>
+<div class="paragraph">
+<p>Scaling distributed systems with stateful scenario is both a complex but thrilling task for a software engineer.</p>
+</div>
+<div class="paragraph">
+<p>In this post we are going to expose some highlights of the design included in Hawkular Alerting.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_alerting">Hawkular Alerting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerting is the component responsible for detecting behaviours within hawkular system by defining rules.
+These rules can generate events or alerts that can also be used in additional rules to detect complex scenarios and to respond with customized actions.</p>
+</div>
+<div class="paragraph">
+<p>This highlevel process is stateful by nature in the sense that rules might depend on the past and future data received.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_scaling_fault_tolerance_vs_distributed_computation">Scaling: fault tolerance vs distributed computation</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A first (non trivial) question is what is meant by 'scaling' in our problem domain.
+For example, 'scaling' in some traditional databases scenarios could mean to add more resources in a big backend machine, on the contrary scaling in a network means to have more nodes to distribute load and increase the computational power.
+Also another preliminary point is that we add more nodes to increase the fault tolerance of our system, meaning that we add more nodes to replicate our load, but not necessary to increase the capacity of the system.
+For example, some networks should be able to support more than one concurrent failure of the system.</p>
+</div>
+<div class="paragraph">
+<p>For our specific Hawkular Alerting domain scaling means to have more computational capacity but also offering a minimal fault tolerance capacity.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_partitionmanager_interface">PartitionManager interface</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerting implements its main logic in the engine service, the engine is responsible for managing the rules definitions and matching the data and events within the rules to update its internal state.
+The engine is the main actor to use the scaling services and in this context the scaling/clustering services have been designed from an abstract interface API called PartitionManager.
+Main benefit of this abstraction layer is that we can improve in the future the implementation of the distributed scenarios without bringing technical debt into the main logic of Hawkular Alerting.</p>
+</div>
+<div class="paragraph">
+<p>The main strategy of the design is to partition and distribute the rules across all the nodes of the topology following a consistent hashing algorithm.
+This means that when topology changes the PartitionManager minimizes the tasks needed to reconfigure the state.</p>
+</div>
+<div class="paragraph">
+<p>So, at a high level, the PartitionManager interface is responsible for the following clustering services:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Notify when a new rule (called Trigger in Hawkular Alerting context) has been added, modified or removed in order to update the engine state.</p>
+</li>
+<li>
+<p>Detect changes to the topology to re-calculate and re-distribute the triggers in a transparent way when a node is added/removed from the cluster.</p>
+</li>
+<li>
+<p>Notify when a new data/event has been received in order to route it to the engine node responsible for its processing.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_some_implementation_details">Some implementation details</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The goal of a scaling design is efficiency, it should distribute the rules in a way that minimize the changes and cost of re-distribution when cluster changes.
+In our PartitionManagerImpl we have used the hashing functions provided by the <strong>guava</strong> library to implement a shared topology as it is shown in the next example.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    /**
+     * Distribute triggers on nodes using a consistent hashing strategy.
+     * This strategy allows to scale and minimize changes and re-distribution when cluster changes.
+     *
+     * @param entries a list of entries to distribute
+     * @param buckets a table of nodes
+     * @return a map of entries distributed across nodes
+     */
+    public Map&lt;PartitionEntry, Integer&gt; calculatePartition(List&lt;PartitionEntry&gt; entries,
+                                                           Map&lt;Integer, Integer&gt; buckets) {
+        if (entries == null) {
+            throw new IllegalArgumentException("entries must be not null");
+        }
+        if (buckets == null || buckets.isEmpty()) {
+            throw new IllegalArgumentException("entries must be not null");
+        }
+        HashFunction md5 = Hashing.md5();
+        int numBuckets = buckets.size();
+        Map&lt;PartitionEntry, Integer&gt; newPartition = new HashMap&lt;&gt;();
+        for (PartitionEntry entry : entries) {
+            newPartition.put(entry, buckets.get(Hashing.consistentHash(md5.hashInt(entry.hashCode()), numBuckets)));
+        }
+        return newPartition;
+    }
+[source,java]</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The backbone of the PartitionManagerImpl is based on <strong>Infinispan</strong> services and its eventing architecture.
+Infinispan let us define small caches used to share minimal topology information about the rules distribution.
+The infinispan eventing architecture let us add our own listeners implementations to provide a high level API that the Hawkular Alerting engine can consume.</p>
+</div>
+<div class="paragraph">
+<p>Further details can be found under the following examples.</p>
+</div>
+<div class="paragraph">
+<div class="title">Consistent hashing algorithm tests applied to topology</div>
+<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java</a></p>
+</div>
+<div class="paragraph">
+<div class="title">Consistent hashing algorithm tests applied to rules distribution</div>
+<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java</a></p>
+</div>
+<div class="paragraph">
+<div class="title">PartitionManager high level interface</div>
+<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java</a></p>
+</div>
+<div class="paragraph">
+<div class="title">Implementation of PartitionManager interface</div>
+<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java</a></p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion_and_future_work">Conclusion and future work</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Today we have a clustering profile in Hawkular Alerting project where we can test and run these distributed scenarios.
+In our future work we will increase the coverage of distributed scenario and refine our design accordingly.</p>
+</div>
+<div class="paragraph">
+<p>We hope this small intro could help to share the main decisions points to build our distributed design for Hawkular Alerting.</p>
+</div>
+<div class="paragraph">
+<p>Comments and questions are welcome, here or in <a href="http://webchat.freenode.net/?channels=hawkular">#hawkular</a> room on freenode.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/06/27/hawkular-apm-0.9-released.html"><h1>Hawkular APM 0.9.0.Final Released</h1></a>
             <p>27 June 2016, by Gary Brown</p>
             <p><div class="paragraph">
@@ -309,117 +464,13 @@ cd "${HAWKULAR_HOME}"
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/05/26/hawkular-btm-booker-demo.html"><h1>Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions</h1></a>
-            <p>26 May 2016, by Gary Brown</p>
-            <p><div class="videoblock">
-<div class="content">
-<iframe src="https://player.vimeo.com/video/167714637" frameborder="0" allowfullscreen></iframe>
-</div>
-</div>
-<div class="paragraph">
-<p>Although distributed systems and the concept of services have been around for a long time, the current trend towards microservices has added some new dimensions to the management problem.</p>
-</div>
-<div class="paragraph">
-<p>The architectural approach leads to business applications comprised of a larger number of simple interacting services, each focused on specific business capabilities, and being responsible for their own data management. This has the benefit of allowing each service to be independently deployable, generally using automated continuous delivery. When used in a cloud environment, it facilitates dynamic scaling of individual services as required, and enables parts of the business application to be upgraded independently with minimal impact, allowing faster turnaround for fixing bugs and adding new features.</p>
-</div>
-<div class="paragraph">
-<p>The downside of this dynamic, scalable and flexible architecture is being able to understand how your business application is operating, and when necessary tracing the execution path of a particular invocation through the multitude of services potentially geographically distributed.</p>
-</div>
-<div class="paragraph">
-<p>From a management perspective we need to understand:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Application Performance</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>How is a particular service performing, understanding the internal components and how the implementation can be improved. This is of interest to the development team responsible for the service, but also for business and IT managers who need to understand how use of particular services is impacting a business.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Distributed Tracing</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Isolating the path of execution across communicating services - identifying which service instances were actually interacting, what was the latency between service invocations, were particular regions impacted by problems, etc. This information can be used during development and testing, to identify performance issues, but also in production to understand what runtime issues may have impacted an individual or set of invocations of the system.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Business Transactions</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>How different business transaction types, that may span across multiple shared services, are impacted when service failures/performance issues occur. We also want to extract business metrics from the information being exchanged between services, to help business analysts gain insight into how their systems are being used and therefore improve how their business operates.</p>
-</div>
-<div class="paragraph">
-<p><strong>The demo</strong></p>
-</div>
-<div class="paragraph">
-<p>The demo shows how <em>Hawkular BTM</em> can present these three different views of information captured (in a non-intrusive manner) from a microservices example. <em>Hawkular BTM</em> requires no changes to the services (or frameworks) being monitored, to allow the information to be captured, as it uses a <a href="http://byteman.jboss.org">Byteman</a> based javaagent to instrument the services.</p>
-</div>
-<div class="paragraph">
-<p>The architecture of the microservices example being monitored is:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-05-26-btm-swarm-booker.png" alt="Swarm Booker Example">
-</div>
-<div class="title">Figure 1. <a href="https://github.com/wildfly-swarm/booker">Swarm booker example</a></div>
-</div>
-<div class="paragraph">
-<p>The example includes the following services:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Keycloak - Provides authentication and authorization.</p>
-</li>
-<li>
-<p>Web client - Provides the web UI for the application.</p>
-</li>
-<li>
-<p>Library - Tracks which items are bought by a user, communicating with the <em>Store</em> service to associate details with a given book ID.</p>
-</li>
-<li>
-<p>Store - Provides a book inventory, and uses the <em>Pricing</em> service to obtain a price for each the item in the store.</p>
-</li>
-<li>
-<p>Pricing - Simple pricing service that indicates everything is $10 if you&#8217;re browsing anonymously, or $9 if you&#8217;re logged in.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>In the demo, two business tranactions are configured to represent business relevant activities that may be performed by, or on behalf of, a customer. These are:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Add Book - This business transaction is triggered by an invocation on the <strong><em>Library</em> POST /items</strong> endpoint, and only involves the <em>Library</em> service.</p>
-</li>
-<li>
-<p>Get Books - This business transaction is triggered by an invocation on the <strong><em>Library</em> GET /items</strong> endpoint, and results in a call to the <em>Store</em> service to obtain information about the books contained in the user&#8217;s library, which in turn calls the <em>Pricing</em> service to obtain the price of each of the books.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Categorizing the activities that the user may perform on your business applications in this way enables business analysts to understand patterns, and where appropriate, extract additional business metrics from those interactions for further more detailed analysis.</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>26 May 2016 - <a href="blog/2016/05/26/hawkular-btm-booker-demo.html">Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions</a></li>
           <li>24 May 2016 - <a href="blog/2016/05/24/hawkular-btm-ticketmonster-demo.html">Obtaining business metrics without the need to instrument your application</a></li>
           <li>02 May 2016 - <a href="blog/2016/05/02/hawkular-metrics-0.15.0.Final-released.html">Hawkular Metrics 0.15.0 - Release</a></li>
           <li>28 April 2016 - <a href="blog/2016/04/28/new-packaging.html">New Hawkular packaging</a></li>
