@@ -170,6 +170,155 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/07/05/hawkular-services-0.0.5.Final.html"><h1>Hawkular Services 0.0.5.Final</h1></a>
+            <p>05 July 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Services is a new base line distribution including only the basic Hawkular components, such as Alerts, Inventory and Metrics.
+The version <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip">0.0.5.Final</a> has just been released and is ready to be tested and integrated with other projects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_s_in_this_release">What&#8217;s in this release</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This release has updated components:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Inventory is now at v 0.17.2, which features a new api. The old api endpoint has been moved to <code>/deprecated</code></p>
+</li>
+<li>
+<p>Hawkular-Metrics is at v 0.17.0</p>
+</li>
+<li>
+<p>Hawkular-agent has been bumped to v 0.20.0 to make use of the new Inventory api. Please note that some inventory objects now have a different name.</p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_ruby_client">Hawkular Ruby Client</h3>
+<div class="paragraph">
+<p>While not included in these release zips above, we have upgraded the <a href="https://github.com/hawkular/hawkular-client-ruby">Hawkular-Ruby-Gem</a> to <a href="https://rubygems.org/gems/hawkular-client/versions/2.2.0">v2.2.0</a> to cater
+for the change in the Inventory api. All changes can be seen in the <a href="https://github.com/hawkular/hawkular-client-ruby/blob/master/CHANGES.rdoc">Changes file</a>.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_differences_to_hawkular_main">Differences to Hawkular-main</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Notable differences between the main Hawkular distribution and Hawkular Services are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Hawkular Services does not ship with a User Interface. Interaction with the backend is exclusively done via REST.</p>
+</li>
+<li>
+<p>Authentication is accomplished via JAAS, configured directly via Wildfly. Please refer to the Wildfly documentation on how to accomplish scenarios like LDAP user database.</p>
+</li>
+<li>
+<p>Due to the changes in the authentication, Keycloak is not part of the distribution, although it can still be used via JAAS. Please refer to the Keycloak documentation on how to protect deployments.</p>
+</li>
+<li>
+<p>Due to the removal of Keycloak, multi tenancy is also simplified. The backend endpoints expect to receive a <code>Hawkular-Tenant</code>, so, multi tenancy is now handled on the consumer side.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>For more information on the details of this new distribution as well as the background, see the blog post <a href="http://www.hawkular.org/blog/2016/04/28/new-packaging.html">New Hawkular packaging</a>. Note that
+<code>hawkular-core-services</code> on that post is what we now know as <code>hawkular-services</code>.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular Services is released every week on Tuesdays.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_get_started">Get started</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To get started with Hawkular Services, <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip">download the latest release</a>, unzip it,
+add a user and set the Agent to use the credentials for the user just added.</p>
+</div>
+<div class="paragraph">
+<p>It can be accomplished with the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">export HAWKULAR_HOME="/path/to/hawkular-services"
+export HAWKULAR_USERNAME="jdoe"
+export HAWKULAR_PASSWORD="password"
+
+cd "${HAWKULAR_HOME}"
+"${HAWKULAR_HOME}/bin/add-user.sh" \
+  -a \
+  -u "${HAWKULAR_USERNAME}" \
+  -p "${HAWKULAR_PASSWORD}" \
+  -g read-write,read-only
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Before starting the server, you need to have Cassandra 3.7 up and running with the RPC port enabled either via
+setting the env variable of <code>CASSANDRA_START_RPC</code> to <code>true</code></p>
+</div>
+<div class="paragraph">
+<p>or by editing <code>cassandra.yml</code> and setting it there:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml"># Whether to start the thrift rpc server.
+start_rpc: true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Using <code>ccm</code> you can use this to update the config: <code>ccm updateconf 'start_rpc: true'</code>.
+Another option is via <code>nodetool enablethrift</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="_build_from_master_and_cassandra">Build from master and Cassandra</h3>
+<div class="paragraph">
+<p>If you build from master, you can pass <code>-Pembeddedc</code> to get a distribution with embedded Cassandra for local development.
+Similarly if you build via <code>-Pdev</code> a default user of <em>jdoe/password</em> will be installed and also be used with the agent.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_use_grafana_with_hawkular_services">Use Grafana with Hawkular-services</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
+The <a href="https://github.com/hawkular/hawkular-grafana-datasource">website of the datasource tells more</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_get_started_via_inofficial_docker_builds">Get started via (inofficial) Docker builds</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are inofficial Docker images of the release and also an instrumented WildFly available on
+DockerHub at <a href="https://hub.docker.com/r/pilhuhn/hawkular-services/">Hawkular services</a>
+and <a href="https://hub.docker.com/r/pilhuhn/hawkfly/">Instrumented WildFly</a>.</p>
+</div>
+<div class="paragraph">
+<p>Both images have been instrumented with the <em>jdoe/password</em> user for the Hawkular server and the agent.</p>
+</div>
+<div class="paragraph">
+<p>See also <a href="http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html" class="bare">http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html</a> on some more
+details about using those images.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/07/05/scaling-hawkular-alerting.html"><h1>Scaling stateful services: an example in Hawkular Alerting</h1></a>
             <p>05 July 2016, by Lucas Ponce</p>
             <p><div id="preamble">
@@ -419,57 +568,13 @@ cd "${HAWKULAR_HOME}"
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/06/01/hawkular-metrics-0.16.0.Final-released.html"><h1>Hawkular Metrics 0.16.0 - Release</h1></a>
-            <p>01 June 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.16.0 of Hawkular Metrics. This release is anchored by overall enhancements in the API and updates to String metric type.</p><p>Here is a list of major changes:</p>
-<ol>
-  <li><strong>String Metric Type - Enhancements</strong>
-  <ul>
-    <li><code>/strings</code> endpoint was enhanced with querying capabilities similar to other metric types, including tag related features (<a href="https://issues.jboss.org/browse/HWKMETRICS-402">HWKMETRICS-402</a>)</li>
-    <li>The endpoints under <code>/strings</code> are still experimental, so changes which break backwards compatibility could be introduced in future releases. The experimental tag allows time for feedback to better determine what the API should be.</li>
-  </ul></li>
-  <li><strong><code>*/stats</code> &amp; <code>*/raw</code> Replace <code>*/data</code></strong> - <strong>second deprecation warning!</strong>
-  <ul>
-    <li><code>*/data</code> has been <strong>deprecated</strong> and functionality split into two single purpose endpoints, this is applicable for all metric types (gauge, counter, availability, and string)</li>
-    <li><code>*/stats</code> endpoints return bucketed, statistical or query-time aggregated data</li>
-    <li><code>*/raw</code> endpoints accept and return raw data for a metric</li>
-    <li>Please update your code to use the new endpoints and follow the release notes for more details regarding removal.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-24">HWKMETRICS-24</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-57">HWKMETRICS-57</a></li>
-  </ul></li>
-  <li><strong>REST API Updates</strong>
-  <ul>
-    <li>Empty buckets are now reported with default values and no samples (<a href="https://issues.jboss.org/browse/HWKMETRICS-345">HWKMETRICS-345</a>)</li>
-    <li>Rate of change stats can be retrieved for Gauge metrics. This feature was exclusive for Counter metrics but was expanded to Gauge metrics. The rates are computed at query time based on stored data (<a href="https://issues.jboss.org/browse/HWKMETRICS-365">HWKMETRICS-365</a>)</li>
-    <li>Min and max timestamps of stored datapoints are now returned when querying for metric definitions (<a href="https://issues.jboss.org/browse/HWKMETRICS-383">HWKMETRICS-383</a>)</li>
-    <li>The endpoint for fetching rates now supports standard query parameters and sort behavior (<a href="https://issues.jboss.org/browse/HWKMETRICS-390">HWKMETRICS-390</a>)</li>
-  </ul></li>
-  <li><strong>Hawkular Metrics - Hawkular Services distribution</strong>
-  <ul>
-    <li>Hawkular Metrics distribution build for inclusion in Hawkular Services is now independent of Hawkular Accounts.</li>
-    <li>Only for this distribution, the authentication is done at container level and tenant id header becomes required.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-399">HWKMETRICS-399</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-401">HWKMETRICS-401</a></li>
-  </ul></li>
-</ol><h3>Hawkular Metrics Clients</h3>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.16.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.16.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330316">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330316</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>01 June 2016 - <a href="blog/2016/06/01/hawkular-metrics-0.16.0.Final-released.html">Hawkular Metrics 0.16.0 - Release</a></li>
           <li>26 May 2016 - <a href="blog/2016/05/26/hawkular-btm-booker-demo.html">Monitoring Microservices for Application Performance, Distributed Tracing and Business Transactions</a></li>
           <li>24 May 2016 - <a href="blog/2016/05/24/hawkular-btm-ticketmonster-demo.html">Obtaining business metrics without the need to instrument your application</a></li>
           <li>02 May 2016 - <a href="blog/2016/05/02/hawkular-metrics-0.15.0.Final-released.html">Hawkular Metrics 0.15.0 - Release</a></li>
