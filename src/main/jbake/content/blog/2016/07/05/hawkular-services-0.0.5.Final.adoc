@@ -1,0 +1,91 @@
+= Hawkular Services 0.0.5.Final
+Heiko W. Rupp
+2016-07-05
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, release, hawkular-services
+
+Hawkular Services is a new base line distribution including only the basic Hawkular components, such as Alerts, Inventory and Metrics.
+The version https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip[0.0.5.Final] has just been released and is ready to be tested and integrated with other projects.
+
+== What's in this release
+
+This release has updated components:
+
+* Inventory is now at v 0.17.2, which features a new api. The old api endpoint has been moved to `/deprecated`
+* Hawkular-Metrics is at v 0.17.0
+* Hawkular-agent has been bumped to v 0.20.0 to make use of the new Inventory api. Please note that some inventory objects now have a different name.
+
+=== Hawkular Ruby Client
+
+While not included in these release zips above, we have upgraded the https://github.com/hawkular/hawkular-client-ruby[Hawkular-Ruby-Gem] to https://rubygems.org/gems/hawkular-client/versions/2.2.0[v2.2.0] to cater
+for the change in the Inventory api. All changes can be seen in the https://github.com/hawkular/hawkular-client-ruby/blob/master/CHANGES.rdoc[Changes file].
+
+== Differences to Hawkular-main
+Notable differences between the main Hawkular distribution and Hawkular Services are:
+
+* Hawkular Services does not ship with a User Interface. Interaction with the backend is exclusively done via REST.
+* Authentication is accomplished via JAAS, configured directly via Wildfly. Please refer to the Wildfly documentation on how to accomplish scenarios like LDAP user database.
+* Due to the changes in the authentication, Keycloak is not part of the distribution, although it can still be used via JAAS. Please refer to the Keycloak documentation on how to protect deployments.
+* Due to the removal of Keycloak, multi tenancy is also simplified. The backend endpoints expect to receive a `Hawkular-Tenant`, so, multi tenancy is now handled on the consumer side.
+
+For more information on the details of this new distribution as well as the background, see the blog post http://www.hawkular.org/blog/2016/04/28/new-packaging.html[New Hawkular packaging]. Note that
+`hawkular-core-services` on that post is what we now know as `hawkular-services`.
+
+Hawkular Services is released every week on Tuesdays.
+
+== Get started
+To get started with Hawkular Services, https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip[download the latest release], unzip it,
+add a user and set the Agent to use the credentials for the user just added.
+
+It can be accomplished with the following commands:
+
+[source,bash]
+----
+export HAWKULAR_HOME="/path/to/hawkular-services"
+export HAWKULAR_USERNAME="jdoe"
+export HAWKULAR_PASSWORD="password"
+
+cd "${HAWKULAR_HOME}"
+"${HAWKULAR_HOME}/bin/add-user.sh" \
+  -a \
+  -u "${HAWKULAR_USERNAME}" \
+  -p "${HAWKULAR_PASSWORD}" \
+  -g read-write,read-only
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"
+----
+
+Before starting the server, you need to have Cassandra 3.7 up and running with the RPC port enabled either via
+setting the env variable of `CASSANDRA_START_RPC` to `true`
+
+or by editing `cassandra.yml` and setting it there:
+
+[source,yml]
+----
+# Whether to start the thrift rpc server.
+start_rpc: true
+----
+
+Using `ccm` you can use this to update the config: `ccm updateconf 'start_rpc: true'`.
+Another option is via `nodetool enablethrift`.
+
+=== Build from master and Cassandra
+
+If you build from master, you can pass `-Pembeddedc` to get a distribution with embedded Cassandra for local development.
+Similarly if you build via `-Pdev` a default user of _jdoe/password_ will be installed and also be used with the agent.
+
+== Use Grafana with Hawkular-services
+
+We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
+The https://github.com/hawkular/hawkular-grafana-datasource[website of the datasource tells more].
+
+== Get started via (inofficial) Docker builds
+
+There are inofficial Docker images of the release and also an instrumented WildFly available on
+DockerHub at https://hub.docker.com/r/pilhuhn/hawkular-services/[Hawkular services]
+and https://hub.docker.com/r/pilhuhn/hawkfly/[Instrumented WildFly].
+
+Both images have been instrumented with the _jdoe/password_ user for the Hawkular server and the agent.
+
+See also http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html on some more
+details about using those images.
