@@ -12,7 +12,7 @@ The version https://repository.jboss.org/nexus/content/groups/public/org/hawkula
 
 This release has updated components:
 
-* Inventory is not at v 0.17.2, which features a new api. The old api endpoint has been moved to `/deprecated`
+* Inventory is now at v 0.17.2, which features a new api. The old api endpoint has been moved to `/deprecated`
 * Hawkular-Metrics is at v 0.17.0
 * Hawkular-agent has been bumped to v 0.20.0 to make use of the new Inventory api. Please note that some inventory objects now have a different name.
 
@@ -35,10 +35,13 @@ For more information on the details of this new distribution as well as the back
 Hawkular Services is released every week on Tuesdays.
 
 == Get started
-To get started with Hawkular Services, https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip[download the latest release], unzip it, add a user and set the Agent to use the credentials for the user just add ed.
+To get started with Hawkular Services, https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip[download the latest release], unzip it,
+add a user and set the Agent to use the credentials for the user just added.
+
 It can be accomplished with the following commands:
 
-```
+[source,bash]
+----
 export HAWKULAR_HOME="/path/to/hawkular-services"
 export HAWKULAR_USERNAME="jdoe"
 export HAWKULAR_PASSWORD="password"
@@ -50,7 +53,21 @@ cd "${HAWKULAR_HOME}"
   -p "${HAWKULAR_PASSWORD}" \
   -g read-write,read-only
 "${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"
-```
+----
+
+Before starting the server, you need to have Cassandra 3.7 up and running with the RPC port enabled either via
+setting the env variable of `CASSANDRA_START_RPC` to `true`
+
+or by editing `cassandra.yml` and setting it there:
+
+[source,yml]
+----
+# Whether to start the thrift rpc server.
+start_rpc: true
+----
+
+Using `ccm` you can use this to update the config: `ccm updateconf 'start_rpc: true'`.
+Another option is via `nodetool enablethrift`.
 
 === Build from master and Cassandra
 
