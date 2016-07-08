@@ -14,7 +14,7 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/overview.html">Overview</a></li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>overview.html">Overview</a></li>
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog.html">Blog</a></li>
                 <li class="dropdown">
                   <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
