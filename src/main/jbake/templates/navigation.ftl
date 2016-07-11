@@ -88,19 +88,7 @@
                     </li>
                   </ul>
                 </li>
-                <li class="dropdown">
-                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
-                    Hawkular Clients<span class="caret"></span>
-                  </a>
-                  <ul class="dropdown-menu" role="menu">
-                    <li>
-                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>clients/libraries/index.html">Client libraries</a>
-                    </li>
-                    <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>clients/clients/index.html">Clients</a>
-                    </li>
-                  </ul>
-                </li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>clients/index.html">Hawkular Clients</a></li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                   Community
                   <span class="caret"></span>
