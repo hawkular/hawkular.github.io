@@ -53,7 +53,7 @@
                       </ul>
                     </li>
                     <li>
-                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Download</a>
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/downloads.html">Download</a>
                     </li>
                   </ul>
                 </li>
@@ -66,7 +66,7 @@
                       <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
                     </li>
                     <li>
-                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-apm/downloads.html">Download</a>
                     </li>
                   </ul>
                 </li>
