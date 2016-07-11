@@ -95,7 +95,7 @@
                 </a>
                 <ul class="dropdown-menu" role="menu">
                   <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/join.html">Connect</a>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/gettinginvolved/index.html">Getting Involved</a>
                   </li>
                   <li class="menu-item ">
                     <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Guide</a>
