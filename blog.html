@@ -170,6 +170,182 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/07/14/hawkular-apm-openshift.html"><h1>Monitoring Application Performance within Openshift</h1></a>
+            <p>14 July 2016, by Gary Brown</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This post will show how to use the Hawkular APM project, previously known as Hawkular BTM, to monitor an application running within Openshift. To achieve this both the Hawkular APM server, and the application (a vert.x Javascript example), will be deployed as Docker images.</p>
+</div>
+<div class="paragraph">
+<p>We will use the Openshift CLI, and therefore will need to login. For example, to login into the Openshift CDK environment:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>oc login 10.1.2.2:8443 -u openshift-dev -p devel</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploy_hawkular_apm_server">Deploy Hawkular APM Server</h3>
+<div class="paragraph">
+<p>The first step is to deploy the Hawkular APM server. There are two ways that this can be achieved.</p>
+</div>
+<div class="sect3">
+<h4 id="_image_from_docker_hub">Image from Docker Hub</h4>
+<div class="paragraph">
+<p>The Hawkular APM server has a docker image registered at <a href="https://hub.docker.com/r/jboss/hawkular-apm-server">Docker Hub</a>. This can be deployed to Openshift using the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>oc new-app jboss/hawkular-apm-server
+oc expose service hawkular-apm-server</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <em>new-app</em> command deploys the image as a service, and the <em>expose</em> command makes it available via a stable URI.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If the deploy fails with an "unknown manifest" error in the openshift events log, this is due to a <a href="http://lists.openshift.redhat.com/openshift-archives/users/2016-June/msg00054.html">known docker issue related to a change between version 1.9 and 1.10</a>. In this case, use the local deploy approach described below.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_local_image">Local Image</h4>
+<div class="paragraph">
+<p>To deploy the APM server from a local build, it will be necessary to get the <a href="https://github.com/jboss-dockerfiles/hawkular/blob/8ffb752b68c0f49a2150fe345e660c53c32fb954/hawkular-apm-server/Dockerfile"><em>Dockerfile</em></a>. Place this file in a suitable folder and from that location run the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>oc new-build --binary --name=hawkular-apm-server
+oc start-build hawkular-apm-server --from-dir=. --follow
+oc new-app hawkular-apm-server
+oc expose service hawkular-apm-server</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_apm_server_in_the_openshift_console">Hawkular APM Server in the Openshift Console</h3>
+<div class="paragraph">
+<p>Once either of these options has been used to deploy the Hawkular APM Server, it can be seen within the Openshift console.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-osapmserver.png" alt="Hawkular APM Server">
+</div>
+<div class="title">Figure 1. Hawkular APM Server deployed in Openshift</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploy_example_vert_x_javascript_application">Deploy Example Vert.x Javascript Application</h3>
+<div class="paragraph">
+<p>The application that we will monitor is a Vert.x Javascript example application. Either clone the <a href="https://github.com/vert-x3/vertx-examples">github repository</a> or simply copy the two relevant files from the <a href="https://github.com/vert-x3/vertx-examples/tree/master/docker-examples/vertx-docker-javascript">vertx-examples/docker-examples/vertx-docker-javascript</a> folder.</p>
+</div>
+<div class="paragraph">
+<p>To enable the application to be instrumented by Hawkular APM, it will be necessary to add the following lines in the <em>Dockerfile</em>, before the <em>EXPOSE 8080</em> line:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>ENV HAWKULAR_APM_VERSION 0.9.0.Final
+
+ADD https://github.com/hawkular/hawkular-apm/releases/download/$HAWKULAR_APM_VERSION/hawkular-apm-agent.jar hawkular-apm-agent.jar
+
+ENV JAVA_OPTS -javaagent:/hawkular-apm-agent.jar</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then, from the same folder in which these files are located, run the following:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>oc new-build --binary --name=vertx-javascript
+oc start-build vertx-javascript --from-dir=. --follow
+oc new-app -e HAWKULAR_APM_URI=http://hawkular-apm-server-sample-project.rhel-cdk.10.1.2.2.xip.io -e HAWKULAR_APM_USERNAME=jdoe -e HAWKULAR_APM_PASSWORD=password vertx-javascript
+
+oc expose service vertx-javascript</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+The <em>HAWKULAR_APM_URI</em> must use the URI exposed by the Hawkular APM server, as shown in the console image above.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example_vert_x_javascript_application_in_the_openshift_console">Example Vert.x Javascript Application in the Openshift Console</h3>
+<div class="paragraph">
+<p>Once these commands have been performed, the Openshift console should also now include:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-osvertx.png" alt="Vert.x Javascript example">
+</div>
+<div class="title">Figure 2. Vert.x Javascript example deployed in Openshift</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_running_the_example_application">Running the Example Application</h3>
+<div class="paragraph">
+<p>To access the example Vert.x Javascript application, simply open a browser window at the URL displayed in the console entry for the application (or just select the link which will cause a new tab to be opened). This will cause the simple Javascript application to return a response and show the message "Wild world":</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-osvertxapp.png" alt="Vert.x Javascript example">
+</div>
+<div class="title">Figure 3. Vert.x Javascript example running within a browser</div>
+</div>
+<div class="paragraph">
+<p>Now if we access the URL associated with the Hawkular APM server, by simply selecting the link in the Openshift console, we will be presented with a login window. Enter the username <em>jdoe</em> and password <em>password</em>, and then you will see some basic information showing the result of executing the Vert.x Javascript application - in this case the application was run multiple times by refreshing the browser page.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-osapm.png" alt="APM info">
+</div>
+<div class="title">Figure 4. Application Performance Management information captured from the example application</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_conclusion">Conclusion</h3>
+<div class="paragraph">
+<p>To summarise, this blog has shown:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>How to monitor an existing application <strong>without requiring any code changes</strong> simply by adding a few lines to the docker configuration file. Even if it is not possible to modify the application&#8217;s <em>Dockerfile</em> (i.e. because it is obtained from Docker Hub), it is still possible to achieve the same result by deriving a new <em>Dockerfile</em> from the image of interest, that contains the additional lines shown in this blog.</p>
+</li>
+<li>
+<p>How to deploy the Hawkular APM Server, along with the monitored application, as <em>Docker</em> images that can be run within Openshift.</p>
+</li>
+<li>
+<p>How to visualise the response time associated with a REST call to a Vert.x Javascript application. In this particular example, a single URL was invoked multiple times - hence only a single entry. However for more complex examples, detailed component information (such as EJBs, Databases, etc) and the dependencies between remotely invoked services, may be shown.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If you have any questions please <a href="http://www.hawkular.org/community/index.html">contact us</a>.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/07/13/hawkfx.html"><h1>Introducing HawkFX</h1></a>
             <p>13 July 2016, by Heiko W. Rupp</p>
             <p><div id="preamble">
@@ -336,161 +512,13 @@ has the ability to pull metric data from a Prometheus endpoint and push that dat
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/05/hawkular-services-0.0.5.Final.html"><h1>Hawkular Services 0.0.5.Final</h1></a>
-            <p>05 July 2016, by Heiko W. Rupp</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Services is a new base line distribution including only the basic Hawkular components, such as Alerts, Inventory and Metrics.
-The version <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip">0.0.5.Final</a> has just been released and is ready to be tested and integrated with other projects.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_s_in_this_release">What&#8217;s in this release</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This release has updated components:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Inventory is now at v 0.17.2, which features a new api. The old api endpoint has been moved to <code>/deprecated</code></p>
-</li>
-<li>
-<p>Hawkular-Metrics is at v 0.17.0</p>
-</li>
-<li>
-<p>Hawkular-agent has been bumped to v 0.20.0 to make use of the new Inventory api. Please note that some inventory objects now have a different name.</p>
-</li>
-</ul>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_ruby_client">Hawkular Ruby Client</h3>
-<div class="paragraph">
-<p>While not included in these release zips above, we have upgraded the <a href="https://github.com/hawkular/hawkular-client-ruby">Hawkular-Ruby-Gem</a> to <a href="https://rubygems.org/gems/hawkular-client/versions/2.2.0">v2.2.0</a> to cater
-for the change in the Inventory api. All changes can be seen in the <a href="https://github.com/hawkular/hawkular-client-ruby/blob/master/CHANGES.rdoc">Changes file</a>.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_differences_to_hawkular_main">Differences to Hawkular-main</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Notable differences between the main Hawkular distribution and Hawkular Services are:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Hawkular Services does not ship with a User Interface. Interaction with the backend is exclusively done via REST.</p>
-</li>
-<li>
-<p>Authentication is accomplished via JAAS, configured directly via Wildfly. Please refer to the Wildfly documentation on how to accomplish scenarios like LDAP user database.</p>
-</li>
-<li>
-<p>Due to the changes in the authentication, Keycloak is not part of the distribution, although it can still be used via JAAS. Please refer to the Keycloak documentation on how to protect deployments.</p>
-</li>
-<li>
-<p>Due to the removal of Keycloak, multi tenancy is also simplified. The backend endpoints expect to receive a <code>Hawkular-Tenant</code>, so, multi tenancy is now handled on the consumer side.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>For more information on the details of this new distribution as well as the background, see the blog post <a href="http://www.hawkular.org/blog/2016/04/28/new-packaging.html">New Hawkular packaging</a>. Note that
-<code>hawkular-core-services</code> on that post is what we now know as <code>hawkular-services</code>.</p>
-</div>
-<div class="paragraph">
-<p>Hawkular Services is released every week on Tuesdays.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_get_started">Get started</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To get started with Hawkular Services, <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.0.5.Final/hawkular-services-dist-0.0.5.Final.zip">download the latest release</a>, unzip it,
-add a user and set the Agent to use the credentials for the user just added.</p>
-</div>
-<div class="paragraph">
-<p>It can be accomplished with the following commands:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">export HAWKULAR_HOME="/path/to/hawkular-services"
-export HAWKULAR_USERNAME="jdoe"
-export HAWKULAR_PASSWORD="password"
-
-cd "${HAWKULAR_HOME}"
-"${HAWKULAR_HOME}/bin/add-user.sh" \
-  -a \
-  -u "${HAWKULAR_USERNAME}" \
-  -p "${HAWKULAR_PASSWORD}" \
-  -g read-write,read-only
-"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Before starting the server, you need to have Cassandra 3.7 up and running with the RPC port enabled either via
-setting the env variable of <code>CASSANDRA_START_RPC</code> to <code>true</code></p>
-</div>
-<div class="paragraph">
-<p>or by editing <code>cassandra.yml</code> and setting it there:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml"># Whether to start the thrift rpc server.
-start_rpc: true</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Using <code>ccm</code> you can use this to update the config: <code>ccm updateconf 'start_rpc: true'</code>.
-Another option is via <code>nodetool enablethrift</code>.</p>
-</div>
-<div class="sect2">
-<h3 id="_build_from_master_and_cassandra">Build from master and Cassandra</h3>
-<div class="paragraph">
-<p>If you build from master, you can pass <code>-Pembeddedc</code> to get a distribution with embedded Cassandra for local development.
-Similarly if you build via <code>-Pdev</code> a default user of <em>jdoe/password</em> will be installed and also be used with the agent.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_use_grafana_with_hawkular_services">Use Grafana with Hawkular-services</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
-The <a href="https://github.com/hawkular/hawkular-grafana-datasource">website of the datasource tells more</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_get_started_via_inofficial_docker_builds">Get started via (inofficial) Docker builds</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are inofficial Docker images of the release and also an instrumented WildFly available on
-DockerHub at <a href="https://hub.docker.com/r/pilhuhn/hawkular-services/">Hawkular services</a>
-and <a href="https://hub.docker.com/r/pilhuhn/hawkfly/">Instrumented WildFly</a>.</p>
-</div>
-<div class="paragraph">
-<p>Both images have been instrumented with the <em>jdoe/password</em> user for the Hawkular server and the agent.</p>
-</div>
-<div class="paragraph">
-<p>See also <a href="http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html" class="bare">http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html</a> on some more
-details about using those images.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>05 July 2016 - <a href="blog/2016/07/05/hawkular-services-0.0.5.Final.html">Hawkular Services 0.0.5.Final</a></li>
           <li>05 July 2016 - <a href="blog/2016/07/05/scaling-hawkular-alerting.html">Scaling stateful services: an example in Hawkular Alerting</a></li>
           <li>27 June 2016 - <a href="blog/2016/06/27/hawkular-apm-0.9-released.html">Hawkular APM 0.9.0.Final Released</a></li>
           <li>14 June 2016 - <a href="blog/2016/06/14/hawkular-services-0.0.2.Final.html">Hawkular Services 0.0.2.Final</a></li>
