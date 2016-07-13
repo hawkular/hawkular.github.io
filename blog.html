@@ -170,6 +170,84 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/07/13/hawkfx.html"><h1>Introducing HawkFX</h1></a>
+            <p>13 July 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>HawkFX is an explorer for Hawkular. It is a pet project of mine and <a href="https://github.com/pilhuhn/hawkfx">hosted on Github</a>.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkfx-main.png" alt="HawkFX main screen">
+</div>
+<div class="title">Figure 1. Main screen with availability popup</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_is_it">What is it?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>As the Hawkular-services distribution only contains the server and not UI on purpose, I had the need to explore the content of the inventory and metrics. Of course this is easily doable via <code>curl</code> commands, but ever so often I mistyped or did not correctly escape the forbidden characters in a URL.
+At around the same time I intensivated my work on the Hawkular Ruby client, so I started creating some tool in Ruby. I was looking first at some other Ruby UI toolkit, but that did not really please me. After a bit of investigation I came around JRubyFX, which is cool, as it combines Ruby with JavaFX.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_running">Running</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The explorer requires JRuby in version 9+ and Java8</p>
+</div>
+<div class="paragraph">
+<p>If you are using <code>rvm</code> you can select JRuby9 via</p>
+</div>
+<div class="paragraph">
+<p><code>rvm use jruby-9.0.5.0</code></p>
+</div>
+<div class="paragraph">
+<p>There is no distribution yet. So you need to clone the git-repository and use it from source</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">git clone https://github.com/pilhuhn/hawkfx.git
+cd hawkfx</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>install and use <code>bundler</code> to install the required gems:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">gem install bundler
+bundle install</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>then run</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">bundle exec jruby hawkfx.rb</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_more">More</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In an earlier stage of HawkFX I wrote a <a href="http://pilhuhn.blogspot.de/2016/05/introducing-hawkfx.html">blog post on it on my personal blog</a>.</p>
+</div>
+<div class="paragraph">
+<p>Again: this is a pet project of mine with no support.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/07/12/hawkular-and-jmx-jolokia.html"><h1>Hawkular and JMX/Jolokia</h1></a>
             <p>12 July 2016, by John Mazzitelli</p>
             <p><div class="paragraph">
@@ -407,167 +485,13 @@ details about using those images.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/05/scaling-hawkular-alerting.html"><h1>Scaling stateful services: an example in Hawkular Alerting</h1></a>
-            <p>05 July 2016, by Lucas Ponce</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Today stateless service architectures have the benefit to simplify the design of distributed scenarios.
-With no state in the logic and a common backend, scaling could be implemented with simple additions of new nodes in the topology and distributing incoming requests with load balancer solutions.</p>
-</div>
-<div class="paragraph">
-<p>But a stateless design can not be applied to every scenario, there are computational problems that have a stateful behaviour by nature.</p>
-</div>
-<div class="paragraph">
-<p>Scaling distributed systems with stateful scenario is both a complex but thrilling task for a software engineer.</p>
-</div>
-<div class="paragraph">
-<p>In this post we are going to expose some highlights of the design included in Hawkular Alerting.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hawkular_alerting">Hawkular Alerting</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerting is the component responsible for detecting behaviours within hawkular system by defining rules.
-These rules can generate events or alerts that can also be used in additional rules to detect complex scenarios and to respond with customized actions.</p>
-</div>
-<div class="paragraph">
-<p>This highlevel process is stateful by nature in the sense that rules might depend on the past and future data received.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_scaling_fault_tolerance_vs_distributed_computation">Scaling: fault tolerance vs distributed computation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>A first (non trivial) question is what is meant by 'scaling' in our problem domain.
-For example, 'scaling' in some traditional databases scenarios could mean to add more resources in a big backend machine, on the contrary scaling in a network means to have more nodes to distribute load and increase the computational power.
-Also another preliminary point is that we add more nodes to increase the fault tolerance of our system, meaning that we add more nodes to replicate our load, but not necessary to increase the capacity of the system.
-For example, some networks should be able to support more than one concurrent failure of the system.</p>
-</div>
-<div class="paragraph">
-<p>For our specific Hawkular Alerting domain scaling means to have more computational capacity but also offering a minimal fault tolerance capacity.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_partitionmanager_interface">PartitionManager interface</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerting implements its main logic in the engine service, the engine is responsible for managing the rules definitions and matching the data and events within the rules to update its internal state.
-The engine is the main actor to use the scaling services and in this context the scaling/clustering services have been designed from an abstract interface API called PartitionManager.
-Main benefit of this abstraction layer is that we can improve in the future the implementation of the distributed scenarios without bringing technical debt into the main logic of Hawkular Alerting.</p>
-</div>
-<div class="paragraph">
-<p>The main strategy of the design is to partition and distribute the rules across all the nodes of the topology following a consistent hashing algorithm.
-This means that when topology changes the PartitionManager minimizes the tasks needed to reconfigure the state.</p>
-</div>
-<div class="paragraph">
-<p>So, at a high level, the PartitionManager interface is responsible for the following clustering services:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Notify when a new rule (called Trigger in Hawkular Alerting context) has been added, modified or removed in order to update the engine state.</p>
-</li>
-<li>
-<p>Detect changes to the topology to re-calculate and re-distribute the triggers in a transparent way when a node is added/removed from the cluster.</p>
-</li>
-<li>
-<p>Notify when a new data/event has been received in order to route it to the engine node responsible for its processing.</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_some_implementation_details">Some implementation details</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The goal of a scaling design is efficiency, it should distribute the rules in a way that minimize the changes and cost of re-distribution when cluster changes.
-In our PartitionManagerImpl we have used the hashing functions provided by the <strong>guava</strong> library to implement a shared topology as it is shown in the next example.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    /**
-     * Distribute triggers on nodes using a consistent hashing strategy.
-     * This strategy allows to scale and minimize changes and re-distribution when cluster changes.
-     *
-     * @param entries a list of entries to distribute
-     * @param buckets a table of nodes
-     * @return a map of entries distributed across nodes
-     */
-    public Map&lt;PartitionEntry, Integer&gt; calculatePartition(List&lt;PartitionEntry&gt; entries,
-                                                           Map&lt;Integer, Integer&gt; buckets) {
-        if (entries == null) {
-            throw new IllegalArgumentException("entries must be not null");
-        }
-        if (buckets == null || buckets.isEmpty()) {
-            throw new IllegalArgumentException("entries must be not null");
-        }
-        HashFunction md5 = Hashing.md5();
-        int numBuckets = buckets.size();
-        Map&lt;PartitionEntry, Integer&gt; newPartition = new HashMap&lt;&gt;();
-        for (PartitionEntry entry : entries) {
-            newPartition.put(entry, buckets.get(Hashing.consistentHash(md5.hashInt(entry.hashCode()), numBuckets)));
-        }
-        return newPartition;
-    }
-[source,java]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The backbone of the PartitionManagerImpl is based on <strong>Infinispan</strong> services and its eventing architecture.
-Infinispan let us define small caches used to share minimal topology information about the rules distribution.
-The infinispan eventing architecture let us add our own listeners implementations to provide a high level API that the Hawkular Alerting engine can consume.</p>
-</div>
-<div class="paragraph">
-<p>Further details can be found under the following examples.</p>
-</div>
-<div class="paragraph">
-<div class="title">Consistent hashing algorithm tests applied to topology</div>
-<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/BucketsTest.java</a></p>
-</div>
-<div class="paragraph">
-<div class="title">Consistent hashing algorithm tests applied to rules distribution</div>
-<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/test/java/org/hawkular/alerts/engine/impl/DistributionTest.java</a></p>
-</div>
-<div class="paragraph">
-<div class="title">PartitionManager high level interface</div>
-<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/service/PartitionManager.java</a></p>
-</div>
-<div class="paragraph">
-<div class="title">Implementation of PartitionManager interface</div>
-<p><a href="https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java" class="bare">https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine/src/main/java/org/hawkular/alerts/engine/impl/PartitionManagerImpl.java</a></p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion_and_future_work">Conclusion and future work</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Today we have a clustering profile in Hawkular Alerting project where we can test and run these distributed scenarios.
-In our future work we will increase the coverage of distributed scenario and refine our design accordingly.</p>
-</div>
-<div class="paragraph">
-<p>We hope this small intro could help to share the main decisions points to build our distributed design for Hawkular Alerting.</p>
-</div>
-<div class="paragraph">
-<p>Comments and questions are welcome, here or in <a href="http://webchat.freenode.net/?channels=hawkular">#hawkular</a> room on freenode.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>05 July 2016 - <a href="blog/2016/07/05/scaling-hawkular-alerting.html">Scaling stateful services: an example in Hawkular Alerting</a></li>
           <li>27 June 2016 - <a href="blog/2016/06/27/hawkular-apm-0.9-released.html">Hawkular APM 0.9.0.Final Released</a></li>
           <li>14 June 2016 - <a href="blog/2016/06/14/hawkular-services-0.0.2.Final.html">Hawkular Services 0.0.2.Final</a></li>
           <li>01 June 2016 - <a href="blog/2016/06/01/hawkular-btm-to-apm.html">Hawkular BTM component rename</a></li>
