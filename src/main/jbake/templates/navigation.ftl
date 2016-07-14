@@ -50,7 +50,7 @@
                       </ul>
                     </li>
                     <li>
-                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>downloads.html">Download</a>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
                     </li>
                   </ul>
                 </li>
