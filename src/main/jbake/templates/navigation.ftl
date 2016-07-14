@@ -26,10 +26,10 @@
                       <ul class="dropdown-menu">
                         <!--li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/quickstart-guide/">Quickstart</a>
-                        </li>
+                        </li-->
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/installation-guide/">Installation Guide</a>
-                        </li-->
+                        </li>
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/user-guide/">User Guide</a>
                         </li>
