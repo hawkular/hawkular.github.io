@@ -8,7 +8,7 @@
             Open Source Monitoring Components
           </h1>
           <div class="buttons fade-in two">
-            <a class="btn btn-primary btn-lg" href="/overview.html">Overview</a>
+            <a class="btn btn-primary btn-lg" href="/overview/">Overview</a>
             <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
           </div>
           <!--p class="version fade-in three"><i class="fa fa-list-ul"></i><span class="latestVersion"/>
@@ -21,29 +21,29 @@
             <div class="row">
                 <ul>
                     <li class="col-md-4 col-sm-4">
-                        <a href="/overview.html#_metric_storage"><i class="fa fa-cloud"></i></a>
+                        <a href="/overview/index.html#_metric_storage"><i class="fa fa-cloud"></i></a>
                         <h4>Metric Storage</h4>
-                        <p>Flexible, scalable and high performance metric storage based on Cassandra. <a href="/overview.html#_metric_storage">More...</a></p>
+                        <p>Flexible, scalable and high performance metric storage based on Cassandra. <a href="/overview/index.html#_metric_storage">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
-                        <a href="/overview.html#_alerting"><i class="fa fa-bell"></i></a>
+                        <a href="/overview/index.html#_alerting"><i class="fa fa-bell"></i></a>
                         <h4>Alerting</h4>
-                        <p>Notify administrators of performance problems or other user defined conditions. <a href="/overview.html#_alerting">More...</a></p>
+                        <p>Notify administrators of performance problems or other user defined conditions. <a href="/overview/index.html#_alerting">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
-                        <a href="/overview.html#_inventory"><i class="fa fa-sitemap"></i></a>
+                        <a href="/overview/index.html#_inventory"><i class="fa fa-sitemap"></i></a>
                         <h4>Inventory</h4>
-                        <p>Keep track of the monitored topology and all the monitored resource metadata. <a href="/overview.html#_inventory">More...</a></p>
+                        <p>Keep track of the monitored topology and all the monitored resource metadata. <a href="/overview/index.html#_inventory">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
-                        <a href="/overview.html#_metric_data_visualization"><i class="fa fa-bar-chart"></i></a>
+                        <a href="/overview/index.html#_metric_data_visualization"><i class="fa fa-bar-chart"></i></a>
                         <h4>Metric Data Visualization</h4>
-                        <p>View your data and add charts where you need them most, including real time monitoring. <a href="/overview.html#_metric_data_visualization">More...</a></p>
+                        <p>View your data and add charts where you need them most, including real time monitoring. <a href="/overview/index.html#_metric_data_visualization">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
-                        <a href="/overview.html#_application_performance_management"><i class="fa fa-briefcase"></i></a>
+                        <a href="/overview/index.html#_application_performance_management"><i class="fa fa-briefcase"></i></a>
                         <h4>Application Performance Management</h4>
-                        <p>Capture information about the application invocations being executed across your servers. <a href="/overview.html#_application_performance_management">More...</a></p>
+                        <p>Capture information about the application invocations being executed across your servers. <a href="/overview/index.html#_application_performance_management">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
                         <a href="http://manageiq.org/"><img src="http://avatars0.githubusercontent.com/ManageIQ?&s=48" alt="ManageIQ logo"></img></a>

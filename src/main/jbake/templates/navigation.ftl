@@ -9,12 +9,12 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>index.html">Home</a>
+              <a class="navbar-brand" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>">Home</a>
             </div>
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>overview.html">Overview</a></li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>overview/">Overview</a></li>
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog.html">Blog</a></li>
                 <li class="dropdown">
                   <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
@@ -24,14 +24,14 @@
                     <li class="menu-item dropdown dropdown-submenu">
                       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/quick-start.html">Quickstart</a>
+                        <!--li class="menu-item ">
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/quickstart-guide/">Quickstart</a>
                         </li>
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/installation-guide.html">Installation Guide</a>
-                        </li>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li-->
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/user/user-guide.html">User Guide</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-services/docs/user-guide/">User Guide</a>
                         </li>
                         <li class="menu-item dropdown dropdown-submenu">
                           <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
@@ -76,7 +76,7 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/metrics/index.html">User Guide</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">User Guide</a>
                         </li>
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">REST API</a>
@@ -88,29 +88,29 @@
                     </li>
                   </ul>
                 </li>
-                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>clients/index.html">Hawkular Clients</a></li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/">Hawkular Clients</a></li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                   Community
                   <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu" role="menu">
                   <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/gettinginvolved/index.html">Getting Involved</a>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/getting-involved/">Getting Involved</a>
                   </li>
                   <li class="menu-item ">
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/dev/development.html">Developer Guide</a>
+                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/">Developer Guide</a>
                   </li>
                   <li class="menu-item dropdown dropdown-submenu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
                       <ul class="dropdown-menu">
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/datamining/index.html">Datamining</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/labs/datamining/">Datamining</a>
                         </li>
                         <li class="menu-item ">
                           <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
                         </li>
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/labs/android-client/index.html">Android client</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/android-client/">Android client</a>
                         </li>
                       </ul>
                   </li>
