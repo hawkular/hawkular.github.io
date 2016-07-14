@@ -114,20 +114,6 @@
                         </li>
                       </ul>
                   </li>
-                  <li class="menu-item dropdown dropdown-submenu">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
-                      <ul class="dropdown-menu">
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/components/datamining/index.html">Datamining</a>
-                        </li>
-                        <li class="menu-item ">
-                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
-                        </li>
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/labs/android-client/index.html">Android client</a>
-                        </li>
-                      </ul>
-                  </li>
                   <li>
                     <a href="https://travis-ci.org/hawkular">CI Builds</a>
                   </li>
