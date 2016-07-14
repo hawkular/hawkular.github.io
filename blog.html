@@ -356,6 +356,131 @@ The <em>HAWKULAR_APM_URI</em> must use the URI exposed by the Hawkular APM serve
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2016/07/14/hawkular-miq.html"><h1>Getting started with ManageIQ and Hawkular</h1></a>
+            <p>14 July 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>This post describes the first steps to get started with ManageIQ master and Hawkular-services.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setup_of_manageiq">Setup of ManageIQ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The functionality to support the Hawkular-Middleware provider is not in the Darga-Release.
+You will need to build ManageIQ from their master branch.
+There is a good <a href="http://manageiq.org/documentation/development/developer_setup/">guide on developer setup</a>.</p>
+</div>
+<div class="paragraph">
+<p>Once you are done, you can start ManageIQ like this:</p>
+</div>
+<div class="listingblock">
+<div class="title">Start ManageIQ</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ bundle exec rake evm:start</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The server will listen on <code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_setup_of_hawkular_services">Setup of Hawkular-services</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Run Hawkular-services with some WildFly servers connected. While it is possible to only run Hawkular-services with the built-in agent enabled, you will get more interesting results if you point other instrumented WildFly servers at Hawkular.</p>
+</div>
+<div class="sect2">
+<h3 id="_docker">Docker</h3>
+<div class="paragraph">
+<p>If you are a Docker user, you can <a href="http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html">follow this route</a>. This uses Docker-compose to stand up Cassandra 3.7, Hawkular-services and a connected WildFly10 server.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_classical_route">Classical route</h3>
+<div class="paragraph">
+<div class="title">NOTE You need to have Cassandra set up</div>
+<p>The release notes for Hawkular-Services 0.0.5 have a <a href="http://www.hawkular.org/blog/2016/07/05/hawkular-services-0.0.5.Final.html#_get_started">Getting started</a> section that describes how to locally set up Hawkular-services along with the needed Cassandra settings.</p>
+</div>
+<div class="paragraph">
+<p>To start the hawkular server you should also pass option <code>-Dhawkular.agent.enabled=true</code> to enable the embedded agent.</p>
+</div>
+<div class="listingblock">
+<div class="title">Start Hawkular server</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD} -Dhawkular.agent.enabled=true"</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_the_endpoint">The endpoint</h3>
+<div class="paragraph">
+<p>Going forward we assume that Hawkular-services listens on <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> and has a user/password of <em>jdoe/password</em> defined.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_adding_hawkular_as_provider_in_manageiq">Adding Hawkular as provider in ManageIQ</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Log into ManageIQ at <code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code> with <em>admin/smartvm</em> as user/password.</p>
+</div>
+<div class="paragraph">
+<p>Then select <em>Middleware</em> from the menu bar on the left and then <em>Providers</em>:</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-miq-hawk-menu.png" alt="Menu in ManageIQ">
+</div>
+<div class="title">Figure 1. Menu in ManageIQ with Middleware section</div>
+</div>
+<div class="paragraph">
+<p>On that page click on <em>Configuration</em> and choose <em>Add new provider</em>:</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-miq-hawk-add.png" alt="Add provider button">
+</div>
+<div class="title">Figure 2. Add provider menu entry</div>
+</div>
+<div class="paragraph">
+<p>Next thing you see is the settings page.
+Here you need to choose Hawkular from the type dropdown and fill in the host and port and also the credentials.
+When you are done you need to <em>validate</em> the credentials. If that went well, you can click on <em>add</em> to add the Hawkular provider.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-miq-hawk-settings.png" alt="Settings for the provider">
+</div>
+<div class="title">Figure 3. Settings to add a new Hawkular provider</div>
+</div>
+<div class="paragraph">
+<p>This should take a short while and you should then see a screen with a nice Hawkular logo :-)</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-miq-hawk-providers.png" alt="Overview of Middleware providers">
+</div>
+<div class="title">Figure 4. Overview over middleware providers</div>
+</div>
+<div class="paragraph">
+<p>Clicking on the provider name below the icon then leads you to the so called summary page of the provider where you can see an overivew and have links to managed servers etc.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-07-14-miq-hawk-provider.png" alt="Hawkular provider summary">
+</div>
+<div class="title">Figure 5. Hawkular provider summary</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/07/13/hawkfx.html"><h1>Introducing HawkFX</h1></a>
             <p>13 July 2016, by Heiko W. Rupp</p>
             <p><div id="preamble">
@@ -458,76 +583,13 @@ has the ability to pull metric data from a Prometheus endpoint and push that dat
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/06/hawkular-metrics-0.17.0.Final-released.html"><h1>Hawkular Metrics 0.17.0 - Release</h1></a>
-            <p>06 July 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.17.0 of Hawkular Metrics. This release is anchored by performance enhancements and new Grafana Datasource Plugin.</p><p>Here is a list of major changes:</p>
-<ol>
-  <li><strong>Grafana Datasource Plugin - Experimental</strong></li>
-</ol>
-<ul>
-  <li>A new Grafana 3 datasource plugin is now available for Hawkular Metrics. This plugin integrates natively via the REST API.</li>
-  <li>For downloads and installation instructions please visit <a href="https://github.com/hawkular/hawkular-grafana-datasource">Hawkular Datasource for Grafana</a></li>
-  <li>The plugin is developed as an independent project and contributions are welcomed.</li>
-</ul>
-<ol>
-  <li><strong>InfluxDB API - DEPRECATED</strong></li>
-</ol>
-<ul>
-  <li>The InfluxDB API has been deprecated and will be removed in the upcoming release.</li>
-  <li>This was an addition to make project integrations easier. As the REST interface matured, the role of the InfluxDB compatibility interface was reduced only serve as the Grafana interface. With the release of the native Grafana plugin, this is no longer needed.</li>
-  <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-411">HWKMETRICS-411</a></li>
-</ul>
-<ol>
-  <li><strong>Fetching Raw Data - Multiple Metrics - Experimental</strong></li>
-</ol>
-<ul>
-  <li>Prior to this release, it was possible to only fetch raw data points for a single metric. This release added <code>POST */query</code> endpoint that allows querying for raw data points for multiple metrics.</li>
-  <li>The endpoints are:
-  <ul>
-    <li><code>POST /hawkular/metrics/gauges/raw/query</code></li>
-    <li><code>POST /hawkular/metrics/counters/raw/query</code></li>
-    <li><code>POST /hawkular/metrics/counters/rates/query</code></li>
-    <li><code>POST /hawkular/metrics/strings/raw/query</code></li>
-    <li><code>POST /hawkular/metrics/availability/raw/query</code></li>
-    <li><code>POST /hawkular/metrics/metrics/raw/query</code></li>
-  </ul></li>
-  <li>The endpoint accepts a list of metrics ids and allows filtering by providing start time, end time, sort order and limit.</li>
-  <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-393">HWKMETRICS-393</a></li>
-</ul>
-<ol>
-  <li><strong>Performance Enhancements</strong></li>
-</ol>
-<ul>
-  <li>Two Cassandra driver settings (maxConnectionsPerHost and maxRequestsPerConnection) are now user configurable. Part of the update, the default values have been increased from the driver defaults. The new defaults had a significant performance boost for a simple test deployment. The settings are configurable to allow users to optimize driver behavior for larger Hawkular Metrics deployments. (<a href="https://issues.jboss.org/browse/HWKMETRICS-430">HWKMETRICS-430</a>)</li>
-  <li>On Linux deployments, the Cassandra driver uses Netty native epoll (<a href="https://issues.jboss.org/browse/HWKMETRICS-418">HWKMETRICS-418</a>)</li>
-</ul>
-<ol>
-  <li><strong>Cassandra</strong></li>
-</ol>
-<ul>
-  <li>Fixed an issue with schema upgrades present in Hawkular Metrics 0.15.0 and 0.16.0. We recommend upgrading from previous versions directly to 0.17.0. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-425">HWKMETRICS-425</a></li>
-  <li>Cassandra 3.7 is now the supported version of Cassandra. Support has been deprecated for Cassandra 3.5.</li>
-</ul><h3>Hawkular Metrics Clients</h3>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.17.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.17.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330692">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330692</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>06 July 2016 - <a href="blog/2016/07/06/hawkular-metrics-0.17.0.Final-released.html">Hawkular Metrics 0.17.0 - Release</a></li>
           <li>05 July 2016 - <a href="blog/2016/07/05/hawkular-services-0.0.5.Final.html">Hawkular Services 0.0.5.Final</a></li>
           <li>05 July 2016 - <a href="blog/2016/07/05/scaling-hawkular-alerting.html">Scaling stateful services: an example in Hawkular Alerting</a></li>
           <li>27 June 2016 - <a href="blog/2016/06/27/hawkular-apm-0.9-released.html">Hawkular APM 0.9.0.Final Released</a></li>
