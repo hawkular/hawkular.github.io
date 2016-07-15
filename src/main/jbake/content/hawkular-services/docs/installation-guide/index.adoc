@@ -10,52 +10,70 @@ Thomas Heute
 
 toc::[]
 
-== Installing the server
-Please follow the instruction in the link:quick-start.html[Quick Start document] for the server itself, followed by the Cassandra instructions below.
+== Basic installation of Hawkular Server
 
-NOTE: Hawkular is built on top of Wildfly and ships an embedded Cassandra and Keycloak, intended for a quick start.
-For real deployments, make sure to read the documentation about those components for the required bootstrap
-tasks, such as setting admin users, appropriate JVM flags, ...
+There are two main components to install Hawkular server, the server itself and Cassandra.
+Fortunately both are easy to install.
 
-== Using an external Cassandra Cluster
-Beyond basic usage and development, you will likely want to configure Hawkular
-to use an external Cassandra cluster.
+=== Apache Cassandra
+You need a running Cassandra cluster to get started, they are various ways to install it,
+any would do and you only need to know the IP/Hostname and port of your Cassandra server.
 
-NOTE: Hawkular requires Cassandra 2.2.x or later. It is recommended to use the
-latest 2.2.x release if possible.
+Developers of Hawkular Services all have their own preference depending on the operating
+system they use and experience, here is one option, using ccm:
 
-WARNING: As of Cassandra 2.2.x, Thrift RPC server is disabled by default and is required by Hawkular. It is necessary to set the value of `start_rpc`  to `true` in the `cassandra.yaml` configuration file.
+. First link:http://www.datastax.com/dev/blog/ccm-a-development-tool-for-creating-local-cassandra-clustershttp://www.datastax.com/dev/blog/ccm-a-development-tool-for-creating-local-cassandra-clusters[install ccm]
+. Create a cluster (of one for now) of Cassandra 3.7 for Hawkular, (with start_rpc enabled) and start it:
 
-Fortunately, this only requires setting
-a few environment variables.
-
-.Using a cassandra cluster on `localhost`
-[source,shell]
+.ccm commands
 ----
-bin/standalone.sh -Dhawkular.backend=remote
+ccm create hawkular -v 3.7 -n 1
+ccm updateconf "start_rpc: true"
+ccm start
 ----
 
-Actually it is possible to pass the backend option via environment variable as shown in the next example.
+Now Cassandra should be running on your machine on the default port.
 
-If you want to use a different host for the Cassandra cluster, you need to pass the list of nodes
-in an another environment variable:
+=== Hawkular Services
+. Grab the https://github.com/hawkular/hawkular-services/releases/latest[latest distribution of Hawkular Services],
+the file name should look like: hawkular-services-dist-x.y.z.Final.zip (or .tar.gz)
+. Unzip the package in the directory of your choice, we'll call it `$HS_HOME`
+. Create as many users as you need (replace `myUsername` and `myPassword` by the values of your choice):
 
-.Using a cassandra cluster on different hosts
-[source,shell]
-----
-export HAWKULAR_BACKEND=remote
-export CASSANDRA_NODES="cassandra_host1,cassandra_host2,..."
-bin/standalone.sh
-----
+ sh $HS_HOME/bin/add-user.sh -a -u myUsername -p myPassword -g read-write,read-only
 
+. Hawkular Services is ready to start assuming Cassandra is running on the same machine, on the same port.
+
+NOTE: If Cassandra in running on a different machine, on non standard port or if you have a cluster of Cassandra nodes,
+you may need to do `export CASSANDRA_NODES="cassandra_host1,cassandra_host2,..."` prior to start Hawkular Services.
 The `CASSANDRA_NODES` environment variable should be a comma-delimited list
 of Cassandra node endpoint addresses. The value for each address should match the
 value of the `rpc_address` in the `cassandra.yaml` configuration file. You do not
 actually have to specify the address of every Cassandra node. As long as Hawkular
 is able to connect to one node, it will discover all of the other cluster nodes.
 
-== Using an external Keycloak Server
-include::external-keycloak.adocPart[]
+.. To just start Hawkular Services:
+
+`sh $HS_HOME/bin/standalone.sh`
+
+..  To start Hawkular Services with the embedded WildFly agent (this is used to monitor itself since
+Hawkular Services is based on WildFly and the embedded agent can push metrics and inventory to Hawkular
+Services). Replace `myUsername` and `myPassword`, with a userame/password combination as defined in the step 3.
+
+`sh $HS_HOME/bin/standalone.sh -Dhawkular.rest.user=myUsername -Dhawkular.rest.password=myPassword -Dhawkular.agent.enabled=true`
+
+. Hawkular Services should be starting, and soon you should be able to access: http://localhost:8080
+to get confirmation that all the services are running
+
+[[img-main]]
+.Hawkular Services Status page
+ifndef::env-github[]
+image::/img/hawkular-services/statuspage.png[Status page]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/hawkular-services/statuspage.png[Status page]
+endif::[]
+
 
 == Using SSL / HTTPS
 
