@@ -1,7 +1,7 @@
-= Quick start
-Heiko Rupp
-2015-06-08
-:description: Fastest route to get Hawkular up and running
+= Hawkular Services Getting Started Guide
+Thomas Heute
+2016-07-15
+:description: Getting started with Hawkular
 :jbake-type: page
 :jbake-status: published
 :icons: font
@@ -10,195 +10,65 @@ Heiko Rupp
 
 toc::[]
 
-== Before we start
-We'll install an Hawkular server and then instrument a WildFly server to be manageable by the server.
-We suppose that you have Java 8 already installed on your machine.
-To install the server we propose an alternative using Docker, we suppose that you have Docker already installed.
+== Install Hawkular
 
-Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
-single-node cluster. You do not have to worry about setting up and configuring
-Cassandra before getting started with Hawkular.
+Please refer to the link:../installation-guide/[installation guide] to install Hawkular Server
 
-Hawkular uses Keycloak. Out of the box Hawkular is configured to use an embedded Keycloak server for user management.
-It's pre-configured and ready to use, but make sure to use an external Keycloak server on more serious environments.
+== Step 1: Add metrics
+In this quickstart guide, we'll start by injecting metrics in the server. For this part we don't need additional metadata nor tags on our metrics,
+we really want to start as quickly as possible, advanced features will be explained in other documents.
 
-For a more proper installation, please refer to link:user/installation-guide.html[the installation guide]
+Let's say we want to insert Weather temperature from a sensor so that we can keep an history and then visualize or alert on those values.
 
-NOTE: The embedded Cassandra is not intended for production use, we definitely recommend to use a separate Cassandra server.
+NOTE: Hawkular Services provides different libraries for different languages, but here we will just use the REST API with CURL.
 
-== Step 1: Installing Hawkular server
-=== Option A: Install from a zip file on any operating system
-Download
-http://download.jboss.org/hawkular/hawkular/{hawkular_released_version}/hawkular-dist-{hawkular_released_version}.zip[Hawkular {hawkular_released_version} (zip)]
-and then unzip and start the server as shown below.
+Copy the following content in a file named `request.json`, it contains weather data collected every 30 min for the whole day of July 15th 2016.
 
-.Unzip and start the server
-[source,shell,subs="+attributes"]
+.request.json
 ----
-unzip hawkular-dist-{hawkular_released_version}.zip
-cd hawkular-{hawkular_released_version}
-bin/standalone.sh  # use standalone.bat on Windows
+include::includes/request.json[]
 ----
 
-You can then navigate your browser to http://localhost:8080/. When you see the login screen,
-you have to register as a user and will then be redirected to the main Hawkular page.
-
-Should you decide to use another hostname and/or port, you'd need to change the system property `keycloak.server.url`
- either via command line or by changing the `standalone.xml`. Example:
-
-[source,bash]
-----
-bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth
-----
-
-For a more permanent solution, you can change the `standalone.xml` by setting an appropriate value for the system
-property:
-[source,xml]
-----
-<property name="keycloak.server.url" value="http://localhost:8180/auth"/>
-----
-
-Then, just start Keycloak as usual:
-[source,bash]
-----
-bin/standalone.sh
-----
-
-=== Option B: Install from a docker image
-
-Hawkular is publishing builds to https://registry.hub.docker.com/u/jboss/hawkular-aio/[Docker Hub] that you can try
-and download from Docker.
-
-NOTE: Those builds are not secured and should not be run on a public network.
-
-The following assumes that you have Docker installed and started if necessary.
-
-[source, shell]
-----
-$ docker run -d -p 8080:8080 jboss/hawkular-aio   #<1>
-Unable to find image 'jboss/hawkular-aio:latest' locally #<2>
-latest: Pulling from docker.io/jboss/hawkular-aio
-26830c504ec5: Download complete
-[...]
-612ba72033af: Download complete
-Digest: sha256:dd0db25c80464f93fb652906317c003d29bf19e9ba6622ddf4df9377c56d3823
-Status: Downloaded newer image for jboss/hawkular-aio:latest #<3>
-c792a1f059521f6ae99  #<4>
-----
-<1> Start the docker container in the background (`-d`) and tell it that the internal (container's) port 8080 should be
-available as host port 8080 (`-p 8080:8080).
-<2> This is the first time that image is to be used, so docker is downloading it from Docker Hub, which may take a
-while. Starting the same image the next time will only take a few seconds.
-<3> Download has finished, Hawkular server will be started
-<4> Hawkular server has started with a container id of `c792a1f0595`. This id will be different for each start.
-
-Now as Docker is running the container and you can reach the Hawkular UI at http://localhost:8080/
-
-NOTE: If you are running docker on OS/X via boot2docker, you need to use the IP address that is stored in the `DOCKER_HOST`
-environment variable instead of `localhost`.)
-
-[NOTE]
-.Stopping the Docker container
-=======================
-When you are done, you can shut down the container via:
-
-[source,shell]
-----
-$ docker stop c792a1f0595  #<1>
-----
-<1> Container id that was emitted above
-=======================
-
-Later if you want to upgrade to a newer build just run:
-
-[source,shell]
-----
-$ docker pull jboss/hawkular-aio:latest  #<1>
-Pulling repository jboss/hawkular-aio
-26830c504ec5: Download complete
-511136ea3c5a: Download complete
-[...]
-612ba72033af: Download complete
-Status: Image is up to date for jboss/hawkular-aio:latest #<2>
-----
-<1> We ask for the latest build
-<2> In this case the local one was already the latest, so we are good here.
-
-You can then navigate your browser to http://localhost:8080/. When you see the login screen, you have to register as a user and will then be redirected to the main Hawkular page.
-
-== Step 2: Install a Hawkular WildFly Agent
-
-Now that the server is installed and you have a user registered you would likely want to push some data into that server, at this stage, the only agent we provide is an agent for WildFly 9 and above.
-
-Here are the steps to install the Hawkular WildFly agent into your own WildFly Server installation:
-
-* Download the Hawkular WildFly Agent installer
-You can download the installer from http://localhost:8080/hawkular/wildfly-agent/installer[your Hawkular Server that is already running].
-* Run the installer, telling it the location of your WildFly Server.
+To insert metrics, we just need a running Hawkular Server and make sure we created a user according to the instructions. You can replace the values of the `Hawkular-Tenant` and `temperature` in the URL
+with the values of your choice, in this simple scenario, we don't need to make additional calls to create those.
 
 ----
-java -jar hawkular-wildfly-agent-installer*.jar --target-location=/your/wildfly/server
+curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/metrics/gauges/temperature/raw -d @request.json -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"
 ----
 
-TIP: If you plan on monitoring multiple servers, pass in the command line option "--managed-server-name=YourUniqueName" where "YourUniqueName" is some *unique* value among your managed machines. (Alpha8 note: this option is not available in Alpha8. To set this if you are running Alpha8, you need to change the "name" attribute in the "local-dmr" element inside standalone.xml.)
+Now your data is stored in Hawkular Server, in it's distributed Cassandra server. It's ready to be used !
 
-* In the `standalone/configuration/standalone.xml` file of your WildFly Server in which you just installed the Hawkular WildFly Agent, set your Hawkular credentials in the storage-adapter XML element.
+== Step 2: Read the metrics
+=== With Grafana
+At the end of Step 1, you need to trust Hawkular that the data was indeed stored.
+The most elegant way to see the data is by link:/hawkular-clients/grafana/[setting up Grafana and its Hawkular plugin] to actually build a dashboard and look at the `temperature` metric over that day (July 15th 2016) for `myTenant`.
+Here would be the result:
 
-[source,xml]
+[[img-main]]
+.Visualization of the metrics in Grafana
+ifndef::env-github[]
+image::/img/hawkular-services/docs/quickstart-guide/grafana.png[Grafana]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/hawkular-services/docs/quickstart-guide/grafana.png[Grafana]
+endif::[]
+
+=== With the REST API
+
+The metrics API provides ways to retrieve raw or aggregated values, here is a command to get back the raw value as we inserted earlier.
+The URL is the same, the command is a GET instead of a POST and we added extra parameters to define from when to when we want the values,
+and that we want the data ordered by time.
+
+.Curl command
 ----
-  <storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /> <1>
-----
-
-<1> You need to provide username/password for one Hawkular user. The app server will only show for this user.
-
-TIP: Optional: A single Hawkular WildFly Agent instance can also manage multiple remote WildFly servers. In that case you need to enable a remote-dmr section and specify the username and password of a management user of the remote WildFly Server.
-
-Now you can start the managed WildFly instance, keeping in mind that if you are following this QuickStart your Hawkular Server is probably already running on port 8080, so you need to run this instance on a different port by starting the server with `sh bin/standalone.sh -Djboss.socket.binding.port-offset=100` for instance.
-Now if you have correcty set up the agent, it will report into your Hawkular Server at http://localhost:8080/hawkular-ui/app/app-list.
-
-To push data about Application Performance Management / Business Transaction Management you need to install the (second) relative agent available in `btm` folder. Open the `btm/setenv.sh` file and set the correct URL user/pass and do:
-----
-source btm/setenv.sh
-----
-
-just before start your WildFly instance.
-
-
-== Troubleshooting
-=== Error on starting Hawkular- OutOfMemoryError: unable to create new native thread
-This may happen if you use Cassandra embedded with Hawkular on *x systems
-
-Cassandra requires `ulimit` settings that are higher than usual on common *nix distributions. First check your present limits with `ulimit -a` and eventually increase open files to 65535 and max user processes to 4096 as appropriate on your system.
-
-On RHEL, CentOS and Fedora the settings can be made persistent in `/etc/security/limits.conf` like this:
-----
-[your_username]          hard    nofile          65535
-[your_username]          soft    nofile          65535
-[your_username]          hard    nproc           4096
-[your_username]          soft    nproc           4096
+curl -u myUsername:myPassword \
+  -X GET "http://localhost:8080/hawkular/metrics/gauges/temperature/raw?start=1468533600000&end=1468618200001&order=ASC" \
+  -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"
 ----
 
-where `[your_username]` needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.
+This would be the result of that command:
 
-=== Unable to resolve realm public key remotely, status = 404
-
-Exception: `ERROR [io.undertow.request] (default task-2) UT005023: Exception handling request to
-/hawkular/accounts/personas/current:` `java.lang.RuntimeException: Unable to resolve realm public key remotely, status
-= 404`
-
-This happens when the auth server (Keycloak) cannot be reached. Make sure that the authentication server URL is set
-to the correct location of the Keycloak server. This might be wrong if you are using the `-b` option to bind
-Wildfly to a specific IP or if you have specified a port-offset (`-Djboss.socket.binding.port-offset=123`).
-
-The property to verify is called `auth-server-url` and is located on the following files:
+.Command result
 ----
-$HAWKULAR_HOME/standalone/configuration/standalone.xml
-$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json
+[{"timestamp":1468533600000,"value":10.0},{"timestamp":1468535400000,"value":10.0},{"timestamp":1468537200000,"value":9.7},{"timestamp":1468539000000,"value":9.6},{"timestamp":1468540800000,"value":9.6},{"timestamp":1468542600000,"value":9.6},{"timestamp":1468544400000,"value":9.5},{"timestamp":1468546200000,"value":9.5},{"timestamp":1468548000000,"value":9.5},{"timestamp":1468549800000,"value":9.5},{"timestamp":1468551600000,"value":9.5},{"timestamp":1468553400000,"value":9.5},{"timestamp":1468555200000,"value":9.6},{"timestamp":1468557000000,"value":9.6},{"timestamp":1468558800000,"value":9.7},{"timestamp":1468560600000,"value":9.7},{"timestamp":1468562400000,"value":9.8},{"timestamp":1468564200000,"value":10.0},{"timestamp":1468566000000,"value":10.2},{"timestamp":1468567800000,"value":10.3},{"timestamp":1468569600000,"value":10.0},{"timestamp":1468571400000,"value":9.9},{"timestamp":1468573200000,"value":10.1},{"timestamp":1468575000000,"value":9.7},{"timestamp":1468576800000,"value":9.2},{"timestamp":1468578600000,"value":9.2},{"timestamp":1468580400000,"value":9.9},{"timestamp":1468582200000,"value":11.0},{"timestamp":1468584000000,"value":12.4},{"timestamp":1468585800000,"value":13.3},{"timestamp":1468587600000,"value":14.3},{"timestamp":1468589400000,"value":13.6},{"timestamp":1468591200000,"value":11.0},{"timestamp":1468593000000,"value":10.2},{"timestamp":1468594800000,"value":10.1},{"timestamp":1468596600000,"value":10.3},{"timestamp":1468598400000,"value":10.9},{"timestamp":1468600200000,"value":11.4},{"timestamp":1468602000000,"value":11.7},{"timestamp":1468603800000,"value":11.5},{"timestamp":1468605600000,"value":11.1},{"timestamp":1468607400000,"value":10.6},{"timestamp":1468609200000,"value":10.1},{"timestamp":1468611000000,"value":9.6},{"timestamp":1468612800000,"value":9.2},{"timestamp":1468614600000,"value":9.1},{"timestamp":1468616400000,"value":9.1},{"timestamp":1468618200000,"value":9.1}]
 ----
-
-=== Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID
-
-Exception: `ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:`
-`Can't do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID`
-
-Similar to the above: make sure that your auth server (Keycloak) configuration is correct.
