@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Quick start</title>
+    <title>Hawkular - Hawkular Services Getting Started Guide</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -71,9 +71,9 @@
                     <li class="menu-item dropdown dropdown-submenu">
                       <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
-                        <!--li class="menu-item ">
+                        <li class="menu-item ">
                           <a href="../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
-                        </li-->
+                        </li>
                         <li class="menu-item ">
                           <a href="../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
                         </li>
@@ -172,12 +172,12 @@
 
       <section class="main-banner">
         <div class="container">
-          <h1>Quick start</h1>
-          <p>Fastest route to get Hawkular up and running</p>
+          <h1>Hawkular Services Getting Started Guide</h1>
+          <p>Getting started with Hawkular</p>
         </div>
       </section>
 
-	<!--<p><em>08 June 2015</em></p>-->
+	<!--<p><em>15 July 2016</em></p>-->
 
 	<section>
       <div class="container">
@@ -186,19 +186,12 @@
 <div id="toc" class="toc">
 <div id="toctitle" class="title"></div>
 <ul class="sectlevel1">
-<li><a href="#_before_we_start">Before we start</a></li>
-<li><a href="#_step_1_installing_hawkular_server">Step 1: Installing Hawkular server</a>
+<li><a href="#_install_hawkular">Install Hawkular</a></li>
+<li><a href="#_step_1_add_metrics">Step 1: Add metrics</a></li>
+<li><a href="#_step_2_read_the_metrics">Step 2: Read the metrics</a>
 <ul class="sectlevel2">
-<li><a href="#_option_a_install_from_a_zip_file_on_any_operating_system">Option A: Install from a zip file on any operating system</a></li>
-<li><a href="#_option_b_install_from_a_docker_image">Option B: Install from a docker image</a></li>
-</ul>
-</li>
-<li><a href="#_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular WildFly Agent</a></li>
-<li><a href="#_troubleshooting">Troubleshooting</a>
-<ul class="sectlevel2">
-<li><a href="#_error_on_starting_hawkular_outofmemoryerror_unable_to_create_new_native_thread">Error on starting Hawkular- OutOfMemoryError: unable to create new native thread</a></li>
-<li><a href="#_unable_to_resolve_realm_public_key_remotely_status_404">Unable to resolve realm public key remotely, status = 404</a></li>
-<li><a href="#_can_t_do_anything_without_a_feed_aborting_startup_java_lang_runtimeexception_cannot_get_tenant_id">Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</a></li>
+<li><a href="#_with_grafana">With Grafana</a></li>
+<li><a href="#_with_the_rest_api">With the REST API</a></li>
 </ul>
 </li>
 </ul>
@@ -206,24 +199,22 @@
 </div>
 </div>
 <div class="sect1">
-<h2 id="_before_we_start">Before we start</h2>
+<h2 id="_install_hawkular">Install Hawkular</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>We&#8217;ll install an Hawkular server and then instrument a WildFly server to be manageable by the server.
-We suppose that you have Java 8 already installed on your machine.
-To install the server we propose an alternative using Docker, we suppose that you have Docker already installed.</p>
+<p>Please refer to the <a href="../installation-guide/">installation guide</a> to install Hawkular Server</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_1_add_metrics">Step 1: Add metrics</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this quickstart guide, we&#8217;ll start by injecting metrics in the server. For this part we don&#8217;t need additional metadata nor tags on our metrics,
+we really want to start as quickly as possible, advanced features will be explained in other documents.</p>
 </div>
 <div class="paragraph">
-<p>Hawkular uses Cassandra. Out of the box Hawkular is configured to use an embedded
-single-node cluster. You do not have to worry about setting up and configuring
-Cassandra before getting started with Hawkular.</p>
-</div>
-<div class="paragraph">
-<p>Hawkular uses Keycloak. Out of the box Hawkular is configured to use an embedded Keycloak server for user management.
-It&#8217;s pre-configured and ready to use, but make sure to use an external Keycloak server on more serious environments.</p>
-</div>
-<div class="paragraph">
-<p>For a more proper installation, please refer to <a href="user/installation-guide.html">the installation guide</a></p>
+<p>Let&#8217;s say we want to insert Weather temperature from a sensor so that we can keep an history and then visualize or alert on those values.</p>
 </div>
 <div class="admonitionblock note">
 <table>
@@ -232,336 +223,123 @@ It&#8217;s pre-configured and ready to use, but make sure to use an external Key
 <i class="fa icon-note" title="Note"></i>
 </td>
 <td class="content">
-The embedded Cassandra is not intended for production use, we definitely recommend to use a separate Cassandra server.
+Hawkular Services provides different libraries for different languages, but here we will just use the REST API with CURL.
 </td>
 </tr>
 </table>
+</div>
+<div class="paragraph">
+<p>Copy the following content in a file named <code>request.json</code>, it contains weather data collected every 30 min for the whole day of July 15th 2016.</p>
+</div>
+<div class="listingblock">
+<div class="title">request.json</div>
+<div class="content">
+<pre>[
+  {"timestamp": 1468533600000, "value": 10},
+  {"timestamp": 1468535400000, "value": 10},
+  {"timestamp": 1468537200000, "value": 9.7},
+  {"timestamp": 1468539000000, "value": 9.6},
+  {"timestamp": 1468540800000, "value": 9.6},
+  {"timestamp": 1468542600000, "value": 9.6},
+  {"timestamp": 1468544400000, "value": 9.5},
+  {"timestamp": 1468546200000, "value": 9.5},
+  {"timestamp": 1468548000000, "value": 9.5},
+  {"timestamp": 1468549800000, "value": 9.5},
+  {"timestamp": 1468551600000, "value": 9.5},
+  {"timestamp": 1468553400000, "value": 9.5},
+  {"timestamp": 1468555200000, "value": 9.6},
+  {"timestamp": 1468557000000, "value": 9.6},
+  {"timestamp": 1468558800000, "value": 9.7},
+  {"timestamp": 1468560600000, "value": 9.7},
+  {"timestamp": 1468562400000, "value": 9.8},
+  {"timestamp": 1468564200000, "value": 10},
+  {"timestamp": 1468566000000, "value": 10.2},
+  {"timestamp": 1468567800000, "value": 10.3},
+  {"timestamp": 1468569600000, "value": 10},
+  {"timestamp": 1468571400000, "value": 9.9},
+  {"timestamp": 1468573200000, "value": 10.1},
+  {"timestamp": 1468575000000, "value": 9.7},
+  {"timestamp": 1468576800000, "value": 9.2},
+  {"timestamp": 1468578600000, "value": 9.2},
+  {"timestamp": 1468580400000, "value": 9.9},
+  {"timestamp": 1468582200000, "value": 11},
+  {"timestamp": 1468584000000, "value": 12.4},
+  {"timestamp": 1468585800000, "value": 13.3},
+  {"timestamp": 1468587600000, "value": 14.3},
+  {"timestamp": 1468589400000, "value": 13.6},
+  {"timestamp": 1468591200000, "value": 11},
+  {"timestamp": 1468593000000, "value": 10.2},
+  {"timestamp": 1468594800000, "value": 10.1},
+  {"timestamp": 1468596600000, "value": 10.3},
+  {"timestamp": 1468598400000, "value": 10.9},
+  {"timestamp": 1468600200000, "value": 11.4},
+  {"timestamp": 1468602000000, "value": 11.7},
+  {"timestamp": 1468603800000, "value": 11.5},
+  {"timestamp": 1468605600000, "value": 11.1},
+  {"timestamp": 1468607400000, "value": 10.6},
+  {"timestamp": 1468609200000, "value": 10.1},
+  {"timestamp": 1468611000000, "value": 9.6},
+  {"timestamp": 1468612800000, "value": 9.2},
+  {"timestamp": 1468614600000, "value": 9.1},
+  {"timestamp": 1468616400000, "value": 9.1},
+  {"timestamp": 1468618200000, "value": 9.1}
+]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To insert metrics, we just need a running Hawkular Server and make sure we created a user according to the instructions. You can replace the values of the <code>Hawkular-Tenant</code> and <code>temperature</code> in the URL
+with the values of your choice, in this simple scenario, we don&#8217;t need to make additional calls to create those.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/metrics/gauges/temperature/raw -d @request.json -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now your data is stored in Hawkular Server, in it&#8217;s distributed Cassandra server. It&#8217;s ready to be used !</p>
 </div>
 </div>
 </div>
 <div class="sect1">
-<h2 id="_step_1_installing_hawkular_server">Step 1: Installing Hawkular server</h2>
+<h2 id="_step_2_read_the_metrics">Step 2: Read the metrics</h2>
 <div class="sectionbody">
 <div class="sect2">
-<h3 id="_option_a_install_from_a_zip_file_on_any_operating_system">Option A: Install from a zip file on any operating system</h3>
+<h3 id="_with_grafana">With Grafana</h3>
 <div class="paragraph">
-<p>Download
-<a href="http://download.jboss.org/hawkular/hawkular/1.0.0.Alpha11/hawkular-dist-1.0.0.Alpha11.zip">Hawkular 1.0.0.Alpha11 (zip)</a>
-and then unzip and start the server as shown below.</p>
+<p>At the end of Step 1, you need to trust Hawkular that the data was indeed stored.
+The most elegant way to see the data is by <a href="/hawkular-clients/grafana/">setting up Grafana and its Hawkular plugin</a> to actually build a dashboard and look at the <code>temperature</code> metric over that day (July 15th 2016) for <code>myTenant</code>.
+Here would be the result:</p>
 </div>
-<div class="listingblock">
-<div class="title">Unzip and start the server</div>
+<div id="img-main" class="imageblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">unzip hawkular-dist-1.0.0.Alpha11.zip
-cd hawkular-1.0.0.Alpha11
-bin/standalone.sh  # use standalone.bat on Windows</code></pre>
+<img src="/img/hawkular-services/docs/quickstart-guide/grafana.png" alt="Grafana">
 </div>
-</div>
-<div class="paragraph">
-<p>You can then navigate your browser to <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a>. When you see the login screen,
-you have to register as a user and will then be redirected to the main Hawkular page.</p>
-</div>
-<div class="paragraph">
-<p>Should you decide to use another hostname and/or port, you&#8217;d need to change the system property <code>keycloak.server.url</code>
- either via command line or by changing the <code>standalone.xml</code>. Example:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">bin/standalone.sh -Dkeycloak.server.url=http://localhost:8180/auth</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>For a more permanent solution, you can change the <code>standalone.xml</code> by setting an appropriate value for the system
-property:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;property name="keycloak.server.url" value="http://localhost:8180/auth"/&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then, just start Keycloak as usual:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">bin/standalone.sh</code></pre>
-</div>
+<div class="title">Figure 1. Visualization of the metrics in Grafana</div>
 </div>
 </div>
 <div class="sect2">
-<h3 id="_option_b_install_from_a_docker_image">Option B: Install from a docker image</h3>
+<h3 id="_with_the_rest_api">With the REST API</h3>
 <div class="paragraph">
-<p>Hawkular is publishing builds to <a href="https://registry.hub.docker.com/u/jboss/hawkular-aio/">Docker Hub</a> that you can try
-and download from Docker.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-Those builds are not secured and should not be run on a public network.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>The following assumes that you have Docker installed and started if necessary.</p>
+<p>The metrics API provides ways to retrieve raw or aggregated values, here is a command to get back the raw value as we inserted earlier.
+The URL is the same, the command is a GET instead of a POST and we added extra parameters to define from when to when we want the values,
+and that we want the data ordered by time.</p>
 </div>
 <div class="listingblock">
+<div class="title">Curl command</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ docker run -d -p 8080:8080 jboss/hawkular-aio   <i class="conum" data-value="1"></i><b>(1)</b>
-Unable to find image 'jboss/hawkular-aio:latest' locally <i class="conum" data-value="2"></i><b>(2)</b>
-latest: Pulling from docker.io/jboss/hawkular-aio
-26830c504ec5: Download complete
-[...]
-612ba72033af: Download complete
-Digest: sha256:dd0db25c80464f93fb652906317c003d29bf19e9ba6622ddf4df9377c56d3823
-Status: Downloaded newer image for jboss/hawkular-aio:latest <i class="conum" data-value="3"></i><b>(3)</b>
-c792a1f059521f6ae99  <i class="conum" data-value="4"></i><b>(4)</b></code></pre>
+<pre>curl -u myUsername:myPassword \
+  -X GET "http://localhost:8080/hawkular/metrics/gauges/temperature/raw?start=1468533600000&amp;end=1468618200001&amp;order=ASC" \
+  -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
 </div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Start the docker container in the background (<code>-d</code>) and tell it that the internal (container&#8217;s) port 8080 should be
-available as host port 8080 (`-p 8080:8080).</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>This is the first time that image is to be used, so docker is downloading it from Docker Hub, which may take a
-while. Starting the same image the next time will only take a few seconds.</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="3"></i><b>3</b></td>
-<td>Download has finished, Hawkular server will be started</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="4"></i><b>4</b></td>
-<td>Hawkular server has started with a container id of <code>c792a1f0595</code>. This id will be different for each start.</td>
-</tr>
-</table>
 </div>
 <div class="paragraph">
-<p>Now as Docker is running the container and you can reach the Hawkular UI at <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a></p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-If you are running docker on OS/X via boot2docker, you need to use the IP address that is stored in the <code>DOCKER_HOST</code>
-environment variable instead of <code>localhost</code>.)
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-<div class="title">Stopping the Docker container</div>
-<div class="paragraph">
-<p>When you are done, you can shut down the container via:</p>
+<p>This would be the result of that command:</p>
 </div>
 <div class="listingblock">
+<div class="title">Command result</div>
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ docker stop c792a1f0595  <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
+<pre>[{"timestamp":1468533600000,"value":10.0},{"timestamp":1468535400000,"value":10.0},{"timestamp":1468537200000,"value":9.7},{"timestamp":1468539000000,"value":9.6},{"timestamp":1468540800000,"value":9.6},{"timestamp":1468542600000,"value":9.6},{"timestamp":1468544400000,"value":9.5},{"timestamp":1468546200000,"value":9.5},{"timestamp":1468548000000,"value":9.5},{"timestamp":1468549800000,"value":9.5},{"timestamp":1468551600000,"value":9.5},{"timestamp":1468553400000,"value":9.5},{"timestamp":1468555200000,"value":9.6},{"timestamp":1468557000000,"value":9.6},{"timestamp":1468558800000,"value":9.7},{"timestamp":1468560600000,"value":9.7},{"timestamp":1468562400000,"value":9.8},{"timestamp":1468564200000,"value":10.0},{"timestamp":1468566000000,"value":10.2},{"timestamp":1468567800000,"value":10.3},{"timestamp":1468569600000,"value":10.0},{"timestamp":1468571400000,"value":9.9},{"timestamp":1468573200000,"value":10.1},{"timestamp":1468575000000,"value":9.7},{"timestamp":1468576800000,"value":9.2},{"timestamp":1468578600000,"value":9.2},{"timestamp":1468580400000,"value":9.9},{"timestamp":1468582200000,"value":11.0},{"timestamp":1468584000000,"value":12.4},{"timestamp":1468585800000,"value":13.3},{"timestamp":1468587600000,"value":14.3},{"timestamp":1468589400000,"value":13.6},{"timestamp":1468591200000,"value":11.0},{"timestamp":1468593000000,"value":10.2},{"timestamp":1468594800000,"value":10.1},{"timestamp":1468596600000,"value":10.3},{"timestamp":1468598400000,"value":10.9},{"timestamp":1468600200000,"value":11.4},{"timestamp":1468602000000,"value":11.7},{"timestamp":1468603800000,"value":11.5},{"timestamp":1468605600000,"value":11.1},{"timestamp":1468607400000,"value":10.6},{"timestamp":1468609200000,"value":10.1},{"timestamp":1468611000000,"value":9.6},{"timestamp":1468612800000,"value":9.2},{"timestamp":1468614600000,"value":9.1},{"timestamp":1468616400000,"value":9.1},{"timestamp":1468618200000,"value":9.1}]</pre>
 </div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>Container id that was emitted above</td>
-</tr>
-</table>
-</div>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Later if you want to upgrade to a newer build just run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ docker pull jboss/hawkular-aio:latest  <i class="conum" data-value="1"></i><b>(1)</b>
-Pulling repository jboss/hawkular-aio
-26830c504ec5: Download complete
-511136ea3c5a: Download complete
-[...]
-612ba72033af: Download complete
-Status: Image is up to date for jboss/hawkular-aio:latest <i class="conum" data-value="2"></i><b>(2)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>We ask for the latest build</td>
-</tr>
-<tr>
-<td><i class="conum" data-value="2"></i><b>2</b></td>
-<td>In this case the local one was already the latest, so we are good here.</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>You can then navigate your browser to <a href="http://localhost:8080/" class="bare">http://localhost:8080/</a>. When you see the login screen, you have to register as a user and will then be redirected to the main Hawkular page.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_step_2_install_a_hawkular_wildfly_agent">Step 2: Install a Hawkular WildFly Agent</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Now that the server is installed and you have a user registered you would likely want to push some data into that server, at this stage, the only agent we provide is an agent for WildFly 9 and above.</p>
-</div>
-<div class="paragraph">
-<p>Here are the steps to install the Hawkular WildFly agent into your own WildFly Server installation:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Download the Hawkular WildFly Agent installer
-You can download the installer from <a href="http://localhost:8080/hawkular/wildfly-agent/installer">your Hawkular Server that is already running</a>.</p>
-</li>
-<li>
-<p>Run the installer, telling it the location of your WildFly Server.</p>
-</li>
-</ul>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>java -jar hawkular-wildfly-agent-installer*.jar --target-location=/your/wildfly/server</pre>
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-If you plan on monitoring multiple servers, pass in the command line option "--managed-server-name=YourUniqueName" where "YourUniqueName" is some <strong>unique</strong> value among your managed machines. (Alpha8 note: this option is not available in Alpha8. To set this if you are running Alpha8, you need to change the "name" attribute in the "local-dmr" element inside standalone.xml.)
-</td>
-</tr>
-</table>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>In the <code>standalone/configuration/standalone.xml</code> file of your WildFly Server in which you just installed the Hawkular WildFly Agent, set your Hawkular credentials in the storage-adapter XML element.</p>
-</li>
-</ul>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;storage-adapter type="HAWKULAR" username="SET_ME" password="SET_ME" /&gt; <i class="conum" data-value="1"></i><b>(1)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<table>
-<tr>
-<td><i class="conum" data-value="1"></i><b>1</b></td>
-<td>You need to provide username/password for one Hawkular user. The app server will only show for this user.</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-Optional: A single Hawkular WildFly Agent instance can also manage multiple remote WildFly servers. In that case you need to enable a remote-dmr section and specify the username and password of a management user of the remote WildFly Server.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Now you can start the managed WildFly instance, keeping in mind that if you are following this QuickStart your Hawkular Server is probably already running on port 8080, so you need to run this instance on a different port by starting the server with <code>sh bin/standalone.sh -Djboss.socket.binding.port-offset=100</code> for instance.
-Now if you have correcty set up the agent, it will report into your Hawkular Server at <a href="http://localhost:8080/hawkular-ui/app/app-list" class="bare">http://localhost:8080/hawkular-ui/app/app-list</a>.</p>
-</div>
-<div class="paragraph">
-<p>To push data about Application Performance Management / Business Transaction Management you need to install the (second) relative agent available in <code>btm</code> folder. Open the <code>btm/setenv.sh</code> file and set the correct URL user/pass and do:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>source btm/setenv.sh</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>just before start your WildFly instance.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_troubleshooting">Troubleshooting</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_error_on_starting_hawkular_outofmemoryerror_unable_to_create_new_native_thread">Error on starting Hawkular- OutOfMemoryError: unable to create new native thread</h3>
-<div class="paragraph">
-<p>This may happen if you use Cassandra embedded with Hawkular on *x systems</p>
-</div>
-<div class="paragraph">
-<p>Cassandra requires <code>ulimit</code> settings that are higher than usual on common *nix distributions. First check your present limits with <code>ulimit -a</code> and eventually increase open files to 65535 and max user processes to 4096 as appropriate on your system.</p>
-</div>
-<div class="paragraph">
-<p>On RHEL, CentOS and Fedora the settings can be made persistent in <code>/etc/security/limits.conf</code> like this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>[your_username]          hard    nofile          65535
-[your_username]          soft    nofile          65535
-[your_username]          hard    nproc           4096
-[your_username]          soft    nproc           4096</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>where <code>[your_username]</code> needs to be replaced by the by the name of the user who starts Hawkular or Cassandra nodes.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_unable_to_resolve_realm_public_key_remotely_status_404">Unable to resolve realm public key remotely, status = 404</h3>
-<div class="paragraph">
-<p>Exception: <code>ERROR [io.undertow.request] (default task-2) UT005023: Exception handling request to
-/hawkular/accounts/personas/current:</code> <code>java.lang.RuntimeException: Unable to resolve realm public key remotely, status
-= 404</code></p>
-</div>
-<div class="paragraph">
-<p>This happens when the auth server (Keycloak) cannot be reached. Make sure that the authentication server URL is set
-to the correct location of the Keycloak server. This might be wrong if you are using the <code>-b</code> option to bind
-Wildfly to a specific IP or if you have specified a port-offset (<code>-Djboss.socket.binding.port-offset=123</code>).</p>
-</div>
-<div class="paragraph">
-<p>The property to verify is called <code>auth-server-url</code> and is located on the following files:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>$HAWKULAR_HOME/standalone/configuration/standalone.xml
-$HAWKULAR_HOME/modules/org/hawkular/nest/main/deployments/hawkular-console.war/keycloak.json</pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_can_t_do_anything_without_a_feed_aborting_startup_java_lang_runtimeexception_cannot_get_tenant_id">Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</h3>
-<div class="paragraph">
-<p>Exception: <code>ERROR [org.hawkular.agent.monitor.service.MonitorService] (Controller Boot Thread) HAWKMONITOR010026:</code>
-<code>Can&#8217;t do anything without a feed; aborting startup: java.lang.RuntimeException: Cannot get tenant ID</code></p>
-</div>
-<div class="paragraph">
-<p>Similar to the above: make sure that your auth server (Keycloak) configuration is correct.</p>
 </div>
 </div>
 </div>
