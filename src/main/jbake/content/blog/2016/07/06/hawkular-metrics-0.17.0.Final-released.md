@@ -11,31 +11,30 @@ I am happy to announce release 0.17.0 of Hawkular Metrics. This release is ancho
 Here is a list of major changes:
 
 1. **Grafana Datasource Plugin - Experimental**
-  - A new Grafana 3 datasource plugin is now available for Hawkular Metrics. This plugin integrates natively via the REST API.
-  - For downloads and installation instructions please visit [Hawkular Datasource for Grafana](https://github.com/hawkular/hawkular-grafana-datasource)
-  - The plugin is developed as an independent project and contributions are welcomed.
+    - A new Grafana 3 datasource plugin is now available for Hawkular Metrics. This plugin integrates natively via the REST API.
+    - For downloads and installation instructions please visit [Hawkular Datasource for Grafana](https://github.com/hawkular/hawkular-grafana-datasource)
+    - The plugin is developed as an independent project and contributions are welcomed.
 1. **InfluxDB API - DEPRECATED**
-  - The InfluxDB API has been deprecated and will be removed in the upcoming release.
-  - This was an addition to make project integrations easier. As the REST interface matured, the role of the InfluxDB compatibility interface was reduced only serve as the Grafana interface. With the release of the native Grafana plugin, this is no longer needed.
-   - For more details: [HWKMETRICS-411](https://issues.jboss.org/browse/HWKMETRICS-411)
+    - The InfluxDB API has been deprecated and will be removed in the upcoming release.
+    - This was an addition to make project integrations easier. As the REST interface matured, the role of the InfluxDB compatibility interface was reduced only serve as the Grafana interface. With the release of the native Grafana plugin, this is no longer needed.
+    - For more details: [HWKMETRICS-411](https://issues.jboss.org/browse/HWKMETRICS-411)
 1. **Fetching Raw Data - Multiple Metrics - Experimental**
-  - Prior to this release, it was possible to only fetch raw data points for a single metric. This release added `POST */query` endpoint that allows querying for raw data points for multiple metrics.
-  - The endpoints are:
-     - `POST /hawkular/metrics/gauges/raw/query`
-     - `POST /hawkular/metrics/counters/raw/query`
-     - `POST /hawkular/metrics/counters/rates/query`
-     - `POST /hawkular/metrics/strings/raw/query`
-     - `POST /hawkular/metrics/availability/raw/query`
-     - `POST /hawkular/metrics/metrics/raw/query`
-  - The endpoint accepts a list of metrics ids and allows filtering by providing start time, end time, sort order and limit.
-  - For more details: [HWKMETRICS-393](https://issues.jboss.org/browse/HWKMETRICS-393)
+    - Prior to this release, it was possible to only fetch raw data points for a single metric. This release added `POST */query` endpoint that allows querying for raw data points for multiple metrics.
+    - The endpoints are:
+      - `POST /hawkular/metrics/gauges/raw/query`
+      - `POST /hawkular/metrics/counters/raw/query`
+      - `POST /hawkular/metrics/counters/rates/query`
+      - `POST /hawkular/metrics/strings/raw/query`
+      - `POST /hawkular/metrics/availability/raw/query`
+      - `POST /hawkular/metrics/metrics/raw/query`
+    - The endpoint accepts a list of metrics ids and allows filtering by providing start time, end time, sort order and limit.
+    - For more details: [HWKMETRICS-393](https://issues.jboss.org/browse/HWKMETRICS-393)
 1. **Performance Enhancements**
-  - Two Cassandra driver settings (maxConnectionsPerHost and maxRequestsPerConnection) are now user configurable. Part of the update, the default values have been increased from the driver defaults. The new defaults had a significant performance boost for a simple test deployment. The settings are configurable to allow users to optimize driver behavior for larger Hawkular Metrics deployments. ([HWKMETRICS-430](https://issues.jboss.org/browse/HWKMETRICS-430))
-  - On Linux deployments, the Cassandra driver uses  Netty native epoll ([HWKMETRICS-418](https://issues.jboss.org/browse/HWKMETRICS-418))
+    - Two Cassandra driver settings (maxConnectionsPerHost and maxRequestsPerConnection) are now user configurable. Part of the update, the default values have been increased from the driver defaults. The new defaults had a significant performance boost for a simple test deployment. The settings are configurable to allow users to optimize driver behavior for larger Hawkular Metrics deployments. ([HWKMETRICS-430](https://issues.jboss.org/browse/HWKMETRICS-430))
+    - On Linux deployments, the Cassandra driver uses  Netty native epoll ([HWKMETRICS-418](https://issues.jboss.org/browse/HWKMETRICS-418))
 1. **Cassandra**
-  - Fixed an issue with schema upgrades present in Hawkular Metrics 0.15.0 and 0.16.0. We recommend upgrading from previous versions directly to 0.17.0. For more details: [HWKMETRICS-425](https://issues.jboss.org/browse/HWKMETRICS-425)
-  - Cassandra 3.7 is now the supported version of Cassandra. Support has been deprecated for Cassandra 3.5.
-
+    - Fixed an issue with schema upgrades present in Hawkular Metrics 0.15.0 and 0.16.0. We recommend upgrading from previous versions directly to 0.17.0. For more details: [HWKMETRICS-425](https://issues.jboss.org/browse/HWKMETRICS-425)
+    - Cassandra 3.7 is now the supported version of Cassandra. Support has been deprecated for Cassandra 3.5.
 
 
 ### Hawkular Metrics Clients
