@@ -1,0 +1,58 @@
+= Vert.x agent inventory implementation
+Austin Kuo
+2016-8-11
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, explorer, vertx, inventory, agent
+
+Hi all,
+This is Austin, who is responsible for the gsoc project link:https://developer.jboss.org/wiki/JBossCommunityGoogleSummerOfCode2016Ideas#jive_content_id_Hawkularagent_for_vertx[Hawkular-agent for vert.x].
+
+What I do is to implement the functionality to report the running vertx instances to the hawkular inventory service.
+
+== Reported Entities
+
+==== Feed and Root resource
+. A feed represents the vertx instance.
+. A root resource which is the parent of all other subresources.
+
+==== Subresources
+. 1 eventbus resource
+. 1 http client resource
+. 1 net client resource
+. 1 datagram socket resource
+. 0...N http server resources depends on how many http servers are running.
+. 0...N net server resources depends on how many net servers are running.
+
+
+== Hawkfx Snapshot
+
+You now can view the inventory structure from the link:https://github.com/pilhuhn/hawkfx[hawkfx client].
+
+ifndef::env-github[]
+image::/img/blog/2016/2016-08-11-vertx-agent-inventory-snapshot.png[Hawkfx snapshot]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2016/2016-08-11-vertx-agent-inventory-snapshot.png[Hawkfx snapshot] 
+endif::[]
+
+== How to use it?
+
+The implementation is now at the brach link:https://github.com/vert-x3/vertx-hawkular-metrics/tree/inventory-reporter[inventory-reporter]
+
+Just follow the instruction in the repository but
+
+IMPORTANT: You have to enable inventory and provide the feed id and root resource id in *VertxHawkularOptions*.
+
+[source,java]
+----
+VertxHawkularOptions vertxHawkularOptions = new VertxHawkularOptions();
+vertxHawkularOptions.setEnabled(true); // By default Vert.x Metrics is disabled
+
+VertxOptions vertxOptions = new VertxOptions();
+vertxOptions.setMetricsOptions(vertxHawkularOptions);
+vertxOptions.setInventoryEnabled(true);
+vertxOptions.setFeedId("vertx-feed-id");
+vertxOptions.setVertxRootResourceId("root-resource-id");
+----
+
