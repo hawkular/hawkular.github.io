@@ -180,6 +180,113 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/08/11/vertx-agent-inventory-impl.html"><h1>Vert.x agent inventory implementation</h1></a>
+            <p>11 August 2016, by Austin Kuo</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hi all,
+This is Austin, who is responsible for the gsoc project <a href="https://developer.jboss.org/wiki/JBossCommunityGoogleSummerOfCode2016Ideas#jive_content_id_Hawkularagent_for_vertx">Hawkular-agent for vert.x</a>.</p>
+</div>
+<div class="paragraph">
+<p>What I do is to implement the functionality to report the running vertx instances to the hawkular inventory service.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_reported_entities">Reported Entities</h2>
+<div class="sectionbody">
+<div class="sect3">
+<h4 id="_feed_and_root_resource">Feed and Root resource</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>A feed represents the vertx instance.</p>
+</li>
+<li>
+<p>A root resource which is the parent of all other subresources.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_subresources">Subresources</h4>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>1 eventbus resource</p>
+</li>
+<li>
+<p>1 http client resource</p>
+</li>
+<li>
+<p>1 net client resource</p>
+</li>
+<li>
+<p>1 datagram socket resource</p>
+</li>
+<li>
+<p>0&#8230;&#8203;N http server resources depends on how many http servers are running.</p>
+</li>
+<li>
+<p>0&#8230;&#8203;N net server resources depends on how many net servers are running.</p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkfx_snapshot">Hawkfx Snapshot</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>You now can view the inventory structure from the <a href="https://github.com/pilhuhn/hawkfx">hawkfx client</a>.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-08-11-vertx-agent-inventory-snapshot.png" alt="Hawkfx snapshot">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_use_it">How to use it?</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The implementation is now at the brach <a href="https://github.com/vert-x3/vertx-hawkular-metrics/tree/inventory-reporter">inventory-reporter</a></p>
+</div>
+<div class="paragraph">
+<p>Just follow the instruction in the repository but</p>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+You have to enable inventory and provide the feed id and root resource id in <strong>VertxHawkularOptions</strong>.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">VertxHawkularOptions vertxHawkularOptions = new VertxHawkularOptions();
+vertxHawkularOptions.setEnabled(true); // By default Vert.x Metrics is disabled
+
+VertxOptions vertxOptions = new VertxOptions();
+vertxOptions.setMetricsOptions(vertxHawkularOptions);
+vertxOptions.setInventoryEnabled(true);
+vertxOptions.setFeedId("vertx-feed-id");
+vertxOptions.setVertxRootResourceId("root-resource-id");</code></pre>
+</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html"><h1>Hawkular Metrics 0.18.0 - Release</h1></a>
             <p>01 August 2016, by Stefan Negrea</p>
             <p><p>I am happy to announce release 0.18.0 of Hawkular Metrics. This release is anchored by performance enhancements and a new internal job scheduler.</p><p>Here is a list of major changes:</p>
@@ -602,90 +709,13 @@ When you are done you need to <em>validate</em> the credentials. If that went we
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/13/hawkfx.html"><h1>Introducing HawkFX</h1></a>
-            <p>13 July 2016, by Heiko W. Rupp</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>HawkFX is an explorer for Hawkular. It is a pet project of mine and <a href="https://github.com/pilhuhn/hawkfx">hosted on Github</a>.</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/hawkfx-main.png" alt="HawkFX main screen">
-</div>
-<div class="title">Figure 1. Main screen with availability popup</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_what_is_it">What is it?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>As the Hawkular-services distribution only contains the server and not UI on purpose, I had the need to explore the content of the inventory and metrics. Of course this is easily doable via <code>curl</code> commands, but ever so often I mistyped or did not correctly escape the forbidden characters in a URL.
-At around the same time I intensivated my work on the Hawkular Ruby client, so I started creating some tool in Ruby. I was looking first at some other Ruby UI toolkit, but that did not really please me. After a bit of investigation I came around JRubyFX, which is cool, as it combines Ruby with JavaFX.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_running">Running</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The explorer requires JRuby in version 9+ and Java8</p>
-</div>
-<div class="paragraph">
-<p>If you are using <code>rvm</code> you can select JRuby9 via</p>
-</div>
-<div class="paragraph">
-<p><code>rvm use jruby-9.0.5.0</code></p>
-</div>
-<div class="paragraph">
-<p>There is no distribution yet. So you need to clone the git-repository and use it from source</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">git clone https://github.com/pilhuhn/hawkfx.git
-cd hawkfx</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>install and use <code>bundler</code> to install the required gems:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">gem install bundler
-bundle install</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>then run</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">bundle exec jruby hawkfx.rb</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_more">More</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>In an earlier stage of HawkFX I wrote a <a href="http://pilhuhn.blogspot.de/2016/05/introducing-hawkfx.html">blog post on it on my personal blog</a>.</p>
-</div>
-<div class="paragraph">
-<p>Again: this is a pet project of mine with no support.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>13 July 2016 - <a href="blog/2016/07/13/hawkfx.html">Introducing HawkFX</a></li>
           <li>12 July 2016 - <a href="blog/2016/07/12/hawkular-and-jmx-jolokia.html">Hawkular and JMX/Jolokia</a></li>
           <li>12 July 2016 - <a href="blog/2016/07/12/hawkular-and-prometheus.html">Hawkular and Prometheus</a></li>
           <li>06 July 2016 - <a href="blog/2016/07/06/hawkular-metrics-0.17.0.Final-released.html">Hawkular Metrics 0.17.0 - Release</a></li>
