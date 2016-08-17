@@ -63,7 +63,7 @@ Hawkular Metrics supports common metric types including:
 
 *Tagging* +
 Hawkular Metrics provides flexible tagging support that makes it easy to organize and group data. Tagging can also be
-used provide additional information and context about data. For example, each metric
+used to provide additional information and context about data.
 
 *Querying* +
 Hawkular Metrics offers a rich set of features around querying that are ideal for rendering data in graphs and in
@@ -132,7 +132,7 @@ unique.
 
 == Metrics
 A metric represents a single time series that can be thought of as a continuous stream of data points. We will get into
-the details of data points in <<Inserting Data Points>>. For now, it is sufficient to know that a data point consists
+the details of data points in <<Inserting Data>>. For now, it is sufficient to know that a data point consists
 of a timestamp and a value.
 
 NOTE: The terms metric, metric definition, and time series will be interchangeably throughout the documentation.
@@ -145,9 +145,7 @@ Three types of metrics are currently supported:
 * Availability
 * Gauge
 * Counter
-
-NOTE: A string metric type may be added in a future release. See
-link:https://issues.jboss.org/browse/HWKMETRICS-384[HWKMETRICS-384] for details.
+* String
 
 ==== Availability
 Represents the availability of a resource such as host machine (physical or virtual) or an application server. There
@@ -193,13 +191,16 @@ compute and maintain the total count.
 Hawkular Metrics only supports the former in which each data point represents the total count; however, we can easily
 simulate counters that store deltas using gauges.
 
-NOTE: It is currently not possible to get rate data points for gauges. This will change in an upcoming release so that
-gauges can then be used for incrementing counters. See
-ink:https://issues.jboss.org/browse/HWKMETRICS-365[HWKMETRICS-365] for details.
+==== String
+The String metric type stores any arbitrary strings. Hawkular Metrics already has an Availability metric type, but it is
+limited to a predefined number of values which cannot easily be changed. In some cases a String type with arbritrary values
+would better fit for availability events. It can also be used for storing and tracking other types of events.
 
-===== Rate
-A rate is a derived metric whose values are computed from counter data points. Rate data points can be retrieved for
-any counter. They are represented as 64-bit floating point numbers.
+IMPORTANT: Note that there is a 2 KB limit for string data points.
+
+=== Rate
+A rate is a derived metric whose values are computed from counter or gauge data points. Rate data points can be retrieved for
+any counter or gauge. They are represented as 64-bit floating point numbers.
 
 TIP: Rate data points are not persisted. They are computed at query time.
 
@@ -291,7 +292,7 @@ slashes are no exception. If for example I have a tenant id of `com/acme`, then 
 as `com%2Facme`.
 
 == Inserting Data
-Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
+Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned until all data points
 are inserted. On the server side however, multiple inserts to the database are done in parallel to achieve higher
 throughput.
 
@@ -965,7 +966,7 @@ The response body will look something like,
 ]
 ----
 
-`gauge_1` has neither any tags or data retention defined. Its the tenant data retention. If that is not defined, it
+`gauge_1` has neither any tags nor data retention defined. It uses the tenant data retention. If that is not defined, it
 uses the system default. `gauge_2` has its own data retention of 20 days. `gauge_3` has a data retention of 15 days and
 also defines some tags.
 
@@ -1627,8 +1628,8 @@ WARNING: There is currently no API for fetching bucket data points across multip
 == Links
 Please visit the following pages for more details:
 
-* link:../../rest/rest-metrics.html[Metrics - REST API documentation]
+* link:../../../docs/rest/rest-metrics.html[Metrics - REST API documentation]
 * https://github.com/hawkular/hawkular-metrics[GitHub Repository]
 * link:installation.html[Installation Guide]
 * link:configuration.html[Configuration Guide]
-* link:grafana_integration.html[Grafana integration]
+* link:../../../hawkular-clients/grafana/docs/quickstart-guide[Grafana integration]
