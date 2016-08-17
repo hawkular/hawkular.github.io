@@ -197,6 +197,7 @@
 <li><a href="#_metrics">Metrics</a>
 <ul class="sectlevel2">
 <li><a href="#_metric_types">Metric Types</a></li>
+<li><a href="#_rate">Rate</a></li>
 <li><a href="#_metric_ids">Metric Ids</a></li>
 <li><a href="#_creating_metrics">Creating Metrics</a></li>
 </ul>
@@ -308,7 +309,7 @@ Hawkular Metrics supports common metric types including:</p>
 <div class="paragraph">
 <p><strong>Tagging</strong><br>
 Hawkular Metrics provides flexible tagging support that makes it easy to organize and group data. Tagging can also be
-used provide additional information and context about data. For example, each metric</p>
+used to provide additional information and context about data.</p>
 </div>
 <div class="paragraph">
 <p><strong>Querying</strong><br>
@@ -424,7 +425,7 @@ unique.
 <div class="sectionbody">
 <div class="paragraph">
 <p>A metric represents a single time series that can be thought of as a continuous stream of data points. We will get into
-the details of data points in <a href="#Inserting Data Points">[Inserting Data Points]</a>. For now, it is sufficient to know that a data point consists
+the details of data points in <a href="#_inserting_data">Inserting Data</a>. For now, it is sufficient to know that a data point consists
 of a timestamp and a value.</p>
 </div>
 <div class="admonitionblock note">
@@ -458,20 +459,10 @@ The terms metric, metric definition, and time series will be interchangeably thr
 <li>
 <p>Counter</p>
 </li>
+<li>
+<p>String</p>
+</li>
 </ul>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-A string metric type may be added in a future release. See
-<a href="https://issues.jboss.org/browse/HWKMETRICS-384">HWKMETRICS-384</a> for details.
-</td>
-</tr>
-</table>
 </div>
 <div class="sect3">
 <h4 id="_availability">Availability</h4>
@@ -561,25 +552,33 @@ compute and maintain the total count.</p>
 <p>Hawkular Metrics only supports the former in which each data point represents the total count; however, we can easily
 simulate counters that store deltas using gauges.</p>
 </div>
-<div class="admonitionblock note">
+</div>
+<div class="sect3">
+<h4 id="_string">String</h4>
+<div class="paragraph">
+<p>The String metric type stores any arbitrary strings. Hawkular Metrics already has an Availability metric type, but it is
+limited to a predefined number of values which cannot easily be changed. In some cases a String type with arbritrary values
+would better fit for availability events. It can also be used for storing and tracking other types of events.</p>
+</div>
+<div class="admonitionblock important">
 <table>
 <tr>
 <td class="icon">
-<i class="fa icon-note" title="Note"></i>
+<i class="fa icon-important" title="Important"></i>
 </td>
 <td class="content">
-It is currently not possible to get rate data points for gauges. This will change in an upcoming release so that
-gauges can then be used for incrementing counters. See
-ink:https://issues.jboss.org/browse/HWKMETRICS-365[HWKMETRICS-365] for details.
+Note that there is a 2 KB limit for string data points.
 </td>
 </tr>
 </table>
 </div>
-<div class="sect4">
-<h5 id="_rate">Rate</h5>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rate">Rate</h3>
 <div class="paragraph">
-<p>A rate is a derived metric whose values are computed from counter data points. Rate data points can be retrieved for
-any counter. They are represented as 64-bit floating point numbers.</p>
+<p>A rate is a derived metric whose values are computed from counter or gauge data points. Rate data points can be retrieved for
+any counter or gauge. They are represented as 64-bit floating point numbers.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -592,8 +591,6 @@ Rate data points are not persisted. They are computed at query time.
 </td>
 </tr>
 </table>
-</div>
-</div>
 </div>
 </div>
 <div class="sect2">
@@ -733,7 +730,7 @@ as <code>com%2Facme</code>.
 <h2 id="_inserting_data">Inserting Data</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned all data points
+<p>Inserting data is a synchronous operation with respect to the client. An HTTP response is not returned until all data points
 are inserted. On the server side however, multiple inserts to the database are done in parallel to achieve higher
 throughput.</p>
 </div>
@@ -1541,7 +1538,7 @@ see the complete <a href="../../rest/rest-metrics.html">REST API documentation</
 </div>
 </div>
 <div class="paragraph">
-<p><code>gauge_1</code> has neither any tags or data retention defined. Its the tenant data retention. If that is not defined, it
+<p><code>gauge_1</code> has neither any tags nor data retention defined. It uses the tenant data retention. If that is not defined, it
 uses the system default. <code>gauge_2</code> has its own data retention of 20 days. <code>gauge_3</code> has a data retention of 15 days and
 also defines some tags.</p>
 </div>
@@ -2459,7 +2456,7 @@ There is currently no API for fetching bucket data points across multiple availa
 <div class="ulist">
 <ul>
 <li>
-<p><a href="../../rest/rest-metrics.html">Metrics - REST API documentation</a></p>
+<p><a href="../../../docs/rest/rest-metrics.html">Metrics - REST API documentation</a></p>
 </li>
 <li>
 <p><a href="https://github.com/hawkular/hawkular-metrics">GitHub Repository</a></p>
@@ -2471,7 +2468,7 @@ There is currently no API for fetching bucket data points across multiple availa
 <p><a href="configuration.html">Configuration Guide</a></p>
 </li>
 <li>
-<p><a href="grafana_integration.html">Grafana integration</a></p>
+<p><a href="../../../hawkular-clients/grafana/docs/quickstart-guide">Grafana integration</a></p>
 </li>
 </ul>
 </div>
