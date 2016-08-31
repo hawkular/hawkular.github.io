@@ -194,6 +194,9 @@
 <li><a href="#_with_the_rest_api">With the REST API</a></li>
 </ul>
 </li>
+<li><a href="#_step_3_add_alerting">Step 3: Add alerting</a></li>
+<li><a href="#_step_4_test_the_alert_trigger">Step 4: Test the alert trigger</a></li>
+<li><a href="#_more">More</a></li>
 </ul>
 </div>
 </div>
@@ -202,7 +205,7 @@
 <h2 id="_install_hawkular">Install Hawkular</h2>
 <div class="sectionbody">
 <div class="paragraph">
-<p>Please refer to the <a href="../installation-guide/">installation guide</a> to install Hawkular Server</p>
+<p>Please refer to the <a href="../installation-guide/">installation guide</a> to install Hawkular Server. To execute the commands below, make sure to create a user <code>myUsername</code> with the password <code>myPassword</code>.</p>
 </div>
 </div>
 </div>
@@ -229,10 +232,10 @@ Hawkular Services provides different libraries for different languages, but here
 </table>
 </div>
 <div class="paragraph">
-<p>Copy the following content in a file named <code>request.json</code>, it contains weather data collected every 30 min for the whole day of July 15th 2016.</p>
+<p>Copy the following content in a file named <code>metrics_day_1.json</code>, it contains weather data collected every 30 min for the whole day of July 15th 2016.</p>
 </div>
 <div class="listingblock">
-<div class="title">request.json</div>
+<div class="title">metrics_day_1.json</div>
 <div class="content">
 <pre>[
   {"timestamp": 1468533600000, "value": 10},
@@ -292,7 +295,7 @@ with the values of your choice, in this simple scenario, we don&#8217;t need to 
 </div>
 <div class="listingblock">
 <div class="content">
-<pre>curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/metrics/gauges/temperature/raw -d @request.json -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
+<pre>curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/metrics/gauges/temperature/raw -d @metrics_day_1.json -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
 </div>
 </div>
 <div class="paragraph">
@@ -320,7 +323,7 @@ Here would be the result:</p>
 <div class="sect2">
 <h3 id="_with_the_rest_api">With the REST API</h3>
 <div class="paragraph">
-<p>The metrics API provides ways to retrieve raw or aggregated values, here is a command to get back the raw value as we inserted earlier.
+<p>The metrics API provides ways to retrieve raw or downsampled values, here is a command to get back the raw value as we inserted earlier, for a part of the day.
 The URL is the same, the command is a GET instead of a POST and we added extra parameters to define from when to when we want the values,
 and that we want the data ordered by time.</p>
 </div>
@@ -328,7 +331,7 @@ and that we want the data ordered by time.</p>
 <div class="title">Curl command</div>
 <div class="content">
 <pre>curl -u myUsername:myPassword \
-  -X GET "http://localhost:8080/hawkular/metrics/gauges/temperature/raw?start=1468533600000&amp;end=1468618200001&amp;order=ASC" \
+  -X GET "http://localhost:8080/hawkular/metrics/gauges/temperature/raw?start=1468578600000&amp;end=1468594800001&amp;order=ASC" \
   -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
 </div>
 </div>
@@ -338,9 +341,381 @@ and that we want the data ordered by time.</p>
 <div class="listingblock">
 <div class="title">Command result</div>
 <div class="content">
-<pre>[{"timestamp":1468533600000,"value":10.0},{"timestamp":1468535400000,"value":10.0},{"timestamp":1468537200000,"value":9.7},{"timestamp":1468539000000,"value":9.6},{"timestamp":1468540800000,"value":9.6},{"timestamp":1468542600000,"value":9.6},{"timestamp":1468544400000,"value":9.5},{"timestamp":1468546200000,"value":9.5},{"timestamp":1468548000000,"value":9.5},{"timestamp":1468549800000,"value":9.5},{"timestamp":1468551600000,"value":9.5},{"timestamp":1468553400000,"value":9.5},{"timestamp":1468555200000,"value":9.6},{"timestamp":1468557000000,"value":9.6},{"timestamp":1468558800000,"value":9.7},{"timestamp":1468560600000,"value":9.7},{"timestamp":1468562400000,"value":9.8},{"timestamp":1468564200000,"value":10.0},{"timestamp":1468566000000,"value":10.2},{"timestamp":1468567800000,"value":10.3},{"timestamp":1468569600000,"value":10.0},{"timestamp":1468571400000,"value":9.9},{"timestamp":1468573200000,"value":10.1},{"timestamp":1468575000000,"value":9.7},{"timestamp":1468576800000,"value":9.2},{"timestamp":1468578600000,"value":9.2},{"timestamp":1468580400000,"value":9.9},{"timestamp":1468582200000,"value":11.0},{"timestamp":1468584000000,"value":12.4},{"timestamp":1468585800000,"value":13.3},{"timestamp":1468587600000,"value":14.3},{"timestamp":1468589400000,"value":13.6},{"timestamp":1468591200000,"value":11.0},{"timestamp":1468593000000,"value":10.2},{"timestamp":1468594800000,"value":10.1},{"timestamp":1468596600000,"value":10.3},{"timestamp":1468598400000,"value":10.9},{"timestamp":1468600200000,"value":11.4},{"timestamp":1468602000000,"value":11.7},{"timestamp":1468603800000,"value":11.5},{"timestamp":1468605600000,"value":11.1},{"timestamp":1468607400000,"value":10.6},{"timestamp":1468609200000,"value":10.1},{"timestamp":1468611000000,"value":9.6},{"timestamp":1468612800000,"value":9.2},{"timestamp":1468614600000,"value":9.1},{"timestamp":1468616400000,"value":9.1},{"timestamp":1468618200000,"value":9.1}]</pre>
+<pre>[
+  {
+    "timestamp": 1468578600000,
+    "value": 9.2
+  },
+  {
+    "timestamp": 1468580400000,
+    "value": 9.9
+  },
+  {
+    "timestamp": 1468582200000,
+    "value": 11
+  },
+  {
+    "timestamp": 1468584000000,
+    "value": 12.4
+  },
+  {
+    "timestamp": 1468585800000,
+    "value": 13.3
+  },
+  {
+    "timestamp": 1468587600000,
+    "value": 14.3
+  },
+  {
+    "timestamp": 1468589400000,
+    "value": 13.6
+  },
+  {
+    "timestamp": 1468591200000,
+    "value": 11
+  },
+  {
+    "timestamp": 1468593000000,
+    "value": 10.2
+  },
+  {
+    "timestamp": 1468594800000,
+    "value": 10.1
+  }
+]</pre>
 </div>
 </div>
+<div class="paragraph">
+<p>It is likely that the data will need to be downsampled, if there are too many data points in a short period of time. For instance to display two years of weather
+in a graph, the frequency every 30min is likely too much. The timeseries database allow to get "buckets" of data, which could be determined by the number of
+datapoints (size of the bucket) or the duration of a bucket. In this example, let&#8217;s say we want to know the minimum, maximum and average values for buckets that
+would last 2 hours. Since we have 24h of data, we should end up with 12 buckets of 4 data points (since we have 4 data points in 2h).</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="title">Percentiles</div>
+It is also possible to add percentiles values to the results, see the <a href="/hawkular-metrics/docs/user-guide/#_downsampling">Metrics User Guide</a>.
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="title">Curl command</div>
+<div class="content">
+<pre>curl -u myUsername:myPassword -X GET "http://localhost:8080/hawkular/metrics/gauges/temperature/stats?bucketDuration=2h&amp;start=1468533600000&amp;end=1468618200001" -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Command result</div>
+<div class="content">
+<pre>[
+  {
+    "start": 1468533600000,
+    "end": 1468540800000,
+    "min": 9.6,
+    "avg": 9.825,
+    "median": 9.7,
+    "max": 10,
+    "sum": 39.3,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468540800000,
+    "end": 1468548000000,
+    "min": 9.5,
+    "avg": 9.55,
+    "median": 9.5,
+    "max": 9.6,
+    "sum": 38.2,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468548000000,
+    "end": 1468555200000,
+    "min": 9.5,
+    "avg": 9.5,
+    "median": 9.5,
+    "max": 9.5,
+    "sum": 38,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468555200000,
+    "end": 1468562400000,
+    "min": 9.6,
+    "avg": 9.649999999999999,
+    "median": 9.6,
+    "max": 9.7,
+    "sum": 38.6,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468562400000,
+    "end": 1468569600000,
+    "min": 9.8,
+    "avg": 10.075,
+    "median": 10,
+    "max": 10.3,
+    "sum": 40.3,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468569600000,
+    "end": 1468576800000,
+    "min": 9.7,
+    "avg": 9.924999999999999,
+    "median": 9.9,
+    "max": 10.1,
+    "sum": 39.699999999999996,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468576800000,
+    "end": 1468584000000,
+    "min": 9.2,
+    "avg": 9.825,
+    "median": 9.2,
+    "max": 11,
+    "sum": 39.3,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468584000000,
+    "end": 1468591200000,
+    "min": 12.4,
+    "avg": 13.399999999999999,
+    "median": 13.3,
+    "max": 14.3,
+    "sum": 53.6,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468591200000,
+    "end": 1468598400000,
+    "min": 10.1,
+    "avg": 10.399999999999999,
+    "median": 10.2,
+    "max": 11,
+    "sum": 41.599999999999994,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468598400000,
+    "end": 1468605600000,
+    "min": 10.9,
+    "avg": 11.375,
+    "median": 11.4,
+    "max": 11.7,
+    "sum": 45.5,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468605600000,
+    "end": 1468612800000,
+    "min": 9.6,
+    "avg": 10.35,
+    "median": 10.1,
+    "max": 11.1,
+    "sum": 41.4,
+    "samples": 4,
+    "empty": false
+  },
+  {
+    "start": 1468612800000,
+    "end": 1468620000000,
+    "min": 9.1,
+    "avg": 9.125,
+    "median": 9.1,
+    "max": 9.2,
+    "sum": 36.5,
+    "samples": 4,
+    "empty": false
+  }
+]</pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+<div class="title">Learn more</div>
+We only scratched the surface of what we can do when storing and retrieving metrics, in the <a href="/hawkular-metrics/docs/user-guide/#_downsampling">Metrics User Guide</a>
+you will see how to tag metrics, aggregate values from various metrics and other advanced features.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_3_add_alerting">Step 3: Add alerting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We saw how to add metrics, visualize those and make some computation, now we&#8217;ll see how to be notified for particular conditions.
+An alert trigger consists of:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A set of conditions to trigger the alert/event</p>
+</li>
+<li>
+<p>One or multiple actions to take when the conditions are met (send an email, call a webhook, start/stop new docker containers or VM for autoscaling&#8230;&#8203;)</p>
+</li>
+<li>
+<p>Some additional metadata (such as the severity, a description or business context)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Here is the example we will use, we put everything in a single file while in practice the actions may be separated as they are reusable among various triggers.
+This basic example would send an email to '<a href="mailto:admin@example.org">admin@example.org</a>' if the temperature gets below 0 degrees Celcius (Water freezing point)</p>
+</div>
+<div class="listingblock">
+<div class="title">trigger_definition.json</div>
+<div class="content">
+<pre>{
+  "triggers": [
+    {
+      "trigger": {
+        "id": "temperature-trigger",
+        "name": "Trigger for the temperature sensor",
+        "severity": "HIGH",
+        "enabled": true,
+        "actions": [
+          {
+            "actionPlugin": "email",
+            "actionId": "notify-admin"
+          }
+        ]
+      },
+      "conditions": [
+        {
+          "triggerMode": "FIRING",
+          "type": "threshold",
+          "dataId": "temperature",
+          "operator": "LT",
+          "threshold": 0
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "actionPlugin": "email",
+      "actionId": "notify-admin",
+      "properties": {
+        "to": "admin@example.org"
+      }
+    }
+  ]
+}</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To import that trigger definition, we&#8217;ll use the <code>import</code> command of the REST API:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/alerts/import/all -d @includes/alert-definition.json \
+   -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_step_4_test_the_alert_trigger">Step 4: Test the alert trigger</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>From now on, if we enter metrics that satisfy the condition, an email would be send (assuming an email server is available and configured).
+Let&#8217;s try to enter more metrics, similar to what we did earlier.</p>
+</div>
+<div class="listingblock">
+<div class="title">metrics_day_2.json</div>
+<div class="content">
+<pre>[
+  {"timestamp": 1468620000000, "value": 8},
+  {"timestamp": 1468621800000, "value": 6},
+  {"timestamp": 1468623600000, "value": 3},
+  {"timestamp": 1468625400000, "value": 0},
+  {"timestamp": 1468627200000, "value": -2},
+  {"timestamp": 1468629000000, "value": -3},
+  {"timestamp": 1468630800000, "value": -1},
+  {"timestamp": 1468632600000, "value": 2},
+  {"timestamp": 1468634400000, "value": 4},
+  {"timestamp": 1468636200000, "value": 5},
+  {"timestamp": 1468638000000, "value": 8},
+  {"timestamp": 1468639800000, "value": 12},
+  {"timestamp": 1468641600000, "value": 13},
+  {"timestamp": 1468643400000, "value": 12},
+  {"timestamp": 1468645200000, "value": 13.4},
+  {"timestamp": 1468647000000, "value": 14},
+  {"timestamp": 1468648800000, "value": 14.3},
+  {"timestamp": 1468650600000, "value": 14.6},
+  {"timestamp": 1468652400000, "value": 17},
+  {"timestamp": 1468654200000, "value": 17.3},
+  {"timestamp": 1468656000000, "value": 17.5},
+  {"timestamp": 1468657800000, "value": 17.9},
+  {"timestamp": 1468659600000, "value": 18},
+  {"timestamp": 1468661400000, "value": 18.7},
+  {"timestamp": 1468663200000, "value": 19.2}
+]</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And execute the command to store the metrics (and will evaluate against our alert trigger conditions):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>curl -u myUsername:myPassword -X POST http://localhost:8080/hawkular/metrics/gauges/temperature/raw -d @metrics_day_2.json \
+   -H "Content-Type: application/json" -H "Hawkular-Tenant: myTenant"</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In the logs of Hawkular Services, you should see 3 INFO messages showing that the conditions were met such as:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>11:59:37,361 INFO  [org.hawkular.alerts.actions.api] (Thread-251 (ActiveMQ-client-global-threads-1118700939)) HAWKALERT240001: Plugin [email] has received an action message: [BusActionMessage[action=Action[eventId='temperature-trigger-1472551176767-dc41aaf3-bdd7-4a89-a950-44dc92f10c8b', ctime=1472551176769, event=Alert [alertId=temperature-trigger-1472551176767-dc41aaf3-bdd7-4a89-a950-44dc92f10c8b, status=OPEN, ackTime=0, ackBy=null, resolvedTime=0, resolvedBy=null, context={}], result='null']]]
+11:59:37,385 INFO  [org.hawkular.alerts.actions.api] (Thread-242 (ActiveMQ-client-global-threads-1118700939)) HAWKALERT240001: Plugin [email] has received an action message: [BusActionMessage[action=Action[eventId='temperature-trigger-1472551176770-300fda0d-2c82-46e3-9f09-f4e9ed4ffa3a', ctime=1472551176771, event=Alert [alertId=temperature-trigger-1472551176770-300fda0d-2c82-46e3-9f09-f4e9ed4ffa3a, status=OPEN, ackTime=0, ackBy=null, resolvedTime=0, resolvedBy=null, context={}], result='null']]]
+11:59:37,384 INFO  [org.hawkular.alerts.actions.api] (Thread-253 (ActiveMQ-client-global-threads-1118700939)) HAWKALERT240001: Plugin [email] has received an action message: [BusActionMessage[action=Action[eventId='temperature-trigger-1472551176759-90040813-1b7a-4bda-ac65-1c7f673d4daa', ctime=1472551176760, event=Alert [alertId=temperature-trigger-1472551176759-90040813-1b7a-4bda-ac65-1c7f673d4daa, status=OPEN, ackTime=0, ackBy=null, resolvedTime=0, resolvedBy=null, context={}], result='null']]]</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_more">More</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Congratulations, you just scratched the surface of Hawkular Services!</p>
+</div>
+<div class="paragraph">
+<p>We played with basic metrics and alerting capabilities, both have more advanced features and we didn&#8217;t tackle the inventory service in this getting started guide.</p>
+</div>
+<div class="paragraph">
+<p>More details are available in the <a href="/hawkular-services/docs/user-guide/">Hawkular Services user guide</a> and the various REST APIs documentations: <a href="/docs/rest/rest-alerts.html">Alerting REST API</a>, <a href="/docs/rest/rest-metrics.html">Metrics REST API</a> and <a href="/docs/rest/rest-inventory.html">Inventory REST API</a></p>
+</div>
+<div class="paragraph">
+<p>Note that multiple client libraries have been written already, and some agents that can collect or listen to metrics to feed the system. Have a look at the <a href="/hawkular-clients/">clients page</a> to see what it supported as of today (We love contributions!)</p>
 </div>
 </div>
 </div>
