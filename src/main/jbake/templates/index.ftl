@@ -9,7 +9,7 @@
           </h1>
           <div class="buttons fade-in two">
             <a class="btn btn-primary btn-lg" href="/overview/">Overview</a>
-            <a class="btn btn-default btn-lg" href="https://github.com/hawkular">View on GitHub</a>
+            <a class="btn btn-default btn-lg" href="/hawkular-services/docs/quickstart-guide/">Get Started!</a>
           </div>
           <!--p class="version fade-in three"><i class="fa fa-list-ul"></i><span class="latestVersion"/>
           </p-->
