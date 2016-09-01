@@ -115,6 +115,8 @@
                       </ul>
                   </li>
                   <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
                     <a href="https://travis-ci.org/hawkular">CI Builds</a>
                   </li>
                 </ul></li>
