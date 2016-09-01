@@ -6,13 +6,25 @@ Jiri Kremser
 :jbake-tags: blog, spark, metrics, cassandra
 
 The goal of this blog post is to show how to easily connect link:https://spark.apache.org/[Apache Spark] to the
-Cassandra with the metric data and do some data transformations/analysis.
+Cassandra with the metric data; perform simple transformation on the data as well as some examples of calculating correlation
+between the two time series data streams. Last but not least we will show how to create a
+link:https://en.wikipedia.org/wiki/K-means_clustering[k-means] clustering model.
 
 ifndef::env-github[]
 image::/img/blog/2016/2016-08-31-spark-logo.png[Spark logo]
 endif::[]
 ifdef::env-github[]
 image::../../../../../assets/img/blog/2016/2016-08-31-spark-logo.png[Spark logo]
+endif::[]
+
+The situation is visualized on the figure bellow. After the WildFly Agent was collecting the data for some time period and
+reporting them to Hawkular Metrics. Hawkular Metrics stores them into Cassandra to which we will be connecting with Spark.
+
+ifndef::env-github[]
+image::/img/blog/2016/2016-08-31-spark.png[Components interaction]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2016/2016-08-31-spark.png[Components interaction]
 endif::[]
 
 == Initialization
@@ -34,9 +46,9 @@ because one can track down the calls in the (native) source code.
 
 == Reading the data from Cassandra
 
-Let's create an RDD from Cassandra table called "data" in "hawkular_metrics" keyspace. RDD stands for Resilient
-Distributed Datasets and has link:https://spark.apache.org/docs/latest/api/scala/#org.apache.spark.rdd.RDD[plenty] of
-useful operations defined. RDD is a leitmotif in Spark, all the data manipulation
+Let's create a "Resilient Distributed Dataset" (RDD) from Cassandra table called "data" in "hawkular_metrics" keyspace.
+Resilient Distributed Datasets have link:https://spark.apache.org/docs/latest/api/scala/#org.apache.spark.rdd.RDD[plenty]
+of useful operations defined. RDD is a leitmotif in Spark, all the data manipulation
 is represented by chaining the operations on RDDs. It is an immutable structure that inherently supports parallelization.
 Generally speaking, RDDs can be created as a result of calling a method on another RDD(s)
 or by calling a method the `SparkContext`.
@@ -96,8 +108,10 @@ Let us create a derived RDD that will represent the used memory on the platform.
 ----
 val used: RDD[Double] = total.zip(free).map(e => e._1 - e._2)
 ----
+What we have done here is that we have created a new RDD, representing a metric data that were calculated using two
+other metric streams. The transformation was trivial, but RDD provides also methods for aggregation.
 
-And calculate the correlation between the used and free memory. There should be some correlation, right?
+Now, let's calculate the correlation between the used and free memory. There should be some correlation, right?
 
 [source,scala]
 ----
@@ -105,10 +119,17 @@ val correlation: Double = Statistics.corr(used, free, "pearson")
 println(s"Correlation is: $correlation")
 ----
 
-This will print `Correlation is: -0.9999999999999781`. That means there is total negative correlation between the two.
-This example is pretty trivial, but in general, one can calculate the correlation between any two metric streams this way.
+This will print `Correlation is: -0.9999999999999781`. That means there is total negative
+link:https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient[correlation] between the two
+(the higher the first one, the lower the second one).
+This example was artificial, but in general, one can calculate the correlation between any two metric streams. Of course,
+correlation doesn't imply causation, so we can't extract any higher level information like business rules here.
+But we obtain some information that metrics are somehow related together and with further analysis we can for example detect, that
+change in one metric stream always precedes the change in the second metric stream. Again, it's not causation, but something stronger than
+correlation. link:https://en.wikipedia.org/wiki/Granger_causality[Granger causality test] is possible method,
+nonetheless, this is out of the scope of this blog post.
 
-Last thing, I wanted to show is the k-means clustering in action.
+Last thing, I wanted to show is the k-means clustering.
 
 [source,scala]
 ----
