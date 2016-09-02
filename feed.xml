@@ -6,9 +6,230 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Thu, 1 Sep 2016 20:24:51 +0000</pubDate>
-    <lastBuildDate>Thu, 1 Sep 2016 20:24:51 +0000</lastBuildDate>
+    <pubDate>Fri, 2 Sep 2016 13:10:46 +0000</pubDate>
+    <lastBuildDate>Fri, 2 Sep 2016 13:10:46 +0000</lastBuildDate>
 
+    <item>
+      <title>Metric Data Analysis using the Apache Spark</title>
+      <link>http://www.hawkular.org/blog/2016/08/31/spark-metric-analysis.html</link>
+      <author>noreply@hawkular.org (Jiri Kremser)</author>
+      <pubDate>Wed, 31 Aug 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/08/31/spark-metric-analysis.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The goal of this blog post is to show how to easily connect &lt;a href=&quot;https://spark.apache.org/&quot;&gt;Apache Spark&lt;/a&gt; to the
+Cassandra with the metric data; perform simple transformation on the data as well as some examples of calculating correlation
+between the two time series data streams. Last but not least we will show how to create a
+&lt;a href=&quot;https://en.wikipedia.org/wiki/K-means_clustering&quot;&gt;k-means&lt;/a&gt; clustering model.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-08-31-spark-logo.png&quot; alt=&quot;Spark logo&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The situation is visualized on the figure bellow. After the WildFly Agent was collecting the data for some time period and
+reporting them to Hawkular Metrics. Hawkular Metrics stores them into Cassandra to which we will be connecting with Spark.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-08-31-spark.png&quot; alt=&quot;Components interaction&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_initialization&quot;&gt;Initialization&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;First we need to create a spark context with the &lt;code&gt;spark.cassandra.connection.host&lt;/code&gt; property correctly set.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val conf = new SparkConf()
+  .setAppName(&quot;HelloHawkular&quot;)
+  .setMaster(&quot;local&quot;)
+  .set(&quot;spark.cassandra.connection.host&quot;, &quot;127.0.0.1&quot;)
+val sc = new SparkContext(conf)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It is very simple, the only assumption here is that the &lt;code&gt;spark-cassandra-connector&lt;/code&gt; jar is on the class path.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Apache Spark is completely written in Scala so also the examples are written in Scala.
+Although, it provides also Java and Python APIs, using the language it has been written in is the best choice,
+because one can track down the calls in the (native) source code.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_reading_the_data_from_cassandra&quot;&gt;Reading the data from Cassandra&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s create a &quot;Resilient Distributed Dataset&quot; (RDD) from Cassandra table called &quot;data&quot; in &quot;hawkular_metrics&quot; keyspace.
+Resilient Distributed Datasets have &lt;a href=&quot;https://spark.apache.org/docs/latest/api/scala/#org.apache.spark.rdd.RDD&quot;&gt;plenty&lt;/a&gt;
+of useful operations defined. RDD is a leitmotif in Spark, all the data manipulation
+is represented by chaining the operations on RDDs. It is an immutable structure that inherently supports parallelization.
+Generally speaking, RDDs can be created as a result of calling a method on another RDD(s)
+or by calling a method the &lt;code&gt;SparkContext&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val rdd: RDD[CassandraRow] = sc.cassandraTable(&quot;hawkular_metrics&quot;, &quot;data&quot;)
+println(rdd.count)
+println(rdd.first)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This prints the number of rows (in my case 245609) and the very first row, just to have an idea how it looks like:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;CassandraRow{tenant_id: hawkular, type: 0, metric: MI~R~[e69a19f7-76e7-4fd2-8ed5-864d1570f3ff/Local~/deployment=hawkular-alerts-rest.war/subsystem=ejb3/singleton-bean=PartitionManagerImpl]~MT~Singleton EJB Metrics~Execution Time, dpart: 0, time: baef5a00-6e31-11e6-96d2-5f826fbc8eb1, aggregates: {}, availability: null, data_retention: null, l_value: null, n_value: 0.0, s_value: null, tags: {}}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The data table contains all the metrics so we need to filter only what we are interested in.
+RDD provides a &lt;code&gt;groupBy&lt;/code&gt; method that takes a function that is applied on all the data in the RDD and returns the key by
+which the grouping should be done. We can group by the &lt;code&gt;metric&lt;/code&gt;. This can be useful when working with more
+metrics. But for our purposes, let&amp;#8217;s just do simple filter method.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val feedId = &quot;e69a19f7-76e7-4fd2-8ed5-864d1570f3ff&quot;
+val metric1 = &quot;Total Memory&quot;
+val metric2 = &quot;Available Memory&quot;
+val total: RDD[Double] = rdd.filter(x =&amp;gt; {
+    val metricId = x.getString(&quot;metric&quot;)
+    metricId.contains(feedId) &amp;amp;&amp;amp; metricId.contains(metric1)
+  })
+  .map(_.getDouble(&quot;n_value&quot;))
+  .repartition(8)
+
+val free: RDD[Double] = rdd.filter(x =&amp;gt; {
+    val metricId = x.getString(&quot;metric&quot;)
+    metricId.contains(feedId) &amp;amp;&amp;amp; metricId.contains(metric2)
+  })
+  .map(_.getDouble(&quot;n_value&quot;))
+  .repartition(8)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;code&gt;repartition()&lt;/code&gt; method needs to be called because methods like &lt;code&gt;filter&lt;/code&gt;, &lt;code&gt;flatMap&lt;/code&gt; and similar have impact on the
+number of elements in each partition. We need those two RDDs to have the same amount of partitions and the same amount
+of elements in each partition in order to be able to apply some statistical methods on them. Method called &lt;code&gt;coalesce&lt;/code&gt;
+is an alternative option to use here. Perhaps even better because it does not shuffle the data over the network in case
+of multi node environment. However, the data model of Hawkular metrics ensures that data from one metric are always on
+the same node.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, we have two RDDs. The &lt;code&gt;total&lt;/code&gt; and &lt;code&gt;free&lt;/code&gt; that represent the amounts of memory that was &quot;free&quot; on the platform and the total value.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_doing_something_fancy&quot;&gt;Doing something fancy&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let us create a derived RDD that will represent the used memory on the platform.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val used: RDD[Double] = total.zip(free).map(e =&amp;gt; e._1 - e._2)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;What we have done here is that we have created a new RDD, representing a metric data that were calculated using two
+other metric streams. The transformation was trivial, but RDD provides also methods for aggregation.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, let&amp;#8217;s calculate the correlation between the used and free memory. There should be some correlation, right?&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val correlation: Double = Statistics.corr(used, free, &quot;pearson&quot;)
+println(s&quot;Correlation is: $correlation&quot;)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This will print &lt;code&gt;Correlation is: -0.9999999999999781&lt;/code&gt;. That means there is total negative
+&lt;a href=&quot;https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient&quot;&gt;correlation&lt;/a&gt; between the two
+(the higher the first one, the lower the second one).
+This example was artificial, but in general, one can calculate the correlation between any two metric streams. Of course,
+correlation doesn&amp;#8217;t imply causation, so we can&amp;#8217;t extract any higher level information like business rules here.
+But we obtain some information that metrics are somehow related together and with further analysis we can for example detect, that
+change in one metric stream always precedes the change in the second metric stream. Again, it&amp;#8217;s not causation, but something stronger than
+correlation. &lt;a href=&quot;https://en.wikipedia.org/wiki/Granger_causality&quot;&gt;Granger causality test&lt;/a&gt; is possible method,
+nonetheless, this is out of the scope of this blog post.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Last thing, I wanted to show is the k-means clustering.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-scala&quot; data-lang=&quot;scala&quot;&gt;val usedMemoryVector = used.map(x =&amp;gt; Vectors.dense(x))
+val numClusters = 3
+val numIterations = 20
+val clusters: KMeansModel = KMeans.train(usedMemoryVector, numClusters, numIterations)
+println(&quot;Cluster centers:&quot;)
+clusters.clusterCenters.foreach(println)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The code above will print the three cluster representatives. It is also possible to test the new data point by
+calling &lt;code&gt;clusters.predics(point)&lt;/code&gt; that will return the expected cluster the point is attracted to.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There is &lt;a href=&quot;https://spark.apache.org/docs/latest/mllib-guide.html&quot;&gt;much more&lt;/a&gt; in the MLlib. One can find outliers,
+common patterns, do a classification, etc.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+All the code examples can be &lt;a href=&quot;https://github.com/Jiri-Kremser/spark-hawkular-demo&quot;&gt;downloaded&lt;/a&gt; and run against the Cassandra with the metric data.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_summary&quot;&gt;Summary&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By using the &lt;code&gt;spark-cassandra-connector&lt;/code&gt;, we were able to get the data from C* as RDD, call the simple operations on RDDs
+and some smart functions from the MLlib package, but we entirely neglected the temporal aspect of the data. The only
+reason it worked reasonably well is because the data is sorted in the table by the timestamp. There is a Spark library for
+time series data out there called &lt;a href=&quot;https://github.com/sryza/spark-timeseries&quot;&gt;spark-ts&lt;/a&gt;. Nice improvement would
+be connecting the &lt;code&gt;spark-cassandra-connector&lt;/code&gt; and &lt;code&gt;spark-ts&lt;/code&gt; to provide convenient way of working with time series data
+on top of Cassandra.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It is also worth mentioning that Spark does not offer only data processing on the data that was obtained by some &quot;data pump&quot;.
+Spark is so popular because it allows running the algorithms close to the data. In our case we had only single headed Cassandra,
+but in general it can be run on a cluster consisting of multiple nodes. This, of course, requires the wisely chosen
+partition keys in the schema respecting it when working with RDDs.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Vert.x agent inventory implementation</title>
       <link>http://www.hawkular.org/blog/2016/08/11/vertx-agent-inventory-impl.html</link>

@@ -182,6 +182,223 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/08/31/spark-metric-analysis.html"><h1>Metric Data Analysis using the Apache Spark</h1></a>
+            <p>31 August 2016, by Jiri Kremser</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The goal of this blog post is to show how to easily connect <a href="https://spark.apache.org/">Apache Spark</a> to the
+Cassandra with the metric data; perform simple transformation on the data as well as some examples of calculating correlation
+between the two time series data streams. Last but not least we will show how to create a
+<a href="https://en.wikipedia.org/wiki/K-means_clustering">k-means</a> clustering model.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-08-31-spark-logo.png" alt="Spark logo">
+</div>
+</div>
+<div class="paragraph">
+<p>The situation is visualized on the figure bellow. After the WildFly Agent was collecting the data for some time period and
+reporting them to Hawkular Metrics. Hawkular Metrics stores them into Cassandra to which we will be connecting with Spark.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-08-31-spark.png" alt="Components interaction">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_initialization">Initialization</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>First we need to create a spark context with the <code>spark.cassandra.connection.host</code> property correctly set.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val conf = new SparkConf()
+  .setAppName("HelloHawkular")
+  .setMaster("local")
+  .set("spark.cassandra.connection.host", "127.0.0.1")
+val sc = new SparkContext(conf)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It is very simple, the only assumption here is that the <code>spark-cassandra-connector</code> jar is on the class path.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Apache Spark is completely written in Scala so also the examples are written in Scala.
+Although, it provides also Java and Python APIs, using the language it has been written in is the best choice,
+because one can track down the calls in the (native) source code.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_reading_the_data_from_cassandra">Reading the data from Cassandra</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s create a "Resilient Distributed Dataset" (RDD) from Cassandra table called "data" in "hawkular_metrics" keyspace.
+Resilient Distributed Datasets have <a href="https://spark.apache.org/docs/latest/api/scala/#org.apache.spark.rdd.RDD">plenty</a>
+of useful operations defined. RDD is a leitmotif in Spark, all the data manipulation
+is represented by chaining the operations on RDDs. It is an immutable structure that inherently supports parallelization.
+Generally speaking, RDDs can be created as a result of calling a method on another RDD(s)
+or by calling a method the <code>SparkContext</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val rdd: RDD[CassandraRow] = sc.cassandraTable("hawkular_metrics", "data")
+println(rdd.count)
+println(rdd.first)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This prints the number of rows (in my case 245609) and the very first row, just to have an idea how it looks like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">CassandraRow{tenant_id: hawkular, type: 0, metric: MI~R~[e69a19f7-76e7-4fd2-8ed5-864d1570f3ff/Local~/deployment=hawkular-alerts-rest.war/subsystem=ejb3/singleton-bean=PartitionManagerImpl]~MT~Singleton EJB Metrics~Execution Time, dpart: 0, time: baef5a00-6e31-11e6-96d2-5f826fbc8eb1, aggregates: {}, availability: null, data_retention: null, l_value: null, n_value: 0.0, s_value: null, tags: {}}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The data table contains all the metrics so we need to filter only what we are interested in.
+RDD provides a <code>groupBy</code> method that takes a function that is applied on all the data in the RDD and returns the key by
+which the grouping should be done. We can group by the <code>metric</code>. This can be useful when working with more
+metrics. But for our purposes, let&#8217;s just do simple filter method.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val feedId = "e69a19f7-76e7-4fd2-8ed5-864d1570f3ff"
+val metric1 = "Total Memory"
+val metric2 = "Available Memory"
+val total: RDD[Double] = rdd.filter(x =&gt; {
+    val metricId = x.getString("metric")
+    metricId.contains(feedId) &amp;&amp; metricId.contains(metric1)
+  })
+  .map(_.getDouble("n_value"))
+  .repartition(8)
+
+val free: RDD[Double] = rdd.filter(x =&gt; {
+    val metricId = x.getString("metric")
+    metricId.contains(feedId) &amp;&amp; metricId.contains(metric2)
+  })
+  .map(_.getDouble("n_value"))
+  .repartition(8)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The <code>repartition()</code> method needs to be called because methods like <code>filter</code>, <code>flatMap</code> and similar have impact on the
+number of elements in each partition. We need those two RDDs to have the same amount of partitions and the same amount
+of elements in each partition in order to be able to apply some statistical methods on them. Method called <code>coalesce</code>
+is an alternative option to use here. Perhaps even better because it does not shuffle the data over the network in case
+of multi node environment. However, the data model of Hawkular metrics ensures that data from one metric are always on
+the same node.</p>
+</div>
+<div class="paragraph">
+<p>Now, we have two RDDs. The <code>total</code> and <code>free</code> that represent the amounts of memory that was "free" on the platform and the total value.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_doing_something_fancy">Doing something fancy</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let us create a derived RDD that will represent the used memory on the platform.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val used: RDD[Double] = total.zip(free).map(e =&gt; e._1 - e._2)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>What we have done here is that we have created a new RDD, representing a metric data that were calculated using two
+other metric streams. The transformation was trivial, but RDD provides also methods for aggregation.</p>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s calculate the correlation between the used and free memory. There should be some correlation, right?</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val correlation: Double = Statistics.corr(used, free, "pearson")
+println(s"Correlation is: $correlation")</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will print <code>Correlation is: -0.9999999999999781</code>. That means there is total negative
+<a href="https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">correlation</a> between the two
+(the higher the first one, the lower the second one).
+This example was artificial, but in general, one can calculate the correlation between any two metric streams. Of course,
+correlation doesn&#8217;t imply causation, so we can&#8217;t extract any higher level information like business rules here.
+But we obtain some information that metrics are somehow related together and with further analysis we can for example detect, that
+change in one metric stream always precedes the change in the second metric stream. Again, it&#8217;s not causation, but something stronger than
+correlation. <a href="https://en.wikipedia.org/wiki/Granger_causality">Granger causality test</a> is possible method,
+nonetheless, this is out of the scope of this blog post.</p>
+</div>
+<div class="paragraph">
+<p>Last thing, I wanted to show is the k-means clustering.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val usedMemoryVector = used.map(x =&gt; Vectors.dense(x))
+val numClusters = 3
+val numIterations = 20
+val clusters: KMeansModel = KMeans.train(usedMemoryVector, numClusters, numIterations)
+println("Cluster centers:")
+clusters.clusterCenters.foreach(println)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The code above will print the three cluster representatives. It is also possible to test the new data point by
+calling <code>clusters.predics(point)</code> that will return the expected cluster the point is attracted to.</p>
+</div>
+<div class="paragraph">
+<p>There is <a href="https://spark.apache.org/docs/latest/mllib-guide.html">much more</a> in the MLlib. One can find outliers,
+common patterns, do a classification, etc.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+All the code examples can be <a href="https://github.com/Jiri-Kremser/spark-hawkular-demo">downloaded</a> and run against the Cassandra with the metric data.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary">Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By using the <code>spark-cassandra-connector</code>, we were able to get the data from C* as RDD, call the simple operations on RDDs
+and some smart functions from the MLlib package, but we entirely neglected the temporal aspect of the data. The only
+reason it worked reasonably well is because the data is sorted in the table by the timestamp. There is a Spark library for
+time series data out there called <a href="https://github.com/sryza/spark-timeseries">spark-ts</a>. Nice improvement would
+be connecting the <code>spark-cassandra-connector</code> and <code>spark-ts</code> to provide convenient way of working with time series data
+on top of Cassandra.</p>
+</div>
+<div class="paragraph">
+<p>It is also worth mentioning that Spark does not offer only data processing on the data that was obtained by some "data pump".
+Spark is so popular because it allows running the algorithms close to the data. In our case we had only single headed Cassandra,
+but in general it can be run on a cluster consisting of multiple nodes. This, of course, requires the wisely chosen
+partition keys in the schema respecting it when working with RDDs.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/08/11/vertx-agent-inventory-impl.html"><h1>Vert.x agent inventory implementation</h1></a>
             <p>11 August 2016, by Austin Kuo</p>
             <p><div id="preamble">
@@ -592,131 +809,13 @@ The <em>HAWKULAR_APM_URI</em> must use the URI exposed by the Hawkular APM serve
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/14/hawkular-miq.html"><h1>Getting started with ManageIQ and Hawkular</h1></a>
-            <p>14 July 2016, by Heiko W. Rupp</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>This post describes the first steps to get started with ManageIQ master and Hawkular-services.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_setup_of_manageiq">Setup of ManageIQ</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The functionality to support the Hawkular-Middleware provider is not in the Darga-Release.
-You will need to build ManageIQ from their master branch.
-There is a good <a href="http://manageiq.org/documentation/development/developer_setup/">guide on developer setup</a>.</p>
-</div>
-<div class="paragraph">
-<p>Once you have completed the instructions, you should have ManageIQ available at</p>
-</div>
-<div class="paragraph">
-<p><code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_setup_of_hawkular_services">Setup of Hawkular-services</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Run Hawkular-services with some WildFly servers connected. While it is possible to only run Hawkular-services with the built-in agent enabled, you will get more interesting results if you point other instrumented WildFly servers at Hawkular.</p>
-</div>
-<div class="sect2">
-<h3 id="_docker">Docker</h3>
-<div class="paragraph">
-<p>If you are a Docker user, you can <a href="http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html">follow this route</a>. This uses Docker-compose to stand up Cassandra 3.7, Hawkular-services and a connected WildFly10 server.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_classical_route">Classical route</h3>
-<div class="paragraph">
-<div class="title">NOTE You need to have Cassandra set up</div>
-<p>The release notes for Hawkular-Services 0.0.5 have a <a href="http://www.hawkular.org/blog/2016/07/05/hawkular-services-0.0.5.Final.html#_get_started">Getting started</a> section that describes how to locally set up Hawkular-services along with the needed Cassandra settings.</p>
-</div>
-<div class="paragraph">
-<p>To start the hawkular server you should also pass option <code>-Dhawkular.agent.enabled=true</code> to enable the embedded agent.</p>
-</div>
-<div class="listingblock">
-<div class="title">Start Hawkular server</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD} -Dhawkular.agent.enabled=true"</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_the_endpoint">The endpoint</h3>
-<div class="paragraph">
-<p>Going forward we assume that Hawkular-services listens on <code><a href="http://localhost:8080" class="bare">http://localhost:8080</a></code> and has a user/password of <em>jdoe/password</em> defined.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_adding_hawkular_as_provider_in_manageiq">Adding Hawkular as provider in ManageIQ</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Log into ManageIQ at <code><a href="http://localhost:3000" class="bare">http://localhost:3000</a></code> with <em>admin/smartvm</em> as user/password.</p>
-</div>
-<div class="paragraph">
-<p>Then select <em>Middleware</em> from the menu bar on the left and then <em>Providers</em>:</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-miq-hawk-menu.png" alt="Menu in ManageIQ">
-</div>
-<div class="title">Figure 1. Menu in ManageIQ with Middleware section</div>
-</div>
-<div class="paragraph">
-<p>On that page click on <em>Configuration</em> and choose <em>Add new provider</em>:</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-miq-hawk-add.png" alt="Add provider button">
-</div>
-<div class="title">Figure 2. Add provider menu entry</div>
-</div>
-<div class="paragraph">
-<p>Next thing you see is the settings page.
-Here you need to choose Hawkular from the type dropdown and fill in the host and port and also the credentials.
-When you are done you need to <em>validate</em> the credentials. If that went well, you can click on <em>add</em> to add the Hawkular provider.</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-miq-hawk-settings.png" alt="Settings for the provider">
-</div>
-<div class="title">Figure 3. Settings to add a new Hawkular provider</div>
-</div>
-<div class="paragraph">
-<p>This should take a short while and you should then see a screen with a nice Hawkular logo :-)</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-miq-hawk-providers.png" alt="Overview of Middleware providers">
-</div>
-<div class="title">Figure 4. Overview over middleware providers</div>
-</div>
-<div class="paragraph">
-<p>Clicking on the provider name below the icon then leads you to the so called summary page of the provider where you can see an overivew and have links to managed servers etc.</p>
-</div>
-<div id="img-main" class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-miq-hawk-provider.png" alt="Hawkular provider summary">
-</div>
-<div class="title">Figure 5. Hawkular provider summary</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-miq.html">Getting started with ManageIQ and Hawkular</a></li>
           <li>13 July 2016 - <a href="blog/2016/07/13/hawkfx.html">Introducing HawkFX</a></li>
           <li>12 July 2016 - <a href="blog/2016/07/12/hawkular-and-jmx-jolokia.html">Hawkular and JMX/Jolokia</a></li>
           <li>12 July 2016 - <a href="blog/2016/07/12/hawkular-and-prometheus.html">Hawkular and Prometheus</a></li>
