@@ -182,6 +182,43 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/09/05/hawkular-metrics-0.19.0.Final-released.html"><h1>Hawkular Metrics 0.19.0 - Release</h1></a>
+            <p>05 September 2016, by Stefan Negrea</p>
+            <p><p>I am happy to announce release 0.19.0 of Hawkular Metrics. This release is anchored by performance enhancements and a lot of REST API enhancements.</p><p>Here is a list of major changes:</p>
+<ol>
+  <li><strong>REST API - Query Improvements</strong>
+  <ul>
+    <li>It is now possible to use relative timestamps when querying for data via <code>+</code> or <code>-</code> added to timestamp parameters. When used, the timestamp is relative to the local system timestamp (<a href="https://issues.jboss.org/browse/HWKMETRICS-358">HWKMETRICS-358</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-457">HWKMETRICS-457</a>)</li>
+    <li>Querying for data from earliest available data point has been expanded to raw data queries for gauges and counters (<a href="https://issues.jboss.org/browse/HWKMETRICS-435">HWKMETRICS-435</a>)</li>
+    <li><code>DELETE tenants/{id}</code> has been added to allow the deletion of an entire tenant (<a href="https://issues.jboss.org/browse/HWKMETRICS-446">HWKMETRICS-446</a>)</li>
+    <li>AvailabilityType is serialized as simple string in bucket data points (<a href="https://issues.jboss.org/browse/HWKMETRICS-436">HWKMETRICS-436</a>)</li>
+  </ul></li>
+  <li><strong>Performance Enhancements</strong>
+  <ul>
+    <li>The write performance has been increased by 10% across the board after reorganizing the meta-data internal indexes. (<a href="https://issues.jboss.org/browse/HWKMETRICS-422">HWKMETRICS-422</a>)</li>
+    <li>GZIP replaced LZ4 as the compression algorithm for the data table. This produces anywhere between 60% to 70% disk usage savings over LZ4. (<a href="https://issues.jboss.org/browse/HWKMETRICS-454">HWKMETRICS-454</a>)</li>
+  </ul></li>
+  <li><strong>Job Scheduler - Improvements</strong>
+  <ul>
+    <li>The newly introduced internal job scheduler received several improvements and fixes; the main focus was to enhance the scalability and fault tolerance.</li>
+    <li>The job scheduler will be used only for internal tasks.</li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-221">HWKMETRICS-221</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-451">HWKMETRICS-451</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-453">HWKMETRICS-453</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-94">HWKMETRICS-94</a></li>
+  </ul></li>
+</ol><h3>Hawkular Metrics Clients</h3>
+<ul>
+  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
+  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
+  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
+  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
+</ul><h3>Release Links</h3>
+<ul>
+  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.19.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.19.0</a></li>
+  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
+  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331192">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331192</a></li>
+</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Joel Takvorian, and Heiko Rupp for their project contributions.</p></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/08/31/spark-metric-analysis.html"><h1>Metric Data Analysis using the Apache Spark</h1></a>
             <p>31 August 2016, by Jiri Kremser</p>
             <p><div id="preamble">
@@ -633,188 +670,13 @@ vertxOptions.setVertxRootResourceId("root-resource-id");</code></pre>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/07/14/hawkular-apm-openshift.html"><h1>Monitoring Application Performance within Openshift</h1></a>
-            <p>14 July 2016, by Gary Brown</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>This post will show how to use the Hawkular APM project, previously known as Hawkular BTM, to monitor an application running within Openshift. To achieve this both the Hawkular APM server, and the application (a vert.x Javascript example), will be deployed as Docker images.</p>
-</div>
-<div class="paragraph">
-<p>We will use the Openshift CLI, and therefore will need to login. For example, to login into the Openshift CDK environment:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>oc login 10.1.2.2:8443 -u openshift-dev -p devel</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_deploy_hawkular_apm_server">Deploy Hawkular APM Server</h3>
-<div class="paragraph">
-<p>The first step is to deploy the Hawkular APM server. There are two ways that this can be achieved.</p>
-</div>
-<div class="sect3">
-<h4 id="_image_from_docker_hub">Image from Docker Hub</h4>
-<div class="paragraph">
-<p>The Hawkular APM server has a docker image registered at <a href="https://hub.docker.com/r/jboss/hawkular-apm-server">Docker Hub</a>. This can be deployed to Openshift using the following commands:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>oc new-app jboss/hawkular-apm-server
-oc expose service hawkular-apm-server</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <em>new-app</em> command deploys the image as a service, and the <em>expose</em> command makes it available via a stable URI.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-If the deploy fails with an "unknown manifest" error in the openshift events log, this is due to a <a href="http://lists.openshift.redhat.com/openshift-archives/users/2016-June/msg00054.html">known docker issue related to a change between version 1.9 and 1.10</a>. In this case, use the local deploy approach described below.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_local_image">Local Image</h4>
-<div class="paragraph">
-<p>To deploy the APM server from a local build, it will be necessary to get the <a href="https://github.com/jboss-dockerfiles/hawkular/blob/8ffb752b68c0f49a2150fe345e660c53c32fb954/hawkular-apm-server/Dockerfile"><em>Dockerfile</em></a>. Place this file in a suitable folder and from that location run the following:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>oc new-build --binary --name=hawkular-apm-server
-oc start-build hawkular-apm-server --from-dir=. --follow
-oc new-app hawkular-apm-server
-oc expose service hawkular-apm-server</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_apm_server_in_the_openshift_console">Hawkular APM Server in the Openshift Console</h3>
-<div class="paragraph">
-<p>Once either of these options has been used to deploy the Hawkular APM Server, it can be seen within the Openshift console.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-osapmserver.png" alt="Hawkular APM Server">
-</div>
-<div class="title">Figure 1. Hawkular APM Server deployed in Openshift</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_deploy_example_vert_x_javascript_application">Deploy Example Vert.x Javascript Application</h3>
-<div class="paragraph">
-<p>The application that we will monitor is a Vert.x Javascript example application. Either clone the <a href="https://github.com/vert-x3/vertx-examples">github repository</a> or simply copy the two relevant files from the <a href="https://github.com/vert-x3/vertx-examples/tree/master/docker-examples/vertx-docker-javascript">vertx-examples/docker-examples/vertx-docker-javascript</a> folder.</p>
-</div>
-<div class="paragraph">
-<p>To enable the application to be instrumented by Hawkular APM, it will be necessary to add the following lines in the <em>Dockerfile</em>, before the <em>EXPOSE 8080</em> line:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>ENV HAWKULAR_APM_VERSION 0.9.0.Final
-
-ADD https://github.com/hawkular/hawkular-apm/releases/download/$HAWKULAR_APM_VERSION/hawkular-apm-agent.jar hawkular-apm-agent.jar
-
-ENV JAVA_OPTS -javaagent:/hawkular-apm-agent.jar</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Then, from the same folder in which these files are located, run the following:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>oc new-build --binary --name=vertx-javascript
-oc start-build vertx-javascript --from-dir=. --follow
-oc new-app -e HAWKULAR_APM_URI=http://hawkular-apm-server-sample-project.rhel-cdk.10.1.2.2.xip.io -e HAWKULAR_APM_USERNAME=jdoe -e HAWKULAR_APM_PASSWORD=password vertx-javascript
-
-oc expose service vertx-javascript</pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-The <em>HAWKULAR_APM_URI</em> must use the URI exposed by the Hawkular APM server, as shown in the console image above.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_example_vert_x_javascript_application_in_the_openshift_console">Example Vert.x Javascript Application in the Openshift Console</h3>
-<div class="paragraph">
-<p>Once these commands have been performed, the Openshift console should also now include:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-osvertx.png" alt="Vert.x Javascript example">
-</div>
-<div class="title">Figure 2. Vert.x Javascript example deployed in Openshift</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_running_the_example_application">Running the Example Application</h3>
-<div class="paragraph">
-<p>To access the example Vert.x Javascript application, simply open a browser window at the URL displayed in the console entry for the application (or just select the link which will cause a new tab to be opened). This will cause the simple Javascript application to return a response and show the message "Wild world":</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-osvertxapp.png" alt="Vert.x Javascript example">
-</div>
-<div class="title">Figure 3. Vert.x Javascript example running within a browser</div>
-</div>
-<div class="paragraph">
-<p>Now if we access the URL associated with the Hawkular APM server, by simply selecting the link in the Openshift console, we will be presented with a login window. Enter the username <em>jdoe</em> and password <em>password</em>, and then you will see some basic information showing the result of executing the Vert.x Javascript application - in this case the application was run multiple times by refreshing the browser page.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-07-14-osapm.png" alt="APM info">
-</div>
-<div class="title">Figure 4. Application Performance Management information captured from the example application</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_conclusion">Conclusion</h3>
-<div class="paragraph">
-<p>To summarise, this blog has shown:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>How to monitor an existing application <strong>without requiring any code changes</strong> simply by adding a few lines to the docker configuration file. Even if it is not possible to modify the application&#8217;s <em>Dockerfile</em> (i.e. because it is obtained from Docker Hub), it is still possible to achieve the same result by deriving a new <em>Dockerfile</em> from the image of interest, that contains the additional lines shown in this blog.</p>
-</li>
-<li>
-<p>How to deploy the Hawkular APM Server, along with the monitored application, as <em>Docker</em> images that can be run within Openshift.</p>
-</li>
-<li>
-<p>How to visualise the response time associated with a REST call to a Vert.x Javascript application. In this particular example, a single URL was invoked multiple times - hence only a single entry. However for more complex examples, detailed component information (such as EJBs, Databases, etc) and the dependencies between remotely invoked services, may be shown.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>If you have any questions please <a href="http://www.hawkular.org/community/index.html">contact us</a>.</p>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-apm-openshift.html">Monitoring Application Performance within Openshift</a></li>
           <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-miq.html">Getting started with ManageIQ and Hawkular</a></li>
           <li>13 July 2016 - <a href="blog/2016/07/13/hawkfx.html">Introducing HawkFX</a></li>
           <li>12 July 2016 - <a href="blog/2016/07/12/hawkular-and-jmx-jolokia.html">Hawkular and JMX/Jolokia</a></li>
