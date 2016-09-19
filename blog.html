@@ -182,6 +182,220 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/09/19/hawkular-apm-on-msa.html"><h1>Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</h1></a>
+            <p>19 September 2016, by Juraci Paixão Kröhling</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The focus of the <a href="https://github.com/hawkular/hawkular-apm/releases/tag/0.10.0.Final">latest Hawkular APM release</a>
+has been in building a compatibility layer for ZipKin-aware applications. In this blog post, we&#8217;ll show how Hawkular APM can
+be used as a drop-in replacement for ZipKin server and UI.</p>
+</div>
+<div class="paragraph">
+<p>At the end of this blog post, we should see data flowing from the target applications to Hawkular APM, without any code changes
+to the application themselves:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot3.png" alt="Hawkular APM Dashboard">
+</div>
+</div>
+<div class="paragraph">
+<p>Red Hat offers a <a href="http://developers.redhat.com/products/cdk/overview/">Container Developer Toolkit</a>, or CDK, for its customers,
+allowing for a quick start on developing applications following the best practices on the microservices architecture.</p>
+</div>
+<div class="paragraph">
+<p>Along with the CDK, Red Hat publishes also a <a href="https://github.com/redhat-helloworld-msa">"MSA - Hello World Microservices Architecture"</a>,
+which demonstrates how applications might benefit from this architecture. It can also be used as seed for your own
+projects, as it shows how activities can be accomplished by using several technology stacks, from <code>nodejs/express</code> to <code>Wildfly Swarm</code>.</p>
+</div>
+<div class="paragraph">
+<p>For Hawkular APM, this offers a great way to test our APIs on different stacks, specially our ZipKin compatibility layer. Ideally,
+one would simply point the ZipKin URL setting to a Hawkular APM server and everything would just work.</p>
+</div>
+<div class="paragraph">
+<p>And that&#8217;s what we are going to do in this post!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_getting_started_with_cdk_and_msa">Getting started with CDK and MSA</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_cdk_and_msa">CDK and MSA</h3>
+<div class="paragraph">
+<p>To setup CDK and MSA, we suggest that you follow the <a href="http://bit.ly/msainstructions">official instructions</a>. At the end of the process,
+you should have all the services running. Open the "frontend" service, and click around a bit. For instance:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Click on the "Browser as client" menu item, which will make the browser make Ajax calls directly to the API endpoints</p>
+</li>
+<li>
+<p>Click on the "API Gateway" menu item: on this case, the browser makes a single call to the API Gateway, which in turn makes single API calls
+to each of the services</p>
+</li>
+<li>
+<p>Click on "Service chaining" menu item: on this case, each service calls the "next", adding the results to its own payload.</p>
+</li>
+<li>
+<p>It could be interesting to make a note about the hostnames, to later make sure that you have "new" Docker containers running.
+The default output for each of the services include the hostname. Concretely, the output <code>ola-7-9wa31</code> means that the service <code>ola</code> is
+running on the container with hostname <code>9wa31</code>.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Open the ZipKin interface, and make sure that data is arriving there. Check also the different visualizations for the different operations.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_apm">Hawkular APM</h3>
+<div class="paragraph">
+<p>We&#8217;ll use the <a href="http://www.hawkular.org/blog/2016/07/14/hawkular-apm-openshift.html">previous post on running Hawkular APM on OpenShift</a>
+as base to install our Hawkular APM alongside the other MSA examples. For this blog post, we&#8217;ll prepare our own image based on the official
+Dockerfile for Hawkular APM. For that, fork and clone <a href="https://github.com/jboss-dockerfiles/hawkular">our repository</a> and run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">cd hawkular-apm-server
+oc new-app jboss/hawkular-apm-server
+oc new-build --binary --name=hawkular-apm-server -l app=hawkular-apm-server
+oc start-build hawkular-apm-server --from-dir=. --follow
+oc expose service hawkular-apm-server</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, the image from Docker Hub can be used, although it&#8217;s possible that networking issues might occur. If you use this option and
+the build takes more than, say, 10 minutes to finish, do a <code>vagrant ssh</code> to enter the box, and check the logs via <code>journalctl -f</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc new-app jboss/hawkular-apm-server
+oc expose service hawkular-apm-server</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This should create a new image stream, build, deployment and application.</p>
+</div>
+<div class="paragraph">
+<p>Before anything else, make note of the admin and password credentials. Those can be seen on the build logs:
+Browse → Deployments → hawkular-apm-server → Click on the latest deployment → Logs.
+A sample output is as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>------------------------------------
+ATTENTION ATTENTION ATTENTION ATTENTION
+We automatically created an admin user for you to access the Hawkular APM web interface:
+Username: adminQqyEF7i
+Password: KS3mmZbkdhRZ5y7oF
+------------------------------------</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once this is done, there should be a new service available on OpenShift&#8217;s dashboard, with an URL like <code><a href="http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io" class="bare">http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io</a></code>.</p>
+</div>
+<div class="paragraph">
+<p>Now that everything is in place and working as expected, it&#8217;s time to switch from ZipKin to Hawkular APM!</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_making_the_switch">Making the switch</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Each one of the MSA modules has a <code>Dockerfile</code>, specifying a <code>ENV ZIPKIN_SERVER_URL <a href="http://zipkin-query:9411" class="bare">http://zipkin-query:9411</a></code>.
+From there, we have some options:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Change each <code>Dockerfile</code> to make the env var point to <code><a href="http://hawkular-apm-server:8080" class="bare">http://hawkular-apm-server:8080</a></code></p>
+</li>
+<li>
+<p>Specify the <code>-e</code> option to Docker, to override the <code>ZIPKIN_SERVER_URL</code></p>
+</li>
+<li>
+<p>Set an Environment Variable in the OpenShift deployment</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We&#8217;ll choose the last option, as we consider that as the less invasive one, inline with the Microservice idea that configuration should not
+be a concern for the application.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc env dc/aloha       ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
+oc env dc/api-gateway ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
+oc env dc/bonjour     ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
+oc env dc/hola        ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
+oc env dc/ola         ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Wait a bit until OpenShift finishes deploying the new containers, and hit "Refresh Results" on the frontend. Note that the hostnames will change, indicating
+that a new container is running. At around the same time, you should see the first data flowing to Hawkular APM.</p>
+</div>
+<div class="paragraph">
+<p><strong>Spoiler alert</strong>: after the first two screenshots that we added for orientation, we also included some screenshots with the final result.</p>
+</div>
+<div class="sect2">
+<h3 id="_overriding_the_environment_variable_on_an_openshift_deployment">Overriding the environment variable on an OpenShift deployment:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot7.png" alt="Environment variable in OpenShift deployment">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_apm_deployment_logs_on_openshift">Hawkular APM Deployment logs on OpenShift:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot6.png" alt="Deployment log">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_sample_of_the_aggregated_visualization_for_the_service_chaining_technique">Sample of the aggregated visualization for the "Service chaining" technique:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot1.png" alt="Service chaining">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_details_about_a_single_instance_of_the_service_chaining_technique">Details about a single instance of the "Service chaining" technique:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot5.png" alt="Screenshot 5">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_sample_of_the_aggregated_visualization_for_the_api_gateway_technique">Sample of the aggregated visualization for the "API Gateway" technique:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot2.png" alt="API Gateway">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_details_about_a_single_instance_of_the_api_gateway_technique">Details about a single instance of the "API Gateway" technique:</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-09-19-screenshot4.png" alt="Screenshot 4">
+</div>
+</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/09/14/consuming-hawkular-api-over-ssl.html"><h1>Consuming Hawkular API over SSL with self signed certificates</h1></a>
             <p>14 September 2016, by Josejulio Martínez</p>
             <p><div id="preamble">
@@ -704,55 +918,13 @@ vertxOptions.setVertxRootResourceId("root-resource-id");</code></pre>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html"><h1>Hawkular Metrics 0.18.0 - Release</h1></a>
-            <p>01 August 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.18.0 of Hawkular Metrics. This release is anchored by performance enhancements and a new internal job scheduler.</p><p>Here is a list of major changes:</p>
-<ol>
-  <li><strong>InfluxDB API - REMOVED</strong>
-  <ul>
-    <li>The InfluxDB API has been removed from the code base.</li>
-    <li>This was an addition to make project integrations easier. As the REST interface matured, the role of the InfluxDB compatibility interface was reduced only serve as the Grafana interface. With the release of the native Grafana plugin, this was no longer needed.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-431">HWKMETRICS-431</a></li>
-  </ul></li>
-  <li><strong>Fetching Stats Data - Multiple Metrics - Experimental</strong>
-  <ul>
-    <li>Prior to this release, it was possible to only fetch stats for a single type metric. This release added <code>POST /metrics/stats/query</code> endpoint that allows querying for mixed stats for multiple metrics.</li>
-    <li>The endpoint accepts a list of metrics ids and allows filtering by providing start time, end time, sort order and limit, as well as the typical stats options such as bucket duration, number of buckets, or percentiles.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-424">HWKMETRICS-424</a></li>
-  </ul></li>
-  <li><strong>Performance Enhancements</strong>
-  <ul>
-    <li>All the JAX-RS handlers are now singletons. This reduces the GC pressure and was relatively simple change since the code was completely stateless. This lead to a significant performance increase. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-437">HWKMETRICS-437</a></li>
-  </ul></li>
-  <li><strong>Job Scheduler - New Implementation - Experimental</strong>
-  <ul>
-    <li>The new internal job scheduler is by far the biggest contribution in this release.</li>
-    <li>This is the foundation for a number of features that will make their way into upcoming releases; a few examples are metric aggregates, adjustable data retention, or complex data purges.</li>
-    <li>The implementation keeps the Hawkular Metrics server stateless so scaling will be just as easy going forward, with zero additional configuration.</li>
-    <li>The job scheduler will be used only for internal tasks.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-360">HWKMETRICS-360</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-375">HWKMETRICS-375</a></li>
-  </ul></li>
-</ol><h3>Hawkular Metrics Clients</h3>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.18.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.18.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330870">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12330870</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>01 August 2016 - <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html">Hawkular Metrics 0.18.0 - Release</a></li>
           <li>19 July 2016 - <a href="blog/2016/07/19/android-client-progess.html">What is new in Android Client</a></li>
           <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-apm-openshift.html">Monitoring Application Performance within Openshift</a></li>
           <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-miq.html">Getting started with ManageIQ and Hawkular</a></li>

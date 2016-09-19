@@ -6,9 +6,227 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 14 Sep 2016 15:35:09 +0000</pubDate>
-    <lastBuildDate>Wed, 14 Sep 2016 15:35:09 +0000</lastBuildDate>
+    <pubDate>Mon, 19 Sep 2016 15:40:43 +0000</pubDate>
+    <lastBuildDate>Mon, 19 Sep 2016 15:40:43 +0000</lastBuildDate>
 
+    <item>
+      <title>Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</title>
+      <link>http://www.hawkular.org/blog/2016/09/19/hawkular-apm-on-msa.html</link>
+      <author>noreply@hawkular.org (Juraci Paixão Kröhling)</author>
+      <pubDate>Mon, 19 Sep 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/09/19/hawkular-apm-on-msa.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The focus of the &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/releases/tag/0.10.0.Final&quot;&gt;latest Hawkular APM release&lt;/a&gt;
+has been in building a compatibility layer for ZipKin-aware applications. In this blog post, we&amp;#8217;ll show how Hawkular APM can
+be used as a drop-in replacement for ZipKin server and UI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At the end of this blog post, we should see data flowing from the target applications to Hawkular APM, without any code changes
+to the application themselves:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot3.png&quot; alt=&quot;Hawkular APM Dashboard&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Red Hat offers a &lt;a href=&quot;http://developers.redhat.com/products/cdk/overview/&quot;&gt;Container Developer Toolkit&lt;/a&gt;, or CDK, for its customers,
+allowing for a quick start on developing applications following the best practices on the microservices architecture.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Along with the CDK, Red Hat publishes also a &lt;a href=&quot;https://github.com/redhat-helloworld-msa&quot;&gt;&quot;MSA - Hello World Microservices Architecture&quot;&lt;/a&gt;,
+which demonstrates how applications might benefit from this architecture. It can also be used as seed for your own
+projects, as it shows how activities can be accomplished by using several technology stacks, from &lt;code&gt;nodejs/express&lt;/code&gt; to &lt;code&gt;Wildfly Swarm&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For Hawkular APM, this offers a great way to test our APIs on different stacks, specially our ZipKin compatibility layer. Ideally,
+one would simply point the ZipKin URL setting to a Hawkular APM server and everything would just work.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And that&amp;#8217;s what we are going to do in this post!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_getting_started_with_cdk_and_msa&quot;&gt;Getting started with CDK and MSA&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_cdk_and_msa&quot;&gt;CDK and MSA&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To setup CDK and MSA, we suggest that you follow the &lt;a href=&quot;http://bit.ly/msainstructions&quot;&gt;official instructions&lt;/a&gt;. At the end of the process,
+you should have all the services running. Open the &quot;frontend&quot; service, and click around a bit. For instance:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Click on the &quot;Browser as client&quot; menu item, which will make the browser make Ajax calls directly to the API endpoints&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Click on the &quot;API Gateway&quot; menu item: on this case, the browser makes a single call to the API Gateway, which in turn makes single API calls
+to each of the services&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Click on &quot;Service chaining&quot; menu item: on this case, each service calls the &quot;next&quot;, adding the results to its own payload.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;It could be interesting to make a note about the hostnames, to later make sure that you have &quot;new&quot; Docker containers running.
+The default output for each of the services include the hostname. Concretely, the output &lt;code&gt;ola-7-9wa31&lt;/code&gt; means that the service &lt;code&gt;ola&lt;/code&gt; is
+running on the container with hostname &lt;code&gt;9wa31&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Open the ZipKin interface, and make sure that data is arriving there. Check also the different visualizations for the different operations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_apm&quot;&gt;Hawkular APM&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll use the &lt;a href=&quot;http://www.hawkular.org/blog/2016/07/14/hawkular-apm-openshift.html&quot;&gt;previous post on running Hawkular APM on OpenShift&lt;/a&gt;
+as base to install our Hawkular APM alongside the other MSA examples. For this blog post, we&amp;#8217;ll prepare our own image based on the official
+Dockerfile for Hawkular APM. For that, fork and clone &lt;a href=&quot;https://github.com/jboss-dockerfiles/hawkular&quot;&gt;our repository&lt;/a&gt; and run:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;cd hawkular-apm-server
+oc new-app jboss/hawkular-apm-server
+oc new-build --binary --name=hawkular-apm-server -l app=hawkular-apm-server
+oc start-build hawkular-apm-server --from-dir=. --follow
+oc expose service hawkular-apm-server&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Alternatively, the image from Docker Hub can be used, although it&amp;#8217;s possible that networking issues might occur. If you use this option and
+the build takes more than, say, 10 minutes to finish, do a &lt;code&gt;vagrant ssh&lt;/code&gt; to enter the box, and check the logs via &lt;code&gt;journalctl -f&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc new-app jboss/hawkular-apm-server
+oc expose service hawkular-apm-server&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This should create a new image stream, build, deployment and application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before anything else, make note of the admin and password credentials. Those can be seen on the build logs:
+Browse → Deployments → hawkular-apm-server → Click on the latest deployment → Logs.
+A sample output is as follows:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;------------------------------------
+ATTENTION ATTENTION ATTENTION ATTENTION
+We automatically created an admin user for you to access the Hawkular APM web interface:
+Username: adminQqyEF7i
+Password: KS3mmZbkdhRZ5y7oF
+------------------------------------&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once this is done, there should be a new service available on OpenShift&amp;#8217;s dashboard, with an URL like &lt;code&gt;&lt;a href=&quot;http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io&quot; class=&quot;bare&quot;&gt;http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io&lt;/a&gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that everything is in place and working as expected, it&amp;#8217;s time to switch from ZipKin to Hawkular APM!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_making_the_switch&quot;&gt;Making the switch&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Each one of the MSA modules has a &lt;code&gt;Dockerfile&lt;/code&gt;, specifying a &lt;code&gt;ENV ZIPKIN_SERVER_URL &lt;a href=&quot;http://zipkin-query:9411&quot; class=&quot;bare&quot;&gt;http://zipkin-query:9411&lt;/a&gt;&lt;/code&gt;.
+From there, we have some options:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Change each &lt;code&gt;Dockerfile&lt;/code&gt; to make the env var point to &lt;code&gt;&lt;a href=&quot;http://hawkular-apm-server:8080&quot; class=&quot;bare&quot;&gt;http://hawkular-apm-server:8080&lt;/a&gt;&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Specify the &lt;code&gt;-e&lt;/code&gt; option to Docker, to override the &lt;code&gt;ZIPKIN_SERVER_URL&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Set an Environment Variable in the OpenShift deployment&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll choose the last option, as we consider that as the less invasive one, inline with the Microservice idea that configuration should not
+be a concern for the application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc env dc/aloha       ZIPKIN_SERVER_URL=&quot;http://hawkular-apm-server:8080&quot;
+oc env dc/api-gateway ZIPKIN_SERVER_URL=&quot;http://hawkular-apm-server:8080&quot;
+oc env dc/bonjour     ZIPKIN_SERVER_URL=&quot;http://hawkular-apm-server:8080&quot;
+oc env dc/hola        ZIPKIN_SERVER_URL=&quot;http://hawkular-apm-server:8080&quot;
+oc env dc/ola         ZIPKIN_SERVER_URL=&quot;http://hawkular-apm-server:8080&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Wait a bit until OpenShift finishes deploying the new containers, and hit &quot;Refresh Results&quot; on the frontend. Note that the hostnames will change, indicating
+that a new container is running. At around the same time, you should see the first data flowing to Hawkular APM.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;strong&gt;Spoiler alert&lt;/strong&gt;: after the first two screenshots that we added for orientation, we also included some screenshots with the final result.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_overriding_the_environment_variable_on_an_openshift_deployment&quot;&gt;Overriding the environment variable on an OpenShift deployment:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot7.png&quot; alt=&quot;Environment variable in OpenShift deployment&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_apm_deployment_logs_on_openshift&quot;&gt;Hawkular APM Deployment logs on OpenShift:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot6.png&quot; alt=&quot;Deployment log&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_sample_of_the_aggregated_visualization_for_the_service_chaining_technique&quot;&gt;Sample of the aggregated visualization for the &quot;Service chaining&quot; technique:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot1.png&quot; alt=&quot;Service chaining&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_details_about_a_single_instance_of_the_service_chaining_technique&quot;&gt;Details about a single instance of the &quot;Service chaining&quot; technique:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot5.png&quot; alt=&quot;Screenshot 5&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_sample_of_the_aggregated_visualization_for_the_api_gateway_technique&quot;&gt;Sample of the aggregated visualization for the &quot;API Gateway&quot; technique:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot2.png&quot; alt=&quot;API Gateway&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_details_about_a_single_instance_of_the_api_gateway_technique&quot;&gt;Details about a single instance of the &quot;API Gateway&quot; technique:&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-09-19-screenshot4.png&quot; alt=&quot;Screenshot 4&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Consuming Hawkular API over SSL with self signed certificates</title>
       <link>http://www.hawkular.org/blog/2016/09/14/consuming-hawkular-api-over-ssl.html</link>
