@@ -13,6 +13,7 @@ I am happy to announce release 0.20.0 of Hawkular Metrics.This is a major releas
 Hawkular Metrics now includes Hawkular Alerting out of the box; it's no longer necessary to install and manage two separate components. Hawkular Metrics delivers a single EAR file containing components from both projects. Incoming metric data is efficiently filtered and evaluated, generating alerts and events for defined triggers. The combined EAR artifact is the primary binary distribution of Hawkular Metrics going forward. For more details: [HWKMETRICS-491](https://issues.jboss.org/browse/HWKMETRICS-491)
 
 Hawkular Alerting Details
+
 * Version [1.2.1](https://issues.jboss.org/browse/HWKALERTS/fixforversion/12331699/) is included in this release
 * Project details and repository: [Hawkular Alerting - Github](https://github.com/hawkular/hawkular-alerts)
 * Documentation: [Hawkular Alerting REST API Documentation](http://www.hawkular.org/docs/rest/rest-alerts.html), [Hawkular Alerting Examples](https://github.com/hawkular/hawkular-alerts/tree/master/examples),
@@ -21,9 +22,9 @@ Hawkular Alerting Details
 Deployment Notes
 
 1. Deployment Naming
-  - The new EAR should be deployed as 'hawkular-metrics.ear' in WildFly.  This naming is required to allow for proper dependencies to be established by the EAR components.
+    - The new EAR should be deployed as 'hawkular-metrics.ear' in WildFly.  This naming is required to allow for proper dependencies to be established by the EAR components.
 2. `standalone.xml` Configuration
-   - The following snippet must be added to `standalone.xml` to support the Hawkular Alerting component. Add this additional cache-container entry after the existing cache-container entries:
+    - The following snippet must be added to `standalone.xml` to support the Hawkular Alerting component. Add this additional cache-container entry after the existing cache-container entries:
 ```xml
 <cache-container name="hawkular-alerts" module="org.jboss.as.clustering.infinispan">
     <local-cache name="partition"/>
@@ -39,12 +40,13 @@ Usage Notes
 To use Hawkular Alerting with Hawkular Metrics there is a naming convention when defining trigger conditions.  For a metric with name 'X', the alerting DataId to reference it will be '<prefix>_X', where the <prefix> depends on the metric's type. For example, let's consider a metric with name 'HeapUsed' and type 'gauge'. This example defines a trigger condition to test if the used heap exceeded 80%: `hm_g_HeapUsed > .8`. The 'hm_g_' prefix indicates that HeapUsed is a gauge.
 
 Because Hawkular Metrics allows the same metric name for different types, the prefix is needed to make clear the target metric. The prefixes are:
-- hm_a: availability
-- hm_c: counter
-- hm_cr: counter rate
-- hm_g: gauge
-- hm_gr: gauge rate
-- hm_s: string
+
+  * hm_a: availability
+  * hm_c: counter
+  * hm_cr: counter rate
+  * hm_g: gauge
+  * hm_gr: gauge rate
+  * hm_s: string
 
 
 **Compression**
@@ -86,6 +88,7 @@ Hawkular Metrics will now compress all the data with a compression scheme based 
   * For more details: [HWKMETRICS-478](https://issues.jboss.org/browse/HWKMETRICS-478)
 
 **Hawkular Metrics Clients**
+
 * Python: https://github.com/hawkular/hawkular-client-python
 * Go: https://github.com/hawkular/hawkular-client-go
 * Ruby: https://github.com/hawkular/hawkular-client-ruby
