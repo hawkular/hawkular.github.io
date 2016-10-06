@@ -57,35 +57,35 @@ Hawkular Metrics will now compress all the data with a compression scheme based 
 **Other major changes**
 
 * REST API - Query Improvements
-   * Querying raw & rate data by tags is now also possible via POST `{metric_type}/query` endpoints for all types of metrics ([HWKMETRICS-466](https://issues.jboss.org/browse/HWKMETRICS-466))
+    * Querying raw & rate data by tags is now also possible via POST `{metric_type}/query` endpoints for all types of metrics ([HWKMETRICS-466](https://issues.jboss.org/browse/HWKMETRICS-466))
     * Added new POST endpoints for stats `gauges/stats/query` and `counters/stats/query` ([HWKMETRICS-465](https://issues.jboss.org/browse/HWKMETRICS-465))
     * It is now possible to fetch metric definitions filtered by a list of ids not just tags ([HWKMETRICS-461](https://issues.jboss.org/browse/HWKMETRICS-461))
 
 * Cassandra Driver Configuration
-  * Driver configuration options are now exposed for connection and request timeouts
-  * Connection timeout can be configured via `CASSANDRA_CONNECTION_TIMEOUT` environment variable, or `hawkular-metrics.cassandra.connection.timeout` system property; value is specified in milliseconds and defaults to 5 seconds.
-  * Request timeout can be configured via `CASSANDRA_REQUEST_TIMEOUT` environment variable, or `hawkular-metrics.cassandra.request.timeout` system property; value is specified in milliseconds and defaults to 12 seconds.
-  * For more details: ([HWKMETRICS-490](https://issues.jboss.org/browse/HWKMETRICS-490))
+    * Driver configuration options are now exposed for connection and request timeouts
+    * Connection timeout can be configured via `CASSANDRA_CONNECTION_TIMEOUT` environment variable, or `hawkular-metrics.cassandra.connection.timeout` system property; value is specified in milliseconds and defaults to 5 seconds.
+    * Request timeout can be configured via `CASSANDRA_REQUEST_TIMEOUT` environment variable, or `hawkular-metrics.cassandra.request.timeout` system property; value is specified in milliseconds and defaults to 12 seconds.
+    * For more details: ([HWKMETRICS-490](https://issues.jboss.org/browse/HWKMETRICS-490))
 
 * Job Scheduler
-  * Duplicate instances of jobs were wrongly scheduled on server restart because the job scheduler was not checking if the job was already scheduled ([HWKMETRICS-461](https://issues.jboss.org/browse/HWKMETRICS-461))
-  * Triggers now have a delay to properly schedule jobs in the future ([HWKMETRICS-224](https://issues.jboss.org/browse/HWKMETRICS-224))
-  * Resolved an issue where long running job can miss future executions because the current execution takes longer than the repeat interval ([HWKMETRICS-477](https://issues.jboss.org/browse/HWKMETRICS-477))
-  * Prevent execution of a job multiple times for the same execution time ([HWKMETRICS-486](https://issues.jboss.org/browse/HWKMETRICS-486))
-  * RepeatingTrigger now allows specifying trigger start time ([HWKMETRICS-476](https://issues.jboss.org/browse/HWKMETRICS-476))
+    * Duplicate instances of jobs were wrongly scheduled on server restart because the job scheduler was not checking if the job was already scheduled ([HWKMETRICS-461](https://issues.jboss.org/browse/HWKMETRICS-461))
+    * Triggers now have a delay to properly schedule jobs in the future ([HWKMETRICS-224](https://issues.jboss.org/browse/HWKMETRICS-224))
+    * Resolved an issue where long running job can miss future executions because the current execution takes longer than the repeat interval ([HWKMETRICS-477](https://issues.jboss.org/browse/HWKMETRICS-477))
+    * Prevent execution of a job multiple times for the same execution time ([HWKMETRICS-486](https://issues.jboss.org/browse/HWKMETRICS-486))
+    * RepeatingTrigger now allows specifying trigger start time ([HWKMETRICS-476](https://issues.jboss.org/browse/HWKMETRICS-476))
 
 * Admin Endpoints
-  * Admin related endpoints are going to be protected via an admin token, to be sent for admin related REST endpoints via Hawkular-Admin-Token request header
-  * The first endpoint to be protected by this mechanism is `/tenants` since its functionality is cross tenant
-  * The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints
-  * This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)
-  * The details:
-    * system property key: hawkular.metrics.admin-token
-    * environment variable: ADMIN_TOKEN
-    * default value: null (admin endpoints are not accessible until set)
-    * header name: Hawkular-Admin-Token
-    * stored on the system config using one way hashing
-  * For more details: [HWKMETRICS-478](https://issues.jboss.org/browse/HWKMETRICS-478)
+    * Admin related endpoints are going to be protected via an admin token, to be sent for admin related REST endpoints via Hawkular-Admin-Token request header
+    * The first endpoint to be protected by this mechanism is `/tenants` since its functionality is cross tenant
+    * The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints
+    * This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)
+    * The details:
+      * system property key: hawkular.metrics.admin-token
+      * environment variable: ADMIN_TOKEN
+      * default value: null (admin endpoints are not accessible until set)
+      * header name: Hawkular-Admin-Token
+      * stored on the system config using one way hashing
+      * For more details: [HWKMETRICS-478](https://issues.jboss.org/browse/HWKMETRICS-478)
 
 **Hawkular Metrics Clients**
 
