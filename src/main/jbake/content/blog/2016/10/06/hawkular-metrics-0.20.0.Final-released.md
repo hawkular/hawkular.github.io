@@ -80,12 +80,12 @@ Hawkular Metrics will now compress all the data with a compression scheme based 
     * The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints
     * This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)
     * The details:
-      * system property key: hawkular.metrics.admin-token
-      * environment variable: ADMIN_TOKEN
-      * default value: null (admin endpoints are not accessible until set)
-      * header name: Hawkular-Admin-Token
-      * stored on the system config using one way hashing
-      * For more details: [HWKMETRICS-478](https://issues.jboss.org/browse/HWKMETRICS-478)
+        * system property key: hawkular.metrics.admin-token
+        * environment variable: ADMIN_TOKEN
+        * default value: null (admin endpoints are not accessible until set)
+        * header name: Hawkular-Admin-Token
+        * stored on the system config using one way hashing
+    * For more details: [HWKMETRICS-478](https://issues.jboss.org/browse/HWKMETRICS-478)
 
 **Hawkular Metrics Clients**
 
