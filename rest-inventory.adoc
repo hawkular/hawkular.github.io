@@ -427,6 +427,18 @@ _The response body contains details about results of creation of individual enti
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Specifies the time to mark the entity as having been created. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Body*
 
 [cols="^20,55,^25", options="header"]
@@ -7579,6 +7591,18 @@ _Given the traversal of inventory expressed in the URL, this will return a (poss
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Look at the entities and relationships as they existed at the provided time. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Response*
 
 *Status codes*
@@ -7757,6 +7781,7 @@ NOTE: *Gets the graph.* +
 . link:#++DELETE__entity__path_++[Deletes an inventory entity on the given location.]
 . link:#++GET__entity__path_++[Reads an inventory entity on the given location.]
 . link:#++PUT__entity__path_++[Updates an entity. The path is actually a canonical path. The format of the accepted JSON object is governed by the type of the entity being updated. If you're updating an environment, look for EnvironmentUpdate type, etc.]
+. link:#++GET__entity__path__history++[Obtains the history of the entity.]
 . link:#++GET__entity__path__treeHash++[Obtains the identity tree hash of the entity.]
 . link:#++POST__entity__path___type_++[Creates a new entity]
 
@@ -7783,6 +7808,18 @@ NOTE: *Deletes an inventory entity on the given location.* +
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Specifies the time to mark the entity as having been deleted. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Response*
 
 *Status codes*
@@ -7791,6 +7828,7 @@ NOTE: *Deletes an inventory entity on the given location.* +
 |Status Code|Reason|Response Model
 
 |204|Entity deleted.|-
+|400|There has been an update to the entity since the time it is requested to be deleted.|-
 |404|No entity found on given traversal URI.|-
 |500|Internal server error|-
 
@@ -7820,6 +7858,18 @@ NOTE: *Reads an inventory entity on the given location.* +
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |path|Yes|See the documentation above for the format of the path.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Look at the entity as it looked at the provided time. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
 
 |=======================
 
@@ -7867,6 +7917,18 @@ NOTE: *Updates an entity. The path is actually a canonical path. The format of t
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Specifies the time to mark the entity as having been updated. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Body*
 
 [cols="^20,55,^25", options="header"]
@@ -7887,10 +7949,65 @@ NOTE: *Updates an entity. The path is actually a canonical path. The format of t
 |Status Code|Reason|Response Model
 
 |204|Entity updated.|-
-|400|Data in wrong format|-
+|400|Data in wrong format or update requested at a time, after which the entity was already changed|-
 |403|Unauthorized access|-
 |404|Entity not found.|-
 |500|Server error.|-
+
+|=======================
+
+
+
+==============================================
+
+
+
+
+==============================================
+
+[[GET__entity__path__history]]
+*Endpoint GET `/entity/{path}/history`*
+
+NOTE: *Obtains the history of the entity.* +
+
+
+
+
+*Path parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|path|Yes|See the documentation above for the format of the path.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|from|No|Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+|to|No|Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|History returned.|<<History>>
+|404|No entity found on given traversal URI.|-
+|500|Internal server error|-
 
 |=======================
 
@@ -7918,6 +8035,18 @@ NOTE: *Obtains the identity tree hash of the entity.* +
 |Parameter|Required|Description|Type|Format|Allowable Values
 
 |path|Yes|See the documentation above for the format of the path.|string|-|-
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Look at the entity as it looked at the provided time. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
 
 |=======================
 
@@ -7962,6 +8091,18 @@ _As all POSTs, this can also accept an array of blueprints to create more than 1
 
 |path|Yes|See the documentation above for the format of the path.|string|-|-
 |type|Yes|The type is either a camel-cased full name of the entity type or its short identifier as used in canonical path.|string|-|environment, e, resourceType, rt, metricType, mt, operationType, ot, metadataPack, mp, feed, f, resource, r, metric, m, data, d
+
+|=======================
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Specifies the time to mark the entity as having been created at. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
 
 |=======================
 
@@ -8026,6 +8167,18 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|The time at which to mark the creates/updates/deletes as having occured. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Body*
 
 [cols="^20,55,^25", options="header"]
@@ -8084,6 +8237,18 @@ NOTE: *Make the inventory under given path match the provided inventory structur
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|The time at which to mark the creates/updates/deletes as having occured. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Body*
 
 [cols="^20,55,^25", options="header"]
@@ -8132,6 +8297,18 @@ NOTE: *Retrieves the details of the current tenant.* +
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Look at the tenant as it looked at the provided time. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Response*
 
 *Status codes*
@@ -8159,6 +8336,18 @@ NOTE: *Retrieves the details of the current tenant.* +
 
 NOTE: *Updates the properties of the tenant* +
 
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|The time to mark the update as having occured at. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
 
 
 
@@ -8204,6 +8393,18 @@ _As all POSTs, this can also accept an array of blueprints to create more than 1
 
 
 
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|The time to mark the relationship as having been created at. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
+
+
+
 *Response*
 
 *Status codes*
@@ -8233,6 +8434,18 @@ _As all POSTs, this can also accept an array of blueprints to create more than 1
 
 NOTE: *Retrieves tenant's relationships* +
 _By default, all the outgoing relationships are returned. This can be modified using the same techniques as in the entity graph traversal._
+
+
+
+*Query parameters*
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Parameter|Required|Description|Type|Format|Allowable Values
+
+|at|No|Look at the relationships as they were at the provided time. Either a Unix epoch timestamp in milliseconds, or an ISO-8601 formatted date and time in UTC timezone.|null|-|-
+
+|=======================
 
 
 
@@ -8299,6 +8512,20 @@ _By default, all the outgoing relationships are returned. This can be modified u
 |=======================
 
 
+[[ActionUpdate]]
+=== ActionUpdate
+
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|originalEntity|No|-|<<Entity>>|-|-
+|update|No|-|<<EntityUpdate>>|-|-
+
+|=======================
+
+
 [[ApiError]]
 === ApiError
 
@@ -8325,6 +8552,21 @@ If REST-call returns other than success, detailed error is returned.
 
 A canonical path is slash-separated list of path segments that uniquely identity an entity in the Hawkular Inventory graph. The path follows the "contains" relationships in inventory (which form a tree structure). Each segment specifies the type of the element on that position in the tree, followed by semicolon and the ID of the element. An example of a canonical path would be "/t;tenant/f;my-feed/r;my-resource". The type is one of 't' (tenant), 'e' (environment), 'rt' (resource type), 'mt' (metric type), 'ot' (operation type), 'mp' (metadata pack), 'r' (resource), 'm' (metric), 'd' (data) or 'rl' (relationship). Please consult Hawkular Inventory documentation for a more thorough discussion of the different types of entities and their places in the model.
 
+
+
+[[Change]]
+=== Change
+
+
+[cols="15,^10,35,^15,^10,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Format|Allowable Values
+
+|action|No|-|string|-|created, updated, deleted
+|context|No|-|null|-|-
+|time|No|A Unix epoch timestamp in milliseconds.|integer|-|-
+
+|=======================
 
 
 [[DataEntity]]
@@ -8443,6 +8685,10 @@ Inherits: <<EntityBlueprint>>
 === FeedUpdate
 
 Inherits: <<EntityUpdate>>
+
+[[History]]
+=== History
+
 
 [[IdentityHashTree]]
 === IdentityHashTree
