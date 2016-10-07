@@ -182,6 +182,93 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/10/06/hawkular-metrics-0.20.0.Final-released.html"><h1>Hawkular Metrics 0.20.0 - Release</h1></a>
+            <p>06 October 2016, by Stefan Negrea</p>
+            <p><p>I am happy to announce release 0.20.0 of Hawkular Metrics.This is a major release anchored by the inclusion of <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting</a> in the distribution, a brand new compression algorithm, and numerous API enhancements and fixes.</p><p><strong>Hawkular Metrics + Alerting</strong></p><p>Hawkular Metrics now includes Hawkular Alerting out of the box; it's no longer necessary to install and manage two separate components. Hawkular Metrics delivers a single EAR file containing components from both projects. Incoming metric data is efficiently filtered and evaluated, generating alerts and events for defined triggers. The combined EAR artifact is the primary binary distribution of Hawkular Metrics going forward. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-491">HWKMETRICS-491</a></p><p>Hawkular Alerting Details</p>
+<ul>
+  <li>Version <a href="https://issues.jboss.org/browse/HWKALERTS/fixforversion/12331699/">1.2.1</a> is included in this release</li>
+  <li>Project details and repository: <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting - Github</a></li>
+  <li>Documentation: <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">Hawkular Alerting REST API Documentation</a>, <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">Hawkular Alerting Examples</a>,<br/><a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Hawkular Alerting Developer Guide</a></li>
+</ul><p>Deployment Notes</p>
+<ol>
+  <li>Deployment Naming
+  <ul>
+    <li>The new EAR should be deployed as 'hawkular-metrics.ear' in WildFly. This naming is required to allow for proper dependencies to be established by the EAR components.</li>
+  </ul></li>
+  <li><code>standalone.xml</code> Configuration
+  <ul>
+    <li>The following snippet must be added to <code>standalone.xml</code> to support the Hawkular Alerting component. Add this additional cache-container entry after the existing cache-container entries:<br/><code>xml
+&lt;cache-container name=&quot;hawkular-alerts&quot; module=&quot;org.jboss.as.clustering.infinispan&quot;&gt;
+&lt;local-cache name=&quot;partition&quot;/&gt;
+&lt;local-cache name=&quot;triggers&quot;/&gt;
+&lt;local-cache name=&quot;data&quot;/&gt;
+&lt;local-cache name=&quot;publish&quot;/&gt;
+&lt;local-cache name=&quot;schema&quot;/&gt;
+&lt;/cache-container&gt;
+</code></li>
+  </ul></li>
+</ol><p>Usage Notes</p><p>To use Hawkular Alerting with Hawkular Metrics there is a naming convention when defining trigger conditions. For a metric with name 'X', the alerting DataId to reference it will be '<prefix>_X', where the <prefix> depends on the metric's type. For example, let's consider a metric with name 'HeapUsed' and type 'gauge'. This example defines a trigger condition to test if the used heap exceeded 80%: <code>hm_g_HeapUsed &gt; .8</code>. The 'hm_g_' prefix indicates that HeapUsed is a gauge.</p><p>Because Hawkular Metrics allows the same metric name for different types, the prefix is needed to make clear the target metric. The prefixes are:</p>
+<ul>
+  <li>hm_a: availability</li>
+  <li>hm_c: counter</li>
+  <li>hm_cr: counter rate</li>
+  <li>hm_g: gauge</li>
+  <li>hm_gr: gauge rate</li>
+  <li>hm_s: string</li>
+</ul><p><strong>Compression</strong></p><p>Hawkular Metrics will now compress all the data with a compression scheme based on Facebook's Gorilla paper. A job will be run every two hours that compresses data received during the 2 hour block since last compression (there's one hour time for out-of-order writes to be written to the Cassandra). These data points are then written to a new storage format that's designed after the Gorilla compression and also compressed with the LZ4 algorithm to give even better compression ratio. Benefits include a faster reading time of larger block of datapoints and very large disk space savings. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-464">HWKMETRICS-464</a></p><p><strong>Other major changes</strong></p>
+<ul>
+  <li><p>REST API - Query Improvements</p>
+  <ul>
+    <li>Querying raw &amp; rate data by tags is now also possible via POST <code>{metric_type}/query</code> endpoints for all types of metrics (<a href="https://issues.jboss.org/browse/HWKMETRICS-466">HWKMETRICS-466</a>)</li>
+    <li>Added new POST endpoints for stats <code>gauges/stats/query</code> and <code>counters/stats/query</code> (<a href="https://issues.jboss.org/browse/HWKMETRICS-465">HWKMETRICS-465</a>)</li>
+    <li>It is now possible to fetch metric definitions filtered by a list of ids not just tags (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
+  </ul></li>
+  <li><p>Cassandra Driver Configuration</p>
+  <ul>
+    <li>Driver configuration options are now exposed for connection and request timeouts</li>
+    <li>Connection timeout can be configured via <code>CASSANDRA_CONNECTION_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.connection.timeout</code> system property; value is specified in milliseconds and defaults to 5 seconds.</li>
+    <li>Request timeout can be configured via <code>CASSANDRA_REQUEST_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.request.timeout</code> system property; value is specified in milliseconds and defaults to 12 seconds.</li>
+    <li>For more details: (<a href="https://issues.jboss.org/browse/HWKMETRICS-490">HWKMETRICS-490</a>)</li>
+  </ul></li>
+  <li><p>Job Scheduler</p>
+  <ul>
+    <li>Duplicate instances of jobs were wrongly scheduled on server restart because the job scheduler was not checking if the job was already scheduled (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
+    <li>Triggers now have a delay to properly schedule jobs in the future (<a href="https://issues.jboss.org/browse/HWKMETRICS-224">HWKMETRICS-224</a>)</li>
+    <li>Resolved an issue where long running job can miss future executions because the current execution takes longer than the repeat interval (<a href="https://issues.jboss.org/browse/HWKMETRICS-477">HWKMETRICS-477</a>)</li>
+    <li>Prevent execution of a job multiple times for the same execution time (<a href="https://issues.jboss.org/browse/HWKMETRICS-486">HWKMETRICS-486</a>)</li>
+    <li>RepeatingTrigger now allows specifying trigger start time (<a href="https://issues.jboss.org/browse/HWKMETRICS-476">HWKMETRICS-476</a>)</li>
+  </ul></li>
+  <li><p>Admin Endpoints</p>
+  <ul>
+    <li>Admin related endpoints are going to be protected via an admin token, to be sent for admin related REST endpoints via Hawkular-Admin-Token request header</li>
+    <li>The first endpoint to be protected by this mechanism is <code>/tenants</code> since its functionality is cross tenant</li>
+    <li>The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints</li>
+    <li>This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)</li>
+    <li>The details:
+    <ul>
+      <li>system property key: hawkular.metrics.admin-token</li>
+      <li>environment variable: ADMIN_TOKEN</li>
+      <li>default value: null (admin endpoints are not accessible until set)</li>
+      <li>header name: Hawkular-Admin-Token</li>
+      <li>stored on the system config using one way hashing</li>
+    </ul></li>
+    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-478">HWKMETRICS-478</a></li>
+  </ul></li>
+</ul><p><strong>Hawkular Metrics Clients</strong></p>
+<ul>
+  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
+  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
+  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
+  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
+</ul><h3>Release Links</h3>
+<ul>
+  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0</a></li>
+  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
+  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331360">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331360</a></li>
+</ul><p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/09/19/hawkular-apm-on-msa.html"><h1>Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</h1></a>
             <p>19 September 2016, by Juraci Paixão Kröhling</p>
             <p><div id="preamble">
@@ -814,119 +901,13 @@ partition keys in the schema respecting it when working with RDDs.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/08/11/vertx-agent-inventory-impl.html"><h1>Vert.x agent inventory implementation</h1></a>
-            <p>11 August 2016, by Austin Kuo</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hi all,
-This is Austin, who is responsible for the gsoc project <a href="https://developer.jboss.org/wiki/JBossCommunityGoogleSummerOfCode2016Ideas#jive_content_id_Hawkularagent_for_vertx">Hawkular-agent for vert.x</a>.</p>
-</div>
-<div class="paragraph">
-<p>What I do is to implement the functionality to report the running vertx instances to the hawkular inventory service.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_reported_entities">Reported Entities</h2>
-<div class="sectionbody">
-<div class="sect3">
-<h4 id="_feed_and_root_resource">Feed and Root resource</h4>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>A feed represents the vertx instance.</p>
-</li>
-<li>
-<p>A root resource which is the parent of all other subresources.</p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_subresources">Subresources</h4>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>1 eventbus resource</p>
-</li>
-<li>
-<p>1 http client resource</p>
-</li>
-<li>
-<p>1 net client resource</p>
-</li>
-<li>
-<p>1 datagram socket resource</p>
-</li>
-<li>
-<p>0&#8230;&#8203;N http server resources depends on how many http servers are running.</p>
-</li>
-<li>
-<p>0&#8230;&#8203;N net server resources depends on how many net servers are running.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hawkfx_snapshot">Hawkfx Snapshot</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>You now can view the inventory structure from the <a href="https://github.com/pilhuhn/hawkfx">hawkfx client</a>.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-08-11-vertx-agent-inventory-snapshot.png" alt="Hawkfx snapshot">
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_how_to_use_it">How to use it?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The implementation is now at the brach <a href="https://github.com/vert-x3/vertx-hawkular-metrics/tree/inventory-reporter">inventory-reporter</a></p>
-</div>
-<div class="paragraph">
-<p>Just follow the instruction in the repository but</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-You have to enable inventory and provide the feed id and root resource id in <strong>VertxHawkularOptions</strong>.
-</td>
-</tr>
-</table>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">VertxHawkularOptions vertxHawkularOptions = new VertxHawkularOptions();
-vertxHawkularOptions.setEnabled(true); // By default Vert.x Metrics is disabled
-
-VertxOptions vertxOptions = new VertxOptions();
-vertxOptions.setMetricsOptions(vertxHawkularOptions);
-vertxOptions.setInventoryEnabled(true);
-vertxOptions.setFeedId("vertx-feed-id");
-vertxOptions.setVertxRootResourceId("root-resource-id");</code></pre>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>11 August 2016 - <a href="blog/2016/08/11/vertx-agent-inventory-impl.html">Vert.x agent inventory implementation</a></li>
           <li>01 August 2016 - <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html">Hawkular Metrics 0.18.0 - Release</a></li>
           <li>19 July 2016 - <a href="blog/2016/07/19/android-client-progess.html">What is new in Android Client</a></li>
           <li>14 July 2016 - <a href="blog/2016/07/14/hawkular-apm-openshift.html">Monitoring Application Performance within Openshift</a></li>
