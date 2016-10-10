@@ -126,7 +126,10 @@
                           <a href="../../../../hawkular-metrics/docs/user-guide/">User Guide</a>
                         </li>
                         <li class="menu-item ">
-                          <a href="../../../../docs/rest/rest-metrics.html">REST API</a>
+                          <a href="../../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../docs/rest/rest-alerts.html">Alerting REST API</a>
                         </li>
                       </ul>
                   </li>
@@ -237,6 +240,54 @@ the Grafana server origin in Metrics' configuration.</p>
 </div>
 <div class="paragraph">
 <p>Openshift-Metrics users must provide an authentication token.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_using_grafana_templating_variables">Using Grafana Templating (variables)</h3>
+<div class="paragraph">
+<p>Grafana allows you to create dashboard templates through the definition of variables. This is <a href="http://docs.grafana.org/reference/templating/">documented on Grafana&#8217;s site</a>.
+With the Hawkular Datasource Plugin, the variables of type <em>'Query'</em> are mapped to the <a href="http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics"><em>@get (url)/metrics</em></a>
+Hawkular Metrics endpoint and can be used to retrieve tenant&#8217;s metric names. Use the <em>Query Options</em> text field to pass query parameters, as illustrated below:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="docs/images/query-for-metrics.png" alt="query for metrics" width="600">
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+For instance, if you have metrics tagged <em>"type:memory"</em> and others tagged <em>"type:cpu"</em>, you can write <em>"?tags=type:memory"</em> to get only the <em>"memory"</em> ones, or <em>"?tags=type:cpu|memory"</em> to get them both. The leading question mark is not mandatory.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>There is an exception to that rule: if the query string is prefixed with <em>'tags/'</em>, the variable will contain the matching tag names rather than the metric names. In this case, the Hawkular Metrics endpoint <a href="http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics_tags__tags_"><em>@get (url)/metrics/tags/{tags}</em></a> will be used.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="docs/images/query-for-tags.png" alt="query for tags" width="600">
+</div>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-tip" title="Tip"></i>
+</td>
+<td class="content">
+For instance, type <em>"tags/type:*"</em> to get all of the available tag values for <em>"type"</em>.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Once you have set some variables, you can use them in graph queries: either for row or graph duplication, or to display multiple series in a single graph from a single query. This is especially useful when metric names contain some dynamic parts and thus cannot be known in advance.</p>
 </div>
 </div>
 <div class="sect2">
