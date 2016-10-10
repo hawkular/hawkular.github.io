@@ -79,7 +79,10 @@
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">User Guide</a>
                         </li>
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">REST API</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts.html">Alerting REST API</a>
                         </li>
                       </ul>
                   </li>
