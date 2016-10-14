@@ -6,9 +6,301 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 10 Oct 2016 21:42:33 +0000</pubDate>
-    <lastBuildDate>Mon, 10 Oct 2016 21:42:33 +0000</lastBuildDate>
+    <pubDate>Fri, 14 Oct 2016 15:54:17 +0000</pubDate>
+    <lastBuildDate>Fri, 14 Oct 2016 15:54:17 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</title>
+      <link>http://www.hawkular.org/blog/2016/10/14/hawkular-apm-polyglot-zipkin.html</link>
+      <author>noreply@hawkular.org (Pavol Loffay)</author>
+      <pubDate>Fri, 14 Oct 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/10/14/hawkular-apm-polyglot-zipkin.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The latest focus of Hawkular APM has been in building a compatibility layer
+for Zipkin instrumented applications. This enables Hawkular APM to leverage
+Zipkin &lt;a href=&quot;http://zipkin.io/pages/existing_instrumentations.html&quot;&gt;instrumentation libraries&lt;/a&gt;
+and instrument polyglot applications.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this blog post we will look how to use Zipkin instrumentation libraries to instrument
+polyglot environment and how the reported data looks in Hawkular APM and Zipkin server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_polyglot_application&quot;&gt;Polyglot Application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A typical polyglot application consists of multiple services written in different programming
+languages. These services interact together to fulfill some business needs or tasks.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following image shows the architecture of our polyglot application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org/https://raw.githubusercontent.com/hawkular/hawkular-apm/master/examples/polyglot-zipkin/architecture.png&quot; alt=&quot;architecture&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Architecture of polyglot application&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are five applications written in 4 languages: Java, JavaScript, Python and Ruby.
+It uses two databases MySQL and Apache Cassandra. Applications expose various REST endpoints
+which simulate some behaviour. For example creating a user in a database or an asynchronous task.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Each application lives in a separate docker container. The whole environment can be deployed
+using one line docker-compose command. Overall there are seven containers including Apache Kafka
+to collect span data. The complete source code with instructions how to run it can be found on
+&lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin&quot;&gt;Github&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_instrumentation_libraries&quot;&gt;Instrumentation Libraries&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are several &lt;a href=&quot;http://zipkin.io/pages/existing_instrumentations.html&quot;&gt;zipkin instrumentation libraries&lt;/a&gt;.
+Developers have to choose the relevant libraries for their target language (and framework).
+If there is no instrumentation for a specific framework they have to report spans to the
+server explicitly, thus having an instrumentation library for a popular web framework is a big
+advantage (not limited to web).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a typical microservice environment it is also necessary to add instrumentation for outgoing
+requests so one application may use two or more Zipkin compliant instrumentation libraries.
+These two implementations have to share trace context, and therefore proper initialization
+is required.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our applications are instrumented with following instrumentations:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Java (JAX-RS): &lt;a href=&quot;https://github.com/openzipkin/brave&quot;&gt;brave&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Java Dropwizard (JAX-RS): &lt;a href=&quot;https://github.com/smoketurner/dropwizard-zipkin&quot;&gt;dropwizard-zipkin&lt;/a&gt; uses brave&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Apache Cassandra: &lt;a href=&quot;https://github.com/thelastpickle/cassandra-zipkin-tracing&quot;&gt;cassandra-zipkin-tracing&lt;/a&gt; uses brave&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;JavaScript (express, cujoJS): &lt;a href=&quot;https://github.com/openzipkin/zipkin-js&quot;&gt;zipkin-js&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Ruby (rack): &lt;a href=&quot;https://github.com/openzipkin/zipkin-ruby&quot;&gt;zipkin-ruby&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Python (Pyramid): &lt;a href=&quot;https://github.com/Yelp/pyramid_zipkin&quot;&gt;pyramid_zipkin&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Python (Bravado): &lt;a href=&quot;https://github.com/Yelp/swagger_zipkin&quot;&gt;swagger_zipkin&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These libraries are typically developed by a community and therefore reported data may differ. For
+example a key of binary annotation representing HTTP URL can be &lt;code&gt;http.url&lt;/code&gt; or &lt;code&gt;http.uri&lt;/code&gt; or even
+&lt;code&gt;http.path&lt;/code&gt;. Some of the libraries do not report HTTP status code. Name of a span often represents
+HTTP method but some instrumentations put there URL or even other data (cassandra-zipkin-tracing).
+It is not an invalid behaviour, just keep in mind when querying data or exporting to external systems for
+an analysis.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There are also a couple of
+&lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin#known-issues&quot;&gt;issues&lt;/a&gt;
+which can lead to an incorrect data presentation in Hawkular APM. Issues were also reported to the Zipkin project.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_run_the_polyglot_application&quot;&gt;Run the Polyglot Application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Follow the instructions on
+&lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin&quot;&gt;Github&lt;/a&gt;
+to run the environment and start Hawkular APM server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Execute following requests which we will analyze in the following sections.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;requests&quot; class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Example HTTP requests&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;1. curl -ivX GET &apos;http://localhost:3001/nodejs/hello&apos;
+2. curl -ivX GET &apos;http://localhost:3000/dropwizard/A
+3. curl -ivX GET &apos;http://localhost:3000/dropwizard/asyncTwoOutgoingCalls&apos;
+4. curl -ivX POST -H &apos;Content-Type: application/json&apos; &apos;http://localhost:3001/nodejs/createUser&apos; -d &apos;{&quot;name&quot;: &quot;jdoe&quot;}&apos;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_server_comparisons&quot;&gt;Server Comparisons&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This section compares user interfaces of Hawkular APM and Zipkin server.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkular_apm_server&quot;&gt;Hawkular APM Server&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In Hawkular APM user interface we are going to look at distributed tracing tab. If you run previous
+commands there should be some data to analyze.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Following figure shows aggregated service interactions for selected initial endpoint (fourth request).
+Nodes represent endpoint with URL and edges invocation flow.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Nodes holds statistics information like average, minimum and maximum duration,
+total number of executions, service name and invoked URL.
+Edges contain timing information of a network latency. This screen only shows nodes with a URL.
+Databases and other components are shown in trace detail view.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For query capabilities we can specify time span, business transaction
+(currently available only for java agent instrumentation and OpenTracing provider) and properties.
+Properties represent binary annotations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-distributed-tracing-createUser.png&quot; alt=&quot;apm distributed tracing createUser&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2. Hawkular APM Distributed Tracing&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Next screen shows instance details. In other words a list of traces for the selected initial endpoint.
+Table contains basic information as collected properties, start time, principal (for java agent instrumentation)
+and overall trace duration. Details button opens a detailed graph.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-instance-details.png&quot; alt=&quot;apm instance details&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 3. Hawkular APM Instance Details&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the detailed view users can see different types of nodes: producers (client span),
+consumers (server span) and components (databases, EJBs). Tooltip is showing recorded binary annotations.
+In this case it is a CQL query for storing an user into Apache Cassandra.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This concrete graph starts with a consumer (REST handler) and produces two producers (outgoing requests). These
+requests are consumed by dropwizard and wildfly-swarm application and so on.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-instance-details-createUser.png&quot; alt=&quot;apm instance details createUser&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 4. Hawkular APM Instance Details&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_zipkin_server&quot;&gt;Zipkin Server&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s compare this now how the native Zipkin server shows stuff. Please start Zipkin server and
+execute requests from &lt;a href=&quot;#requests&quot;&gt;Example HTTP requests&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first thing we are going to look at is a query capability. The user interface
+offers to specify service name and names of recorded spans of a given service.
+It is possible to specify span&amp;#8217;s start time, end time and duration range.
+For a more specific query it is possible to query on binary annotations,
+which is helpful if we are looking for specific spans, for example HTTP URL of invoked service.
+In the following figure it can be seen that we specified URL and HTTP status code
+of invoked service.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The result of the query shows one trace which consist of 23 spans.
+There is also a trace duration time and information which services were invoked within
+that trace (also with a duration if possible to calculate).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-zipkin-createUser-query.png&quot; alt=&quot;apm zipkin createUser query&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 5. Zipkin Query&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The next screen is a trace instance view. It shows a timeline with timing data relative
+to the trace start time. In the following figure there is a trace view for the third call.
+It can be seen that it represent an asynchronous call. The first call ended before its
+descendants.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-zipkin-async.png&quot; alt=&quot;apm zipkin async&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 6. Zipkin Trace Detail&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you click on a specific span it shows a span detail view with events recorded within
+the span. There are also recorded binary annotations which denotes information like HTTP URL
+or HTTP status code. Instrumented application can add custom binary annotations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-zipkin-async-span-detail.png&quot; alt=&quot;apm zipkin async span detail&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 7. Zipkin Span Detail&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The last Zipkin screen is showing dependencies between services. When you click on a specific
+service it shows how many calls were triggered from a service to a service. The more calls to
+the service the wider arrow.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot; style=&quot;text-align: center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/apm-zipkin-dependencies.png&quot; alt=&quot;apm zipkin dependencies&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 8. Zipkin Service Dependencies&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We have seen a brief comparison of Hawkular APM and Zipkin server. Both of these projects
+display data differently. Hawkular APM is doing more high level aggregations based on user
+specific filter with calculation of statistics. On the other side Zipkin displays spans in
+&quot;RAW&quot; fashion. There are definitely advantages and disadvantages for both of these approaches.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We are always interested to hear feedback from users on how the information presentation may be
+improved to provide a powerful tool to analyze timing data of distributed applications.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Polyglot example: &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Zipkin instrumentations: &lt;a href=&quot;http://zipkin.io/pages/existing_instrumentations.html&quot; class=&quot;bare&quot;&gt;http://zipkin.io/pages/existing_instrumentations.html&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular APM: &lt;a href=&quot;https://github.com/hawkular/hawkular-apm&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-apm&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Zipkin: &lt;a href=&quot;https://github.com/openzipkin/zipkin&quot; class=&quot;bare&quot;&gt;https://github.com/openzipkin/zipkin&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Metrics 0.20.0 - Release</title>
       <link>http://www.hawkular.org/blog/2016/10/06/hawkular-metrics-0.20.0.Final-released.html</link>

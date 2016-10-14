@@ -185,6 +185,294 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/10/14/hawkular-apm-polyglot-zipkin.html"><h1>Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</h1></a>
+            <p>14 October 2016, by Pavol Loffay</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The latest focus of Hawkular APM has been in building a compatibility layer
+for Zipkin instrumented applications. This enables Hawkular APM to leverage
+Zipkin <a href="http://zipkin.io/pages/existing_instrumentations.html">instrumentation libraries</a>
+and instrument polyglot applications.</p>
+</div>
+<div class="paragraph">
+<p>In this blog post we will look how to use Zipkin instrumentation libraries to instrument
+polyglot environment and how the reported data looks in Hawkular APM and Zipkin server.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_polyglot_application">Polyglot Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>A typical polyglot application consists of multiple services written in different programming
+languages. These services interact together to fulfill some business needs or tasks.</p>
+</div>
+<div class="paragraph">
+<p>The following image shows the architecture of our polyglot application.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="https://raw.githubusercontent.com/hawkular/hawkular-apm/master/examples/polyglot-zipkin/architecture.png" alt="architecture">
+</div>
+<div class="title">Figure 1. Architecture of polyglot application</div>
+</div>
+<div class="paragraph">
+<p>There are five applications written in 4 languages: Java, JavaScript, Python and Ruby.
+It uses two databases MySQL and Apache Cassandra. Applications expose various REST endpoints
+which simulate some behaviour. For example creating a user in a database or an asynchronous task.</p>
+</div>
+<div class="paragraph">
+<p>Each application lives in a separate docker container. The whole environment can be deployed
+using one line docker-compose command. Overall there are seven containers including Apache Kafka
+to collect span data. The complete source code with instructions how to run it can be found on
+<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin">Github</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_instrumentation_libraries">Instrumentation Libraries</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are several <a href="http://zipkin.io/pages/existing_instrumentations.html">zipkin instrumentation libraries</a>.
+Developers have to choose the relevant libraries for their target language (and framework).
+If there is no instrumentation for a specific framework they have to report spans to the
+server explicitly, thus having an instrumentation library for a popular web framework is a big
+advantage (not limited to web).</p>
+</div>
+<div class="paragraph">
+<p>In a typical microservice environment it is also necessary to add instrumentation for outgoing
+requests so one application may use two or more Zipkin compliant instrumentation libraries.
+These two implementations have to share trace context, and therefore proper initialization
+is required.</p>
+</div>
+<div class="paragraph">
+<p>Our applications are instrumented with following instrumentations:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Java (JAX-RS): <a href="https://github.com/openzipkin/brave">brave</a></p>
+</li>
+<li>
+<p>Java Dropwizard (JAX-RS): <a href="https://github.com/smoketurner/dropwizard-zipkin">dropwizard-zipkin</a> uses brave</p>
+</li>
+<li>
+<p>Apache Cassandra: <a href="https://github.com/thelastpickle/cassandra-zipkin-tracing">cassandra-zipkin-tracing</a> uses brave</p>
+</li>
+<li>
+<p>JavaScript (express, cujoJS): <a href="https://github.com/openzipkin/zipkin-js">zipkin-js</a></p>
+</li>
+<li>
+<p>Ruby (rack): <a href="https://github.com/openzipkin/zipkin-ruby">zipkin-ruby</a></p>
+</li>
+<li>
+<p>Python (Pyramid): <a href="https://github.com/Yelp/pyramid_zipkin">pyramid_zipkin</a></p>
+</li>
+<li>
+<p>Python (Bravado): <a href="https://github.com/Yelp/swagger_zipkin">swagger_zipkin</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These libraries are typically developed by a community and therefore reported data may differ. For
+example a key of binary annotation representing HTTP URL can be <code>http.url</code> or <code>http.uri</code> or even
+<code>http.path</code>. Some of the libraries do not report HTTP status code. Name of a span often represents
+HTTP method but some instrumentations put there URL or even other data (cassandra-zipkin-tracing).
+It is not an invalid behaviour, just keep in mind when querying data or exporting to external systems for
+an analysis.</p>
+</div>
+<div class="paragraph">
+<p>There are also a couple of
+<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin#known-issues">issues</a>
+which can lead to an incorrect data presentation in Hawkular APM. Issues were also reported to the Zipkin project.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_run_the_polyglot_application">Run the Polyglot Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Follow the instructions on
+<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin">Github</a>
+to run the environment and start Hawkular APM server.</p>
+</div>
+<div class="paragraph">
+<p>Execute following requests which we will analyze in the following sections.</p>
+</div>
+<div id="requests" class="listingblock">
+<div class="title">Example HTTP requests</div>
+<div class="content">
+<pre>1. curl -ivX GET 'http://localhost:3001/nodejs/hello'
+2. curl -ivX GET 'http://localhost:3000/dropwizard/A
+3. curl -ivX GET 'http://localhost:3000/dropwizard/asyncTwoOutgoingCalls'
+4. curl -ivX POST -H 'Content-Type: application/json' 'http://localhost:3001/nodejs/createUser' -d '{"name": "jdoe"}'</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_server_comparisons">Server Comparisons</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section compares user interfaces of Hawkular APM and Zipkin server.</p>
+</div>
+<div class="sect2">
+<h3 id="_hawkular_apm_server">Hawkular APM Server</h3>
+<div class="paragraph">
+<p>In Hawkular APM user interface we are going to look at distributed tracing tab. If you run previous
+commands there should be some data to analyze.</p>
+</div>
+<div class="paragraph">
+<p>Following figure shows aggregated service interactions for selected initial endpoint (fourth request).
+Nodes represent endpoint with URL and edges invocation flow.</p>
+</div>
+<div class="paragraph">
+<p>Nodes holds statistics information like average, minimum and maximum duration,
+total number of executions, service name and invoked URL.
+Edges contain timing information of a network latency. This screen only shows nodes with a URL.
+Databases and other components are shown in trace detail view.</p>
+</div>
+<div class="paragraph">
+<p>For query capabilities we can specify time span, business transaction
+(currently available only for java agent instrumentation and OpenTracing provider) and properties.
+Properties represent binary annotations.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-distributed-tracing-createUser.png" alt="apm distributed tracing createUser">
+</div>
+<div class="title">Figure 2. Hawkular APM Distributed Tracing</div>
+</div>
+<div class="paragraph">
+<p>Next screen shows instance details. In other words a list of traces for the selected initial endpoint.
+Table contains basic information as collected properties, start time, principal (for java agent instrumentation)
+and overall trace duration. Details button opens a detailed graph.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-instance-details.png" alt="apm instance details">
+</div>
+<div class="title">Figure 3. Hawkular APM Instance Details</div>
+</div>
+<div class="paragraph">
+<p>In the detailed view users can see different types of nodes: producers (client span),
+consumers (server span) and components (databases, EJBs). Tooltip is showing recorded binary annotations.
+In this case it is a CQL query for storing an user into Apache Cassandra.</p>
+</div>
+<div class="paragraph">
+<p>This concrete graph starts with a consumer (REST handler) and produces two producers (outgoing requests). These
+requests are consumed by dropwizard and wildfly-swarm application and so on.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-instance-details-createUser.png" alt="apm instance details createUser">
+</div>
+<div class="title">Figure 4. Hawkular APM Instance Details</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_zipkin_server">Zipkin Server</h3>
+<div class="paragraph">
+<p>Let&#8217;s compare this now how the native Zipkin server shows stuff. Please start Zipkin server and
+execute requests from <a href="#requests">Example HTTP requests</a>.</p>
+</div>
+<div class="paragraph">
+<p>The first thing we are going to look at is a query capability. The user interface
+offers to specify service name and names of recorded spans of a given service.
+It is possible to specify span&#8217;s start time, end time and duration range.
+For a more specific query it is possible to query on binary annotations,
+which is helpful if we are looking for specific spans, for example HTTP URL of invoked service.
+In the following figure it can be seen that we specified URL and HTTP status code
+of invoked service.</p>
+</div>
+<div class="paragraph">
+<p>The result of the query shows one trace which consist of 23 spans.
+There is also a trace duration time and information which services were invoked within
+that trace (also with a duration if possible to calculate).</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-zipkin-createUser-query.png" alt="apm zipkin createUser query">
+</div>
+<div class="title">Figure 5. Zipkin Query</div>
+</div>
+<div class="paragraph">
+<p>The next screen is a trace instance view. It shows a timeline with timing data relative
+to the trace start time. In the following figure there is a trace view for the third call.
+It can be seen that it represent an asynchronous call. The first call ended before its
+descendants.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-zipkin-async.png" alt="apm zipkin async">
+</div>
+<div class="title">Figure 6. Zipkin Trace Detail</div>
+</div>
+<div class="paragraph">
+<p>When you click on a specific span it shows a span detail view with events recorded within
+the span. There are also recorded binary annotations which denotes information like HTTP URL
+or HTTP status code. Instrumented application can add custom binary annotations.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-zipkin-async-span-detail.png" alt="apm zipkin async span detail">
+</div>
+<div class="title">Figure 7. Zipkin Span Detail</div>
+</div>
+<div class="paragraph">
+<p>The last Zipkin screen is showing dependencies between services. When you click on a specific
+service it shows how many calls were triggered from a service to a service. The more calls to
+the service the wider arrow.</p>
+</div>
+<div class="imageblock" style="text-align: center">
+<div class="content">
+<img src="/img/blog/2016/apm-zipkin-dependencies.png" alt="apm zipkin dependencies">
+</div>
+<div class="title">Figure 8. Zipkin Service Dependencies</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We have seen a brief comparison of Hawkular APM and Zipkin server. Both of these projects
+display data differently. Hawkular APM is doing more high level aggregations based on user
+specific filter with calculation of statistics. On the other side Zipkin displays spans in
+"RAW" fashion. There are definitely advantages and disadvantages for both of these approaches.</p>
+</div>
+<div class="paragraph">
+<p>We are always interested to hear feedback from users on how the information presentation may be
+improved to provide a powerful tool to analyze timing data of distributed applications.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_links">Links</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Polyglot example: <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin" class="bare">https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin</a></p>
+</li>
+<li>
+<p>Zipkin instrumentations: <a href="http://zipkin.io/pages/existing_instrumentations.html" class="bare">http://zipkin.io/pages/existing_instrumentations.html</a></p>
+</li>
+<li>
+<p>Hawkular APM: <a href="https://github.com/hawkular/hawkular-apm" class="bare">https://github.com/hawkular/hawkular-apm</a></p>
+</li>
+<li>
+<p>Zipkin: <a href="https://github.com/openzipkin/zipkin" class="bare">https://github.com/openzipkin/zipkin</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/10/06/hawkular-metrics-0.20.0.Final-released.html"><h1>Hawkular Metrics 0.20.0 - Release</h1></a>
             <p>06 October 2016, by Stefan Negrea</p>
             <p><p>I am happy to announce release 0.20.0 of Hawkular Metrics.This is a major release anchored by the inclusion of <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting</a> in the distribution, a brand new compression algorithm, and numerous API enhancements and fixes.</p><p><strong>Hawkular Metrics + Alerting</strong></p><p>Hawkular Metrics now includes Hawkular Alerting out of the box; it's no longer necessary to install and manage two separate components. Hawkular Metrics delivers a single EAR file containing components from both projects. Incoming metric data is efficiently filtered and evaluated, generating alerts and events for defined triggers. The combined EAR artifact is the primary binary distribution of Hawkular Metrics going forward. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-491">HWKMETRICS-491</a></p><p>Hawkular Alerting Details</p>
@@ -687,229 +975,13 @@ $ sudo c_rehash OPENSSLDIR/certs</code></pre>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/08/31/spark-metric-analysis.html"><h1>Metric Data Analysis using the Apache Spark</h1></a>
-            <p>31 August 2016, by Jiri Kremser</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>The goal of this blog post is to show how to easily connect <a href="https://spark.apache.org/">Apache Spark</a> to the
-Cassandra with the metric data; perform simple transformation on the data as well as some examples of calculating correlation
-between the two time series data streams. Last but not least we will show how to create a
-<a href="https://en.wikipedia.org/wiki/K-means_clustering">k-means</a> clustering model.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-08-31-spark-logo.png" alt="Spark logo">
-</div>
-</div>
-<div class="paragraph">
-<p>The situation is visualized on the figure bellow. After the WildFly Agent was collecting the data for some time period and
-reporting them to Hawkular Metrics. Hawkular Metrics stores them into Cassandra to which we will be connecting with Spark.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-08-31-spark.png" alt="Components interaction">
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_initialization">Initialization</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>First we need to create a spark context with the <code>spark.cassandra.connection.host</code> property correctly set.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val conf = new SparkConf()
-  .setAppName("HelloHawkular")
-  .setMaster("local")
-  .set("spark.cassandra.connection.host", "127.0.0.1")
-val sc = new SparkContext(conf)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>It is very simple, the only assumption here is that the <code>spark-cassandra-connector</code> jar is on the class path.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-Apache Spark is completely written in Scala so also the examples are written in Scala.
-Although, it provides also Java and Python APIs, using the language it has been written in is the best choice,
-because one can track down the calls in the (native) source code.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_reading_the_data_from_cassandra">Reading the data from Cassandra</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s create a "Resilient Distributed Dataset" (RDD) from Cassandra table called "data" in "hawkular_metrics" keyspace.
-Resilient Distributed Datasets have <a href="https://spark.apache.org/docs/latest/api/scala/#org.apache.spark.rdd.RDD">plenty</a>
-of useful operations defined. RDD is a leitmotif in Spark, all the data manipulation
-is represented by chaining the operations on RDDs. It is an immutable structure that inherently supports parallelization.
-Generally speaking, RDDs can be created as a result of calling a method on another RDD(s)
-or by calling a method the <code>SparkContext</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val rdd: RDD[CassandraRow] = sc.cassandraTable("hawkular_metrics", "data")
-println(rdd.count)
-println(rdd.first)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This prints the number of rows (in my case 245609) and the very first row, just to have an idea how it looks like:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">CassandraRow{tenant_id: hawkular, type: 0, metric: MI~R~[e69a19f7-76e7-4fd2-8ed5-864d1570f3ff/Local~/deployment=hawkular-alerts-rest.war/subsystem=ejb3/singleton-bean=PartitionManagerImpl]~MT~Singleton EJB Metrics~Execution Time, dpart: 0, time: baef5a00-6e31-11e6-96d2-5f826fbc8eb1, aggregates: {}, availability: null, data_retention: null, l_value: null, n_value: 0.0, s_value: null, tags: {}}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The data table contains all the metrics so we need to filter only what we are interested in.
-RDD provides a <code>groupBy</code> method that takes a function that is applied on all the data in the RDD and returns the key by
-which the grouping should be done. We can group by the <code>metric</code>. This can be useful when working with more
-metrics. But for our purposes, let&#8217;s just do simple filter method.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val feedId = "e69a19f7-76e7-4fd2-8ed5-864d1570f3ff"
-val metric1 = "Total Memory"
-val metric2 = "Available Memory"
-val total: RDD[Double] = rdd.filter(x =&gt; {
-    val metricId = x.getString("metric")
-    metricId.contains(feedId) &amp;&amp; metricId.contains(metric1)
-  })
-  .map(_.getDouble("n_value"))
-  .repartition(8)
-
-val free: RDD[Double] = rdd.filter(x =&gt; {
-    val metricId = x.getString("metric")
-    metricId.contains(feedId) &amp;&amp; metricId.contains(metric2)
-  })
-  .map(_.getDouble("n_value"))
-  .repartition(8)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The <code>repartition()</code> method needs to be called because methods like <code>filter</code>, <code>flatMap</code> and similar have impact on the
-number of elements in each partition. We need those two RDDs to have the same amount of partitions and the same amount
-of elements in each partition in order to be able to apply some statistical methods on them. Method called <code>coalesce</code>
-is an alternative option to use here. Perhaps even better because it does not shuffle the data over the network in case
-of multi node environment. However, the data model of Hawkular metrics ensures that data from one metric are always on
-the same node.</p>
-</div>
-<div class="paragraph">
-<p>Now, we have two RDDs. The <code>total</code> and <code>free</code> that represent the amounts of memory that was "free" on the platform and the total value.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_doing_something_fancy">Doing something fancy</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let us create a derived RDD that will represent the used memory on the platform.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val used: RDD[Double] = total.zip(free).map(e =&gt; e._1 - e._2)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>What we have done here is that we have created a new RDD, representing a metric data that were calculated using two
-other metric streams. The transformation was trivial, but RDD provides also methods for aggregation.</p>
-</div>
-<div class="paragraph">
-<p>Now, let&#8217;s calculate the correlation between the used and free memory. There should be some correlation, right?</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val correlation: Double = Statistics.corr(used, free, "pearson")
-println(s"Correlation is: $correlation")</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This will print <code>Correlation is: -0.9999999999999781</code>. That means there is total negative
-<a href="https://en.wikipedia.org/wiki/Pearson_product-moment_correlation_coefficient">correlation</a> between the two
-(the higher the first one, the lower the second one).
-This example was artificial, but in general, one can calculate the correlation between any two metric streams. Of course,
-correlation doesn&#8217;t imply causation, so we can&#8217;t extract any higher level information like business rules here.
-But we obtain some information that metrics are somehow related together and with further analysis we can for example detect, that
-change in one metric stream always precedes the change in the second metric stream. Again, it&#8217;s not causation, but something stronger than
-correlation. <a href="https://en.wikipedia.org/wiki/Granger_causality">Granger causality test</a> is possible method,
-nonetheless, this is out of the scope of this blog post.</p>
-</div>
-<div class="paragraph">
-<p>Last thing, I wanted to show is the k-means clustering.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-scala" data-lang="scala">val usedMemoryVector = used.map(x =&gt; Vectors.dense(x))
-val numClusters = 3
-val numIterations = 20
-val clusters: KMeansModel = KMeans.train(usedMemoryVector, numClusters, numIterations)
-println("Cluster centers:")
-clusters.clusterCenters.foreach(println)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The code above will print the three cluster representatives. It is also possible to test the new data point by
-calling <code>clusters.predics(point)</code> that will return the expected cluster the point is attracted to.</p>
-</div>
-<div class="paragraph">
-<p>There is <a href="https://spark.apache.org/docs/latest/mllib-guide.html">much more</a> in the MLlib. One can find outliers,
-common patterns, do a classification, etc.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-All the code examples can be <a href="https://github.com/Jiri-Kremser/spark-hawkular-demo">downloaded</a> and run against the Cassandra with the metric data.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_summary">Summary</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>By using the <code>spark-cassandra-connector</code>, we were able to get the data from C* as RDD, call the simple operations on RDDs
-and some smart functions from the MLlib package, but we entirely neglected the temporal aspect of the data. The only
-reason it worked reasonably well is because the data is sorted in the table by the timestamp. There is a Spark library for
-time series data out there called <a href="https://github.com/sryza/spark-timeseries">spark-ts</a>. Nice improvement would
-be connecting the <code>spark-cassandra-connector</code> and <code>spark-ts</code> to provide convenient way of working with time series data
-on top of Cassandra.</p>
-</div>
-<div class="paragraph">
-<p>It is also worth mentioning that Spark does not offer only data processing on the data that was obtained by some "data pump".
-Spark is so popular because it allows running the algorithms close to the data. In our case we had only single headed Cassandra,
-but in general it can be run on a cluster consisting of multiple nodes. This, of course, requires the wisely chosen
-partition keys in the schema respecting it when working with RDDs.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>31 August 2016 - <a href="blog/2016/08/31/spark-metric-analysis.html">Metric Data Analysis using the Apache Spark</a></li>
           <li>11 August 2016 - <a href="blog/2016/08/11/vertx-agent-inventory-impl.html">Vert.x agent inventory implementation</a></li>
           <li>01 August 2016 - <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html">Hawkular Metrics 0.18.0 - Release</a></li>
           <li>19 July 2016 - <a href="blog/2016/07/19/android-client-progess.html">What is new in Android Client</a></li>
