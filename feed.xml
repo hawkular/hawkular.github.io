@@ -6,9 +6,164 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 17 Oct 2016 07:15:49 +0000</pubDate>
-    <lastBuildDate>Mon, 17 Oct 2016 07:15:49 +0000</lastBuildDate>
+    <pubDate>Mon, 17 Oct 2016 09:16:30 +0000</pubDate>
+    <lastBuildDate>Mon, 17 Oct 2016 09:16:30 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular APM supports OpenTracing and Alerts</title>
+      <link>http://www.hawkular.org/blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html</link>
+      <author>noreply@hawkular.org (Gary Brown)</author>
+      <pubDate>Mon, 17 Oct 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/releases/tag/0.11.0.Final&quot;&gt;latest Hawkular APM release&lt;/a&gt; includes two new features, a Java based &lt;a href=&quot;http://opentracing.io/&quot;&gt;OpenTracing&lt;/a&gt; provider and integration with &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html&quot;&gt;Hawkular Alerts&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A video demonstrating these new features can also be viewed &lt;a href=&quot;https://youtu.be/HSWSiww07RE&quot;&gt;here&lt;/a&gt;. The video starts with an explanation of how a vertx application is instrumented using OpenTracing. If you want to skip that explanation, then start &lt;a href=&quot;https://youtu.be/HSWSiww07RE?t=7m47s&quot;&gt;here for an explanation of the alert trigger&lt;/a&gt; or start &lt;a href=&quot;https://youtu.be/HSWSiww07RE?t=9m20s&quot;&gt;here for the actual demo&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_an_example_vertx_application_instrumented_using_opentracing&quot;&gt;An Example Vertx Application instrumented using OpenTracing&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As explained on the &lt;a href=&quot;http://opentracing.io/&quot;&gt;OpenTracing Website&lt;/a&gt;, it is &lt;em&gt;&quot;A vendor-neutral open standard for distributed tracing&quot;&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The project has been established to provide a consistent API, across multiple languages, to enable applications to be independent of any particular tracing solution. The currently supported languages are Java, Javascript, Go, Python, Objective-C and C++.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As part of the most recent &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/releases/tag/0.11.0.Final&quot;&gt;Hawkular APM release (version 0.11)&lt;/a&gt; we have implemented a Java based OpenTracing provider. To help demonstrate its use, we have instrumented an example &lt;a href=&quot;http://vertx.io/&quot;&gt;Vert.x&lt;/a&gt; application that uses an asynchronous programming style with different interaction patterns (request/response and publish/subscribe). The code for the example can be found on &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/0.11.0.Final/examples/vertx-opentracing&quot;&gt;GitHub&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Adding OpentTracing instrumentation to an application essentially involves creating a set of spans to demarcate significant points in your application that you wish to monitor. When a service receives a request from a client, it should first attempt to extract any existing state information from the client request before creating the top level span for the service:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;        SpanContext spanCtx = tracer.extract(Format.Builtin.TEXT_MAP,
+                new HttpHeadersExtractAdapter(routingContext.request().headers()));
+
+        Span ordersConsumerSpan = tracer.buildSpan(&quot;POST&quot;)
+                .asChildOf(spanCtx)
+                .withTag(&quot;http.url&quot;, &quot;/orders&quot;)
+                .withTag(&quot;service&quot;, &quot;OrderManager&quot;)
+                .withTag(&quot;transaction&quot;, &quot;Place Order&quot;)
+                .start();&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So in this case, we are receiving a request to place an order via a RESTful endpoint (i.e. POST /orders). The first statement extracts any trace state from the HTTP headers and stores them in a &lt;em&gt;SpanContext&lt;/em&gt; which is then used when creating a &lt;em&gt;childOf&lt;/em&gt; relationship for the top level span.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The additional tags we have specified are for information purposes. The &lt;code&gt;http.url&lt;/code&gt; is used to identify two things, that the endpoint type is HTTP, and secondly the URL is &lt;em&gt;/orders&lt;/em&gt;. The &lt;code&gt;service&lt;/code&gt; tag is used to add information on the dependency graph, and finally the &lt;code&gt;transaction&lt;/code&gt; enables the trace instance to be classified as belonging to this business transaction.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As this service is then making calls out to other services, we want to create a span to encapsulate the service invocation, and identify it as being a child span of the previously created span (i.e. to make it clear that this service invocation is being performed in the scope of the existing trace instance). The follow span represents the call out to the &lt;em&gt;AccountManager&lt;/em&gt; to get account information.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;        Span getAccountSpan = tracer.buildSpan(&quot;GetAccount&quot;)
+                .asChildOf(ordersConsumerSpan)
+                .start();
+
+        tracer.inject(getAccountSpan.context(), Format.Builtin.TEXT_MAP,
+                new VertxMessageInjectAdapter(order));
+
+        eb.send(&quot;AccountManager.getAccount&quot;, order, acctresp -&amp;gt; {
+            getAccountSpan.finish();
+            ....&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After creating the span, the second statement is used to &lt;em&gt;inject&lt;/em&gt; the trace state into the message being sent to the &lt;em&gt;AccountManager&lt;/em&gt;. This is necessary to ensure that the activities that occur within the account manager are linked to the same trace instance.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;        response.putHeader(&quot;content-type&quot;, &quot;application/json&quot;)
+                .setStatusCode(202).end(order.encodePrettily());
+
+        ordersConsumerSpan.setTag(&quot;orderId&quot;, order.getString(&quot;id&quot;));
+        ordersConsumerSpan.setTag(&quot;itemId&quot;, order.getString(&quot;itemId&quot;));
+        ordersConsumerSpan.setTag(&quot;accountId&quot;, order.getString(&quot;accountId&quot;));
+
+        ordersConsumerSpan.finish();&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Finally, once the order has been confirmed, we associate some additional information with the top level span, before calling the &lt;code&gt;finish()&lt;/code&gt; method.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This gives a brief insight into how an application can be instrumented to use the OpenTracing API. The &lt;em&gt;OrderManager&lt;/em&gt; example is slightly more complex, in that it also instruments a subsequent publish of the order confirmation on the event bus, and relates the instrumentation back to the original trace using the &lt;em&gt;FOLLOWS_FROM&lt;/em&gt; reference type. For more information please see the &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/0.11.0.Final/examples/vertx-opentracing&quot;&gt;code&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_analysing_the_captured_information&quot;&gt;Analysing the Captured Information&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When starting the Hawkular APM console, the first page that is displayed shows details for the spans associated with the tracing information that has been captured from the application. The spans can represent &lt;em&gt;Consumers&lt;/em&gt; that receive service requests, &lt;em&gt;Producers&lt;/em&gt; that make service requests, or internal &lt;em&gt;Components&lt;/em&gt; (e.g. databases).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As you can see, the values in the &lt;em&gt;Operation&lt;/em&gt; column have the same values that were used when building the spans in the vertx application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-apm-vertx-components.png&quot; alt=&quot;Application component details&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;On the &lt;strong&gt;Distributed Tracing&lt;/strong&gt; page, we can view the dependencies between the services that were involved in placing the order (i.e. we have selected the &lt;em&gt;Place Order&lt;/em&gt; business transaction). We could also filter based on individual properties to further refine the trace instances that are aggregated into this view.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-apm-vertx-dt.png&quot; alt=&quot;Service dependencies&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If we then select the &lt;strong&gt;Show &apos;n&apos; instance details&lt;/strong&gt; button, and select an instance from the table, you can view the flow of the individual trace instance:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-apm-vertx-instance.png&quot; alt=&quot;Trace instance for placing an order&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this diagram, you can see how the order is first passed to the &lt;em&gt;AccountManager&lt;/em&gt; to check the account id is known, followed by the &lt;em&gt;InventoryManager&lt;/em&gt; to check the stock level. At this point the order confirmation is created and returned to the client application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However this is not the end of the trace, as the Vertx application then publishes the order confirmation on the event bus, which is consumed by two services (&lt;em&gt;OrderLog&lt;/em&gt; and &lt;em&gt;InventoryManager&lt;/em&gt;) - which demonstrates tracing a publish/subscribe interaction. This behaviour is represented by a dotted line, as it is being performed concurrently, outside the scope of the main request/response interaction with the client application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following screenshot is the &lt;strong&gt;Business Transaction&lt;/strong&gt; page, which shows a summary of the business transactions being managed by the server. In previous releases, the business transactions were configured on the server, based on information captured using the non-intrusive agent based approach.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With the explicit instrumentation of applications using the OpenTracing API, we have added the ability for the application to directly specify the name of the business transaction, which is then propagated with the trace state between interacting services. This means that business transactions don&amp;#8217;t need to be configured on the server when specified via the OpenTracing API.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-apm-vertx-btxnsummary.png&quot; alt=&quot;Summary of business transactions&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When a business transaction is selected from the summary page, it shows the detailed information:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-apm-vertx-btxn-placeorder.png&quot; alt=&quot;Place order business transaction information&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This screenshot shows how information specified via tags on the OpenTracing spans can be used to show faults and properties for the business transaction. Selecting the segments in the fault and properties pie charts can be used to further filter the information displayed on this page.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_summary&quot;&gt;Summary&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this blog and accompanying video we have shown how Hawkular APM can be used with an application instrumented using the standard OpenTracing API. The video also shows how trace information captured and reported to the Hawkular APM server can be used to trigger alerts defined using Hawkular Alerts.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</title>
       <link>http://www.hawkular.org/blog/2016/10/14/hawkular-apm-polyglot-zipkin.html</link>

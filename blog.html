@@ -185,6 +185,157 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html"><h1>Hawkular APM supports OpenTracing and Alerts</h1></a>
+            <p>17 October 2016, by Gary Brown</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="https://github.com/hawkular/hawkular-apm/releases/tag/0.11.0.Final">latest Hawkular APM release</a> includes two new features, a Java based <a href="http://opentracing.io/">OpenTracing</a> provider and integration with <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Hawkular Alerts</a>.</p>
+</div>
+<div class="paragraph">
+<p>A video demonstrating these new features can also be viewed <a href="https://youtu.be/HSWSiww07RE">here</a>. The video starts with an explanation of how a vertx application is instrumented using OpenTracing. If you want to skip that explanation, then start <a href="https://youtu.be/HSWSiww07RE?t=7m47s">here for an explanation of the alert trigger</a> or start <a href="https://youtu.be/HSWSiww07RE?t=9m20s">here for the actual demo</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_an_example_vertx_application_instrumented_using_opentracing">An Example Vertx Application instrumented using OpenTracing</h3>
+<div class="paragraph">
+<p>As explained on the <a href="http://opentracing.io/">OpenTracing Website</a>, it is <em>"A vendor-neutral open standard for distributed tracing"</em>.</p>
+</div>
+<div class="paragraph">
+<p>The project has been established to provide a consistent API, across multiple languages, to enable applications to be independent of any particular tracing solution. The currently supported languages are Java, Javascript, Go, Python, Objective-C and C++.</p>
+</div>
+<div class="paragraph">
+<p>As part of the most recent <a href="https://github.com/hawkular/hawkular-apm/releases/tag/0.11.0.Final">Hawkular APM release (version 0.11)</a> we have implemented a Java based OpenTracing provider. To help demonstrate its use, we have instrumented an example <a href="http://vertx.io/">Vert.x</a> application that uses an asynchronous programming style with different interaction patterns (request/response and publish/subscribe). The code for the example can be found on <a href="https://github.com/hawkular/hawkular-apm/tree/0.11.0.Final/examples/vertx-opentracing">GitHub</a>.</p>
+</div>
+<div class="paragraph">
+<p>Adding OpentTracing instrumentation to an application essentially involves creating a set of spans to demarcate significant points in your application that you wish to monitor. When a service receives a request from a client, it should first attempt to extract any existing state information from the client request before creating the top level span for the service:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>        SpanContext spanCtx = tracer.extract(Format.Builtin.TEXT_MAP,
+                new HttpHeadersExtractAdapter(routingContext.request().headers()));
+
+        Span ordersConsumerSpan = tracer.buildSpan("POST")
+                .asChildOf(spanCtx)
+                .withTag("http.url", "/orders")
+                .withTag("service", "OrderManager")
+                .withTag("transaction", "Place Order")
+                .start();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>So in this case, we are receiving a request to place an order via a RESTful endpoint (i.e. POST /orders). The first statement extracts any trace state from the HTTP headers and stores them in a <em>SpanContext</em> which is then used when creating a <em>childOf</em> relationship for the top level span.</p>
+</div>
+<div class="paragraph">
+<p>The additional tags we have specified are for information purposes. The <code>http.url</code> is used to identify two things, that the endpoint type is HTTP, and secondly the URL is <em>/orders</em>. The <code>service</code> tag is used to add information on the dependency graph, and finally the <code>transaction</code> enables the trace instance to be classified as belonging to this business transaction.</p>
+</div>
+<div class="paragraph">
+<p>As this service is then making calls out to other services, we want to create a span to encapsulate the service invocation, and identify it as being a child span of the previously created span (i.e. to make it clear that this service invocation is being performed in the scope of the existing trace instance). The follow span represents the call out to the <em>AccountManager</em> to get account information.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>        Span getAccountSpan = tracer.buildSpan("GetAccount")
+                .asChildOf(ordersConsumerSpan)
+                .start();
+
+        tracer.inject(getAccountSpan.context(), Format.Builtin.TEXT_MAP,
+                new VertxMessageInjectAdapter(order));
+
+        eb.send("AccountManager.getAccount", order, acctresp -&gt; {
+            getAccountSpan.finish();
+            ....</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After creating the span, the second statement is used to <em>inject</em> the trace state into the message being sent to the <em>AccountManager</em>. This is necessary to ensure that the activities that occur within the account manager are linked to the same trace instance.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>        response.putHeader("content-type", "application/json")
+                .setStatusCode(202).end(order.encodePrettily());
+
+        ordersConsumerSpan.setTag("orderId", order.getString("id"));
+        ordersConsumerSpan.setTag("itemId", order.getString("itemId"));
+        ordersConsumerSpan.setTag("accountId", order.getString("accountId"));
+
+        ordersConsumerSpan.finish();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Finally, once the order has been confirmed, we associate some additional information with the top level span, before calling the <code>finish()</code> method.</p>
+</div>
+<div class="paragraph">
+<p>This gives a brief insight into how an application can be instrumented to use the OpenTracing API. The <em>OrderManager</em> example is slightly more complex, in that it also instruments a subsequent publish of the order confirmation on the event bus, and relates the instrumentation back to the original trace using the <em>FOLLOWS_FROM</em> reference type. For more information please see the <a href="https://github.com/hawkular/hawkular-apm/tree/0.11.0.Final/examples/vertx-opentracing">code</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_analysing_the_captured_information">Analysing the Captured Information</h3>
+<div class="paragraph">
+<p>When starting the Hawkular APM console, the first page that is displayed shows details for the spans associated with the tracing information that has been captured from the application. The spans can represent <em>Consumers</em> that receive service requests, <em>Producers</em> that make service requests, or internal <em>Components</em> (e.g. databases).</p>
+</div>
+<div class="paragraph">
+<p>As you can see, the values in the <em>Operation</em> column have the same values that were used when building the spans in the vertx application.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-apm-vertx-components.png" alt="Application component details">
+</div>
+</div>
+<div class="paragraph">
+<p>On the <strong>Distributed Tracing</strong> page, we can view the dependencies between the services that were involved in placing the order (i.e. we have selected the <em>Place Order</em> business transaction). We could also filter based on individual properties to further refine the trace instances that are aggregated into this view.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-apm-vertx-dt.png" alt="Service dependencies">
+</div>
+</div>
+<div class="paragraph">
+<p>If we then select the <strong>Show 'n' instance details</strong> button, and select an instance from the table, you can view the flow of the individual trace instance:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-apm-vertx-instance.png" alt="Trace instance for placing an order">
+</div>
+</div>
+<div class="paragraph">
+<p>In this diagram, you can see how the order is first passed to the <em>AccountManager</em> to check the account id is known, followed by the <em>InventoryManager</em> to check the stock level. At this point the order confirmation is created and returned to the client application.</p>
+</div>
+<div class="paragraph">
+<p>However this is not the end of the trace, as the Vertx application then publishes the order confirmation on the event bus, which is consumed by two services (<em>OrderLog</em> and <em>InventoryManager</em>) - which demonstrates tracing a publish/subscribe interaction. This behaviour is represented by a dotted line, as it is being performed concurrently, outside the scope of the main request/response interaction with the client application.</p>
+</div>
+<div class="paragraph">
+<p>The following screenshot is the <strong>Business Transaction</strong> page, which shows a summary of the business transactions being managed by the server. In previous releases, the business transactions were configured on the server, based on information captured using the non-intrusive agent based approach.</p>
+</div>
+<div class="paragraph">
+<p>With the explicit instrumentation of applications using the OpenTracing API, we have added the ability for the application to directly specify the name of the business transaction, which is then propagated with the trace state between interacting services. This means that business transactions don&#8217;t need to be configured on the server when specified via the OpenTracing API.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-apm-vertx-btxnsummary.png" alt="Summary of business transactions">
+</div>
+</div>
+<div class="paragraph">
+<p>When a business transaction is selected from the summary page, it shows the detailed information:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-apm-vertx-btxn-placeorder.png" alt="Place order business transaction information">
+</div>
+</div>
+<div class="paragraph">
+<p>This screenshot shows how information specified via tags on the OpenTracing spans can be used to show faults and properties for the business transaction. Selecting the segments in the fault and properties pie charts can be used to further filter the information displayed on this page.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_summary">Summary</h3>
+<div class="paragraph">
+<p>In this blog and accompanying video we have shown how Hawkular APM can be used with an application instrumented using the standard OpenTracing API. The video also shows how trace information captured and reported to the Hawkular APM server can be used to trigger alerts defined using Hawkular Alerts.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/10/14/hawkular-apm-polyglot-zipkin.html"><h1>Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</h1></a>
             <p>14 October 2016, by Pavol Loffay</p>
             <p><div id="preamble">
@@ -938,49 +1089,13 @@ $ sudo c_rehash OPENSSLDIR/certs</code></pre>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/09/05/hawkular-metrics-0.19.0.Final-released.html"><h1>Hawkular Metrics 0.19.0 - Release</h1></a>
-            <p>05 September 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.19.0 of Hawkular Metrics. This release is anchored by performance enhancements and a lot of REST API enhancements.</p><p>Here is a list of major changes:</p>
-<ol>
-  <li><strong>REST API - Query Improvements</strong>
-  <ul>
-    <li>It is now possible to use relative timestamps when querying for data via <code>+</code> or <code>-</code> added to timestamp parameters. When used, the timestamp is relative to the local system timestamp (<a href="https://issues.jboss.org/browse/HWKMETRICS-358">HWKMETRICS-358</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-457">HWKMETRICS-457</a>)</li>
-    <li>Querying for data from earliest available data point has been expanded to raw data queries for gauges and counters (<a href="https://issues.jboss.org/browse/HWKMETRICS-435">HWKMETRICS-435</a>)</li>
-    <li><code>DELETE tenants/{id}</code> has been added to allow the deletion of an entire tenant (<a href="https://issues.jboss.org/browse/HWKMETRICS-446">HWKMETRICS-446</a>)</li>
-    <li>AvailabilityType is serialized as simple string in bucket data points (<a href="https://issues.jboss.org/browse/HWKMETRICS-436">HWKMETRICS-436</a>)</li>
-  </ul></li>
-  <li><strong>Performance Enhancements</strong>
-  <ul>
-    <li>The write performance has been increased by 10% across the board after reorganizing the meta-data internal indexes. (<a href="https://issues.jboss.org/browse/HWKMETRICS-422">HWKMETRICS-422</a>)</li>
-    <li>GZIP replaced LZ4 as the compression algorithm for the data table. This produces anywhere between 60% to 70% disk usage savings over LZ4. (<a href="https://issues.jboss.org/browse/HWKMETRICS-454">HWKMETRICS-454</a>)</li>
-  </ul></li>
-  <li><strong>Job Scheduler - Improvements</strong>
-  <ul>
-    <li>The newly introduced internal job scheduler received several improvements and fixes; the main focus was to enhance the scalability and fault tolerance.</li>
-    <li>The job scheduler will be used only for internal tasks.</li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-221">HWKMETRICS-221</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-451">HWKMETRICS-451</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-453">HWKMETRICS-453</a>, <a href="https://issues.jboss.org/browse/HWKMETRICS-94">HWKMETRICS-94</a></li>
-  </ul></li>
-</ol><h3>Hawkular Metrics Clients</h3>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.19.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.19.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331192">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331192</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Thomas Segismont, Mike Thompson, Matt Wringe, Michael Burman, Joel Takvorian, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>05 September 2016 - <a href="blog/2016/09/05/hawkular-metrics-0.19.0.Final-released.html">Hawkular Metrics 0.19.0 - Release</a></li>
           <li>31 August 2016 - <a href="blog/2016/08/31/spark-metric-analysis.html">Metric Data Analysis using the Apache Spark</a></li>
           <li>11 August 2016 - <a href="blog/2016/08/11/vertx-agent-inventory-impl.html">Vert.x agent inventory implementation</a></li>
           <li>01 August 2016 - <a href="blog/2016/08/01/hawkular-metrics-0.18.0.Final-released.html">Hawkular Metrics 0.18.0 - Release</a></li>
