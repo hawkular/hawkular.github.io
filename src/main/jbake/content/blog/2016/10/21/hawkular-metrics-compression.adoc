@@ -1,0 +1,105 @@
+= Hawkular-Metrics and the new compression algorithm
+Michael Burman
+2016-10-21
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, compression, gorilla, storage, performance
+
+In Hawkular-Metrics release 0.20.0 we introduced a new compression capability that reduces the required storage space. This blog post will describe details about the implementation in the processing pipelines and what implications there are for the user. Should you want to skip the technical details, head over to the <<benchmark,benchmark section>> below.
+
+Some of the details mentioned here were improved or introduced in the 0.21.0, but the compression ratio is equal between 0.20.0 and 0.21.0. 
+
+=== Compression algorithm
+
+In this release, we support the compression from the Facebook's great link:www.vldb.org/pvldb/vol8/p1816-teller.pdf[Gorilla paper] with small changes. For complete overview on how the compression method works I recommend reading the original paper. For short overview, the timestamps are compressed by calculating the delta of delta and writing them with variable length encoding while the data values are compressed by taking a XOR (eXclusive OR) between values (using the previous value as predictor for the next one) and storing that with variable length encoding also. We slightly change the original algorithm, as it had two design choices we don't want to use: second precision and use of only 64 bit double values.
+
+As we store values in a millisecond precision, it was important for us to increase the size of the block's maximum delta value. In Facebook's implementation they reserved 14 bits to represent the first delta from the block start (giving them 4 hour blocks with 1 second precision) where as we use 27 bits to get a maximum of 24 hour blocks with a millisecond precision. In 0.20.0/0.21.0 we however use 2 hour block sizes but with millisecond precision. We will revisit the block size requirements later.
+
+The other change we wanted was to allow storing also integers, which are pretty common in the monitoring pipelines. While it's possible to store integers as floating point values this transformation reduces the precision as the 64 bit floating point values can't store exactly all the values that 64 bit integers can present.
+
+=== Insert pipeline
+
+We didn't change anything. When you issue a write to the Cassandra, we store it just like before to the `data` table. No restrictions on out-of-order times or changes to the persistence. Instead, we opted to do everything as an ETL (Extract Transform Load) job on the write path as described in the next section and merge results from both tables in the read path. 
+
+=== Compression job
+
+A while ago, we introduced a job scheduler to the Hawkular-Metrics and it's been improved on 0.20.0 and 0.21.0 based on our requirements to do reliable repeated compression jobs. When the server launches it schedules a repeated job called `CompressionData` that is ran every 2 hours at the start of odd hours. Should you for some reason miss one execution (because the server down for example), the scheduler will immediately start the missing jobs in order with only one being active at a time (cluster wide, state is maintained in Cassandra). The scheduled job `CompressionData` will take care of our ETL process for the whole cluster (this is something we will also improve later so that one can scale the amount of compression jobs, but for now we deemed it to be enough fast).
+
+When the job is started, the job itself takes a look at the intended runtime (irrelevant of the actual running time as that could be influenced by server downtime or previous job) and starts to fetch all the metrics that were created during the last 2 even hour block. For example, assuming the job should start at 03:00, we will compress the datapoints that were sent between 00:00 and 02:00. This allows up to one hour of out-of-order writes to be still compressed. If an out-of-order writes happens after this, it is kept uncompressed in the Cassandra and merged during the read phase.
+
+We have limited the compression job to only process a single time serie at once, to reduce the memory pressure on the Cassandra node as it might have to load existing data to memory from the disk. To reduce the I/O effect you can allocate more memory to the Cassandra as that will make reading from the disk less likely and can also reduce the amount of compaction jobs that are required as already compressed data doesn't have to be written to the disk. Should any Cassandra request fail during the compression job, we will retry the operation with a linear wait period between the requests. 
+
+All the datapoints that were read are then streamed to the compression method of choice out of heap to reduce GC pressure. We place a header as the first byte in the compressed array, with 4 first bits reserved for the compression type and last 4 bits as metadata for the compression type. 
+
+=== Reading pipeline
+
+Since we store the data now potentially in two different places, `data` for uncompressed metrics and `data_compressed` for compressed metrics, we need to read from both if necessary. While usually the `data` table holds newer datapoints than `data_compressed` this is not guaranteed as we support writing out-of-order writes without any limitations. 
+
+As such, we need to push the read requests to both tables, with exact timestamps to the `data` table and with modified request timestamp to the `data_compressed` table to account for block sizes. For `data` reads this often means that nothing is there for older timestamps and reads there could be a waste of time. Luckily Cassandra does use a bloom filter in the read path that should get rid of these extra reads quite efficiently.
+
+At this point we now have two distinct streams, one with `DataPoint<T>` items and one with `ByteBuffers`. The first job is obviously to transform the `Observable<ByteBuffer>` to `Observable<DataPoint<T>>` in the given sorting order. For this, we have a transformer that takes the input ByteBuffer from the Cassandra driver, reads the first byte as our header and checks then what to do. Given that we only support a single compression method in this release, the straightforward approach is to then decompress the byte array and transform the compressed block back to uncompressed DataPoints. As we already know the type of the metric that's going to be read from the compressed block, we can correctly read either `long` or a `double` and as such avoid any casting that would reduce precision.
+
+Next, we must read from these two streams in the given order as the datapoints could be interleaved. Luckily, for this to function we don't need to do in-memory sorting of everything, but instead we read one point from each of the streams and then with a comparator select which one to forward and which one will be hold in the memory for next comparison. And then we request the next one from the Cassandra / uncompressed pool and continue. This allows us to reduce the memory pressure by keeping only one active datapoint and one uncompressed block in the memory for read operations. If either stream ends, then the other stream is allowed to push data without comparing it.
+
+This way, all the internal calls to getting datapoints (which go through a single method, link:github[findDataPoints()]) are unaware if the datapoints are coming from compressed or uncompressed streams. This allows easier refactoring in the future where we could read from several different streams if we so decided and no changes to elsewhere in the application is required.
+
+anchor:benchmark[]
+
+=== Benchmarks
+
+Disclaimer: the following performance numbers are an indication of results with the given test data. Your real world results can vary.
+
+The results are created against Cassandra 3.7, using LZ4 table compression settings.
+
+First data set was created by taking real monitoring data from collectd and then duplicating it to get larger sample set. It has 25 time series.
+
+[cols="2*", options="header"]
+.Storage usage, data set #1
+|===
+|0.19.0
+|0.21.0
+
+| megaGB
+| miniMB
+|===
+
+The second data set was created artificially to test the performance. It has 100 000 time series with 10 s interval for datapoints with a week of data, in total of 6.05 billion datapoints. 
+
+[cols="*", options="header"]
+.Storage usage, data set #2
+|===
+|0.19.0
+|0.21.0
+
+| megaGB
+| miniMB
+|===
+
+=== Future improvements?
+
+The improvements we should look at fall into two potential categories:
+
+1. Architectural improvements
+2. Compression improvements
+
+I would like to discuss only the short term objectives in this blog post as the architectural improvements would deserve their own design post. In short what we could imagine in the future using the compressed blocks directly from the node memory instead of first writing them to Cassandra and then reading them back for compression. This would be simple improvement if we were talking about a single node environment and no out-of-order writes, however with these two limitations the setup becomes much more complex. We would need to build an in-memory layer on top of our current setup, infront of Cassandra, that would send the data to the replicas and quite possibly replicate most of the Cassandra's dynamo behavior. At the same time we would need to guarantee that writes still succeed, so some sort of WAL to Cassandra or elsewhere would be required as well (and also to provide recreation of in-memory nodes). This isn't a small change and as such should not belong to the post note section of this post. There are however smaller changes to the way we write data to the Cassandra that can benefit from optimizations and which we will address in the upcoming releases, such as how we're going to handle `TTL` and `gc_grace_seconds`.
+
+The compression improvements are however easier to implement, so lets discuss them. Currently we store all the blocks in a streamed fashion, one timestamp is followed by one value. However, since we can't actually read anything in a streaming fashion from Cassandra (instead we have to fetch the whole block), we could get rid of this limitation and instead store things in separate blocks. One byte array for timestamps and second for values. This would allow us to choose different compression methods for values and timestamps. We have already designed our Cassandra tables to accommodate this, so decision to do this shouldn't require large changes to the reading path or write path.
+
+Now, assuming that we would still choose Gorilla for both, timestamps and values, would we still benefit from this? Actually, we would. Currently, we store our Cassandra SSTables with a generic block compression algorithm, such as LZ4 which can reduce repeating patterns to a smaller size. Lets take an example where the timestamps have changing delta-of-delta values (happens because the polling interval could be slightly delayed in some occasions), but the value we store is an availability that's always the same value. The data would look like this:
+
+```
+<timestamp>0<timestamp>0<timestamp>0<timestamp>0..
+```
+
+Now, if we reordered them so that values would be separate and timestamps separate, we could do:
+
+```
+0000<timestamp><timestamp><timestamp><timestamp>
+```
+
+In this case the secondary block compression method could reduce the first "0000" to a repeating pattern of 4 times 0. Now, that combined with the fact that we can use larger block sizes would allow compressing several metric sequences together as they would follow the same pattern. The secondary compression allows us to do more than just compressing a single time series. The same would happen if the timestamps are always with the same delta-of-delta (we store a 0 bit in that case to the stream). These savings can be significant in some cases.
+
+The other improvements to the compression ratio would be, as mentioned previously, to select different compression methods for different data patterns. In some cases, the Gorilla compression does not compress the data in optimal way and would benefit more from either not compressing it at all (and letting the block compressor take care of the compression) or we could select another compression method, such as PFOR/Simple8/Varint8/RLE/etc that would do better job with this input pattern.
+
+All these methods are storing the metrics with their original precision, however in many cases this is not necessary. Allowing lossy compression methods by reducing the precision of the input values allows all the previously mentioned compression methods to do even better job. This is certainly one of the issues we should look at, as for example storing metrics with milliseconds precision is hardly worthwhile if the polling period is once every 10 seconds. Storing them with 1 second precision or even 10 second precision would give just as "accurate" information. Not to mention that usually data is processed in buckets and single values are not meaningful (the precision reduction in computed aggregates is smaller than per single value).
