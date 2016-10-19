@@ -17,13 +17,9 @@ Let's see how to make them work together and visualize our microservices metrics
 
 === Preparing OpenShift
 
-I assume you already have an access to a running OpenShift Origin, but if you don't, you can link:https://github.com/openshift/origin[follow the installation steps]. Or if you're a lazy boy/girl like me, you can use link:https://github.com/jimmidyson/minishift[MiniShift] to get it running very quickly. Just make sure you assign enough memory and CPU resources to the VM; I could get everything running fine with 2 cores and 4GB, of course that will depend on your hardware.
-
-TODO: add info on required version: origin/enterprise? As stated on origin-metrics github, >=1.0.8 is ok?
+I assume you already have an access to a running OpenShift Origin (1.0.8 or later), but if you don't, you can link:https://github.com/openshift/origin[follow the installation steps]. Or if you're a lazy boy/girl like me, you can use link:https://github.com/jimmidyson/minishift[MiniShift] to get it running very quickly. Just make sure you assign enough memory and CPU resources to the VM; I could get everything running fine with 2 cores and 4GB, of course that will depend on your hardware.
 
 Then follow the link:https://github.com/openshift/origin-metrics[origin-metrics installation steps] to deploy Hawkular Metrics in OpenShift. Make sure you use a recent version, you will need at least Hawkular Metrics 0.20.0 to get the best of Grafana and to use some of the features describes in this article.
-
-TODO: make sure the latest release of metrics includes 0.20.0!
 
 === Deploying a Microservice
 
@@ -93,15 +89,13 @@ With this single variable, you will already be able to build a nice dynamic dash
 
 TIP: If you want to see the list of available tags created in OpenShift, you can fetch the metrics definitions with the following command: ```curl -X GET https://yourserver/hawkular/metrics/metrics -H "Content-Type: application/json" -H "Hawkular-Tenant: your-tenant" -H "Authorization: Bearer your-bearer-token"```
 
-TODO: is there no better way to fetch all tags?
-
 Now, time to see nice charts! In the first row, we create a new panel of type Graph. In General tab, set "Memory usage" as the graph title. In Metrics tab, select your Hawkular datasource. Create a series of type Gauge, searching by tag, and give the following tags:
 
 - _container_name_: _$app_
 
 - _descriptor_name_: _memory/usage_
 
-These tagged metrics are provided to Hawkular by ? (TODO!)
+These tagged metrics are provided to Hawkular by OpenShift.
 
 ifndef::env-github[]
 image::/img/blog/2016/2016-10-17-grafana-memory-usage.png[Memory usage]
@@ -211,10 +205,6 @@ Thanks to the metrics provided in OpenShift, you can build more elaborate dashbo
 
 But that's just the starting kit! link:http://www.hawkular.org/hawkular-clients/[The Hawkular Metrics ecosystem] is rich and keeps growing, including a Wildfly agent, a Vert.x plugin, a DropWizard reporter, etc. And if that's not enough for you, it's very easy to integrate your own metrics: either through the client libraries or by directly calling the link:http://www.hawkular.org/docs/rest/rest-metrics.html[Metrics REST API].
 
-TODO: add other "clients" to hawkular website? (Vertx, dropwizard etc.)
-
 A good practice, when you define your own metrics, is to tag them with some pod-discriminant values. It can be through the environment variables set by Kubernetes/OpenShift, but it could also be the hostname since it's generated specifically for a pod. With that in mind, you will be able to monitor every part of your microservices architecture.
 
-TIP: You can download this dashboard [link] here and import it in Grafana.
-
-TODO: set link once PR is merged
+TIP: You can download this dashboard link:https://github.com/hawkular/hawkular-grafana-datasource/blob/master/dashboards/openshift-memory-example.json[here on GitHub] and import it in Grafana.
