@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Grafana Quickstart Guide</title>
+    <title>Hawkular - Define Alert Triggers via HawkFX</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -44,7 +44,7 @@
             }, false);
         </script>
       </div>
-
+	
     	<!-- Fixed navbar -->
         <nav class="navbar navbar-fixed-top" role="navigation">
           <div class="container">
@@ -175,164 +175,152 @@
           </div>
         </nav>
 
-      <section class="main-banner">
+    <section class="main-banner blog-mainbanner">
         <div class="container">
-          <h1>Grafana Quickstart Guide</h1>
-          <p>Getting started with Hawkular and Grafana</p>
+            <h1>Define Alert Triggers via HawkFX</h1>
+            <p>blog post</p>
         </div>
-      </section>
-
-	<!--<p><em>15 July 2016</em></p>-->
-
-	<section>
-      <div class="container">
-        <div id="preamble">
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Metrics standalone servers as well</p>
-</li>
-<li>
-<p>Hawkular servers, starting from version Alpha13</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_installing">Installing</h3>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-note" title="Note"></i>
-</td>
-<td class="content">
-If you don&#8217;t have Grafana yet, <a href="http://grafana.org/download/">download and install it</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="sect3">
-<h4 id="_from_source">From source</h4>
-<div class="paragraph">
-<p>Download the source code and copy the content of <code>dist</code> to <code>hawkular</code> inside Grafana&#8217;s plugin directory.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash"># This is the default for Linux Grafana installs. Change it to match yours, if needed.
-GRAFANA_PLUGINS=/var/lib/grafana/plugins
-wget https://github.com/hawkular/hawkular-grafana-datasource/archive/release.zip -O hawkular-grafana-datasource-release.zip
-unzip hawkular-grafana-datasource-release.zip
-mkdir ${GRAFANA_PLUGINS}/hawkular
-cp -R hawkular-grafana-datasource-release/dist/* ${GRAFANA_PLUGINS}/hawkular</code></pre>
-</div>
-</div>
-</div>
-<div class="sect3">
-<h4 id="_from_the_grafana_plugin_directory">From the Grafana plugin directory</h4>
-<div class="paragraph">
-<p>COMING SOON</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_configuration">Configuration</h3>
-<div class="paragraph">
-<p>The datasource URL must point to the Hawkular Metrics service, e.g. <code><a href="http://myhost:8080/hawkular/metrics" class="bare">http://myhost:8080/hawkular/metrics</a></code></p>
-</div>
-<div class="paragraph">
-<p><code>direct</code> access mode only works with standalone Metrics servers currently. If you active it, make sure to allow
-the Grafana server origin in Metrics' configuration.</p>
-</div>
-<div class="paragraph">
-<p>Authentication must be set when working with a Hawkular server. Check the 'Basic Auth' box and fill the user and password fields.</p>
-</div>
-<div class="paragraph">
-<p>Select the tenant. On Hawkular servers, use <code>hawkular</code>.</p>
-</div>
-<div class="paragraph">
-<p>Openshift-Metrics users must provide an authentication token.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_using_grafana_templating_variables">Using Grafana Templating (variables)</h3>
-<div class="paragraph">
-<p>Grafana allows you to create dashboard templates through the definition of variables. This is <a href="http://docs.grafana.org/reference/templating/">documented on Grafana&#8217;s site</a>.
-With the Hawkular Datasource Plugin, the variables of type <em>'Query'</em> are mapped to the <a href="http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics"><em>@get (url)/metrics</em></a>
-Hawkular Metrics endpoint and can be used to retrieve tenant&#8217;s metric names. Use the <em>Query Options</em> text field to pass query parameters, as illustrated below:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="docs/images/query-for-metrics.png" alt="query for metrics" width="600">
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-For instance, if you have metrics tagged <em>"type:memory"</em> and others tagged <em>"type:cpu"</em>, you can write <em>"?tags=type:memory"</em> to get only the <em>"memory"</em> ones, or <em>"?tags=type:cpu|memory"</em> to get them both. The leading question mark is not mandatory.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>There is an exception to that rule: if the query string is prefixed with <em>'tags/'</em>, the variable will contain the matching tag names rather than the metric names. In this case, the Hawkular Metrics endpoint <a href="http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics_tags__tags_"><em>@get (url)/metrics/tags/{tags}</em></a> will be used.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="docs/images/query-for-tags.png" alt="query for tags" width="600">
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-tip" title="Tip"></i>
-</td>
-<td class="content">
-For instance, type <em>"tags/type:*"</em> to get all of the available tag values for <em>"type"</em>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Once you have set some variables, you can use them in graph queries: either for row or graph duplication, or to display multiple series in a single graph from a single query. This is especially useful when metric names contain some dynamic parts and thus cannot be known in advance.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_building">Building</h3>
-<div class="paragraph">
-<p>You need <code>npm</code> and <code>grunt</code> to build the project. Clone this repository, then from that directory run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">npm install
-grunt</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Files are generated under the <code>dist</code> directory.
-To test your build, copy these files to <code>${GRAFANA_PLUGINS}/hawkular</code> and restart grafana-server.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_building_and_running_a_docker_image">Building and running a Docker image</h3>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash"># This will build the image
-docker build -t hawkular/hawkular-grafana-datasource .
-# This will run the image on http://localhost:3000/
-docker run -i -p 3000:3000 --name hawkular-grafana-datasource --rm hawkular/hawkular-grafana-datasource</code></pre>
-</div>
-</div>
-</div>
-      </div>
     </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>HawkFX is an explorer for Hawkular. It is a pet project of mine and <a href="https://github.com/pilhuhn/hawkfx">hosted on
+Github</a>. It now has the ability to define alerting triggers.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular-services and now also Hawkular-Metrics standalone have the ability to fire alerts when certain conditions
+are met. To define those conditions, one creates a <em>trigger</em> via
+the <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">Hawkular-Alerts api</a>. The alerting team has also written a
+<a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">developer guide</a> that explains the concepts and
+terms behind Hawkular-Alerts.</p>
+</div>
+<div class="paragraph">
+<p>HawkFX now has the ability to directly insert new triggers. For this purpose I have created a
+<a href="http://pilhuhn.blogspot.de/2016/10/a-dsl-for-alert-trigger-definitions-in.html">DSL</a> to allow to define triggers
+in a more 'natural language'. More on this below.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkfx-trigger-menu.png" alt="HawkFX trigger context menu" width="300">
+</div>
+<div class="title">Figure 1. Context menu</div>
+</div>
+<div class="paragraph">
+<p>When you right-click on a metric in the HawkFX list of metrics, there is now a new context menu item 'New trigger',
+that leads you to the insert screen, where you can insert the definition. This will contain a canned definition
+to start with.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkfx-trigger-insert-box.png" alt="HawkFX trigger insert" width="600">
+</div>
+<div class="title">Figure 2. Alert trigger insert screen</div>
+</div>
+<div class="paragraph">
+<p>When you are done writing the definition, you can click on the <em>parse</em> button at the bottom to check the definition.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_examples">Examples</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="title">Simple threshold trigger for gauges</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+ ( threshold "myvalue" &gt; 3 )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">and for counters</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+( threshold counter "myvalue" &gt; 3 )</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can see from the previous two examples that gauges are the default for <em>threshold</em> triggers, so you can omit that
+ keyword.</p>
+</div>
+<div class="listingblock">
+<div class="title">Trigger for availability, with high severity that is initially disabled</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+  disabled
+  severity HIGH
+  ( availability "mymetric" is DOWN )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Trigger that fires when two conditions are true</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+  AND(
+    ( threshold counter "mycount" &lt; 5 )
+    ( string "mymetric" CO "ERROR" )
+  )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Trigger that disables itself after firing</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+ ( threshold "myvalue" &gt; 3 )
+ auto-disable</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_state_of_the_dsl">State of the DSL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The DSL is in flux and will be augmented and refined. So far it only contains a basic set of instructions.</p>
+</div>
+<div class="paragraph">
+<p>The DSL tries to make life easy by trying to set sensible defaults (e.g. a trigger is enabled by default - you have
+to provide the <em>disable</em> command explicitly).</p>
+</div>
+<div class="paragraph">
+<p>If you are interested in the grammar behind the DSL, visit the
+<a href="https://github.com/pilhuhn/hawkfx/blob/master/lib/alert_trigger.treetop">definition file</a>.
+For examples about supported usage, you can have a look at
+the <a href="https://github.com/pilhuhn/hawkfx/blob/master/spec/alert_trigger_parser_spec.rb">spec</a>.</p>
+</div>
+<div class="paragraph">
+<p>I hope to be able to extend the DSL going forward and get it into a state where it is useful for people.
+At least it makes it easy for me to get triggers defined when working on Hawkular.</p>
+</div>
+<div class="paragraph">
+<p>Going forward it could also be possible to offer DSLs that mimic if-this-then-that or Zabbix rules, so that users of
+those systems can (re-)use their existing rules.</p>
+</div>
+<div class="paragraph">
+<p>As <a href="http://hawkular.org/blog/2016/07/13/hawkfx.html">written before</a>, HawkFX is a Pet project of mine and comes with no
+support.</p>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+        <p><em>Published by Heiko W. Rupp on  24 October 2016</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
 
 		</div>
 		<div id="push"></div>

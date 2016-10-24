@@ -6,9 +6,138 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 17 Oct 2016 09:16:30 +0000</pubDate>
-    <lastBuildDate>Mon, 17 Oct 2016 09:16:30 +0000</lastBuildDate>
+    <pubDate>Mon, 24 Oct 2016 13:28:16 +0000</pubDate>
+    <lastBuildDate>Mon, 24 Oct 2016 13:28:16 +0000</lastBuildDate>
 
+    <item>
+      <title>Define Alert Triggers via HawkFX</title>
+      <link>http://www.hawkular.org/blog/2016/10/24/hawkfx-alerts.html</link>
+      <author>noreply@hawkular.org (Heiko W. Rupp)</author>
+      <pubDate>Mon, 24 Oct 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/10/24/hawkfx-alerts.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;HawkFX is an explorer for Hawkular. It is a pet project of mine and &lt;a href=&quot;https://github.com/pilhuhn/hawkfx&quot;&gt;hosted on
+Github&lt;/a&gt;. It now has the ability to define alerting triggers.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular-services and now also Hawkular-Metrics standalone have the ability to fire alerts when certain conditions
+are met. To define those conditions, one creates a &lt;em&gt;trigger&lt;/em&gt; via
+the &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html&quot;&gt;Hawkular-Alerts api&lt;/a&gt;. The alerting team has also written a
+&lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html&quot;&gt;developer guide&lt;/a&gt; that explains the concepts and
+terms behind Hawkular-Alerts.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;HawkFX now has the ability to directly insert new triggers. For this purpose I have created a
+&lt;a href=&quot;http://pilhuhn.blogspot.de/2016/10/a-dsl-for-alert-trigger-definitions-in.html&quot;&gt;DSL&lt;/a&gt; to allow to define triggers
+in a more &apos;natural language&apos;. More on this below.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-main&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/hawkfx-trigger-menu.png&quot; alt=&quot;HawkFX trigger context menu&quot; width=&quot;300&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Context menu&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you right-click on a metric in the HawkFX list of metrics, there is now a new context menu item &apos;New trigger&apos;,
+that leads you to the insert screen, where you can insert the definition. This will contain a canned definition
+to start with.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;img-main&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/hawkfx-trigger-insert-box.png&quot; alt=&quot;HawkFX trigger insert&quot; width=&quot;600&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2. Alert trigger insert screen&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you are done writing the definition, you can click on the &lt;em&gt;parse&lt;/em&gt; button at the bottom to check the definition.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_examples&quot;&gt;Examples&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Simple threshold trigger for gauges&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;define trigger &quot;MyTrigger&quot;
+ ( threshold &quot;myvalue&quot; &amp;gt; 3 )&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;and for counters&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;define trigger &quot;MyTrigger&quot;
+( threshold counter &quot;myvalue&quot; &amp;gt; 3 )&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can see from the previous two examples that gauges are the default for &lt;em&gt;threshold&lt;/em&gt; triggers, so you can omit that
+ keyword.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Trigger for availability, with high severity that is initially disabled&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;define trigger &quot;MyTrigger&quot;
+  disabled
+  severity HIGH
+  ( availability &quot;mymetric&quot; is DOWN )&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Trigger that fires when two conditions are true&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;define trigger &quot;MyTrigger&quot;
+  AND(
+    ( threshold counter &quot;mycount&quot; &amp;lt; 5 )
+    ( string &quot;mymetric&quot; CO &quot;ERROR&quot; )
+  )&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Trigger that disables itself after firing&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;define trigger &quot;MyTrigger&quot;
+ ( threshold &quot;myvalue&quot; &amp;gt; 3 )
+ auto-disable&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_state_of_the_dsl&quot;&gt;State of the DSL&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The DSL is in flux and will be augmented and refined. So far it only contains a basic set of instructions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The DSL tries to make life easy by trying to set sensible defaults (e.g. a trigger is enabled by default - you have
+to provide the &lt;em&gt;disable&lt;/em&gt; command explicitly).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you are interested in the grammar behind the DSL, visit the
+&lt;a href=&quot;https://github.com/pilhuhn/hawkfx/blob/master/lib/alert_trigger.treetop&quot;&gt;definition file&lt;/a&gt;.
+For examples about supported usage, you can have a look at
+the &lt;a href=&quot;https://github.com/pilhuhn/hawkfx/blob/master/spec/alert_trigger_parser_spec.rb&quot;&gt;spec&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I hope to be able to extend the DSL going forward and get it into a state where it is useful for people.
+At least it makes it easy for me to get triggers defined when working on Hawkular.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Going forward it could also be possible to offer DSLs that mimic if-this-then-that or Zabbix rules, so that users of
+those systems can (re-)use their existing rules.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As &lt;a href=&quot;http://hawkular.org/blog/2016/07/13/hawkfx.html&quot;&gt;written before&lt;/a&gt;, HawkFX is a Pet project of mine and comes with no
+support.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular APM supports OpenTracing and Alerts</title>
       <link>http://www.hawkular.org/blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html</link>

@@ -185,6 +185,131 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/10/24/hawkfx-alerts.html"><h1>Define Alert Triggers via HawkFX</h1></a>
+            <p>24 October 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>HawkFX is an explorer for Hawkular. It is a pet project of mine and <a href="https://github.com/pilhuhn/hawkfx">hosted on
+Github</a>. It now has the ability to define alerting triggers.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular-services and now also Hawkular-Metrics standalone have the ability to fire alerts when certain conditions
+are met. To define those conditions, one creates a <em>trigger</em> via
+the <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">Hawkular-Alerts api</a>. The alerting team has also written a
+<a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">developer guide</a> that explains the concepts and
+terms behind Hawkular-Alerts.</p>
+</div>
+<div class="paragraph">
+<p>HawkFX now has the ability to directly insert new triggers. For this purpose I have created a
+<a href="http://pilhuhn.blogspot.de/2016/10/a-dsl-for-alert-trigger-definitions-in.html">DSL</a> to allow to define triggers
+in a more 'natural language'. More on this below.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkfx-trigger-menu.png" alt="HawkFX trigger context menu" width="300">
+</div>
+<div class="title">Figure 1. Context menu</div>
+</div>
+<div class="paragraph">
+<p>When you right-click on a metric in the HawkFX list of metrics, there is now a new context menu item 'New trigger',
+that leads you to the insert screen, where you can insert the definition. This will contain a canned definition
+to start with.</p>
+</div>
+<div id="img-main" class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/hawkfx-trigger-insert-box.png" alt="HawkFX trigger insert" width="600">
+</div>
+<div class="title">Figure 2. Alert trigger insert screen</div>
+</div>
+<div class="paragraph">
+<p>When you are done writing the definition, you can click on the <em>parse</em> button at the bottom to check the definition.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_examples">Examples</h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="title">Simple threshold trigger for gauges</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+ ( threshold "myvalue" &gt; 3 )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">and for counters</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+( threshold counter "myvalue" &gt; 3 )</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can see from the previous two examples that gauges are the default for <em>threshold</em> triggers, so you can omit that
+ keyword.</p>
+</div>
+<div class="listingblock">
+<div class="title">Trigger for availability, with high severity that is initially disabled</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+  disabled
+  severity HIGH
+  ( availability "mymetric" is DOWN )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Trigger that fires when two conditions are true</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+  AND(
+    ( threshold counter "mycount" &lt; 5 )
+    ( string "mymetric" CO "ERROR" )
+  )</pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="title">Trigger that disables itself after firing</div>
+<div class="content">
+<pre>define trigger "MyTrigger"
+ ( threshold "myvalue" &gt; 3 )
+ auto-disable</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_state_of_the_dsl">State of the DSL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The DSL is in flux and will be augmented and refined. So far it only contains a basic set of instructions.</p>
+</div>
+<div class="paragraph">
+<p>The DSL tries to make life easy by trying to set sensible defaults (e.g. a trigger is enabled by default - you have
+to provide the <em>disable</em> command explicitly).</p>
+</div>
+<div class="paragraph">
+<p>If you are interested in the grammar behind the DSL, visit the
+<a href="https://github.com/pilhuhn/hawkfx/blob/master/lib/alert_trigger.treetop">definition file</a>.
+For examples about supported usage, you can have a look at
+the <a href="https://github.com/pilhuhn/hawkfx/blob/master/spec/alert_trigger_parser_spec.rb">spec</a>.</p>
+</div>
+<div class="paragraph">
+<p>I hope to be able to extend the DSL going forward and get it into a state where it is useful for people.
+At least it makes it easy for me to get triggers defined when working on Hawkular.</p>
+</div>
+<div class="paragraph">
+<p>Going forward it could also be possible to offer DSLs that mimic if-this-then-that or Zabbix rules, so that users of
+those systems can (re-)use their existing rules.</p>
+</div>
+<div class="paragraph">
+<p>As <a href="http://hawkular.org/blog/2016/07/13/hawkfx.html">written before</a>, HawkFX is a Pet project of mine and comes with no
+support.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html"><h1>Hawkular APM supports OpenTracing and Alerts</h1></a>
             <p>17 October 2016, by Gary Brown</p>
             <p><div id="preamble">
@@ -928,173 +1053,13 @@ that a new container is running. At around the same time, you should see the fir
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/09/14/consuming-hawkular-api-over-ssl.html"><h1>Consuming Hawkular API over SSL with self signed certificates</h1></a>
-            <p>14 September 2016, by Josejulio Martínez</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>In this post I&#8217;ll show you how to trust self-signed certificates for use with Ruby client, used on projects such as ManageIQ and HawkFX.</p>
-</div>
-<div class="paragraph">
-<p>If you haven&#8217;t already, follow this guide for
-<a href="http://www.hawkular.org/hawkular-services/docs/installation-guide/secure-comm.html">securing communications</a> on your Hawkular server, because we&#8217;ll make use of the files generated by that guide.</p>
-</div>
-<div class="paragraph">
-<p>As today, there are Hawkular clients for the following programming languages:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-client-java">Java</a>.</p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-client-python">Python</a>.</p>
-</li>
-<li>
-<p><a href="https://github.com/hawkular/hawkular-client-go">Go</a>.</p>
-</li>
-<li>
-<p><a href="http://github.com/hawkular/hawkular-client-ruby">Ruby</a>.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>The Hawkular Ruby client lets you connect using a secure connection. Buying a certificate from a trusted SSL vendor to host your own development server can be cost-prohibitive or just complicated.</p>
-</div>
-<div class="paragraph">
-<p>If you are going to self-sign your own development certificates for use outside of Java, you will need to do some additional steps to tell your consumer environment to trust them.</p>
-</div>
-<div class="paragraph">
-<p>For this you will need to:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Install <code>c_rehash</code>.</p>
-</li>
-<li>
-<p>Identify where OpenSSL reads certificates and keys from.</p>
-</li>
-<li>
-<p>Hand over your certificate to OpenSSL in PEM format and rehash.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_install_c_rehash">Install c_rehash</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p><code>c_rehash</code> is an OpenSSL utility to create symbolic links to files by their hash values.
-This format is used by OpenSSL to find certificates.</p>
-</div>
-<div class="paragraph">
-<p>You can install it on fedora by executing</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ sudo dnf install openssl-perl</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_identify_where_openssl_reads_certificates_and_keys_from">Identify where OpenSSL reads certificates and keys from.</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>OpenSSL reads certificates and keys from a specific path, you will need to copy your self-signed certificates there.
-You can find this path by running the following command:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ openssl version -d
-OPENSSLDIR: "/etc/pki/tls"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In this case, OpenSSL files are located in <code>/etc/pki/tls</code>.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-The above output is from Fedora 24, it should be similar on other operative systems.
-</td>
-</tr>
-</table>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Warning</div>
-</td>
-<td class="content">
-It seems that if you are using RVM to manage your Ruby versions, you should ignore this
-and use: $rvm_path/usr/ssl
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hand_over_your_certificate_to_openssl_in_pem_format_and_rehash">Hand over your certificate to OpenSSL in PEM format and rehash.</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p><code>c_rehash</code> specs the certificates in PEM format, so before proceeding we need make sure is in PEM format. The <a href="http://www.hawkular.org/hawkular-services/docs/installation-guide/secure-comm.html">guide</a> for securing communications on Hawkular produces the certificate in DER format it needs to be converted to PEM format.</p>
-</div>
-<div class="paragraph">
-<p>OpenSSL can be used as follow to convert <code>hawkular.cert</code> from DER to PEM format.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ openssl x509 -inform der -in hawkular.cert -out hawkular.pem</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once created, copy your PEM certificate to <code>OPENSSLDIR/certs</code> (you will need root permissions) and run c_rehash on that dir.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ sudo cp hawkular.pem OPENSSLDIR/certs
-$ sudo c_rehash OPENSSLDIR/certs</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>If you are using any application that relies on JRuby (such as HawkFX) you will probably need to use old-style hashes. To do that run c_rehash a second time with flags to use the old-style hash and to keep existing hashes.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ sudo c_rehash -old -n OPENSSLDIR/certs</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>That should be enough to let Ruby client or any application that uses it (e.g. HawkFX) to communicate with Hawkular Server over SSL.</p>
-</div>
-<div class="paragraph">
-<p>To use on HawkFX simply put the address with https and the secure port.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-14-hawkfx-over-https.png" alt="HawkFX over https">
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>14 September 2016 - <a href="blog/2016/09/14/consuming-hawkular-api-over-ssl.html">Consuming Hawkular API over SSL with self signed certificates</a></li>
           <li>05 September 2016 - <a href="blog/2016/09/05/hawkular-metrics-0.19.0.Final-released.html">Hawkular Metrics 0.19.0 - Release</a></li>
           <li>31 August 2016 - <a href="blog/2016/08/31/spark-metric-analysis.html">Metric Data Analysis using the Apache Spark</a></li>
           <li>11 August 2016 - <a href="blog/2016/08/11/vertx-agent-inventory-impl.html">Vert.x agent inventory implementation</a></li>
