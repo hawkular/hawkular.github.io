@@ -6,8 +6,8 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Tue, 25 Oct 2016 13:40:32 +0000</pubDate>
-    <lastBuildDate>Tue, 25 Oct 2016 13:40:32 +0000</lastBuildDate>
+    <pubDate>Tue, 25 Oct 2016 13:42:06 +0000</pubDate>
+    <lastBuildDate>Tue, 25 Oct 2016 13:42:06 +0000</lastBuildDate>
 
     <item>
       <title>Define Alert Triggers via HawkFX</title>
@@ -134,6 +134,311 @@ those systems can (re-)use their existing rules.&lt;/p&gt;
 &lt;p&gt;As &lt;a href=&quot;http://hawkular.org/blog/2016/07/13/hawkfx.html&quot;&gt;written before&lt;/a&gt;, HawkFX is a Pet project of mine and comes with no
 support.&lt;/p&gt;
 &lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
+    <item>
+      <title>Monitoring Microservices with OpenShift, Hawkular Metrics and Grafana</title>
+      <link>http://www.hawkular.org/blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html</link>
+      <author>noreply@hawkular.org (Joel Takvorian)</author>
+      <pubDate>Mon, 24 Oct 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;OpenShift, Hawkular Metrics and Grafana are three great tools that we can combine to build a powerful monitoring system for microservices.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Grafana is the visualization layer that enables building custom and dynamic dashboards.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular Metrics is the robust and flexible layer that is used for metrics storage and querying.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;And OpenShift 3 is the new container platform from Red Hat built on top of Docker and Kubernetes.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s see how to make them work together and visualize our microservices metrics in Grafana.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_preparing_openshift&quot;&gt;Preparing OpenShift&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;I assume you already have access to a running OpenShift Origin (1.0.8 or later), but if you don&amp;#8217;t, you can &lt;a href=&quot;https://github.com/openshift/origin&quot;&gt;follow the installation steps&lt;/a&gt;. Or if you&amp;#8217;re a lazy boy/girl like me, you can use &lt;a href=&quot;https://github.com/jimmidyson/minishift&quot;&gt;MiniShift&lt;/a&gt; to get it running very quickly. Just make sure you assign enough memory and CPU resources to the VM; I could get everything running fine with 2 cores and 4GB, of course that will depend on your hardware.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Then follow the &lt;a href=&quot;https://github.com/openshift/origin-metrics&quot;&gt;origin-metrics installation steps&lt;/a&gt; to deploy Hawkular Metrics in OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that Grafana will not work on an insecure SSL connection to Hawkular. So you will have to provide your own certificates when creating the secret:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ oc secrets new metrics-deployer hawkular-metrics.pem=/path/to/hm.pem \
+hawkular-metrics-ca.cert=/path/to/hm-ca.cert -n openshift-infra&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_deploying_a_microservice&quot;&gt;Deploying a Microservice&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You will need to deploy some application in OpenShift. For this article I&amp;#8217;ll use some parts of the &lt;a href=&quot;https://htmlpreview.github.io/?https://github.com/redhat-helloworld-msa/helloworld-msa/blob/master/readme.html#_deploy_aloha_vert_x_microservice&quot;&gt;Red Hat Helloworld MSA&lt;/a&gt; to deploy &quot;Aloha&quot;, and later &quot;Bonjour&quot;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For example:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ oc login -u ... -p ...
+# The project name you choose here matters, because it will be the tenant ID in Hawkular
+$ oc new-project test
+$ git clone https://github.com/redhat-helloworld-msa/aloha
+$ cd aloha/
+$ oc new-build --binary --name=aloha -l app=aloha
+$ mvn package; oc start-build aloha --from-dir=. --follow
+$ oc new-app aloha -l app=aloha,hystrix.enabled=true
+$ oc expose service aloha&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can open the OpenShift web console to see when Aloha is correctly deployed. And scale it up to 2 pods. The web console should show something like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-aloha-openshift.png&quot; alt=&quot;Aloha in OpenShift&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_setup_hawkular_datasource_in_grafana&quot;&gt;Setup Hawkular Datasource in Grafana&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So now, let&amp;#8217;s have a look at Grafana. For this article I&amp;#8217;ve installed a recent version (3.1.1) and the &lt;a href=&quot;https://github.com/hawkular/hawkular-grafana-datasource&quot;&gt;Hawkular Datasource plugin&lt;/a&gt; (1.0.2).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In Grafana, to configure the Hawkular Datasource, set the URL of the Metrics service in OpenShift, ending with &lt;em&gt;/hawkular/metrics&lt;/em&gt;. You should have something similar to &lt;em&gt;&lt;a href=&quot;https://metrics.192.168.42.63.xip.io/hawkular/metrics&quot; class=&quot;bare&quot;&gt;https://metrics.192.168.42.63.xip.io/hawkular/metrics&lt;/a&gt;&lt;/em&gt;. Access mode must be &lt;em&gt;Proxy&lt;/em&gt;. The tenant must be the name of the project in OpenShift where we&amp;#8217;ve created our sample application; so for my example here, it&amp;#8217;s just &quot;test&quot;. And finally, put the bearer token for the OpenShift API access. To generate a token, you can navigate to &lt;em&gt;/oauth/token/request&lt;/em&gt; from your OpenShift base path (something like &lt;em&gt;&lt;a href=&quot;https://192.168.42.63:8443/oauth/token/request&quot; class=&quot;bare&quot;&gt;https://192.168.42.63:8443/oauth/token/request&lt;/a&gt;&lt;/em&gt;).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-hawkular-datasource.png&quot; alt=&quot;Hawkular Datasource configuration&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_create_the_dashboard&quot;&gt;Create the Dashboard&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we can create a new dashboard. And a template variable, which will be the cornerstone of our dynamic dashboards.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-templating.png&quot; alt=&quot;Open templating&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;Open dashboard templating screen&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Create a variable named &lt;em&gt;app&lt;/em&gt;, select your Hawkular datasource and type in query: &lt;em&gt;tags/container_name:*&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As you can guess, it will search all known values of the tag &lt;em&gt;container_name&lt;/em&gt;. Once you&amp;#8217;ve typed the query, you should see your application names displayed at the bottom of the page.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Ticking &lt;em&gt;Multi-value&lt;/em&gt; and &lt;em&gt;Include All option&lt;/em&gt; is recommended as it will enable better filtering.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-edit-variable.png&quot; alt=&quot;Editing variables&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With this single variable, you will already be able to build a nice dynamic dashboard.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+If you want to see the list of available tags created in OpenShift, you can fetch the metrics definitions with the following command: &lt;code&gt;&lt;code&gt;curl -X GET &lt;a href=&quot;https://yourserver/hawkular/metrics/metrics&quot; class=&quot;bare&quot;&gt;https://yourserver/hawkular/metrics/metrics&lt;/a&gt; -H &quot;Content-Type: application/json&quot; -H &quot;Hawkular-Tenant: your-tenant&quot; -H &quot;Authorization: Bearer your-bearer-token&quot;&lt;/code&gt;&lt;/code&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, time to see nice charts! In the first row, we create a new panel of type Graph. In General tab, set &quot;Memory usage&quot; as the graph title. In Metrics tab, select your Hawkular datasource. Create a series of type Gauge, searching by tag, and give the following tags:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;em&gt;container_name&lt;/em&gt;: &lt;em&gt;$app&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;em&gt;descriptor_name&lt;/em&gt;: &lt;em&gt;memory/usage&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These tagged metrics are provided to Hawkular by OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-memory-usage.png&quot; alt=&quot;Memory usage&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From now on, you can see the memory usage by pod instance and for all your applications. There are 2 series because we scaled the service to 2 pods earlier.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can edit the Graph Axes to set Y-Unit &quot;Data &amp;gt; Bytes&quot; and Y-min 0. Note that you can also show stacked values from the Display tab. This is useful when you want to see the total amount of memory.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Next, we will show some aggregated stats. But before that, go back editing the Graph panel and, in the General tab, set span to 6.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From the Row menu create a new &lt;em&gt;Singlestat&lt;/em&gt; panel. Name it &lt;em&gt;&quot;Average, all pods&quot;&lt;/em&gt;, span 2, height 100px. In the Metrics tab, select your Hawkular datasource. &lt;em&gt;Search by tags&lt;/em&gt; using the same tags as before: &lt;em&gt;container_name&lt;/em&gt;: &lt;em&gt;$app&lt;/em&gt;, &lt;em&gt;descriptor_name&lt;/em&gt;: &lt;em&gt;memory/usage&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As you can see, there&amp;#8217;s some new options when querying from a Singlestat panel: Multiple series aggregation and Time aggregation.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-singlestat.png&quot; alt=&quot;Singletat query&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When a standard query by tag is submitted to Hawkular Metrics, the response may contain several series of data points, depending on the matching tags. Since we want here to get a single number, we will ask the plugin to perform a two-steps aggregation: a &quot;vertical&quot; aggregation that merges all series into a single one, and an &quot;horizontal&quot; aggregation that extracts a single stat from a time-series.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As you can see, when the &lt;em&gt;Multiple series aggregation&lt;/em&gt; is left to &lt;em&gt;None&lt;/em&gt;, Grafana reports a &lt;em&gt;Multiple Series Error&lt;/em&gt;. This is because the Singlestat panel doesn&amp;#8217;t know how to merge multiple series, so let&amp;#8217;s ask the Hawkular plugin to do it. Select &lt;em&gt;Sum&lt;/em&gt; instead of &lt;em&gt;None&lt;/em&gt;, and keep &lt;em&gt;Average&lt;/em&gt; for the time aggregation.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now switch to the Options tab and change Unit to &quot;Data &amp;gt; bytes&quot;. Here, you can define thresholds to highlight high memory levels.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Usually, Grafana&amp;#8217;s Singlestat panel performs time aggregation by itself, through the &lt;em&gt;value&lt;/em&gt; field on the &lt;em&gt;Big value&lt;/em&gt; row. But since the Hawkular plugin does it on its own, setting whatever value in this field won&amp;#8217;t have any effect.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-one-singlestat.png&quot; alt=&quot;A singlestat&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To finalize this dashboard setup for an application, click on the Singlestat panel title and duplicate 5 times. Edit each of the duplicates with the following names and queries:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&quot;Max, all pods&quot;: set &lt;em&gt;Time aggregation&lt;/em&gt; to &lt;em&gt;Max&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&quot;Live, all pods&quot;: set &lt;em&gt;Time aggregation&lt;/em&gt; to &lt;em&gt;Live&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&quot;Average per pod&quot;: set &lt;em&gt;Multiple series aggregation&lt;/em&gt; to &lt;em&gt;Average&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&quot;Max per pod&quot;: set &lt;em&gt;Multiple series aggregation&lt;/em&gt; to &lt;em&gt;Average&lt;/em&gt; and &lt;em&gt;Time aggregation&lt;/em&gt; to &lt;em&gt;Max&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&quot;Live per pod&quot;: set &lt;em&gt;Multiple series aggregation&lt;/em&gt; to &lt;em&gt;Average&lt;/em&gt; and &lt;em&gt;Time aggregation&lt;/em&gt; to &lt;em&gt;Live&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-6-singlestats.png&quot; alt=&quot;6 singlestats&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_adding_another_application&quot;&gt;Adding Another Application&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we have a pretty nice dashboard for tracking memory usage on an application. Let&amp;#8217;s see what happens if we add a new application in OpenShift, under the same project.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This time I&amp;#8217;ll use &lt;em&gt;&lt;a href=&quot;https://htmlpreview.github.io/?https://github.com/redhat-helloworld-msa/helloworld-msa/blob/master/readme.html#_deploy_bonjour_nodejs_microservice&quot;&gt;Bonjour from Helloworld MSA&lt;/a&gt;&lt;/em&gt;, which is a Node.js microservice. After adding it to OpenShift, and again scaling it to 2 pods, see how it looks like:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-apps-merged.png&quot; alt=&quot;Merged applications&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hmm, interesting. Our panels show new series: two for the &lt;em&gt;Bonjour&lt;/em&gt; microservice and one &lt;em&gt;docker-build&lt;/em&gt;. The later is caused by the build I triggered when I created &lt;em&gt;Bonjour&lt;/em&gt;. The sequence of the events is quite obvious when looking at the graphs. We don&amp;#8217;t necessarily want to monitor that, but it&amp;#8217;s nice to see how far we can go with Hawkular and OpenShift. Anyway, we can filter it out using the top combo box &lt;em&gt;Application&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;But still, this is probably not what we would expect. What happens here is that the &lt;em&gt;$app&lt;/em&gt; variable we set up in queries is resolved into as many &lt;em&gt;container_name&lt;/em&gt; as there are, and result in the same number of series in a single graph. We can change that behaviour very easily thanks to a nice feature of Grafana: on the existing row, to the left, open the Row editor and in &lt;em&gt;Templating options&lt;/em&gt; activate duplication from variable &lt;em&gt;app&lt;/em&gt;. Save and refresh the browser.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-apps-rows.png&quot; alt=&quot;Applications per row&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That&amp;#8217;s better! By turning on row duplication based on our variable, Grafana has created 3 rows, and for each one it provides to the Hawkular plugin just one value of &lt;em&gt;$app&lt;/em&gt; at a time.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we can monitor our microservices quite easily! If we don&amp;#8217;t want to see the &lt;em&gt;docker-build&lt;/em&gt; instance, just filter it out with the top combo.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We will just add a little enhancement to the dashboard, to make easier to understand which row is for which app. On the first row, add a new &lt;em&gt;Text&lt;/em&gt; panel, set its title empty, span 2, height 100px, mode HTML and content:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;&amp;lt;center&amp;gt;&amp;lt;p style=&apos;font-size: 40pt&apos;&amp;gt;$app&amp;lt;/p&amp;gt;&amp;lt;/center&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It will display the microservice name. After some layout arrangement, here is the final result:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2016/2016-10-17-grafana-apps-rows-2.png&quot; alt=&quot;Applications per row bis&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can play around with OpenShift. Scale some pods up and down, and you&amp;#8217;ll get the metrics updated in Grafana. Just note that on downscaling, you&amp;#8217;ll have to wait a little bit (5 minutes) before seeing the &lt;em&gt;Live&lt;/em&gt; metrics on the &lt;em&gt;Singlestat&lt;/em&gt; panel being updated. This is because we&amp;#8217;re not sure if the absence of data is due to a pod being shut down, or a simple delay between measurements.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_it_s_just_a_beginning&quot;&gt;It&amp;#8217;s Just a Beginning&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Thanks to the metrics provided in OpenShift, you can build more elaborate dashboards. Just change the &lt;em&gt;desciptor_name&lt;/em&gt; tag and see what&amp;#8217;s interesting for you, there are metrics on memory, CPU, network and filesystem.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;But that&amp;#8217;s just the starting kit! &lt;a href=&quot;http://www.hawkular.org/hawkular-clients/&quot;&gt;The Hawkular Metrics ecosystem&lt;/a&gt; is rich and keeps growing, including a Wildfly agent, a Vert.x plugin, a DropWizard reporter, etc. And if that&amp;#8217;s not enough for you, it&amp;#8217;s very easy to integrate your own metrics: either through the client libraries or by directly calling the &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-metrics.html&quot;&gt;Metrics REST API&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A good practice, when you define your own metrics, is to tag them with some pod-discriminant values. It can be through the environment variables set by Kubernetes/OpenShift, but it could also be the hostname since it&amp;#8217;s generated specifically for a pod. With that in mind, you will be able to monitor every part of your microservices architecture.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+You can download this dashboard &lt;a href=&quot;https://github.com/hawkular/hawkular-grafana-datasource/blob/master/dashboards/openshift-memory-example.json&quot;&gt;here on GitHub&lt;/a&gt; and import it in Grafana.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 	</description>

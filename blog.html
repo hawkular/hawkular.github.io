@@ -310,6 +310,307 @@ support.</p>
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html"><h1>Monitoring Microservices with OpenShift, Hawkular Metrics and Grafana</h1></a>
+            <p>24 October 2016, by Joel Takvorian</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>OpenShift, Hawkular Metrics and Grafana are three great tools that we can combine to build a powerful monitoring system for microservices.</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Grafana is the visualization layer that enables building custom and dynamic dashboards.</p>
+</li>
+<li>
+<p>Hawkular Metrics is the robust and flexible layer that is used for metrics storage and querying.</p>
+</li>
+<li>
+<p>And OpenShift 3 is the new container platform from Red Hat built on top of Docker and Kubernetes.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s see how to make them work together and visualize our microservices metrics in Grafana.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_openshift">Preparing OpenShift</h3>
+<div class="paragraph">
+<p>I assume you already have access to a running OpenShift Origin (1.0.8 or later), but if you don&#8217;t, you can <a href="https://github.com/openshift/origin">follow the installation steps</a>. Or if you&#8217;re a lazy boy/girl like me, you can use <a href="https://github.com/jimmidyson/minishift">MiniShift</a> to get it running very quickly. Just make sure you assign enough memory and CPU resources to the VM; I could get everything running fine with 2 cores and 4GB, of course that will depend on your hardware.</p>
+</div>
+<div class="paragraph">
+<p>Then follow the <a href="https://github.com/openshift/origin-metrics">origin-metrics installation steps</a> to deploy Hawkular Metrics in OpenShift.</p>
+</div>
+<div class="paragraph">
+<p>Note that Grafana will not work on an insecure SSL connection to Hawkular. So you will have to provide your own certificates when creating the secret:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc secrets new metrics-deployer hawkular-metrics.pem=/path/to/hm.pem \
+hawkular-metrics-ca.cert=/path/to/hm-ca.cert -n openshift-infra</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploying_a_microservice">Deploying a Microservice</h3>
+<div class="paragraph">
+<p>You will need to deploy some application in OpenShift. For this article I&#8217;ll use some parts of the <a href="https://htmlpreview.github.io/?https://github.com/redhat-helloworld-msa/helloworld-msa/blob/master/readme.html#_deploy_aloha_vert_x_microservice">Red Hat Helloworld MSA</a> to deploy "Aloha", and later "Bonjour".</p>
+</div>
+<div class="paragraph">
+<p>For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc login -u ... -p ...
+# The project name you choose here matters, because it will be the tenant ID in Hawkular
+$ oc new-project test
+$ git clone https://github.com/redhat-helloworld-msa/aloha
+$ cd aloha/
+$ oc new-build --binary --name=aloha -l app=aloha
+$ mvn package; oc start-build aloha --from-dir=. --follow
+$ oc new-app aloha -l app=aloha,hystrix.enabled=true
+$ oc expose service aloha</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can open the OpenShift web console to see when Aloha is correctly deployed. And scale it up to 2 pods. The web console should show something like this:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-aloha-openshift.png" alt="Aloha in OpenShift">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_setup_hawkular_datasource_in_grafana">Setup Hawkular Datasource in Grafana</h3>
+<div class="paragraph">
+<p>So now, let&#8217;s have a look at Grafana. For this article I&#8217;ve installed a recent version (3.1.1) and the <a href="https://github.com/hawkular/hawkular-grafana-datasource">Hawkular Datasource plugin</a> (1.0.2).</p>
+</div>
+<div class="paragraph">
+<p>In Grafana, to configure the Hawkular Datasource, set the URL of the Metrics service in OpenShift, ending with <em>/hawkular/metrics</em>. You should have something similar to <em><a href="https://metrics.192.168.42.63.xip.io/hawkular/metrics" class="bare">https://metrics.192.168.42.63.xip.io/hawkular/metrics</a></em>. Access mode must be <em>Proxy</em>. The tenant must be the name of the project in OpenShift where we&#8217;ve created our sample application; so for my example here, it&#8217;s just "test". And finally, put the bearer token for the OpenShift API access. To generate a token, you can navigate to <em>/oauth/token/request</em> from your OpenShift base path (something like <em><a href="https://192.168.42.63:8443/oauth/token/request" class="bare">https://192.168.42.63:8443/oauth/token/request</a></em>).</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-hawkular-datasource.png" alt="Hawkular Datasource configuration">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_create_the_dashboard">Create the Dashboard</h3>
+<div class="paragraph">
+<p>Now we can create a new dashboard. And a template variable, which will be the cornerstone of our dynamic dashboards.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-templating.png" alt="Open templating">
+</div>
+</div>
+<div class="paragraph">
+<p><em>Open dashboard templating screen</em></p>
+</div>
+<div class="paragraph">
+<p>Create a variable named <em>app</em>, select your Hawkular datasource and type in query: <em>tags/container_name:*</em></p>
+</div>
+<div class="paragraph">
+<p>As you can guess, it will search all known values of the tag <em>container_name</em>. Once you&#8217;ve typed the query, you should see your application names displayed at the bottom of the page.</p>
+</div>
+<div class="paragraph">
+<p>Ticking <em>Multi-value</em> and <em>Include All option</em> is recommended as it will enable better filtering.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-edit-variable.png" alt="Editing variables">
+</div>
+</div>
+<div class="paragraph">
+<p>With this single variable, you will already be able to build a nice dynamic dashboard.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+If you want to see the list of available tags created in OpenShift, you can fetch the metrics definitions with the following command: <code><code>curl -X GET <a href="https://yourserver/hawkular/metrics/metrics" class="bare">https://yourserver/hawkular/metrics/metrics</a> -H "Content-Type: application/json" -H "Hawkular-Tenant: your-tenant" -H "Authorization: Bearer your-bearer-token"</code></code>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Now, time to see nice charts! In the first row, we create a new panel of type Graph. In General tab, set "Memory usage" as the graph title. In Metrics tab, select your Hawkular datasource. Create a series of type Gauge, searching by tag, and give the following tags:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>container_name</em>: <em>$app</em></p>
+</li>
+<li>
+<p><em>descriptor_name</em>: <em>memory/usage</em></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>These tagged metrics are provided to Hawkular by OpenShift.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-memory-usage.png" alt="Memory usage">
+</div>
+</div>
+<div class="paragraph">
+<p>From now on, you can see the memory usage by pod instance and for all your applications. There are 2 series because we scaled the service to 2 pods earlier.</p>
+</div>
+<div class="paragraph">
+<p>You can edit the Graph Axes to set Y-Unit "Data &gt; Bytes" and Y-min 0. Note that you can also show stacked values from the Display tab. This is useful when you want to see the total amount of memory.</p>
+</div>
+<div class="paragraph">
+<p>Next, we will show some aggregated stats. But before that, go back editing the Graph panel and, in the General tab, set span to 6.</p>
+</div>
+<div class="paragraph">
+<p>From the Row menu create a new <em>Singlestat</em> panel. Name it <em>"Average, all pods"</em>, span 2, height 100px. In the Metrics tab, select your Hawkular datasource. <em>Search by tags</em> using the same tags as before: <em>container_name</em>: <em>$app</em>, <em>descriptor_name</em>: <em>memory/usage</em>.</p>
+</div>
+<div class="paragraph">
+<p>As you can see, there&#8217;s some new options when querying from a Singlestat panel: Multiple series aggregation and Time aggregation.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-singlestat.png" alt="Singletat query">
+</div>
+</div>
+<div class="paragraph">
+<p>When a standard query by tag is submitted to Hawkular Metrics, the response may contain several series of data points, depending on the matching tags. Since we want here to get a single number, we will ask the plugin to perform a two-steps aggregation: a "vertical" aggregation that merges all series into a single one, and an "horizontal" aggregation that extracts a single stat from a time-series.</p>
+</div>
+<div class="paragraph">
+<p>As you can see, when the <em>Multiple series aggregation</em> is left to <em>None</em>, Grafana reports a <em>Multiple Series Error</em>. This is because the Singlestat panel doesn&#8217;t know how to merge multiple series, so let&#8217;s ask the Hawkular plugin to do it. Select <em>Sum</em> instead of <em>None</em>, and keep <em>Average</em> for the time aggregation.</p>
+</div>
+<div class="paragraph">
+<p>Now switch to the Options tab and change Unit to "Data &gt; bytes". Here, you can define thresholds to highlight high memory levels.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Usually, Grafana&#8217;s Singlestat panel performs time aggregation by itself, through the <em>value</em> field on the <em>Big value</em> row. But since the Hawkular plugin does it on its own, setting whatever value in this field won&#8217;t have any effect.
+</td>
+</tr>
+</table>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-one-singlestat.png" alt="A singlestat">
+</div>
+</div>
+<div class="paragraph">
+<p>To finalize this dashboard setup for an application, click on the Singlestat panel title and duplicate 5 times. Edit each of the duplicates with the following names and queries:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>"Max, all pods": set <em>Time aggregation</em> to <em>Max</em></p>
+</li>
+<li>
+<p>"Live, all pods": set <em>Time aggregation</em> to <em>Live</em></p>
+</li>
+<li>
+<p>"Average per pod": set <em>Multiple series aggregation</em> to <em>Average</em></p>
+</li>
+<li>
+<p>"Max per pod": set <em>Multiple series aggregation</em> to <em>Average</em> and <em>Time aggregation</em> to <em>Max</em></p>
+</li>
+<li>
+<p>"Live per pod": set <em>Multiple series aggregation</em> to <em>Average</em> and <em>Time aggregation</em> to <em>Live</em></p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-6-singlestats.png" alt="6 singlestats">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_adding_another_application">Adding Another Application</h3>
+<div class="paragraph">
+<p>Now we have a pretty nice dashboard for tracking memory usage on an application. Let&#8217;s see what happens if we add a new application in OpenShift, under the same project.</p>
+</div>
+<div class="paragraph">
+<p>This time I&#8217;ll use <em><a href="https://htmlpreview.github.io/?https://github.com/redhat-helloworld-msa/helloworld-msa/blob/master/readme.html#_deploy_bonjour_nodejs_microservice">Bonjour from Helloworld MSA</a></em>, which is a Node.js microservice. After adding it to OpenShift, and again scaling it to 2 pods, see how it looks like:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-apps-merged.png" alt="Merged applications">
+</div>
+</div>
+<div class="paragraph">
+<p>Hmm, interesting. Our panels show new series: two for the <em>Bonjour</em> microservice and one <em>docker-build</em>. The later is caused by the build I triggered when I created <em>Bonjour</em>. The sequence of the events is quite obvious when looking at the graphs. We don&#8217;t necessarily want to monitor that, but it&#8217;s nice to see how far we can go with Hawkular and OpenShift. Anyway, we can filter it out using the top combo box <em>Application</em>.</p>
+</div>
+<div class="paragraph">
+<p>But still, this is probably not what we would expect. What happens here is that the <em>$app</em> variable we set up in queries is resolved into as many <em>container_name</em> as there are, and result in the same number of series in a single graph. We can change that behaviour very easily thanks to a nice feature of Grafana: on the existing row, to the left, open the Row editor and in <em>Templating options</em> activate duplication from variable <em>app</em>. Save and refresh the browser.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-apps-rows.png" alt="Applications per row">
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s better! By turning on row duplication based on our variable, Grafana has created 3 rows, and for each one it provides to the Hawkular plugin just one value of <em>$app</em> at a time.</p>
+</div>
+<div class="paragraph">
+<p>Now we can monitor our microservices quite easily! If we don&#8217;t want to see the <em>docker-build</em> instance, just filter it out with the top combo.</p>
+</div>
+<div class="paragraph">
+<p>We will just add a little enhancement to the dashboard, to make easier to understand which row is for which app. On the first row, add a new <em>Text</em> panel, set its title empty, span 2, height 100px, mode HTML and content:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;center&gt;&lt;p style='font-size: 40pt'&gt;$app&lt;/p&gt;&lt;/center&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will display the microservice name. After some layout arrangement, here is the final result:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-10-17-grafana-apps-rows-2.png" alt="Applications per row bis">
+</div>
+</div>
+<div class="paragraph">
+<p>You can play around with OpenShift. Scale some pods up and down, and you&#8217;ll get the metrics updated in Grafana. Just note that on downscaling, you&#8217;ll have to wait a little bit (5 minutes) before seeing the <em>Live</em> metrics on the <em>Singlestat</em> panel being updated. This is because we&#8217;re not sure if the absence of data is due to a pod being shut down, or a simple delay between measurements.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_it_s_just_a_beginning">It&#8217;s Just a Beginning</h3>
+<div class="paragraph">
+<p>Thanks to the metrics provided in OpenShift, you can build more elaborate dashboards. Just change the <em>desciptor_name</em> tag and see what&#8217;s interesting for you, there are metrics on memory, CPU, network and filesystem.</p>
+</div>
+<div class="paragraph">
+<p>But that&#8217;s just the starting kit! <a href="http://www.hawkular.org/hawkular-clients/">The Hawkular Metrics ecosystem</a> is rich and keeps growing, including a Wildfly agent, a Vert.x plugin, a DropWizard reporter, etc. And if that&#8217;s not enough for you, it&#8217;s very easy to integrate your own metrics: either through the client libraries or by directly calling the <a href="http://www.hawkular.org/docs/rest/rest-metrics.html">Metrics REST API</a>.</p>
+</div>
+<div class="paragraph">
+<p>A good practice, when you define your own metrics, is to tag them with some pod-discriminant values. It can be through the environment variables set by Kubernetes/OpenShift, but it could also be the hostname since it&#8217;s generated specifically for a pod. With that in mind, you will be able to monitor every part of your microservices architecture.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+You can download this dashboard <a href="https://github.com/hawkular/hawkular-grafana-datasource/blob/master/dashboards/openshift-memory-example.json">here on GitHub</a> and import it in Grafana.
+</td>
+</tr>
+</table>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html"><h1>Hawkular APM supports OpenTracing and Alerts</h1></a>
             <p>17 October 2016, by Gary Brown</p>
             <p><div id="preamble">
@@ -836,229 +1137,13 @@ improved to provide a powerful tool to analyze timing data of distributed applic
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/09/19/hawkular-apm-on-msa.html"><h1>Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</h1></a>
-            <p>19 September 2016, by Juraci Paixão Kröhling</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>The focus of the <a href="https://github.com/hawkular/hawkular-apm/releases/tag/0.10.0.Final">latest Hawkular APM release</a>
-has been in building a compatibility layer for ZipKin-aware applications. In this blog post, we&#8217;ll show how Hawkular APM can
-be used as a drop-in replacement for ZipKin server and UI.</p>
-</div>
-<div class="paragraph">
-<p>A video demonstrating this approach can also be viewed <a href="https://www.youtube.com/watch?v=USyGYVYlDIM">here</a>.</p>
-</div>
-<div class="paragraph">
-<p>At the end of this blog post, we should see data flowing from the target applications to Hawkular APM, without any code changes
-to the application themselves:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot3.png" alt="Hawkular APM Dashboard">
-</div>
-</div>
-<div class="paragraph">
-<p>Red Hat offers a <a href="http://developers.redhat.com/products/cdk/overview/">Container Developer Toolkit</a>, or CDK, for its customers,
-allowing for a quick start on developing applications following the best practices on the microservices architecture.</p>
-</div>
-<div class="paragraph">
-<p>Along with the CDK, Red Hat publishes also a <a href="https://github.com/redhat-helloworld-msa">"MSA - Hello World Microservices Architecture"</a>,
-which demonstrates how applications might benefit from this architecture. It can also be used as seed for your own
-projects, as it shows how activities can be accomplished by using several technology stacks, from <code>nodejs/express</code> to <code>Wildfly Swarm</code>.</p>
-</div>
-<div class="paragraph">
-<p>For Hawkular APM, this offers a great way to test our APIs on different stacks, specially our ZipKin compatibility layer. Ideally,
-one would simply point the ZipKin URL setting to a Hawkular APM server and everything would just work.</p>
-</div>
-<div class="paragraph">
-<p>And that&#8217;s what we are going to do in this post!</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_getting_started_with_cdk_and_msa">Getting started with CDK and MSA</h2>
-<div class="sectionbody">
-<div class="sect2">
-<h3 id="_cdk_and_msa">CDK and MSA</h3>
-<div class="paragraph">
-<p>To setup CDK and MSA, we suggest that you follow the <a href="http://bit.ly/msainstructions">official instructions</a>. At the end of the process,
-you should have all the services running. Open the "frontend" service, and click around a bit. For instance:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Click on the "Browser as client" menu item, which will make the browser make Ajax calls directly to the API endpoints</p>
-</li>
-<li>
-<p>Click on the "API Gateway" menu item: on this case, the browser makes a single call to the API Gateway, which in turn makes single API calls
-to each of the services</p>
-</li>
-<li>
-<p>Click on "Service chaining" menu item: on this case, each service calls the "next", adding the results to its own payload.</p>
-</li>
-<li>
-<p>It could be interesting to make a note about the hostnames, to later make sure that you have "new" Docker containers running.
-The default output for each of the services include the hostname. Concretely, the output <code>ola-7-9wa31</code> means that the service <code>ola</code> is
-running on the container with hostname <code>9wa31</code>.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Open the ZipKin interface, and make sure that data is arriving there. Check also the different visualizations for the different operations.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_apm">Hawkular APM</h3>
-<div class="paragraph">
-<p>We&#8217;ll use the <a href="http://www.hawkular.org/blog/2016/07/14/hawkular-apm-openshift.html">previous post on running Hawkular APM on OpenShift</a>
-as base to install our Hawkular APM alongside the other MSA examples. For this blog post, we&#8217;ll prepare our own image based on the official
-Dockerfile for Hawkular APM. For that, fork and clone <a href="https://github.com/jboss-dockerfiles/hawkular">our repository</a> and run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">cd hawkular-apm-server
-oc new-app jboss/hawkular-apm-server
-oc new-build --binary --name=hawkular-apm-server -l app=hawkular-apm-server
-oc start-build hawkular-apm-server --from-dir=. --follow
-oc expose service hawkular-apm-server</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Alternatively, the image from Docker Hub can be used, although it&#8217;s possible that networking issues might occur. If you use this option and
-the build takes more than, say, 10 minutes to finish, do a <code>vagrant ssh</code> to enter the box, and check the logs via <code>journalctl -f</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc new-app jboss/hawkular-apm-server
-oc expose service hawkular-apm-server</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This should create a new image stream, build, deployment and application.</p>
-</div>
-<div class="paragraph">
-<p>Before anything else, make note of the admin and password credentials. Those can be seen on the build logs:
-Browse → Deployments → hawkular-apm-server → Click on the latest deployment → Logs.
-A sample output is as follows:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>------------------------------------
-ATTENTION ATTENTION ATTENTION ATTENTION
-We automatically created an admin user for you to access the Hawkular APM web interface:
-Username: adminQqyEF7i
-Password: KS3mmZbkdhRZ5y7oF
-------------------------------------</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once this is done, there should be a new service available on OpenShift&#8217;s dashboard, with an URL like <code><a href="http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io" class="bare">http://hawkular-apm-server-helloworld-msa.rhel-cdk.10.1.2.2.xip.io</a></code>.</p>
-</div>
-<div class="paragraph">
-<p>Now that everything is in place and working as expected, it&#8217;s time to switch from ZipKin to Hawkular APM!</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_making_the_switch">Making the switch</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Each one of the MSA modules has a <code>Dockerfile</code>, specifying a <code>ENV ZIPKIN_SERVER_URL <a href="http://zipkin-query:9411" class="bare">http://zipkin-query:9411</a></code>.
-From there, we have some options:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Change each <code>Dockerfile</code> to make the env var point to <code><a href="http://hawkular-apm-server:8080" class="bare">http://hawkular-apm-server:8080</a></code></p>
-</li>
-<li>
-<p>Specify the <code>-e</code> option to Docker, to override the <code>ZIPKIN_SERVER_URL</code></p>
-</li>
-<li>
-<p>Set an Environment Variable in the OpenShift deployment</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>We&#8217;ll choose the last option, as we consider that as the less invasive one, inline with the Microservice idea that configuration should not
-be a concern for the application.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc env dc/aloha       ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
-oc env dc/api-gateway ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
-oc env dc/bonjour     ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
-oc env dc/hola        ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"
-oc env dc/ola         ZIPKIN_SERVER_URL="http://hawkular-apm-server:8080"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Wait a bit until OpenShift finishes deploying the new containers, and hit "Refresh Results" on the frontend. Note that the hostnames will change, indicating
-that a new container is running. At around the same time, you should see the first data flowing to Hawkular APM.</p>
-</div>
-<div class="paragraph">
-<p><strong>Spoiler alert</strong>: after the first two screenshots that we added for orientation, we also included some screenshots with the final result.</p>
-</div>
-<div class="sect2">
-<h3 id="_overriding_the_environment_variable_on_an_openshift_deployment">Overriding the environment variable on an OpenShift deployment:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot7.png" alt="Environment variable in OpenShift deployment">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_apm_deployment_logs_on_openshift">Hawkular APM Deployment logs on OpenShift:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot6.png" alt="Deployment log">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_sample_of_the_aggregated_visualization_for_the_service_chaining_technique">Sample of the aggregated visualization for the "Service chaining" technique:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot1.png" alt="Service chaining">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_details_about_a_single_instance_of_the_service_chaining_technique">Details about a single instance of the "Service chaining" technique:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot5.png" alt="Screenshot 5">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_sample_of_the_aggregated_visualization_for_the_api_gateway_technique">Sample of the aggregated visualization for the "API Gateway" technique:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot2.png" alt="API Gateway">
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_details_about_a_single_instance_of_the_api_gateway_technique">Details about a single instance of the "API Gateway" technique:</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-09-19-screenshot4.png" alt="Screenshot 4">
-</div>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>19 September 2016 - <a href="blog/2016/09/19/hawkular-apm-on-msa.html">Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</a></li>
           <li>14 September 2016 - <a href="blog/2016/09/14/consuming-hawkular-api-over-ssl.html">Consuming Hawkular API over SSL with self signed certificates</a></li>
           <li>05 September 2016 - <a href="blog/2016/09/05/hawkular-metrics-0.19.0.Final-released.html">Hawkular Metrics 0.19.0 - Release</a></li>
           <li>31 August 2016 - <a href="blog/2016/08/31/spark-metric-analysis.html">Metric Data Analysis using the Apache Spark</a></li>
