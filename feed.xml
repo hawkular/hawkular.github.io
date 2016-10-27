@@ -6,9 +6,69 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Tue, 25 Oct 2016 13:42:06 +0000</pubDate>
-    <lastBuildDate>Tue, 25 Oct 2016 13:42:06 +0000</lastBuildDate>
+    <pubDate>Thu, 27 Oct 2016 07:09:09 +0000</pubDate>
+    <lastBuildDate>Thu, 27 Oct 2016 07:09:09 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular Metrics 0.21.0 - Release</title>
+      <link>http://www.hawkular.org/blog/2016/10/25/hawkular-metrics-0.21.0.Final-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Tue, 25 Oct 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/10/25/hawkular-metrics-0.21.0.Final-released.html</guid>
+      	<description>
+	&lt;p&gt;I am happy to announce release 0.21.0 of Hawkular Metrics.This release is anchored by performance enhancements and general fixes.&lt;/p&gt;&lt;p&gt;Here is a list of major changes:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;p&gt;Cassandra&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;&lt;strong&gt;Cassandra 3.0.9 is now the supported version of Cassandra.&lt;/strong&gt;&lt;/li&gt;
+    &lt;li&gt;Note: this is a rollback from previously supported version of 3.7 due to Cassandra community recommendations for stability and production deployment. Cassandra 3.7 or 3.9 are still compatible but development and testing now use 3.0.9 release.&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;p&gt;Compression&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Fixed an issue that allowed duplicate instances of the compression job to get scheduled on server restart (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-492&quot;&gt;HWKMETRICS-492&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Improved the fault tolerance of the compression job (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-494&quot;&gt;HWKMETRICS-494&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Improved the performance of the merge process for reading compressed data (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-488&quot;&gt;HWKMETRICS-488&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Fixed wrong ordering when fetching compressed and uncompressed data (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-506&quot;&gt;HWKMETRICS-506&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Compression job provides back pressure (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-500&quot;&gt;HWKMETRICS-500&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;The job scheduler now handles failure scenarios (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-505&quot;&gt;HWKMETRICS-505&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;p&gt;Cassandra Schema&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Fixed an issue where the server can fail to start due to Cassalog being in inconsistent state (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-495&quot;&gt;HWKMETRICS-495&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;gc_grace_second&lt;/code&gt; is set to zero for single node clusters (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-381&quot;&gt;HWKMETRICS-381&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;p&gt;API Updates&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Inserting data points has server side retries to increase the fault tolerance for simple error scenarios (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-510&quot;&gt;HWKMETRICS-510&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;&lt;code&gt;fromEarliest&lt;/code&gt; parameter is now supported in all query endpoints (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-445&quot;&gt;HWKMETRICS-445&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Non-existant tag queries are now supported via &lt;code&gt;!tag:*&lt;/code&gt; format; example: &lt;code&gt;!partition:*&lt;/code&gt; (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-480&quot;&gt;HWKMETRICS-480&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;p&gt;Configuration&lt;/p&gt;
+  &lt;ul&gt;
+    &lt;li&gt;The configuration options did not have a consistent naming scheme. &lt;code&gt;hawkular-metrics&lt;/code&gt;, &lt;code&gt;hawkular.metrics&lt;/code&gt;, and &lt;code&gt;hawkular&lt;/code&gt; prefixes were used along no prefixes at all.&lt;/li&gt;
+    &lt;li&gt;In this release the naming schema has been standardized to &lt;code&gt;hawkular.metrics.*&lt;/code&gt; for metrics specific configuration and &lt;code&gt;hawkular.*&lt;/code&gt; for general configuration.&lt;/li&gt;
+    &lt;li&gt;Here is list of all configuration options currently available: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/blob/release/0.21.0/api/metrics-api-util/src/main/java/org/hawkular/metrics/api/jaxrs/config/ConfigurationKey.java#L29&quot;&gt;ConfigurationKey&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;For more details: &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-508&quot;&gt;HWKMETRICS-508&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Alerting - included&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Version &lt;a href=&quot;https://issues.jboss.org/projects/HWKALERTS/versions/12331985&quot;&gt;1.3.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Project details and repository: &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts&quot;&gt;Github&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Documentation: &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html&quot;&gt;REST API Documentation&lt;/a&gt;, &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples&quot;&gt;Examples&lt;/a&gt;,&lt;br/&gt;&lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html&quot;&gt;Developer Guide&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Metrics Clients&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Python: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-python&quot;&gt;https://github.com/hawkular/hawkular-client-python&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Go: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-go&quot;&gt;https://github.com/hawkular/hawkular-client-go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ruby: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-ruby&quot;&gt;https://github.com/hawkular/hawkular-client-ruby&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Java: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-java&quot;&gt;https://github.com/hawkular/hawkular-client-java&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;h3&gt;Release Links&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Github Release: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.21.0&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.21.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;JBoss Nexus Maven artifacts: &lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jira release tracker: &lt;a href=&quot;https://issues.jboss.org/projects/HWKMETRICS/versions/12331718&quot;&gt;https://issues.jboss.org/projects/HWKMETRICS/versions/12331718&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;A big &quot;Thank you&quot; goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.&lt;/p&gt;
+	</description>
+    </item>
     <item>
       <title>Define Alert Triggers via HawkFX</title>
       <link>http://www.hawkular.org/blog/2016/10/24/hawkfx-alerts.html</link>
