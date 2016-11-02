@@ -50,7 +50,32 @@ Select the tenant. On Hawkular servers, use `hawkular`.
 
 Openshift-Metrics users must provide an authentication token.
 
-== Using Grafana Templating (variables)
+== Usage
+
+=== Queries
+
+When adding a Graph panel, the Metrics tab allows you fetch _Gauges_ and _Counters_ metrics in Hawkular. You can either search by metric id or by tag.
+
+When searching by id, you must provide the exact metric id (or use variables, as discussed later).
+
+image::docs/images/search-by-name.png[caption="Example of query by name"]
+
+When searching by tag, you must provide the tag key, followed by its value or any pattern recognized by Hawkular Metrics. Check how link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_tag_filtering[tagging works in Hawkular].
+
+- To add more tag filters, hit the "+" button and repeat the process.
+- To remove a tag, click on its key and select "Remove tag".
+
+image::docs/images/search-by-tag.png[caption="Example of query by tag"]
+
+TIP: Note that querying by tag may return multiple series for a single query, as illustrated above.
+
+When using a _Singlestat_ panel, some additional options come in. The Hawkular Datasource plugin can perform aggregations on multiple metrics, which usually the _Singlestat_ panel doesn't. It's actually a two-steps aggregation: first, multiple series are reduced into a single one (that is either the sum of its parts, or the average). Then, the resulting series is aggregated over time through another folding: min, max, average etc.
+
+image::docs/images/single-stats-aggreg.png[caption="Example of singlestat panel"]
+
+TIP: Note that because the aggregation takes place in Hawkular, the _Singlestat_ panel has nothing to aggregate. Thus in panel options, setting whatever in the _value_ field on the _Big value_ won't have any effect. However if you don't want to use the Hawkular aggregation, just set _Multiple series aggregation_ to _None_.
+
+=== Templating variables
 
 Grafana allows you to create dashboard templates through the definition of variables. This is link:http://docs.grafana.org/reference/templating/[documented on Grafana's site].
 With the Hawkular Datasource Plugin, the variables of type _'Query'_ are mapped to the http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics[_@get (url)/metrics_]
@@ -59,7 +84,7 @@ Hawkular Metrics endpoint and can be used to retrieve tenant's metric names. Use
 image::docs/images/query-for-metrics.png[caption="Example of query by tags to get metric ids", width="600"]
 
 [TIP]
-For instance, if you have metrics tagged _"type:memory"_ and others tagged _"type:cpu"_, you can write _"?tags=type:memory"_ to get only the _"memory"_ ones, or _"?tags=type:cpu|memory"_ to get them both. The leading question mark is not mandatory.
+For instance, if you have metrics tagged _"type:memory"_ and others tagged _"type:cpu"_, you can write _"tags=type:memory"_ to get only the _"memory"_ ones, or _"tags=type:cpu|memory"_ to get them both.
 
 There is an exception to that rule: if the query string is prefixed with _'tags/'_, the variable will contain the matching tag names rather than the metric names. In this case, the Hawkular Metrics endpoint link:++http://www.hawkular.org/docs/rest/rest-metrics.html#GET__metrics_tags__tags_++[_@get (url)/metrics/tags/{tags}_] will be used.
 
