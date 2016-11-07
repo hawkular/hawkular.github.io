@@ -60,6 +60,9 @@
                   </a>
                   <ul class="dropdown-menu" role="menu">
                     <li>
+                      <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
                       <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
                     </li>
                     <li>
