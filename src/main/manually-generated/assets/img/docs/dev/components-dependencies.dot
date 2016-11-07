@@ -10,21 +10,20 @@ digraph {
     node [fontname = "helvetica" shape=box]
     edge [fontname = "helvetica"]
 
-    "Hawkular"
-    "Accounts"
-    "Agent"
-    "Alerts"
-    "BTM"
+    "Hawkular Services"
+    "WildFly Agent"
+    "Hawkular Alerting"
+    "Hawkular APM"
     "Build Tools"
     "Command Gateway"
 
     // commons
 
-    "Inventory"
-    "Metrics"
+    "Hawkular Inventory"
+    "Hawkular Metrics"
     "Hawkular Parent"
     "Android Client"
-    "Data Mining"
+    "Data Mining" [color="grey" fontcolor="grey"]
 
     // parent
     "Hawkular Parent" -> "Build Tools"
@@ -49,6 +48,12 @@ digraph {
             style="invis"
             "Commons E-Mail" -> "Commons Templates"
         }
+
+        subgraph cluster_cmd_gateway {
+            label=""
+            style="invis"
+            "Command Gateway"
+        }
     }
     "Bus" -> "Hawkular Parent" [ltail=cluster_commons]
     { "Cassandra Driver" "Embedded Cassandra" "REST Status" } -> "Hawkular Parent" [style="invis"] // invisible edges for better layout
@@ -57,56 +62,40 @@ digraph {
     "Android Client" -> "Hawkular Parent"
 
     // Hawkular direct deps
-    "Hawkular" -> "Accounts"
-    "Hawkular" -> "Agent"
-    "Hawkular" -> "Alerts"
-    "Hawkular" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
-    "Hawkular" -> "Inventory"
-    "Hawkular" -> "Metrics"
-
-    // Accounts direct deps
-    "Accounts" -> "Nest" [lhead=cluster_commons label="Nest, Mail, Status" fontcolor="grey"]
-    "Accounts" -> { "Commons E-Mail" "REST Status" } [style="invis"] // invisible edges for better layout
+    "Hawkular Services" -> "WildFly Agent"
+    "Hawkular Services" -> "Hawkular Alerting"
+    "Hawkular Services" -> "Nest" [lhead=cluster_commons]
+    "Hawkular Services" -> "Hawkular Inventory"
+    "Hawkular Services" -> "Hawkular Metrics"
 
     // agent direct deps
-    "Agent" -> "Command Gateway"
-    "Agent" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
-    "Agent" -> "Inventory"
-    "Agent" -> "Metrics"
-    "Agent" -> "Accounts"
+    "WildFly Agent" -> "Nest" [lhead=cluster_commons label="Bus, Command Gateway" fontcolor="grey"]
+    "WildFly Agent" -> "Hawkular Inventory"
+    "WildFly Agent" -> "Hawkular Metrics"
 
     // alerts direct deps
-    "Alerts" -> "Accounts"
-    "Alerts" -> "Metrics"
-    "Alerts" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Hawkular Alerting" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
 
-    // btm direct deps
-    "BTM" -> "Accounts"
-
-    // command-gateway direct deps
-    "Command Gateway" -> "Accounts"
-    "Command Gateway" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
-    "Command Gateway" -> "Inventory"
+    // apm direct deps
+    "Hawkular APM" -> "Hawkular Parent"
 
     // datamining direct deps
-    "Data Mining" -> "Inventory"
-    "Data Mining" -> "Alerts"
-    "Data Mining" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Data Mining" -> "Hawkular Inventory" [color="grey"]
+    "Data Mining" -> "Hawkular Alerting" [color="grey"]
+    "Data Mining" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey" color="grey"]
 
     // inventory direct deps
-    "Inventory" -> "Accounts"
-    "Inventory" -> "Nest" [lhead=cluster_commons label="Bus, Nest, Status" fontcolor="grey"]
+    "Hawkular Inventory" -> "Nest" [lhead=cluster_commons label="Bus, Nest, Status" fontcolor="grey"]
 
     // metrics
-    "Metrics" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
-    "Metrics" -> "Accounts"
+    "Hawkular Metrics" -> "Nest" [lhead=cluster_commons label="Bus" fontcolor="grey"]
+    "Hawkular Metrics" -> "Hawkular Alerting"
 
     // layout
     { rank=same "Build Tools" }
-    { rank=same "Hawkular Parent" "Android Client" }
+    { rank=same "Hawkular Parent" "Android Client" "Hawkular APM"}
     { rank=same "Bus" "Embedded Cassandra" "Cassandra Driver" "Commons Templates" }
-    { rank=same "Nest" "REST Status" "Commons E-Mail" }
-    { rank=same "Accounts" }
+    { rank=same "Nest" "REST Status" "Commons E-Mail" "Command Gateway" }
 
 
 }
