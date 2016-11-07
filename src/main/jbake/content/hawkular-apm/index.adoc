@@ -1,0 +1,148 @@
+= Hawkular APM
+Gary Brown
+2016-11-07
+:description: OpenTracing compliant application performance management
+:jbake-type: page
+:jbake-status: published
+:icons: font
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Who Should Be Interested?
+
+Hawkular APM provides insight into the way an application executes across multiple (micro) services in a distributed (e.g. cloud) environment.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/distributed-tracing-instance-graph.png[Distributed Tracing - Instance View,600,300]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/distributed-tracing-instance-graph.png[Distributed Tracing - Instance View,600,300]
+endif::[]
+
+Therefore it should be of interest to:
+
+=== Developers
+
+Gain a greater understanding of how a complex business transaction executes across a wide range of services, under different resource constraints, to help optimise the application. Detailed tracing information captured from test and production environments can be used to help diagnose issues.
+
+=== Operators
+
+Operators can gain insignt into how an application is performing in the real world. Either manual or automated actions can be taken when particular situations occur, such as services becoming overloaded triggering an action to scale up the relevant service(s).
+
+=== Business analysts
+
+While capturing information that can be used for performance tuning, and optimising the way an application is running, the same technology can be used to provide business intelligence regarding the usage of the application. Important business metrics can be associated with the distributed tracing data for use in real time or historical analysis.
+
+
+== What is Application Performance Management?
+
+As defined on https://en.wikipedia.org/wiki/Application_performance_management[wikipedia], _"application performance management (APM) is the monitoring and management of performance and availability of software applications. APM strives to detect and diagnose complex application performance problems to maintain an expected level of service"_.
+
+In a microservices world this becomes even more critical due to the potentially large number of simple services that collaborate to deliver a business application.
+
+Being able to obtain high level aggregated views of an application's performance, as well as trace the individual path taken by a particular end user request through a potentially dynamically scaled cloud environment, enables application operations and development teams to understand where issues may have occurred and what improvements can be made to deliver better performance for the business.
+
+
+
+== Features
+
+This section provides a high level description of the features available in Hawkular APM. For more detailed information, including how to install and use the project, please see the https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/[documentation].
+
+=== Application Instrumentation
+
+Hawkular APM offers three approaches for instrumenting your application.
+
+==== OpenTracing
+
+http://opentracing.io/[OpenTracing] is a _"vendor-neutral open standard for distributed tracing"_. The standard currently provides APIs and abstract implementations for 6 languages, _Java_, _Javascript_, _Go_, _Python_, _Objective C_ and _C++_.
+
+The Hawkular APM project currently provides the following OpenTracing compliant providers:
+
+.OpenTracing Providers for Hawkular APM
+|===
+|Language |Repository |Available
+|Java |https://github.com/hawkular/hawkular-apm/tree/master/client/opentracing |0.11
+|Javascript |https://github.com/hawkular/hawkular-apm-opentracing-javascript |Scheduled for 0.12
+|===
+
+Note: It is also possible to use OpenTracing compliant zipkin providers. However Hawkular APM and Zipkin providers cannot be mixed within the same environment (i.e. propagation of state is not compatible between the two projects).
+
+==== JVM based agent
+
+A java agent can be configured to non-intrusively monitor your applications/services and report trace information to the APM server.
+
+==== Zipkin instrumentation libraries
+
+http://zipkin.io/[Zipkin] is a distributed tracing system. If your application already makes use of its client libraries to capture trace information, you can benefit from our drop-in replacement for the server: just deploy Hawkular APM and point your client libraries to our server and it will just work. Hawkular APM provides support for collecting Zipkin span data via HTTP and Kafka.
+
+=== Aggregated view of components
+
+The _Components_ view provides information about traced components. The components include the _Producers_ and _Consumers_ that are involved in service invocations, as well as internal components such as _Databases_, _EJBs_, etc.
+
+A filter can be specified to focus on the time range and specific properties.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/components.png[Components]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/components.png[Components]
+endif::[]
+
+The chart shows the average durations of the various component types being viewed, subject to the defined filter.
+
+The table gives a more detailed breakdown of the components, identifying their average actual and elapsed durations.
+
+=== Distributed tracing
+
+The _Distributed Tracing_ tab initially presents an aggregated view of the service dependencies based on a selected initial endpoint. The nodes are colour coded to enable users to see where most of the time is being spent.
+
+As with the previous components view, it is possible to define a filter, based on time, properties and transaction, to focus in on specific information of interest.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/distributed-tracing.png[Distributed Tracing - Service Dependency View]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/distributed-tracing.png[Distributed Tracing - Service Dependency View]
+endif::[]
+
+At the top of the page, a button will show the number of trace instances that contribute to the aggregated service dependency view. Pressing the button results in a table being shown listing the trace instances. It is then possible to select the 'detail' icon to see a more detailed view of the trace instance.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/distributed-tracing-instance.png[Distributed Tracing - Instance View]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/distributed-tracing-instance.png[Distributed Tracing - Instance View]
+endif::[]
+
+
+=== Business transactions
+
+As well as providing distributed tracing capabilities, Hawkular APM enables specific application invocations to be classified as business (or user defined) transactions. These enables captured business metrics, associated with trace instances, to be analysed and viewed in a business context.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/business-txn-summary.png[Business Transaction Summary]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/business-txn-summary.png[Business Transaction Summary]
+endif::[]
+
+The summary page shows high level information about the business transactions being managed. By selecting a particular business transaction it is possible to see a more detailed view.
+
+ifndef::env-github[]
+image::/img/hawkular-apm/business-txn-info.png[Business Transaction Information]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/hawkular-apm/business-txn-info.png[Business Transaction Information]
+endif::[]
+
+As with the other pages, it is possible to define a filter based on time range, properties and faults.
+
+
+=== Alerts
+
+Following the recent integration with Hawkular Alerts, it is now possible to define alert triggers based on trace instance completion events. This enables custom situations to be monitored, and where appropriate automated actions taken. This could include sending notification emails to inform appropriate people that the situation has occurred, or potentially to initiate some remedial action such as scaling up specific services within a cloud environment.
+
+
+

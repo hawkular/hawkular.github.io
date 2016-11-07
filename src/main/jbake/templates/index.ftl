@@ -43,7 +43,7 @@
                     <li class="col-md-4 col-sm-4">
                         <a href="/overview/index.html#_application_performance_management"><i class="fa fa-briefcase"></i></a>
                         <h4>Application Performance Management</h4>
-                        <p>Capture information about the application invocations being executed across your servers. <a href="/overview/index.html#_application_performance_management">More...</a></p>
+                        <p>Capture information about the application invocations being executed across your servers. <a href="/hawkular-apm/index.html">More...</a></p>
                     </li>
                     <li class="col-md-4 col-sm-4">
                         <a href="http://manageiq.org/"><img src="http://avatars0.githubusercontent.com/ManageIQ?&s=48" alt="ManageIQ logo"></img></a>
