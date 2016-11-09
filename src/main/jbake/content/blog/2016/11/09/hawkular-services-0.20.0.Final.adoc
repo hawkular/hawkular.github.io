@@ -1,0 +1,106 @@
+= Hawkular Services 0.20.0.Final
+Heiko W. Rupp
+2016-11-09
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, release, hawkular-services
+
+Hawkular services is a ready to run distribution of Hawkular-Metrics with Alerts, Inventory, the WildFly agent and other components
+The version https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.20.0.Final/hawkular-services-dist-0.20.0.Final.zip[0.20.0.Final] has just been released and is ready to be tested and integrated with other projects.
+
+== On the release number
+
+Hawkular-services is long out of the 0.0._z_ numbers, even if the previous releases only looked at the _z_.
+To cater for this we have made a big jump to 0._20_.0.Final. There was a 0.19 yesterday, but we had
+ to update the included release of Hawkular-metrics.
+
+== What's in this release
+
+
+This release includes components
+
+* Inventory is now at v 1.1.0, which features a new api. This brings support for internal H2
+ database (taken by default if you don't specify and additional flags) and Postgres as storage backend
+* Hawkular-Metrics is at v 0.21.5 and includes alerting 1.3.2 (we call this HAM now :-)
+* Hawkular-agent has been bumped to v 0.24.1 to make use of the new Inventory api.
+
+
+Hawkular Services is released every week on Tuesdays.
+
+== Get started
+To get started with Hawkular Services, https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.20.0.Final/hawkular-services-dist-0.20.0.Final.zip[download the latest release], unzip it,
+add a user and set the Agent to use the credentials for the user just added.
+
+It can be accomplished with the following commands:
+
+[source,bash]
+----
+export HAWKULAR_HOME="/path/to/hawkular-services"
+export HAWKULAR_USERNAME="jdoe"
+export HAWKULAR_PASSWORD="password"
+
+cd "${HAWKULAR_HOME}"
+"${HAWKULAR_HOME}/bin/add-user.sh" \
+  -a \
+  -u "${HAWKULAR_USERNAME}" \
+  -p "${HAWKULAR_PASSWORD}" \
+  -g read-write,read-only
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"
+----
+
+Before starting the server, you need to have Cassandra 3.0.9 up and running with the RPC port enabled either via
+setting the env variable of `CASSANDRA_START_RPC` to `true`
+
+or by editing `cassandra.yml` and setting it there:
+
+[source,yml]
+----
+# Whether to start the thrift rpc server.
+start_rpc: true
+----
+
+Using `ccm` you can use this to update the config: `ccm updateconf 'start_rpc: true'`.
+Another option is via `nodetool enablethrift`.
+
+=== Using Postgres
+
+To use Postgres as backend you need to pass additional properties to the `standalone.sh` command
+above:
+
+[source, bash]
+----
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" \
+    -Dhawkular.rest.password="${HAWKULAR_PASSWORD} \
+    -Dhawkular.inventory.sql.jdbc.url=jdbc:postgresql://1.2.3.4:5432/hawkular \
+    -Dhawkular.inventory.sql.jdbc.username=jdoe \
+    -Dhawkular.inventory.sql.jdbc.password=password
+----
+
+To use a postgres database called _hawkular_ on host _1.2.3.4_ owned by a user _jdoe_ with a
+ password of _password_.
+
+See also
+http://www.hawkular.org/hawkular-services/docs/user-guide/inventory/index.html#configuration-properties.
+
+
+=== Build from master and Cassandra
+
+If you build from master, you can pass `-Pembeddedc` to get a distribution with embedded Cassandra for local development.
+Similarly if you build via `-Pdev` a default user of _jdoe/password_ will be installed and also be used with the agent.
+
+== Use Grafana with Hawkular-services
+
+We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
+You can download it from https://grafana.net/plugins/hawkular-datasource[Grafana.net].
+The https://github.com/hawkular/hawkular-grafana-datasource[website of the datasource tells more].
+
+== Get started via (inofficial) Docker builds
+
+There are inofficial Docker images of the release and also an instrumented WildFly available on
+DockerHub at https://hub.docker.com/r/pilhuhn/hawkular-services/[Hawkular services]
+and https://hub.docker.com/r/pilhuhn/hawkfly/[Instrumented WildFly].
+
+Both images have been instrumented with the _jdoe/password_ user for the Hawkular server and the agent.
+
+See also http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html on some more
+details about using those images.
