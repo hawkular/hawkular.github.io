@@ -188,6 +188,156 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/11/09/hawkular-services-0.20.0.Final.html"><h1>Hawkular Services 0.20.0.Final</h1></a>
+            <p>09 November 2016, by Heiko W. Rupp</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular services is a ready to run distribution of Hawkular-Metrics with Alerts, Inventory, the WildFly agent and other components
+The version <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.20.0.Final/hawkular-services-dist-0.20.0.Final.zip">0.20.0.Final</a> has just been released and is ready to be tested and integrated with other projects.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_on_the_release_number">On the release number</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular-services is long out of the 0.0.<em>z</em> numbers, even if the previous releases only looked at the <em>z</em>.
+To cater for this we have made a big jump to 0.<em>20</em>.0.Final. There was a 0.19 yesterday, but we had
+ to update the included release of Hawkular-metrics.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_what_s_in_this_release">What&#8217;s in this release</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This release includes components</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Inventory is now at v 1.1.0, which features a new api. This brings support for internal H2
+database (taken by default if you don&#8217;t specify and additional flags) and Postgres as storage backend</p>
+</li>
+<li>
+<p>Hawkular-Metrics is at v 0.21.5 and includes alerting 1.3.2 (we call this HAM now :-)</p>
+</li>
+<li>
+<p>Hawkular-agent has been bumped to v 0.24.1 to make use of the new Inventory api.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Hawkular Services is released every week on Tuesdays.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_get_started">Get started</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To get started with Hawkular Services, <a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.20.0.Final/hawkular-services-dist-0.20.0.Final.zip">download the latest release</a>, unzip it,
+add a user and set the Agent to use the credentials for the user just added.</p>
+</div>
+<div class="paragraph">
+<p>It can be accomplished with the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">export HAWKULAR_HOME="/path/to/hawkular-services"
+export HAWKULAR_USERNAME="jdoe"
+export HAWKULAR_PASSWORD="password"
+
+cd "${HAWKULAR_HOME}"
+"${HAWKULAR_HOME}/bin/add-user.sh" \
+  -a \
+  -u "${HAWKULAR_USERNAME}" \
+  -p "${HAWKULAR_PASSWORD}" \
+  -g read-write,read-only
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Before starting the server, you need to have Cassandra 3.0.9 up and running with the RPC port enabled either via
+setting the env variable of <code>CASSANDRA_START_RPC</code> to <code>true</code></p>
+</div>
+<div class="paragraph">
+<p>or by editing <code>cassandra.yml</code> and setting it there:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml"># Whether to start the thrift rpc server.
+start_rpc: true</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Using <code>ccm</code> you can use this to update the config: <code>ccm updateconf 'start_rpc: true'</code>.
+Another option is via <code>nodetool enablethrift</code>.</p>
+</div>
+<div class="sect2">
+<h3 id="_using_postgres">Using Postgres</h3>
+<div class="paragraph">
+<p>To use Postgres as backend you need to pass additional properties to the <code>standalone.sh</code> command
+above:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" \
+    -Dhawkular.rest.password="${HAWKULAR_PASSWORD} \
+    -Dhawkular.inventory.sql.jdbc.url=jdbc:postgresql://1.2.3.4:5432/hawkular \
+    -Dhawkular.inventory.sql.jdbc.username=jdoe \
+    -Dhawkular.inventory.sql.jdbc.password=password</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To use a postgres database called <em>hawkular</em> on host <em>1.2.3.4</em> owned by a user <em>jdoe</em> with a
+ password of <em>password</em>.</p>
+</div>
+<div class="paragraph">
+<p>See also
+<a href="http://www.hawkular.org/hawkular-services/docs/user-guide/inventory/index.html#configuration-properties" class="bare">http://www.hawkular.org/hawkular-services/docs/user-guide/inventory/index.html#configuration-properties</a>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_build_from_master_and_cassandra">Build from master and Cassandra</h3>
+<div class="paragraph">
+<p>If you build from master, you can pass <code>-Pembeddedc</code> to get a distribution with embedded Cassandra for local development.
+Similarly if you build via <code>-Pdev</code> a default user of <em>jdoe/password</em> will be installed and also be used with the agent.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_use_grafana_with_hawkular_services">Use Grafana with Hawkular-services</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
+You can download it from <a href="https://grafana.net/plugins/hawkular-datasource">Grafana.net</a>.
+The <a href="https://github.com/hawkular/hawkular-grafana-datasource">website of the datasource tells more</a>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_get_started_via_inofficial_docker_builds">Get started via (inofficial) Docker builds</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There are inofficial Docker images of the release and also an instrumented WildFly available on
+DockerHub at <a href="https://hub.docker.com/r/pilhuhn/hawkular-services/">Hawkular services</a>
+and <a href="https://hub.docker.com/r/pilhuhn/hawkfly/">Instrumented WildFly</a>.</p>
+</div>
+<div class="paragraph">
+<p>Both images have been instrumented with the <em>jdoe/password</em> user for the Hawkular server and the agent.</p>
+</div>
+<div class="paragraph">
+<p>See also <a href="http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html" class="bare">http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html</a> on some more
+details about using those images.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/10/25/hawkular-metrics-0.21.0.Final-released.html"><h1>Hawkular Metrics 0.21.0 - Release</h1></a>
             <p>25 October 2016, by Stefan Negrea</p>
             <p><p>I am happy to announce release 0.21.0 of Hawkular Metrics.This release is anchored by performance enhancements and general fixes.</p><p>Here is a list of major changes:</p>
@@ -821,300 +971,13 @@ You can download this dashboard <a href="https://github.com/hawkular/hawkular-gr
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/10/14/hawkular-apm-polyglot-zipkin.html"><h1>Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</h1></a>
-            <p>14 October 2016, by Pavol Loffay</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>The latest focus of Hawkular APM has been in building a compatibility layer
-for Zipkin instrumented applications. This enables Hawkular APM to leverage
-Zipkin <a href="http://zipkin.io/pages/existing_instrumentations.html">instrumentation libraries</a>
-and instrument polyglot applications.</p>
-</div>
-<div class="paragraph">
-<p>In this blog post we will look how to use Zipkin instrumentation libraries to instrument
-polyglot environment and how the reported data looks in Hawkular APM and Zipkin server.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_polyglot_application">Polyglot Application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>A typical polyglot application consists of multiple services written in different programming
-languages. These services interact together to fulfill some business needs or tasks.</p>
-</div>
-<div class="paragraph">
-<p>The following image shows the architecture of our polyglot application.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-zipkin-polyglot-arch.png" alt="apm zipkin polyglot arch">
-</div>
-<div class="title">Figure 1. Architecture of polyglot application</div>
-</div>
-<div class="paragraph">
-<p>There are five applications written in 4 languages: Java, JavaScript, Python and Ruby.
-It uses two databases MySQL and Apache Cassandra. Applications expose various REST endpoints
-which simulate some behaviour. For example creating a user in a database or an asynchronous task.</p>
-</div>
-<div class="paragraph">
-<p>Each application lives in a separate docker container. The whole environment can be deployed
-using one line docker-compose command. Overall there are seven containers including Apache Kafka
-to collect span data. The complete source code with instructions how to run it can be found on
-<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin">Github</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_instrumentation_libraries">Instrumentation Libraries</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are several <a href="http://zipkin.io/pages/existing_instrumentations.html">zipkin instrumentation libraries</a>.
-Developers have to choose the relevant libraries for their target language (and framework).
-If there is no instrumentation for a specific framework they have to report spans to the
-server explicitly, thus having an instrumentation library for a popular web framework is a big
-advantage (not limited to web).</p>
-</div>
-<div class="paragraph">
-<p>In a typical microservice environment it is also necessary to add instrumentation for outgoing
-requests so one application may use two or more Zipkin compliant instrumentation libraries.
-These two implementations have to share trace context, and therefore proper initialization
-is required.</p>
-</div>
-<div class="paragraph">
-<p>Our applications are instrumented with following instrumentations:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Java (JAX-RS): <a href="https://github.com/openzipkin/brave">brave</a></p>
-</li>
-<li>
-<p>Java Dropwizard (JAX-RS): <a href="https://github.com/smoketurner/dropwizard-zipkin">dropwizard-zipkin</a> uses brave</p>
-</li>
-<li>
-<p>Apache Cassandra: <a href="https://github.com/thelastpickle/cassandra-zipkin-tracing">cassandra-zipkin-tracing</a> uses brave</p>
-</li>
-<li>
-<p>JavaScript (express, cujoJS): <a href="https://github.com/openzipkin/zipkin-js">zipkin-js</a></p>
-</li>
-<li>
-<p>Ruby (rack): <a href="https://github.com/openzipkin/zipkin-ruby">zipkin-ruby</a></p>
-</li>
-<li>
-<p>Python (Pyramid): <a href="https://github.com/Yelp/pyramid_zipkin">pyramid_zipkin</a></p>
-</li>
-<li>
-<p>Python (Bravado): <a href="https://github.com/Yelp/swagger_zipkin">swagger_zipkin</a></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>These libraries are typically developed by a community and therefore reported data may differ. For
-example a key of binary annotation representing HTTP URL can be <code>http.url</code> or <code>http.uri</code> or even
-<code>http.path</code>. Some of the libraries do not report HTTP status code. Name of a span often represents
-HTTP method but some instrumentations put there URL or even other data (cassandra-zipkin-tracing).
-It is not an invalid behaviour, just keep in mind when querying data or exporting to external systems for
-an analysis.</p>
-</div>
-<div class="paragraph">
-<p>There are also a couple of
-<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin#known-issues">issues</a>
-which can lead to an incorrect data presentation in Hawkular APM. Issues were also reported to the Zipkin project.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_run_the_polyglot_application">Run the Polyglot Application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Follow the instructions on
-<a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin">Github</a>
-to run the environment and start Hawkular APM server.</p>
-</div>
-<div class="paragraph">
-<p>Execute following requests which we will analyze in the following sections.</p>
-</div>
-<div id="requests" class="listingblock">
-<div class="title">Example HTTP requests</div>
-<div class="content">
-<pre>1. curl -ivX GET 'http://localhost:3001/nodejs/hello'
-2. curl -ivX GET 'http://localhost:3000/dropwizard/A
-3. curl -ivX GET 'http://localhost:3000/dropwizard/asyncTwoOutgoingCalls'
-4. curl -ivX POST -H 'Content-Type: application/json' 'http://localhost:3001/nodejs/createUser' -d '{"name": "jdoe"}'</pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_server_comparisons">Server Comparisons</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This section compares user interfaces of Hawkular APM and Zipkin server.</p>
-</div>
-<div class="sect2">
-<h3 id="_hawkular_apm_server">Hawkular APM Server</h3>
-<div class="paragraph">
-<p>In Hawkular APM user interface we are going to look at distributed tracing tab. If you run previous
-commands there should be some data to analyze.</p>
-</div>
-<div class="paragraph">
-<p>Following figure shows aggregated service interactions for selected initial endpoint (fourth request).
-Nodes represent endpoint with URL and edges invocation flow.</p>
-</div>
-<div class="paragraph">
-<p>Nodes holds statistics information like average, minimum and maximum duration,
-total number of executions, service name and invoked URL.
-Edges contain timing information of a network latency. This screen only shows nodes with a URL.
-Databases and other components are shown in trace detail view.</p>
-</div>
-<div class="paragraph">
-<p>For query capabilities we can specify time span, business transaction
-(currently available only for java agent instrumentation and OpenTracing provider) and properties.
-Properties represent binary annotations.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-distributed-tracing-createUser.png" alt="apm distributed tracing createUser">
-</div>
-<div class="title">Figure 2. Hawkular APM Distributed Tracing</div>
-</div>
-<div class="paragraph">
-<p>Next screen shows instance details. In other words a list of traces for the selected initial endpoint.
-Table contains basic information as collected properties, start time, principal (for java agent instrumentation)
-and overall trace duration. Details button opens a detailed graph.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-instance-details.png" alt="apm instance details">
-</div>
-<div class="title">Figure 3. Hawkular APM Instance Details</div>
-</div>
-<div class="paragraph">
-<p>In the detailed view users can see different types of nodes: producers (client span),
-consumers (server span) and components (databases, EJBs). Tooltip is showing recorded binary annotations.
-In this case it is a CQL query for storing an user into Apache Cassandra.</p>
-</div>
-<div class="paragraph">
-<p>This concrete graph starts with a consumer (REST handler) and produces two producers (outgoing requests). These
-requests are consumed by dropwizard and wildfly-swarm application and so on.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-instance-details-createUser.png" alt="apm instance details createUser">
-</div>
-<div class="title">Figure 4. Hawkular APM Instance Details</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_zipkin_server">Zipkin Server</h3>
-<div class="paragraph">
-<p>Let&#8217;s compare this now how the native Zipkin server shows stuff. Please start Zipkin server and
-execute requests from <a href="#requests">Example HTTP requests</a>.</p>
-</div>
-<div class="paragraph">
-<p>The first thing we are going to look at is a query capability. The user interface
-offers to specify service name and names of recorded spans of a given service.
-It is possible to specify span&#8217;s start time, end time and duration range.
-For a more specific query it is possible to query on binary annotations,
-which is helpful if we are looking for specific spans, for example HTTP URL of invoked service.
-In the following figure it can be seen that we specified URL and HTTP status code
-of invoked service.</p>
-</div>
-<div class="paragraph">
-<p>The result of the query shows one trace which consist of 23 spans.
-There is also a trace duration time and information which services were invoked within
-that trace (also with a duration if possible to calculate).</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-zipkin-createUser-query.png" alt="apm zipkin createUser query">
-</div>
-<div class="title">Figure 5. Zipkin Query</div>
-</div>
-<div class="paragraph">
-<p>The next screen is a trace instance view. It shows a timeline with timing data relative
-to the trace start time. In the following figure there is a trace view for the third call.
-It can be seen that it represent an asynchronous call. The first call ended before its
-descendants.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-zipkin-async.png" alt="apm zipkin async">
-</div>
-<div class="title">Figure 6. Zipkin Trace Detail</div>
-</div>
-<div class="paragraph">
-<p>When you click on a specific span it shows a span detail view with events recorded within
-the span. There are also recorded binary annotations which denotes information like HTTP URL
-or HTTP status code. Instrumented application can add custom binary annotations.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-zipkin-async-span-detail.png" alt="apm zipkin async span detail">
-</div>
-<div class="title">Figure 7. Zipkin Span Detail</div>
-</div>
-<div class="paragraph">
-<p>The last Zipkin screen is showing dependencies between services. When you click on a specific
-service it shows how many calls were triggered from a service to a service. The more calls to
-the service the wider arrow.</p>
-</div>
-<div class="imageblock" style="text-align: center">
-<div class="content">
-<img src="/img/blog/2016/apm-zipkin-dependencies.png" alt="apm zipkin dependencies">
-</div>
-<div class="title">Figure 8. Zipkin Service Dependencies</div>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We have seen a brief comparison of Hawkular APM and Zipkin server. Both of these projects
-display data differently. Hawkular APM is doing more high level aggregations based on user
-specific filter with calculation of statistics. On the other side Zipkin displays spans in
-"RAW" fashion. There are definitely advantages and disadvantages for both of these approaches.</p>
-</div>
-<div class="paragraph">
-<p>We are always interested to hear feedback from users on how the information presentation may be
-improved to provide a powerful tool to analyze timing data of distributed applications.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_links">Links</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>Polyglot example: <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin" class="bare">https://github.com/hawkular/hawkular-apm/tree/master/examples/polyglot-zipkin</a></p>
-</li>
-<li>
-<p>Zipkin instrumentations: <a href="http://zipkin.io/pages/existing_instrumentations.html" class="bare">http://zipkin.io/pages/existing_instrumentations.html</a></p>
-</li>
-<li>
-<p>Hawkular APM: <a href="https://github.com/hawkular/hawkular-apm" class="bare">https://github.com/hawkular/hawkular-apm</a></p>
-</li>
-<li>
-<p>Zipkin: <a href="https://github.com/openzipkin/zipkin" class="bare">https://github.com/openzipkin/zipkin</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>14 October 2016 - <a href="blog/2016/10/14/hawkular-apm-polyglot-zipkin.html">Hawkular APM Distributed Tracing of Polyglot Application using Zipkin Instrumentations</a></li>
           <li>06 October 2016 - <a href="blog/2016/10/06/hawkular-metrics-0.20.0.Final-released.html">Hawkular Metrics 0.20.0 - Release</a></li>
           <li>19 September 2016 - <a href="blog/2016/09/19/hawkular-apm-on-msa.html">Using Hawkular APM on Red Hat&apos;s Microservices Reference Architecture example</a></li>
           <li>14 September 2016 - <a href="blog/2016/09/14/consuming-hawkular-api-over-ssl.html">Consuming Hawkular API over SSL with self signed certificates</a></li>
