@@ -1,0 +1,77 @@
+= Hawkular APM OpenTracing JavaScript
+Pavol Loffay
+2016-11-16
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, APM, microservices, distributed tracing, javascript
+
+In the latest https://github.com/hawkular/hawkular-apm/releases/tag/0.12.0.Final[release]
+of Hawkular APM we have added a new OpenTracing implementation. This
+time we decided to add a JavaScript provider, therefore, it is now possible to get timing metrics
+from a polyglot environment instrumented with our Java and JavaScript OpenTracing implementations.
+
+== Library
+Library is implemented against the latest version (0.13.0) of OpenTracing JavaScript API.
+Data is reported to APM via HTTP. For debugging purposes it is possible to use a console recorder.
+From the sampling perspective it allows developers to add their own sampling mechanism.
+In the future releases we will add more built-in samplers.
+
+The following code snippet shows how to initialize and create spans in JavaScript code. It works for
+a web browser and Node.js application.
+
+.Tracer initialization.
+[source, javascript]
+----
+const opentracing = require('opentracing');
+const hawkularAPM = require('hawkular-apm-opentracing');
+
+const tracer = new hawkularAPM.APMTracer({
+    recorder: new hawkularAPM.ConsoleRecorder(),
+    sampler: new hawkularAPM.AlwaysSampledSampler()
+});
+
+opentracing.initGlobalTracer(tracer);
+
+const span = opentracing.globalTracer().startSpan('name');
+span.finish();
+----
+
+After the initialization tracer instance can be obtained via `opentracing.globalTracer()` method.
+
+== Want To Try It?
+Our https://github.com/hawkular/hawkular-apm-opentracing-javascript/tree/master/examples[Github] repository contains
+two example applications. One of which is tracing requests from a web browser across Node.js
+backed services. Examples contain detailed instructions on how to run them.
+
+Following code snippet shows tracing server requests in Node.js express framework.
+
+.Tracing requests on the server.
+[source, javascript]
+----
+const app = express();
+
+app.get('/api', function(req, res) {
+    const serverSpan = opentracing.globalTracer().startSpan('api', {
+        childOf: tracer.extract(opentracing.FORMAT_TEXT_MAP, req.headers),
+        tags: {
+            'http.method': 'GET',
+            'http.url': `http://${req.headers.host}${req.url}`,
+        }
+    });
+
+    /**
+     * Business logic
+     */
+
+    res.writeHead(200);
+    res.end('/api');
+    serverSpan.setTag('http.status_code', 200);
+    serverSpan.finish();
+});
+----
+
+== Links
+* Hawkular APM: https://github.com/hawkular/hawkular-apm
+* Hawkular APM OpenTracing JavaScript: https://github.com/hawkular/hawkular-apm-opentracing-javascript
+* NPM Hawkular APM OpenTracing JavaScript: https://www.npmjs.com/package/hawkular-apm-opentracing
