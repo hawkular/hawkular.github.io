@@ -6,9 +6,119 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Tue, 15 Nov 2016 13:54:19 +0000</pubDate>
-    <lastBuildDate>Tue, 15 Nov 2016 13:54:19 +0000</lastBuildDate>
+    <pubDate>Wed, 16 Nov 2016 19:09:09 +0000</pubDate>
+    <lastBuildDate>Wed, 16 Nov 2016 19:09:09 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular APM OpenTracing JavaScript</title>
+      <link>http://www.hawkular.org/blog/2016/11/16/hawkular-apm-opentracing-js.html</link>
+      <author>noreply@hawkular.org (Pavol Loffay)</author>
+      <pubDate>Wed, 16 Nov 2016 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2016/11/16/hawkular-apm-opentracing-js.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the latest &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/releases/tag/0.12.0.Final&quot;&gt;release&lt;/a&gt;
+of Hawkular APM we have added a new OpenTracing implementation. This
+time we decided to add a JavaScript provider, therefore, it is now possible to get timing metrics
+from a polyglot environment instrumented with our Java and JavaScript OpenTracing implementations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_library&quot;&gt;Library&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Library is implemented against the latest version (0.13.0) of OpenTracing JavaScript API.
+Data is reported to APM via HTTP. For debugging purposes it is possible to use a console recorder.
+From the sampling perspective it allows developers to add their own sampling mechanism.
+In the future releases we will add more built-in samplers.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following code snippet shows how to initialize and create spans in JavaScript code. It works for
+a web browser and Node.js application.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tracer initialization.&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;const opentracing = require(&apos;opentracing&apos;);
+const hawkularAPM = require(&apos;hawkular-apm-opentracing&apos;);
+
+const tracer = new hawkularAPM.APMTracer({
+    recorder: new hawkularAPM.ConsoleRecorder(),
+    sampler: new hawkularAPM.AlwaysSampledSampler()
+});
+
+opentracing.initGlobalTracer(tracer);
+
+const span = opentracing.globalTracer().startSpan(&apos;name&apos;);
+span.finish();&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After the initialization tracer instance can be obtained via &lt;code&gt;opentracing.globalTracer()&lt;/code&gt; method.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_want_to_try_it&quot;&gt;Want To Try It?&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our &lt;a href=&quot;https://github.com/hawkular/hawkular-apm-opentracing-javascript/tree/master/examples&quot;&gt;Github&lt;/a&gt; repository contains
+two example applications. One of which is tracing requests from a web browser across Node.js
+backed services. Examples contain detailed instructions on how to run them.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Following code snippet shows tracing server requests in Node.js express framework.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tracing requests on the server.&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-javascript&quot; data-lang=&quot;javascript&quot;&gt;const app = express();
+
+app.get(&apos;/api&apos;, function(req, res) {
+    const serverSpan = opentracing.globalTracer().startSpan(&apos;api&apos;, {
+        childOf: tracer.extract(opentracing.FORMAT_TEXT_MAP, req.headers),
+        tags: {
+            &apos;http.method&apos;: &apos;GET&apos;,
+            &apos;http.url&apos;: `http://${req.headers.host}${req.url}`,
+        }
+    });
+
+    /**
+     * Business logic
+     */
+
+    res.writeHead(200);
+    res.end(&apos;/api&apos;);
+    serverSpan.setTag(&apos;http.status_code&apos;, 200);
+    serverSpan.finish();
+});&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular APM: &lt;a href=&quot;https://github.com/hawkular/hawkular-apm&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-apm&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular APM OpenTracing JavaScript: &lt;a href=&quot;https://github.com/hawkular/hawkular-apm-opentracing-javascript&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-apm-opentracing-javascript&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;NPM Hawkular APM OpenTracing JavaScript: &lt;a href=&quot;https://www.npmjs.com/package/hawkular-apm-opentracing&quot; class=&quot;bare&quot;&gt;https://www.npmjs.com/package/hawkular-apm-opentracing&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Services 0.20.0.Final</title>
       <link>http://www.hawkular.org/blog/2016/11/09/hawkular-services-0.20.0.Final.html</link>
