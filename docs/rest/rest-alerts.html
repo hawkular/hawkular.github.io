@@ -185,7 +185,7 @@
         </div>
       </section>
 
-	<!--<p><em>16 November 2016</em></p>-->
+	<!--<p><em>23 November 2016</em></p>-->
 
 	<section>
       <div class="container">
@@ -204,6 +204,7 @@
 <ul class="sectlevel2">
 <li><a href="#__alerts_handling">[ / ] Alerts Handling</a></li>
 <li><a href="#__actions_actions_handling">[ /actions ] Actions Handling</a></li>
+<li><a href="#__admin_cross_tenant_operations">[ /admin ] Cross tenant Operations</a></li>
 <li><a href="#__events_event_handling">[ /events ] Event Handling</a></li>
 <li><a href="#__export_export_of_triggers_and_actions_definitions">[ /export ] Export of triggers and actions definitions</a></li>
 <li><a href="#__import_import_of_triggers_and_actions_definitions">[ /import ] Import of triggers and actions definitions</a></li>
@@ -2302,6 +2303,304 @@ WARNING: If not criteria defined, it deletes all actions history stored in the s
 <tr>
 <td class="tableblock halign-center valign-top"><p class="tableblock">404</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">No Action found.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Internal server error.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="__admin_cross_tenant_operations">[ /admin ] Cross tenant Operations</h3>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#GET__admin_alerts">Get alerts with optional filtering from multiple tenants.</a></p>
+</li>
+<li>
+<p><a href="#GET__admin_events">Get events with optional filtering from multiple tenants.</a></p>
+</li>
+</ol>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__admin_alerts" class="paragraph">
+<p><strong>Endpoint GET <code>/admin/alerts</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Get alerts with optional filtering from multiple tenants.<br>
+<br>
+If not criteria defined, it fetches all alerts available in the system.<br>
+<br>
+Multiple tenants are expected on HawkularTenant header as a comma separated list.<br>
+i.e. HawkularTenant: tenant1,tenant2,tenant3<br></p>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">alertIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified alertIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of alert IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">statuses</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified lifecycle status.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">severities</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified severity.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin alerts, do not include: evalSets, resolvedEvalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched list of alerts.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">array of <a href="#Alert">Alert</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bad Request/Invalid Parameters</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">500</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Internal server error.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__admin_events" class="paragraph">
+<p><strong>Endpoint GET <code>/admin/events</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Get events with optional filtering from multiple tenants.<br>
+<br>
+If not criteria defined, it fetches all events stored in the system.<br>
+<br>
+Multiple tenants are expected on HawkularTenant header as a comma separated list.<br>
+i.e. HawkularTenant: tenant1,tenant2,tenant3<br></p>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified eventIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of event IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">categories</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified categories.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of category values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin events, do not include: evalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully fetched list of events.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">array of <a href="#Event">Event</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bad Request/Invalid Parameters.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
 </tr>
 <tr>
