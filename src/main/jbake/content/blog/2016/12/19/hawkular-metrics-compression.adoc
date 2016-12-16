@@ -1,21 +1,19 @@
 = Hawkular-Metrics and the new compression algorithm
 Michael Burman
-2016-10-21
+2016-12-19
 :jbake-type: post
 :jbake-status: published
 :jbake-tags: blog, metrics, compression, gorilla, storage, performance
 
 In Hawkular-Metrics release 0.20.0 we introduced a new compression capability that reduces the required storage space. This blog post will describe details about the implementation in the processing pipelines and what implications there are for the user. Should you want to skip the technical details, head over to the <<benchmark,benchmark section>> below.
 
-Some of the details mentioned here were improved or introduced in the 0.21.0, but the compression ratio is equal between 0.20.0 and 0.21.0. 
+Some of the details mentioned here were improved or introduced in the 0.21.0, but the compression ratio is equal between 0.20.0 and 0.21.0. Results are published against 0.22.0 which is the newest released version. 
 
 === Compression algorithm
 
-In this release, we support the compression from the Facebook's great link:www.vldb.org/pvldb/vol8/p1816-teller.pdf[Gorilla paper] with small changes. For complete overview on how the compression method works I recommend reading the original paper. For short overview, the timestamps are compressed by calculating the delta of delta and writing them with variable length encoding while the data values are compressed by taking a XOR (eXclusive OR) between values (using the previous value as predictor for the next one) and storing that with variable length encoding also. We slightly change the original algorithm, as it had two design choices we don't want to use: second precision and use of only 64 bit double values.
+In this release, we support the compression from the Facebook's great link:www.vldb.org/pvldb/vol8/p1816-teller.pdf[Gorilla paper] with small changes. For complete overview on how the compression method works I recommend reading the original paper. For short overview, the timestamps are compressed by calculating the delta of delta and writing them with variable length encoding while the data values are compressed by taking a XOR (eXclusive OR) between values (using the previous value as predictor for the next one) and storing that with variable length encoding also. We also slightly change the implementation details, as we need to use millisecond precision instead of the second precision used by Facebook.
 
 As we store values in a millisecond precision, it was important for us to increase the size of the block's maximum delta value. In Facebook's implementation they reserved 14 bits to represent the first delta from the block start (giving them 4 hour blocks with 1 second precision) where as we use 27 bits to get a maximum of 24 hour blocks with a millisecond precision. In 0.20.0/0.21.0 we however use 2 hour block sizes but with millisecond precision. We will revisit the block size requirements later.
-
-The other change we wanted was to allow storing also integers, which are pretty common in the monitoring pipelines. While it's possible to store integers as floating point values this transformation reduces the precision as the 64 bit floating point values can't store exactly all the values that 64 bit integers can present.
 
 === Insert pipeline
 
@@ -51,29 +49,19 @@ Disclaimer: the following performance numbers are an indication of results with 
 
 The results are created against Cassandra 3.7, using LZ4 table compression settings.
 
-First data set was created by taking real monitoring data from collectd and then duplicating it to get larger sample set. It has 25 time series.
+The dataset consist of real world data coming from a Windows host. A total of 19166 different time series are stored in the dataset, with each serie having a 10910 measurements with a millisecond precision. That means the total is 209110368 (209M) datapoints. All of them were stored as gauge type with 64 bit floating point precision.
 
 [cols="2*", options="header"]
 .Storage usage, data set #1
 |===
 |0.19.0
-|0.21.0
+|0.22.0
 
-| megaGB
-| miniMB
+| 3.2GB
+| 158MB
 |===
 
-The second data set was created artificially to test the performance. It has 100 000 time series with 10 s interval for datapoints with a week of data, in total of 6.05 billion datapoints. 
-
-[cols="*", options="header"]
-.Storage usage, data set #2
-|===
-|0.19.0
-|0.21.0
-
-| megaGB
-| miniMB
-|===
+From the results we can gather that with only LZ4, the previous versions of Hawkular-Metrics used approximately 16.4 bytes to store each datapoint. With the new compression method, we drop this down to 0.79 bytes (6.3 bits) per datapoint (in this dataset).
 
 === Future improvements?
 
@@ -98,8 +86,8 @@ Now, if we reordered them so that values would be separate and timestamps separa
 0000<timestamp><timestamp><timestamp><timestamp>
 ```
 
-In this case the secondary block compression method could reduce the first "0000" to a repeating pattern of 4 times 0. Now, that combined with the fact that we can use larger block sizes would allow compressing several metric sequences together as they would follow the same pattern. The secondary compression allows us to do more than just compressing a single time series. The same would happen if the timestamps are always with the same delta-of-delta (we store a 0 bit in that case to the stream). These savings can be significant in some cases.
+In this case the secondary block compression method could reduce the first "0000" to a repeating pattern of 4 times 0. Now, that combined with the fact that we can use larger block sizes would allow compressing several metric sequences together as they would follow the same pattern. The secondary compression allows us to do more than just compressing a single time series. The same would happen if the timestamps are always with the same delta-of-delta (we store a 0 bit in that case to the stream). These savings can be significant in some cases. By some extent we already do this with the LZ4 compression, which takes a byte range on the storage and compresses it. 
 
-The other improvements to the compression ratio would be, as mentioned previously, to select different compression methods for different data patterns. In some cases, the Gorilla compression does not compress the data in optimal way and would benefit more from either not compressing it at all (and letting the block compressor take care of the compression) or we could select another compression method, such as PFOR/Simple8/Varint8/RLE/etc that would do better job with this input pattern.
+The other improvements to the compression ratio would be, as mentioned previously, to select different compression methods for different data patterns. In some cases, the Gorilla compression does not compress the data in optimal way and would benefit more from either not compressing it at all (and letting the block compressor take care of the compression) or we could select another compression method, such as PFOR/Simple8/Varint8/etc that would do better job with this input pattern.
 
-All these methods are storing the metrics with their original precision, however in many cases this is not necessary. Allowing lossy compression methods by reducing the precision of the input values allows all the previously mentioned compression methods to do even better job. This is certainly one of the issues we should look at, as for example storing metrics with milliseconds precision is hardly worthwhile if the polling period is once every 10 seconds. Storing them with 1 second precision or even 10 second precision would give just as "accurate" information. Not to mention that usually data is processed in buckets and single values are not meaningful (the precision reduction in computed aggregates is smaller than per single value).
+All these methods are storing the metrics with their original precision while in many cases this is not necessary. Allowing lossy compression methods by reducing the precision of the input values allows all the previously mentioned compression methods to do even better job. This is certainly one of the issues we should look at, as for example storing metrics with milliseconds precision is hardly worthwhile if the polling period is once every 10 seconds. Storing them with 1 second precision or even 10 second precision would give just as "accurate" information. Not to mention that usually data is processed in buckets and single values are not meaningful (the precision loss in computed aggregates is smaller than for each single value).
