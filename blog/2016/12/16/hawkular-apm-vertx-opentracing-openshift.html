@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8"/>
-    <title>Hawkular - Using Hawkular APM on OpenShift</title>
+    <title>Hawkular - Hawkular APM improvements for OpenShift</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -180,54 +180,50 @@
 
     <section class="main-banner blog-mainbanner">
         <div class="container">
-            <h1>Using Hawkular APM on OpenShift</h1>
+            <h1>Hawkular APM improvements for OpenShift</h1>
             <p>blog post</p>
         </div>
     </section>
 
     <div class="blog-container">
         <br/><br/>
-    	<p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>During the past few weeks, we&#8217;ve been improving how Hawkular APM can be used in OpenShift, making it easier after each iteration. At the
-moment, it&#8217;s possible to get a complete Hawkular APM server instance with a single command, if you already have a running OpenShift instance.</p>
+    	<p><div class="paragraph">
+<p>In our last release, we added a few improvements for applications deployed in
+OpenShift, such as an automatic way to recognize the name of the service. The
+name consists of the OpenShift&#8217;s build name for the application,
+prepended with the namespace to avoid clashes. For instance, if you have
+the "Order Manager" application deployed in OpenShift under the build name
+<code>order-manager-1</code>, under a project (namespace) called <code>my-project</code>, the service
+name that is visible on Hawkular APM is <code>my-project.order-manager</code>. In addition,
+we are recording also the build stamp, such as <code>my-project.order-manager-1</code> for
+the first build of the service <code>my-project.order-manager</code>.</p>
 </div>
-<div class="paragraph">
-<p>There are two files available at the moment that can be used in conjunction with OpenShift:</p>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-12-16-service-name.png" alt="Service name from environment">
 </div>
-<div class="ulist">
-<ul>
-<li>
-<p><a href="https://github.com/jboss-dockerfiles/hawkular-apm/blob/master/openshift-templates/hawkular-apm-server-deployment.yml">hawkular-apm-server-deployment.yml</a></p>
-</li>
-<li>
-<p><a href="https://github.com/jboss-dockerfiles/hawkular-apm/blob/master/openshift-templates/hawkular-apm-server.yml">hawkular-apm-server.yml</a></p>
-</li>
-</ul>
 </div>
 <div class="paragraph">
-<p>The first creates a complete deployment of Hawkular APM, including the required services and routes, as well as a
-default user (<code>admin</code>/<code>password</code>).
-The second creates a "template", which can be used to create new services, and it&#8217;s commonly known as "instant app".</p>
+<p>We also improved our Vert.x OpenTracing, promoting it to the <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples">examples</a>
+directory on the main Hawkular APM source code repository. We refactored it and
+prepared an Ansible playbook, so that it can be deployed in just a few minutes,
+preparing the whole OpenShift infrastructure as needed. Do give it a try!</p>
 </div>
 <div class="paragraph">
-<p>If you just want to give Hawkular APM a shot, the first file is your best option.
-If you are a service provider and want to let your users deploy APM on demand, on their own namespaces and possibly
-customizing the deployment, then the second should be used.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_deploying_a_hawkular_apm_instance_into_openshift">Deploying a Hawkular APM instance into OpenShift</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>In short, if you already have a working OpenShift installation, this is all that should be required to get a Hawkular APM server running:</p>
+<p>On a Fedora 25 with Docker, OpenShift Origin Clients and Ansible, all that
+it&#8217;s required is this:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code>oc create -f https://raw.githubusercontent.com/jboss-dockerfiles/hawkular-apm/master/openshift-templates/hawkular-apm-server-deployment.yml</code></pre>
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">ansible-playbook vertx-opentracing.yml</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p>Once the playbook finishes running, you&#8217;ll have an OpenShift cluster running
+with Hawkular APM on it and our Eclipse Vert.x example "Order Manager",
+instrumented using OpenTracing APIs. Refer to the <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/vertx-opentracing#opentracing---microservices-with-vertx">README</a>
+file on the example&#8217;s source code directory for more info on how to access the
+OpenShift console and Hawkular APM UI.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -237,12 +233,19 @@ customizing the deployment, then the second should be used.</p>
 </td>
 <td class="content">
 <div class="paragraph">
-<p>On Fedora 24 or newer, you can get a complete OpenShift environment ready by running the following commands:</p>
+<p>For a completely fresh install on Fedora 25, the whole environment can be
+created with the following commands:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker-machine create -d virtualbox --virtualbox-memory 8192 --virtualbox-cpu-count 4 --engine-insecure-registry 172.30.0.0/16 openshift
-oc cluster up --docker-machine=openshift</code></pre>
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">sudo dnf install -y docker origin-clients ansible maven
+sudo sh -c "echo \"INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'\" &gt;&gt; /etc/sysconfig/docker"
+sudo systemctl start docker
+mkdir -p /opt/hawkular-apm/ ; cd /opt/hawkular-apm/
+git clone https://github.com/hawkular/hawkular-apm.git .
+mvn clean install -Dcheckstyle.skip=true -Dlicense.skip=true -Dxml.skip=true -DskipTests -Dnoui
+cd examples/vertx-opentracing
+ansible-playbook vertx-opentracing.yml</code></pre>
 </div>
 </div>
 </td>
@@ -250,76 +253,11 @@ oc cluster up --docker-machine=openshift</code></pre>
 </table>
 </div>
 <div class="paragraph">
-<p>After a few seconds, you should see a new service on your OpenShift project, like the one on the following image:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-11-25-apm-deployed-openshift.png" alt="APM Deployed on OpenShift">
-</div>
-</div>
-<div class="paragraph">
-<p>You can open the Hawkular APM web UI by clicking on the link, shown as "https://hawkular-apm-myproject.192.168.178.26.xip.io" on
-the image above. The username is <code>admin</code>, and the password is <code>password</code>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_deploying_a_hawkular_apm_template_into_openshift">Deploying a Hawkular APM template into OpenShift</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We <a href="https://www.youtube.com/watch?v=GwnmX_NkyeA">recorded</a> a demo with this option, showing also a bit of one of our
-OpenTracing examples.</p>
-</div>
-<div class="paragraph">
-<p>You might also choose to deploy a template into your OpenShift infrastructure. This would allow your users to deploy
-their own instances of Hawkular APM, within their own namespaces.</p>
-</div>
-<div class="paragraph">
-<p>To do that, the following command can be used:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>oc login -u system:admin
-oc create -n openshift -f https://raw.githubusercontent.com/jboss-dockerfiles/hawkular-apm/master/openshift-templates/hawkular-apm-server.yml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Note that the command above installs the template into the <code>openshift</code> namespace, meaning that it&#8217;s available to every user
-on your OpenShift cluster. If you want to restrict this template to a single project, remove the <code>-n openshift</code> option.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-11-25-apm-template.png" alt="APM template on OpenShift">
-</div>
-</div>
-<div class="paragraph">
-<p>The first option on the image shows our Hawkular APM as an instant app. Click on it, and the following screen is shown,
-allowing the customization of the Hawkular APM instance.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2016/2016-11-25-apm-template-customization.png" alt="APM template on OpenShift">
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>At this point, your Hawkular APM server is ready to start processing data from applications instrumented with OpenTracing providers,
-Hawkular APM agent or even ZipKin clients. Check out our <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples">examples</a>
-and use them as reference to integrate in your own projects, or browse our <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">documentation</a>.</p>
-</div>
-<div class="paragraph">
-<p>If you want to check out what our UI can offer, the easiest way is to run our
-<a href="https://github.com/hawkular/hawkular-apm/tree/master/tests/app/vertx-opentracing">vertx OpenTracing example</a>, the same we used in our
-<a href="https://www.youtube.com/watch?v=GwnmX_NkyeA">recorded demo</a>. Refer to the example&#8217;s documentation on how to run it and generate data on the server.</p>
-</div>
-</div>
+<p>If you need any assistance, feel free to join us via IRC at <code>#hawkular</code>
+on Freenode.</p>
 </div></p>
     	<hr /><br /><br />
-        <p><em>Published by Juraci Paixão Kröhling on  25 November 2016</em></p>
+        <p><em>Published by Juraci Paixão Kröhling on  16 December 2016</em></p>
 
     <div id="disqus_thread"></div>
         <script type="text/javascript">

@@ -188,6 +188,80 @@
 
 
 <div class="blog-container">
+            <a href="blog/2016/12/16/hawkular-apm-vertx-opentracing-openshift.html"><h1>Hawkular APM improvements for OpenShift</h1></a>
+            <p>16 December 2016, by Juraci Paixão Kröhling</p>
+            <p><div class="paragraph">
+<p>In our last release, we added a few improvements for applications deployed in
+OpenShift, such as an automatic way to recognize the name of the service. The
+name consists of the OpenShift&#8217;s build name for the application,
+prepended with the namespace to avoid clashes. For instance, if you have
+the "Order Manager" application deployed in OpenShift under the build name
+<code>order-manager-1</code>, under a project (namespace) called <code>my-project</code>, the service
+name that is visible on Hawkular APM is <code>my-project.order-manager</code>. In addition,
+we are recording also the build stamp, such as <code>my-project.order-manager-1</code> for
+the first build of the service <code>my-project.order-manager</code>.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-12-16-service-name.png" alt="Service name from environment">
+</div>
+</div>
+<div class="paragraph">
+<p>We also improved our Vert.x OpenTracing, promoting it to the <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples">examples</a>
+directory on the main Hawkular APM source code repository. We refactored it and
+prepared an Ansible playbook, so that it can be deployed in just a few minutes,
+preparing the whole OpenShift infrastructure as needed. Do give it a try!</p>
+</div>
+<div class="paragraph">
+<p>On a Fedora 25 with Docker, OpenShift Origin Clients and Ansible, all that
+it&#8217;s required is this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">ansible-playbook vertx-opentracing.yml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the playbook finishes running, you&#8217;ll have an OpenShift cluster running
+with Hawkular APM on it and our Eclipse Vert.x example "Order Manager",
+instrumented using OpenTracing APIs. Refer to the <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/vertx-opentracing#opentracing---microservices-with-vertx">README</a>
+file on the example&#8217;s source code directory for more info on how to access the
+OpenShift console and Hawkular APM UI.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>For a completely fresh install on Fedora 25, the whole environment can be
+created with the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">sudo dnf install -y docker origin-clients ansible maven
+sudo sh -c "echo \"INSECURE_REGISTRY='--insecure-registry 172.30.0.0/16'\" &gt;&gt; /etc/sysconfig/docker"
+sudo systemctl start docker
+mkdir -p /opt/hawkular-apm/ ; cd /opt/hawkular-apm/
+git clone https://github.com/hawkular/hawkular-apm.git .
+mvn clean install -Dcheckstyle.skip=true -Dlicense.skip=true -Dxml.skip=true -DskipTests -Dnoui
+cd examples/vertx-opentracing
+ansible-playbook vertx-opentracing.yml</code></pre>
+</div>
+</div>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If you need any assistance, feel free to join us via IRC at <code>#hawkular</code>
+on Freenode.</p>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2016/12/06/hawkular-metrics-0.22.0.Final-released.html"><h1>Hawkular Metrics 0.22.0 - Release</h1></a>
             <p>06 December 2016, by Stefan Negrea</p>
             <p><p>I am happy to announce release 0.22.0 of Hawkular Metrics.This release is anchored by performance and compression enhancements.</p><p>Here is a list of major changes:</p>
@@ -291,9 +365,15 @@ customizing the deployment, then the second should be used.</p>
 <div class="title">Tip</div>
 </td>
 <td class="content">
-On Fedora 24 or newer, you can get a complete OpenShift environment ready by running the following commands:
-<code>docker-machine create -d virtualbox --virtualbox-memory 8192 --virtualbox-cpu-count 4 --engine-insecure-registry 172.30.0.0/16 openshift</code>
-<code>oc cluster up --docker-machine=openshift</code>
+<div class="paragraph">
+<p>On Fedora 24 or newer, you can get a complete OpenShift environment ready by running the following commands:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker-machine create -d virtualbox --virtualbox-memory 8192 --virtualbox-cpu-count 4 --engine-insecure-registry 172.30.0.0/16 openshift
+oc cluster up --docker-machine=openshift</code></pre>
+</div>
+</div>
 </td>
 </tr>
 </table>
@@ -626,68 +706,13 @@ details about using those images.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/10/25/hawkular-metrics-0.21.0.Final-released.html"><h1>Hawkular Metrics 0.21.0 - Release</h1></a>
-            <p>25 October 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.21.0 of Hawkular Metrics.This release is anchored by performance enhancements and general fixes.</p><p>Here is a list of major changes:</p>
-<ul>
-  <li><p>Cassandra</p>
-  <ul>
-    <li><strong>Cassandra 3.0.9 is now the supported version of Cassandra.</strong></li>
-    <li>Note: this is a rollback from previously supported version of 3.7 due to Cassandra community recommendations for stability and production deployment. Cassandra 3.7 or 3.9 are still compatible but development and testing now use 3.0.9 release.</li>
-  </ul></li>
-  <li><p>Compression</p>
-  <ul>
-    <li>Fixed an issue that allowed duplicate instances of the compression job to get scheduled on server restart (<a href="https://issues.jboss.org/browse/HWKMETRICS-492">HWKMETRICS-492</a>)</li>
-    <li>Improved the fault tolerance of the compression job (<a href="https://issues.jboss.org/browse/HWKMETRICS-494">HWKMETRICS-494</a>)</li>
-    <li>Improved the performance of the merge process for reading compressed data (<a href="https://issues.jboss.org/browse/HWKMETRICS-488">HWKMETRICS-488</a>)</li>
-    <li>Fixed wrong ordering when fetching compressed and uncompressed data (<a href="https://issues.jboss.org/browse/HWKMETRICS-506">HWKMETRICS-506</a>)</li>
-    <li>Compression job provides back pressure (<a href="https://issues.jboss.org/browse/HWKMETRICS-500">HWKMETRICS-500</a>)</li>
-    <li>The job scheduler now handles failure scenarios (<a href="https://issues.jboss.org/browse/HWKMETRICS-505">HWKMETRICS-505</a>)</li>
-  </ul></li>
-  <li><p>Cassandra Schema</p>
-  <ul>
-    <li>Fixed an issue where the server can fail to start due to Cassalog being in inconsistent state (<a href="https://issues.jboss.org/browse/HWKMETRICS-495">HWKMETRICS-495</a>)</li>
-    <li><code>gc_grace_second</code> is set to zero for single node clusters (<a href="https://issues.jboss.org/browse/HWKMETRICS-381">HWKMETRICS-381</a>)</li>
-  </ul></li>
-  <li><p>API Updates</p>
-  <ul>
-    <li>Inserting data points has server side retries to increase the fault tolerance for simple error scenarios (<a href="https://issues.jboss.org/browse/HWKMETRICS-510">HWKMETRICS-510</a>)</li>
-    <li><code>fromEarliest</code> parameter is now supported in all query endpoints (<a href="https://issues.jboss.org/browse/HWKMETRICS-445">HWKMETRICS-445</a>)</li>
-    <li>Non-existant tag queries are now supported via <code>!tag:*</code> format; example: <code>!partition:*</code> (<a href="https://issues.jboss.org/browse/HWKMETRICS-480">HWKMETRICS-480</a>)</li>
-  </ul></li>
-  <li><p>Configuration</p>
-  <ul>
-    <li>The configuration options did not have a consistent naming scheme. <code>hawkular-metrics</code>, <code>hawkular.metrics</code>, and <code>hawkular</code> prefixes were used along no prefixes at all.</li>
-    <li>In this release the naming schema has been standardized to <code>hawkular.metrics.*</code> for metrics specific configuration and <code>hawkular.*</code> for general configuration.</li>
-    <li>Here is list of all configuration options currently available: <a href="https://github.com/hawkular/hawkular-metrics/blob/release/0.21.0/api/metrics-api-util/src/main/java/org/hawkular/metrics/api/jaxrs/config/ConfigurationKey.java#L29">ConfigurationKey</a></li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-508">HWKMETRICS-508</a></li>
-  </ul></li>
-</ul><p><strong>Hawkular Alerting - included</strong></p>
-<ul>
-  <li>Version <a href="https://issues.jboss.org/projects/HWKALERTS/versions/12331985">1.3.0</a></li>
-  <li>Project details and repository: <a href="https://github.com/hawkular/hawkular-alerts">Github</a></li>
-  <li>Documentation: <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">REST API Documentation</a>, <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">Examples</a>,<br/><a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Developer Guide</a></li>
-</ul><p><strong>Hawkular Metrics Clients</strong></p>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.21.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.21.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/projects/HWKMETRICS/versions/12331718">https://issues.jboss.org/projects/HWKMETRICS/versions/12331718</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>25 October 2016 - <a href="blog/2016/10/25/hawkular-metrics-0.21.0.Final-released.html">Hawkular Metrics 0.21.0 - Release</a></li>
           <li>24 October 2016 - <a href="blog/2016/10/24/hawkfx-alerts.html">Define Alert Triggers via HawkFX</a></li>
           <li>24 October 2016 - <a href="blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html">Monitoring Microservices with OpenShift, Hawkular Metrics and Grafana</a></li>
           <li>17 October 2016 - <a href="blog/2016/10/17/hawkular-apm-opentracing-and-alerts.html">Hawkular APM supports OpenTracing and Alerts</a></li>
