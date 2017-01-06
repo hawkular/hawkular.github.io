@@ -17,7 +17,7 @@ Here is a list of major changes:
     * Resolved an issue with resource-env-ref in component war ([HWKMETRICS-541](https://issues.jboss.org/browse/HWKMETRICS-541))
     * Updated packaging to support deployments on WildFly 10.1.0 ([HWKMETRICS-558](https://issues.jboss.org/browse/HWKMETRICS-558))
 * **REST API**
-    * Updated CORS validation to be applied prior to processing the request; this solves an issue where some content is still returned even thought a bad request status is returned ([HWKMETRICS-554](https://issues.jboss.org/browse/HWKMETRICS-554))
+    * Updated CORS validation to be applied prior to processing the request; this solves an issue where some content is still returned even though a bad request status is returned ([HWKMETRICS-554](https://issues.jboss.org/browse/HWKMETRICS-554))
 * **Internal Monitoring**
     * Hostname is now part of the metric id when creating and storing internal metrics ([HWKMETRICS-555](https://issues.jboss.org/browse/HWKMETRICS-555))
 * **Hawkular Alerting - Updates**
@@ -25,7 +25,7 @@ Here is a list of major changes:
     * Allow ExternalCondition to be fired on Event submission; external conditions can now be matched via Event and Data submissions ([HWKALERTS-207](https://issues.jboss.org/browse/HWKALERTS-207))
     * Added new NelsonCondition for native Nelson Rule detection; a brand new condition type to perform automatic Nelson Rule detection of misbehaving metrics. ([HWKALERTS-209](https://issues.jboss.org/browse/HWKALERTS-209))
 
-**Hawkular Alerting - included**
+**Hawkular Alerting - Included**
 
 * Version [1.5.0](https://issues.jboss.org/projects/HWKALERTS/versions/12332918)
 * Project details and repository: [Github](https://github.com/hawkular/hawkular-alerts)
