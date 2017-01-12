@@ -6,9 +6,307 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 6 Jan 2017 15:58:56 +0000</pubDate>
-    <lastBuildDate>Fri, 6 Jan 2017 15:58:56 +0000</lastBuildDate>
+    <pubDate>Thu, 12 Jan 2017 15:34:01 +0000</pubDate>
+    <lastBuildDate>Thu, 12 Jan 2017 15:34:01 +0000</lastBuildDate>
 
+    <item>
+      <title>Extending Complex Event Processing in Hawkular Alerting</title>
+      <link>http://www.hawkular.org/blog/2017/01/13/events-aggregation-extension.html</link>
+      <author>noreply@hawkular.org (Lucas Ponce)</author>
+      <pubDate>Fri, 13 Jan 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/01/13/events-aggregation-extension.html</guid>
+      	<description>
+	&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_stream_processing_versus_polling_processing&quot;&gt;Stream Processing versus Polling Processing&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting uses different techniques to detect behaviours by defining rules.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The main implementation is based in a Stream Processing design.
+Hawkular Alerting analyzes streams of data and events ordered in a timeline searching for conditions matches.
+This technique is also known as Event Processing (or Complex Event Processing) especially when the processing of incoming data might need multiple conditions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/stream-processing.png&quot; alt=&quot;Stream Processing&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This method is particularity good to identify meaningful happenings on complex scenarios and respond to them as quickly as possible.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting also supports an &lt;em&gt;Alerter&lt;/em&gt; based Polling technique that allows periodic processing of defined queries against a backend.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/polling-processing.png&quot; alt=&quot;Polling Processing&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This Polling technique is also good in non real time scenarios, for example, to compare historical values in
+large range time intervals using statistical operators like averages, medians or percentiles.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_sliding_windows_on_complex_event_processing&quot;&gt;Sliding Windows on Complex Event Processing&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An interesting aspect in the logic of detection behaviours is the combination of Stream and Polling processing characteristics.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A Sliding Window is a way to define a scope in the stream of data and events received in the timeline.
+This Sliding Window lets us define special rules that apply only on the scoped data and events.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/sliding-windows.png&quot; alt=&quot;Sliding Windows&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A powerful use case is when we can aggregate the scoped events and define expressions on them.&lt;br&gt;
+For example, let&amp;#8217;s examine the high level scenarios&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Marketing&lt;/strong&gt;&lt;br&gt;
+&lt;em&gt;Detect when a customer buys several items in a short period of time&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Fraud&lt;/strong&gt;&lt;br&gt;
+&lt;em&gt;Alert when a customer buys from several locations in a short period of time&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;Customer loyalty&lt;/strong&gt;&lt;br&gt;
+&lt;em&gt;Detect specific transactions to offer premium discounts to customers&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;All of these scenarios need some sort of aggregation (i.e. aggregate events by customer/transaction id),
+define expressions on aggregated fields and scope these events using a Slide Window.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_events_aggregation_extension&quot;&gt;Events Aggregation Extension&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting has introduced a new &lt;em&gt;Extension&lt;/em&gt; called &lt;em&gt;EventsAggregation&lt;/em&gt;.&lt;br&gt;
+&lt;em&gt;Extensions&lt;/em&gt; is a new mechanism to pre-process data or events before they are processed by the core Alerting Engine.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;em&gt;EventsAggregation&lt;/em&gt; &lt;em&gt;Extension&lt;/em&gt; allows us to scope Sliding Windows on Events and define expressions on aggregated data.
+This new feature can be used on &lt;em&gt;Triggers&lt;/em&gt; with &lt;em&gt;ExternalCondition&lt;/em&gt; and &lt;em&gt;EventsAggregation&lt;/em&gt; alerter.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For example, we can define a &lt;em&gt;Trigger&lt;/em&gt; that represents the &lt;strong&gt;Marketing&lt;/strong&gt; scenario previously described:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;{
+  &quot;triggers&quot;:[
+    {
+      &quot;trigger&quot;:{
+        &quot;id&quot;: &quot;marketing-scenario&quot;,
+        &quot;name&quot;: &quot;Marketing Scenario&quot;,
+        &quot;description&quot;: &quot;Detect when a customer buys several items in a short period of time&quot;,
+        &quot;severity&quot;: &quot;HIGH&quot;,
+        &quot;enabled&quot;: true,
+        &quot;actions&quot;:[
+          {
+            &quot;actionPlugin&quot;: &quot;email&quot;,
+            &quot;actionId&quot;: &quot;notify-to-marketing&quot;
+          }
+        ],
+        &quot;tags&quot;:{
+            &quot;HawkularExtension&quot;:&quot;EventsAggregation&quot;
+        }
+      },
+      &quot;conditions&quot;:[
+        {
+          &quot;triggerMode&quot;: &quot;FIRING&quot;,
+          &quot;type&quot;: &quot;EXTERNAL&quot;,
+          &quot;alerterId&quot;:&quot;EventsAggregation&quot;,
+          &quot;dataId&quot;: &quot;marketing&quot;,
+          &quot;expression&quot;: &quot;event:groupBy(context.accountId):window(time,10s):having(count &amp;gt; 2)&quot;
+        }
+      ]
+    }
+  ],
+  &quot;actions&quot;:[
+    {
+      &quot;actionPlugin&quot;: &quot;email&quot;,
+      &quot;actionId&quot;: &quot;notify-to-marketing&quot;,
+      &quot;properties&quot;: {
+        &quot;to&quot;: &quot;marketing@hawkular.org&quot;
+      }
+    }
+  ]
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The expression used can be described as follows:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;groupBy(context.accountId)      Group window events by context &quot;accountId&quot; field
+window(time,10s)                Define a sliding time window of 10 seconds
+having(count &amp;gt; 2)               Define an expression on the grouped events&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In other words, this condition will be true, each time that there are more than two events with the same &lt;em&gt;accountId&lt;/em&gt; for a 10 seconds window.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a similar way, we can describe the &lt;strong&gt;Fraud&lt;/strong&gt; scenario previously described with the expression:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&quot;event:groupBy(tags.accountId):window(time,10s):having(count &amp;gt; 1, count.tags.location &amp;gt; 1)&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Where&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;groupBy(context.accountId)                    Group window events by context &quot;accountId&quot; field
+window(time,10s)                              Define a sliding time window of 10 seconds
+having(count &amp;gt; 1, count.tags.location &amp;gt; 1)    Define an expression on the grouped events&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This condition will be true when there are more than 1 events with more than one &lt;em&gt;location&lt;/em&gt; tag, so detecting when
+events for the same &lt;em&gt;accountId&lt;/em&gt; happens from different places.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The two previous expressions groups all events of the timing window.
+We might have scenarios where only specific events should be grouped.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For these cases we can add filters into the expressions like in the following example:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&quot;event:groupBy(tags.traceId):filter((category == \&quot;Credit Check\&quot; &amp;amp;&amp;amp; text == \&quot;Exceptionally Good\&quot;) || (category == \&quot;Stock Check\&quot; &amp;amp;&amp;amp; text == \&quot;Out of Stock\&quot;)):having(count &amp;gt; 1, count.tags.accountId == 1)&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This expression will group events filtered by a expression&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;filter(
+    (category == \&quot;Credit Check\&quot; &amp;amp;&amp;amp; text == \&quot;Exceptionally Good\&quot;) ||
+    (category == \&quot;Stock Check\&quot; &amp;amp;&amp;amp; text == \&quot;Out of Stock\&quot;)
+)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that this expression doesn&amp;#8217;t define an explicit sliding time window, so it will use a default expiration window.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_use_cases&quot;&gt;Use cases&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Stream Processing and Polling Processing might be used for similar scenarios.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The EventsAggregation Extension groups Events in memory so it is designed for real time scenarios with relatively short sliding windows.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;EventsAggregation Extension is a useful addition to Hawkular Alerting that will extend the scenarios and type of behaviours that can be detected.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In our future work we will enhance this extension covering more use cases (potential aggregation of data).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We hope this short introduction helps to show how the EventsAggregation Extension provides powerful new CEP capabilities for Hawkular Alerting.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Comments and questions are welcome, here or in &lt;a href=&quot;http://webchat.freenode.net/?channels=hawkular&quot;&gt;#hawkular&lt;/a&gt; room on freenode.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_references&quot;&gt;References&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;EventsAggregation Expression syntax:&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine-extensions/hawkular-alerts-events-aggregation/src/main/java/org/hawkular/alerts/extensions/Expression.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine-extensions/hawkular-alerts-events-aggregation/src/main/java/org/hawkular/alerts/extensions/Expression.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;EventsAggregation examples:&lt;/div&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine-extensions/hawkular-alerts-events-aggregation/src/test/java/org/hawkular/alerts/extensions/ExpressionTest.java&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-engine-extensions/hawkular-alerts-events-aggregation/src/test/java/org/hawkular/alerts/extensions/ExpressionTest.java&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/EventsAggregationExtensionITest.groovy&quot; class=&quot;bare&quot;&gt;https://github.com/hawkular/hawkular-alerts/blob/master/hawkular-alerts-rest-tests/src/test/groovy/org/hawkular/alerts/rest/EventsAggregationExtensionITest.groovy&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
+    <item>
+      <title>Hawkular Metrics 0.23.0 - Release</title>
+      <link>http://www.hawkular.org/blog/2017/01/04/hawkular-metrics-0.23.0.Final-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Wed, 4 Jan 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/01/04/hawkular-metrics-0.23.0.Final-released.html</guid>
+      	<description>
+	&lt;p&gt;I am happy to announce release 0.23.0 of Hawkular Metrics. This release is anchored by performance and stability improvements.&lt;/p&gt;&lt;p&gt;Here is a list of major changes:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Performance&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Prevent BusyPoolException under heavy load due no available connection and queue reaching max size of 256 (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-542&quot;&gt;HWKMETRICS-542&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Gatling load tests have a new option (&lt;code&gt;loops&lt;/code&gt;) to specify the number of requests per client (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-559&quot;&gt;HWKMETRICS-559&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Deployment&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Resolved an issue with resource-env-ref in component war (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-541&quot;&gt;HWKMETRICS-541&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Updated packaging to support deployments on WildFly 10.1.0 (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-558&quot;&gt;HWKMETRICS-558&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;REST API&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Updated CORS validation to be applied prior to processing the request; this solves an issue where some content is still returned even though a bad request status is returned (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-554&quot;&gt;HWKMETRICS-554&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Internal Monitoring&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Hostname is now part of the metric id when creating and storing internal metrics (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-555&quot;&gt;HWKMETRICS-555&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Hawkular Alerting - Updates&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Added support for newer condition types to the email plugin (&lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS-208&quot;&gt;HWKALERTS-208&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Allow ExternalCondition to be fired on Event submission; external conditions can now be matched via Event and Data submissions (&lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS-207&quot;&gt;HWKALERTS-207&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Added new NelsonCondition for native Nelson Rule detection; a brand new condition type to perform automatic Nelson Rule detection of misbehaving metrics. (&lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS-209&quot;&gt;HWKALERTS-209&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Alerting - Included&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Version &lt;a href=&quot;https://issues.jboss.org/projects/HWKALERTS/versions/12332918&quot;&gt;1.5.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Project details and repository: &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts&quot;&gt;Github&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Documentation: &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html&quot;&gt;REST API&lt;/a&gt;, &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples&quot;&gt;Examples&lt;/a&gt;, &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html&quot;&gt;Developer Guide&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Metrics Clients&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Python: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-python&quot;&gt;https://github.com/hawkular/hawkular-client-python&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Go: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-go&quot;&gt;https://github.com/hawkular/hawkular-client-go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ruby: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-ruby&quot;&gt;https://github.com/hawkular/hawkular-client-ruby&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Java: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-java&quot;&gt;https://github.com/hawkular/hawkular-client-java&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;h3&gt;Release Links&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Github Release: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.23.0&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.23.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;JBoss Nexus Maven artifacts: &lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jira release tracker: &lt;a href=&quot;https://issues.jboss.org/projects/HWKMETRICS/versions/12332805&quot;&gt;https://issues.jboss.org/projects/HWKMETRICS/versions/12332805&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;A big &quot;Thank you&quot; goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.&lt;/p&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkinit</title>
       <link>http://www.hawkular.org/blog/2016/12/22/hawkular-hawkinit-cli-tool.html</link>
