@@ -44,7 +44,7 @@ In your Java code, create a _MetricRegistry_ and pass it to the _HawkularReporte
 
 ``` java
     MetricRegistry registry = new MetricRegistry();
-    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "com.hawkular.sample")
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
             .build();
     hawkularReporter.start(1, TimeUnit.SECONDS);
 ```
@@ -52,11 +52,11 @@ In your Java code, create a _MetricRegistry_ and pass it to the _HawkularReporte
 And that's it. From now on, all metrics that are added to the registry will be reported to Hawkular Metrics.
 The default configuration expects to find the Hawkular server on _localhost:8080_, you can change it with the builder's `uri` method. You can link:https://github.com/hawkular/hawkular-dropwizard-reporter#other-builder-options[explore the builder options] to configure it.
 
-TIP: In this example, "com.hawkular.sample" refers to the tenant used in Hawkular. You can set whatever you want instead. link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_tenants[Check Hawkular documentation] to learn more about multi-tenancy.
+TIP: In this example, "sample-tenant" refers to the tenant used in Hawkular. You can set whatever you want instead. link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_tenants[Check Hawkular documentation] to learn more about multi-tenancy.
 
 If, for instance, we want to connect to an Hawkular pod running in OpenShift, we would configure the reporter similar to that one:
 ``` java
-    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "com.hawkular.sample")
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
             .uri("https://metrics.192.168.42.63.xip.io/hawkular/metrics")
             .bearerToken("ABCDEFGHIJ1234")
             .build();
@@ -74,7 +74,7 @@ A convenient way to do that is to set a prefix in the reporter configuration, fo
     } catch (UnknownHostException e) {
         hostname = "?";
     }
-    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "com.hawkular.sample")
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
             .prefixedWith(hostname + ".")
             .build();
 ```
@@ -277,7 +277,7 @@ Tagging may not seem very important at first sight, but over time when you get m
 Even for this sample app, when building the Grafana dashboard we soon want to make it generic so that it can show any other competing implementation of caches. In order to do it, we will create per-metric tags based on regexp. Just by adding a few lines in the `HawkularReporter` builder:
 
 ``` java
-    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "com.hawkular.sample")
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
             .addRegexTag(Pattern.compile(GuavaBackend.NAME + "\\..*"), "impl", GuavaBackend.NAME)
             .addRegexTag(Pattern.compile(EhcacheBackend.NAME + "\\..*"), "impl", EhcacheBackend.NAME)
             .addGlobalTag("hostname", hostname)
@@ -313,7 +313,7 @@ From the Dropwizard point of view, there is no metric called "guava.cache.read.1
 or using regexp, as I'm doing in the sample app:
 
 ``` java
-    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "com.hawkular.sample")
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
             .addRegexTag(Pattern.compile(GuavaBackend.NAME + "\\..*"), "impl", GuavaBackend.NAME)
             .addRegexTag(Pattern.compile(EhcacheBackend.NAME + "\\..*"), "impl", EhcacheBackend.NAME)
             .addGlobalTag("hostname", hostname)
