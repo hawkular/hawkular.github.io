@@ -188,6 +188,511 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/01/16/hawkular-metrics-with-dropwizard.html"><h1>Reporting Dropwizard metrics to Hawkular</h1></a>
+            <p>16 January 2017, by Joel Takvorian</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p><em>Dropwizard metrics</em> (aka. Codahale aka. Yammer) is a well known, successful metrics framework that is easy to plug in a Java application.
+You just create a metrics registry, create metrics, feed them and voilà.
+But Dropwizard metrics doesn&#8217;t store anything by itself, it&#8217;s delegated to the so-called "reporters".
+So we&#8217;ve built the <a href="https://github.com/hawkular/hawkular-dropwizard-reporter"><em>hawkular-dropwizard-reporter</em></a>.</p>
+</div>
+<div class="paragraph">
+<p>This article will show you:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>how you can create custom metrics</p>
+</li>
+<li>
+<p>how you can take advantage of existing middleware that uses Dropwizard metrics</p>
+</li>
+<li>
+<p>how to fine-tune the Hawkular reporter to make data exploitation easy</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As an example, I will use a very simple application to benchmark some data structures (caches) in real time, and output results as metrics.
+This is not a serious benchmark and we don&#8217;t really care about the results: our purpose is nothing more than to illustrate how we can work with Hawkular and Dropwizard.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-01-16-dropwizard-sample-overview.png" alt="Overview">
+</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_minimal_setup">Minimal setup</h3>
+<div class="paragraph">
+<p>You need very few things to start using the Hawkular Dropwizard reporter. Obviously, you must have a running instance of <em>Hawkular Metrics</em>. If you don&#8217;t have it yet, check out the <a href="http://www.hawkular.org/hawkular-services/docs/installation-guide/">installation guide</a>.</p>
+</div>
+<div class="paragraph">
+<p>Then, add a <em>maven</em> dependency to your Java application:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+        &lt;groupId&gt;org.hawkular.metrics&lt;/groupId&gt;
+        &lt;artifactId&gt;hawkular-dropwizard-reporter&lt;/artifactId&gt;
+        &lt;version&gt;0.1.1&lt;/version&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>In your Java code, create a <em>MetricRegistry</em> and pass it to the <em>HawkularReporter</em>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    MetricRegistry registry = new MetricRegistry();
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
+            .build();
+    hawkularReporter.start(1, TimeUnit.SECONDS);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And that&#8217;s it. From now on, all metrics that are added to the registry will be reported to Hawkular Metrics.
+The default configuration expects to find the Hawkular server on <em>localhost:8080</em>, you can change it with the builder&#8217;s <code>uri</code> method. You can <a href="https://github.com/hawkular/hawkular-dropwizard-reporter#other-builder-options">explore the builder options</a> to configure it.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+In this example, "sample-tenant" refers to the tenant used in Hawkular. You can set whatever you want instead. <a href="http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_tenants">Check Hawkular documentation</a> to learn more about multi-tenancy.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>If, for instance, we want to connect to an Hawkular pod running in OpenShift, we would configure the reporter similar to that one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
+            .uri("https://metrics.192.168.42.63.xip.io/hawkular/metrics")
+            .bearerToken("ABCDEFGHIJ1234")
+            .build();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>To conclude with the initial setup, note that it is often a good practice to include some host-based disambiguation string in the metric names,
+so that if your application is deployed on several hosts and they all communicate to the same Hawkular instance using the same tenant,
+they will not conflict and feed the same metrics.
+A convenient way to do that is to set a prefix in the reporter configuration, for instance using the host name:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    String hostname;
+    try {
+        hostname = InetAddress.getLocalHost().getCanonicalHostName();
+    } catch (UnknownHostException e) {
+        hostname = "?";
+    }
+    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
+            .prefixedWith(hostname + ".")
+            .build();</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_dropwizard_hawkular">Dropwizard &#8594; Hawkular</h3>
+<div class="paragraph">
+<p>As stated before, our sample app will do some (very) basic benchmarking on several caches implementations: we&#8217;ll have a <em>Guava</em> cache and a local <em>EhCache</em>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+This sample app is on my GitHub: <a href="https://github.com/jotak/hawkular-dropwizard-sample" class="bare">https://github.com/jotak/hawkular-dropwizard-sample</a>
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We create a very simple interface that allows us to get data from cache, count number of elements and know if the latest read was from cache or not:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">interface Backend {
+    Object get(String key);
+    long count();
+    void init(Map&lt;String, Object&gt; presetElements);
+    boolean isLastReadFromCache();
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>You can <a href="https://github.com/jotak/hawkular-dropwizard-sample/tree/master/src/main/java/com/hawkular/sample">see on GitHub</a> the <code>GuavaBackend</code> and <code>EhcacheBackend</code> implementations, there&#8217;s nothing fancy here.</p>
+</div>
+<div class="paragraph">
+<p>EhCache is initialized programmatically:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    CacheManager cacheManager = CacheManager.newInstance();
+    Ehcache cache = cacheManager.addCacheIfAbsent("testCache");</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, the <code>Benchmark</code> class. This is where we create metrics and feed them, with the pretext of a small scenario. Here&#8217;s the <code>run</code> method:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    private void run() {
+        final DatabaseStub fakeDb = new DatabaseStub(); <b class="conum">(1)</b>
+        final BackendMonitoring monitoring = new BackendMonitoring(registry); <b class="conum">(2)</b>
+        Map&lt;String, Object&gt; presetElements = IntStream.range(0, 100000)
+                .mapToObj(Integer::new)
+                .collect(Collectors.toMap(i -&gt; UUID.randomUUID().toString(), i -&gt; i)); <b class="conum">(3)</b>
+
+        <b class="conum">(4)</b>
+        monitoring.runScenario(presetElements, new GuavaBackend(fakeDb), GuavaBackend.NAME);
+        monitoring.runScenario(presetElements, new EhcacheBackend(fakeDb, ehcache), EhcacheBackend.NAME);
+    }</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>The class <code>DatabaseStub</code> is used to simulate a database with latency, using just a <code>HashMap</code> for storage (<a href="https://github.com/jotak/hawkular-dropwizard-sample/blob/master/src/main/java/com/hawkular/sample/DatabaseStub.java">view it on GitHub</a>).</p>
+</li>
+<li>
+<p><code>BackendMonitoring</code> will setup monitoring for a given backend.</p>
+</li>
+<li>
+<p>Creates a collection of items to store in cache, and use them in the scenarios.</p>
+</li>
+<li>
+<p>Run the scenario for each <code>Backend</code> implementation (described below).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Now, <code>BackendMonitoring.runScenario</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    void runScenario(Map&lt;String, Object&gt; presetElements, Backend backend, String name) {
+        System.out.println("Starting scenario for " + name);
+        registry.register(name + ".size", (Gauge&lt;Long&gt;) backend::count); <b class="conum">(1)</b>
+        Timer readTimer = registry.timer(name + ".read"); <b class="conum">(2)</b>
+        final Meter readCacheMeter = registry.meter(name + ".cache.read"); <b class="conum">(3)</b>
+        final Meter readDbMeter = registry.meter(name + ".db.read"); <b class="conum">(4)</b>
+        final Counter numberItemsRead = registry.counter(name + ".total.read.count"); <b class="conum">(5)</b>
+        // Setup preset elements
+        backend.init(presetElements);
+        List&lt;String&gt; keys = new ArrayList&lt;&gt;(presetElements.keySet());
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        Stopwatch watch = Stopwatch.createStarted();
+        while (watch.elapsed(TimeUnit.MINUTES) &lt; 5) {
+            int pos = rnd.nextInt(0, keys.size());
+            runWithBenchmark(() -&gt; {
+                backend.get(keys.get(pos));
+                if (backend.isLastReadFromCache()) {
+                    readCacheMeter.mark();
+                } else {
+                    readDbMeter.mark();
+                }
+                numberItemsRead.inc();
+            }, readTimer);
+        }
+        // Reset size gauge to 0
+        backend.init(new HashMap&lt;&gt;());
+        System.out.println("Ending scenario for " + name);
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, <code>BackendMonitoring.runWithBenchmark</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    private void runWithBenchmark(Runnable r, Timer readTimer) {
+        final Timer.Context ctx = readTimer.time();
+        try {
+            r.run();
+        } finally {
+            ctx.stop();
+        }
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here we create several metrics:</p>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>A <em>Gauge</em> that will track the number of elements in cache.</p>
+</li>
+<li>
+<p>A <em>Timer</em> metric. Each time the <code>runWithBenchmark</code> method is called, that timer computes the <code>Runnable</code> execution time.</p>
+</li>
+<li>
+<p>A <em>Meter</em> that is invoked each time data is read from cache (rather than DB).</p>
+</li>
+<li>
+<p>The opposite: a <em>Meter</em> that is invoked each time data is read from db.</p>
+</li>
+<li>
+<p>A <em>Counter</em> that tracks the total number of reads. We could actually get rid of it, because its value could be retrieved from readDbMeter.count + readCacheMeter.count (yes, a <em>Meter</em> includes a <em>Counter</em>).</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You can learn more about <em>Dropwizard</em> metric types <a href="http://metrics.dropwizard.io/3.1.0/getting-started/">from its documentation</a>.</p>
+</div>
+<div class="paragraph">
+<p>Remember that since we associated the Hawkular reporter with the metrics registry, all metrics are automatically reported into <em>Hawkular Metrics</em>.</p>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s run the benchmark. I&#8217;m using <a href="http://grafana.org/">Grafana</a> with its <a href="https://grafana.net/plugins/hawkular-datasource">Hawkular plugin</a> to display graphs.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-01-16-dropwizard-sample-metrics.png" alt="Custom metrics">
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><em>Upper-left: storage size (yellow = Guava, green = EhCache)</em></p>
+</li>
+<li>
+<p><em>Upper-right: read response time (yellow = Guava, green = EhCache)</em></p>
+</li>
+<li>
+<p><em>Bottom-left: read cache vs DB - mean rate (orange = Guava/db, yellow = Guava/cache, blue = EhCache/db, green = EhCache/cache)</em></p>
+</li>
+<li>
+<p><em>Bottom-right: read cache vs DB - count (orange = Guava/db, yellow = Guava/cache, blue = EhCache/db, green = EhCache/cache)</em></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>We can see the Guava cache scenario in the first 5 minutes, followed by the EhCache scenario.
+Note how the storage size fells abruptly at about halfway of EhCache scenario: this is probably due to a cache eviction mechanism that is present by default (given we didn&#8217;t configure the cache at all).</p>
+</div>
+<div class="paragraph">
+<p>We can correlate that with the response time with EhCache that is not improving as fast as Guava&#8217;s as long as the cache get filled. However we can suppose it&#8217;s compensated for smaller memory footprint.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_middleware_dropwizard_hawkular">Middleware &#8594; Dropwizard &#8594; Hawkular</h3>
+<div class="paragraph">
+<p>So, we know how to create metrics. That&#8217;s perfect to track values that are very specific to an application.
+But the best is that a lot of existing Java middleware already provides tons of metrics on Dropwizard, that you can integrate very easily in your application.</p>
+</div>
+<div class="paragraph">
+<p>There is a non exhaustive list in Dropwizard documentation (<a href="http://metrics.dropwizard.io/3.1.0/manual/">here</a> and <a href="http://metrics.dropwizard.io/3.1.0/manual/third-party/">there</a>). It includes <em>EhCache</em>, <em>Apache Http client</em>, <em>Jetty</em>, etc.
+But they are actually many others. Some frameworks, <a href="http://vertx.io/docs/vertx-hawkular-metrics/java/">like Vert.X</a> may also report metrics directly to Hawkular, so you don&#8217;t even need to go through Dropwizard at all (but still, <a href="http://vertx.io/docs/vertx-dropwizard-metrics/java/">you can</a>).</p>
+</div>
+<div class="paragraph">
+<p>Since we&#8217;re already using EhCache in our sample app, let&#8217;s try to get EhCache middleware metrics. We need first to add a maven dependency:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;io.dropwizard.metrics&lt;/groupId&gt;
+      &lt;artifactId&gt;metrics-ehcache&lt;/artifactId&gt;
+      &lt;version&gt;3.1.2&lt;/version&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>When we initialize EhCache programmatically, we create an <code>InstrumentedEhcache</code> object, which is its Dropwizard avatar:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    private Benchmark(MetricRegistry registry, Ehcache cache) {
+        this.registry = registry;
+        ehcache = InstrumentedEhcache.instrument(registry, cache);
+    }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And then we use this <code>InstrumentedCache</code> instead of the initial <code>EhCache</code> object in the rest of our code. That&#8217;s it. Every time something is done on EhCache, metrics will be feeded.</p>
+</div>
+<div class="paragraph">
+<p>See for instance what we get in Grafana, when the <code>EhcacheBackend</code> is invoked during our scenario:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-01-16-dropwizard-ehcache.png" alt="EhCache metrics">
+</div>
+</div>
+<div class="paragraph">
+<p><em>Here we track some metrics such as the gets and puts mean, the number of memory hits and misses. See the <a href="http://metrics.dropwizard.io/3.1.0/manual/ehcache/">full list of available metrics</a>.</em></p>
+</div>
+<div class="paragraph">
+<p>What else could we do&#8230;&#8203; We&#8217;re on the JVM, right? We could get monitoring data from MX Beans (such as <code>MemoryMXBean</code>) and create our own metrics in Dropwizard, but there&#8217;s already a module that does the job:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;io.dropwizard.metrics&lt;/groupId&gt;
+      &lt;artifactId&gt;metrics-jvm&lt;/artifactId&gt;
+      &lt;version&gt;3.1.2&lt;/version&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After creating the <code>MetricRegistry</code>, you can add some preset JVM metric sets, such as <code>GarbageCollectorMetricSet</code>, <code>MemoryUsageGaugeSet</code>, <code>ThreadStatesGaugeSet</code> etc.</p>
+</div>
+<div class="paragraph">
+<p>Having them in Hawkular will help you to quickly correlate information, such as an increasing memory heap or non-heap usage related to the use of a cache in our example.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-01-16-dropwizard-jvm.png" alt="JVM metrics">
+</div>
+</div>
+<div class="paragraph">
+<p><em>Heap vs non-heap memory used, plus some counters on threads and GC. See the drop in heap memory, at about third quarter of the timeline? It matches the cache eviction in EhCache.</em></p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+An interesting fact is that the <em>Cassandra</em> database also exposes metrics through Dropwizard. And <em>Hawkular</em> uses <em>Cassandra</em> internally for metrics storage. Which means that it can be self-monitored with the Hawkular Dropwizard reporter. If you want to read more on this subject, check out <a href="https://wiki.apache.org/cassandra/Metrics">Cassandra metrics</a> and <a href="https://github.com/hawkular/hawkular-dropwizard-reporter#usage-as-an-addthis-plugin-in-cassandra">some instructions here</a>.
+</td>
+</tr>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_fine_tuning_the_reporter">Fine-tuning the reporter</h3>
+<div class="sect3">
+<h4 id="_tagging">Tagging</h4>
+<div class="paragraph">
+<p>There are some improvements we can bring to our sample app. First of all, we could tag our metrics.</p>
+</div>
+<div class="paragraph">
+<p>Tagging may not seem very important at first sight, but over time when you get more and more metrics, and when you try to exploit them in a dynamic way, tags become crucial.</p>
+</div>
+<div class="paragraph">
+<p>Even for this sample app, when building the Grafana dashboard we soon want to make it generic so that it can show any other competing implementation of caches. In order to do it, we will create per-metric tags based on regexp. Just by adding a few lines in the <code>HawkularReporter</code> builder:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
+            .addRegexTag(Pattern.compile(GuavaBackend.NAME + "\\..*"), "impl", GuavaBackend.NAME)
+            .addRegexTag(Pattern.compile(EhcacheBackend.NAME + "\\..*"), "impl", EhcacheBackend.NAME)
+            .addGlobalTag("hostname", hostname)
+            .prefixedWith(hostname + ".")
+            .build();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And as you can see I also added a global tag with the hostname.</p>
+</div>
+<div class="paragraph">
+<p>With that configuration, every metrics whose name starts with <em>"guava."</em> will be tagged <em>"impl:guava"</em>, and similarly for ehcache.
+Every metric reported through this reporter will be tagged with the hostname.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_filtering">Filtering</h4>
+<div class="paragraph">
+<p>If you use Grafana with this sample app, you&#8217;ve probably noticed how annoying it is to find and select the metric you want to display,
+because it&#8217;s flooded among tons of other metrics. And obviously, the more you store metrics, the more resources will be consumed. So you can filter out metrics you don&#8217;t want.</p>
+</div>
+<div class="paragraph">
+<p>There&#8217;s two kinds of filters:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>the usual built-in Dropwizard filters, that you can set using <code>HawkularReporterBuilder.filter</code> and by implementing <a href="http://metrics.dropwizard.io/3.1.0/apidocs/com/codahale/metrics/MetricFilter.html">MetricFilter</a></p>
+</li>
+<li>
+<p>another kind of filter that is very specific to the Hawkular reporter, called <em>MetricComposition</em> and for which I must provide some details:</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As stated before, <em>Dropwizard</em> has several metric types (gauges, meters, timers etc.), some of them being composed of multiple values. So they don&#8217;t match 1-1 with <em>Hawkular</em> metric types, which are made of simple values (basically, <em>doubles</em> for <em>gauges</em> and <em>longs</em> for <em>counters</em>&#8201;&#8212;&#8201;there are other types but unused in the dropwizard reporter).</p>
+</div>
+<div class="paragraph">
+<p>In order not to loose any piece of data, <em>Dropwizard</em> metrics are <em>exploded</em> into several metrics in <em>Hawkular</em>. For instance, a Meter named <em>guava.cache.read</em> will be translated into 4 gauges (<em>guava.cache.read.1minrt</em>, <em>guava.cache.read.5minrt</em>, <em>guava.cache.read.15minrt</em>, <em>guava.cache.read.meanrt</em>) and 1 counter (<em>guava.cache.read.count</em>) in <em>Hawkular</em>. The full translation table is <a href="https://github.com/hawkular/hawkular-dropwizard-reporter#how-it-works">described here</a>.</p>
+</div>
+<div class="paragraph">
+<p>From the Dropwizard point of view, there is no metric called "guava.cache.read.1minrt". So you cannot filter it out with Dropwizard filters. However you can act on the "metric composition" in the Hawkular reporter. Either by providing the full metric name:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    // builder.
+      .setMetricComposition("guava.cache.read", Lists.newArrayList("1minrt", "meanrt", "count"))</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or using regexp, as I&#8217;m doing in the sample app:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">    HawkularReporter hawkularReporter = HawkularReporter.builder(registry, "sample-tenant")
+            .addRegexTag(Pattern.compile(GuavaBackend.NAME + "\\..*"), "impl", GuavaBackend.NAME)
+            .addRegexTag(Pattern.compile(EhcacheBackend.NAME + "\\..*"), "impl", EhcacheBackend.NAME)
+            .addGlobalTag("hostname", hostname)
+            .prefixedWith(hostname + ".")
+            .setRegexMetricComposition(Pattern.compile("net\\.sf\\.ehcache"), Lists.newArrayList("mean", "meanrt", "5minrt", "98perc", "count"))
+            .setRegexMetricComposition(Pattern.compile(".*"), Lists.newArrayList("mean", "meanrt", "count"))
+            .build();</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Here, we configure all <em>net.sf.ehcache.*</em> metrics (EhCache middleware metrics) to provide their <em>mean</em>, <em>meanrt</em>, <em>5minrt</em>, <em>98perc</em> and <em>count</em> attributes. All other attributes will be discarded.
+For all other metrics we only keep <em>mean</em>, <em>meanrt</em> and <em>count</em>.</p>
+</div>
+<div class="paragraph">
+<p>The declaration order matters, since only the first matching pattern will be used for a given metric name.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+Using plain string rather than regexp for metric composition is more efficient, since they are internally indexed in a <code>HashMap</code>.
+</td>
+</tr>
+</table>
+</div>
+<hr>
+<div class="paragraph">
+<p>That was a quite complete tour of the Hawkular Dropwizard reporter. Some useful links:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The sample app used to illustrate this article: <a href="https://github.com/jotak/hawkular-dropwizard-sample" class="bare">https://github.com/jotak/hawkular-dropwizard-sample</a></p>
+</li>
+<li>
+<p>The Grafana dashboard I used (exported json): <a href="https://raw.githubusercontent.com/jotak/hawkular-dropwizard-sample/master/grafana/grafana-dropwizard-sample.json" class="bare">https://raw.githubusercontent.com/jotak/hawkular-dropwizard-sample/master/grafana/grafana-dropwizard-sample.json</a></p>
+</li>
+<li>
+<p>The GitHub page of the reporter itself, along with its documentation, is here: <a href="https://github.com/hawkular/hawkular-dropwizard-reporter" class="bare">https://github.com/hawkular/hawkular-dropwizard-reporter</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/01/13/events-aggregation-extension.html"><h1>Extending Complex Event Processing in Hawkular Alerting</h1></a>
             <p>13 January 2017, by Lucas Ponce</p>
             <p><div class="sect1">
@@ -608,64 +1113,13 @@ on Freenode.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2016/12/06/hawkular-metrics-0.22.0.Final-released.html"><h1>Hawkular Metrics 0.22.0 - Release</h1></a>
-            <p>06 December 2016, by Stefan Negrea</p>
-            <p><p>I am happy to announce release 0.22.0 of Hawkular Metrics.This release is anchored by performance and compression enhancements.</p><p>Here is a list of major changes:</p>
-<ul>
-  <li><strong>Compression</strong>
-  <ul>
-    <li>Prevent OutOfMemoryError on Cassandra when compression job runs (<a href="https://issues.jboss.org/browse/HWKMETRICS-520">HWKMETRICS-520</a>)</li>
-    <li>Avoid compression job executing in a loop when execution falls behind (<a href="https://issues.jboss.org/browse/HWKMETRICS-536">HWKMETRICS-536</a>)</li>
-    <li>Avoid future executions of compression job from not running if Cassandra is shutdown abruptly (<a href="https://issues.jboss.org/browse/HWKMETRICS-518">HWKMETRICS-518</a>)</li>
-    <li>Added a flag to disable the compression job; the data will be persisted and retrieved without compression (<a href="https://issues.jboss.org/browse/HWKMETRICS-524">HWKMETRICS-524</a>)</li>
-    <li>The block size for compression is now configurable (<a href="https://issues.jboss.org/browse/HWKMETRICS-545">HWKMETRICS-545</a>)</li>
-    <li>The compression job can now be triggered manually (<a href="https://issues.jboss.org/browse/HWKMETRICS-502">HWKMETRICS-502</a>)</li>
-  </ul></li>
-  <li><strong>Server Clustering</strong>
-  <ul>
-    <li>The external alerter is now cluster-aware and will not process the same request on multiple nodes (<a href="https://issues.jboss.org/browse/HWKMETRICS-515">HWKMETRICS-515</a>)</li>
-    <li>Schema updates are correctly applied when multiple servers are started at the same time (<a href="https://issues.jboss.org/browse/HWKMETRICS-514">HWKMETRICS-514</a>)</li>
-    <li>Added Cassandra connection information to the status page and created an admin version with detailed Cassandra cluster information (<a href="https://issues.jboss.org/browse/HWKMETRICS-526">HWKMETRICS-526</a>)</li>
-    <li>Internal system metrics are now persisted under <code>admin</code> tenant; this gives a good overview of the current system load (<a href="https://issues.jboss.org/browse/HWKMETRICS-550">HWKMETRICS-550</a>)</li>
-  </ul></li>
-  <li><strong>REST API</strong>
-  <ul>
-    <li>Added endpoint to allow fetching of available tag names (<a href="https://issues.jboss.org/browse/HWKMETRICS-532">HWKMETRICS-532</a>)</li>
-    <li>Fixed an issue where the API would report an internal server error on invalid query (<a href="https://issues.jboss.org/browse/HWKMETRICS-543">HWKMETRICS-543</a>)</li>
-  </ul></li>
-  <li><strong>Hawkular Alerting - Updates</strong>
-  <ul>
-    <li>End to end performance enhancements</li>
-    <li>Major improvements to <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">REST API documentation</a></li>
-    <li>New cross-tenant endpoints for for fetching alerts</li>
-    <li>Email and webhook action plugins are now packaged in the main distribution (<a href="https://issues.jboss.org/browse/HWKMETRICS-552">HWKMETRICS-552</a>)</li>
-  </ul></li>
-</ul><p><strong>Hawkular Alerting - included</strong></p>
-<ul>
-  <li>Version <a href="https://issues.jboss.org/projects/HWKALERTS/versions/12331986">1.4.0</a></li>
-  <li>Project details and repository: <a href="https://github.com/hawkular/hawkular-alerts">Github</a></li>
-  <li>Documentation: <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">REST API Documentation</a>, <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">Examples</a>,<br/><a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Developer Guide</a></li>
-</ul><p><strong>Hawkular Metrics Clients</strong></p>
-<ul>
-  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
-  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
-  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
-  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
-<ul>
-  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.22.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.22.0</a></li>
-  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
-  <li>Jira release tracker: <a href="https://issues.jboss.org/projects/HWKMETRICS/versions/12332012">https://issues.jboss.org/projects/HWKMETRICS/versions/12332012</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>06 December 2016 - <a href="blog/2016/12/06/hawkular-metrics-0.22.0.Final-released.html">Hawkular Metrics 0.22.0 - Release</a></li>
           <li>25 November 2016 - <a href="blog/2016/11/25/hawkular-apm-on-openshift.html">Using Hawkular APM on OpenShift</a></li>
           <li>16 November 2016 - <a href="blog/2016/11/16/hawkular-apm-opentracing-js.html">Hawkular APM OpenTracing JavaScript</a></li>
           <li>09 November 2016 - <a href="blog/2016/11/09/hawkular-services-0.20.0.Final.html">Hawkular Services 0.20.0.Final</a></li>
