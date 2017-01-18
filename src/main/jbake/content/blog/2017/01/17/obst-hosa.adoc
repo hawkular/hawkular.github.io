@@ -1,0 +1,269 @@
+= Monitoring Microservices on OpenShift with HOSA
+Heiko W. Rupp
+2017-01-17
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, openshift, agent, obsidian-toaster, fabric8
+
+== Monitoring Microservices on OpenShift with the Hawkular OpenShift Agent
+
+Monitoring Microservices on orchestrated platforms like OpenShift is a very different endeavor than the classical monitoring of monoliths on their dedicated servers. The biggest two differences are that the services can just be deployed by the schedule on any available server node and that it is possible to have many instances of a single service run in parallel
+
+The Hawkular project is now introducing the Hawkular OpenShift Agent (HOSA), which is deployed in OpenShift as infrastructure level component. Hosa runs on each node to monitor pods for the node and sends the retrieved metrics to Hawkular-Metrics. Hosa may eventually replace Heapster in the longer run.
+
+=== The monitoring scenario
+
+The following drawing shows the scenario that I am going to describe below
+
+.The Scenario
+ifndef::env-github[]
+image::/img/blog/2017/OBST-Monitoring-HOSA.png[Scenario overview]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/OBST-Monitoring-HOSA.png[Scenario overview]
+endif::[]
+
+The numbers in the round blue circles will be referenced below as _(n)_.
+
+As example we are taking Microservices created by the https://github.com/obsidian-toaster[Obsidian Toaster] generators and deploy them with the help of the https://github.com/fabric8io/fabric8-maven-plugin[Fabric8 Maven Plugin] into OpenShift.
+
+NOTE: It is not necessary to retrieve the source code from Obsidian Toaster. Any source that can be
+deployed to OpenShift via the Fabric8 Maven plugin will do.
+
+After getting the source code from the generator, run the respective
+`mvn clean package` goals as described in the README of the source _(1)_. If that works well, you can then deploy the result into OpenShift via `mvn fabric8:deploy -Popenshift` _(2)_. This will create a so called Source to Image (S2I) build in OpenShift which takes the provided artifacts and config files, creates images and deploys them in a pod with associated service etc _(3)_.
+
+The latter is driven by some internal settings of the maven plugin, which also merges in files from `src/main/fabric8/`. More on that below.
+
+For each JVM that the Fabric8 plugin deploys, it also puts a https://jolokia.org[Jolokia] agent in the VM, as you can see in _(3)_. This agent exposes internal JMX metrics via the Jolokia-REST protocol, on a pre-defined port with a default user name and a random password. The data of this pod is also exposed via the API-proxy, so that you can click on the _Open Java Console_ link in the next figure to get to a JMX browser.
+
+.A pod in OpenShift
+ifndef::env-github[]
+image::/img/blog/2017/OBST-Pod.png[Pod in Openshift]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/OBST-Pod.png[Pod in Openshift]
+endif::[]
+
+=== The Hawkular OpenShift Agent
+
+The https://github.com/hawkular/hawkular-openshift-agent[Hawkular OpenShift Agent] (Hosa) runs as part of the OpenShift infrastructure inside the _openshift-infra_ namespace on a per node basis, monitoring eligible pods on that node. The GitHub page has pretty good information on how to compile and deploy it (there are also pre-created Docker images available). 
+
+In order for Hosa to know which pods to monitor and what metrics to collect, it looks at pods and checks if they have a _ConfigMap_ with a name of `hawkular-openshift-agent` declared.
+
+.Config Map for Hosa, _(4)_
+[source,yml]
+----
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: obs-java-hosa-config.yml  # <1>
+  namespace: myproject
+data:
+  hawkular-openshift-agent: | # <2>
+    endpoints:
+    - type: jolokia # <3>
+      collection_interval: 60s # <4>
+      protocol: "https"
+      tls:
+        skip_certificate_validation: true # <5>
+      port: 8778
+      credentials:
+        username: jolokia
+        password: secret:hosa-secret/password  # <6>
+      path: /jolokia/
+      tags:
+        name: ${POD:label[project]} # <7>
+      metrics: # <8>
+      - name: java.lang:type=Threading#ThreadCount
+        id: the_thread_count
+        type: gauge
+----
+<1> Name of the map
+<2> Configuration for the agent to monitor matching pods
+<3> This is a Jolokia-kind of endpoint
+<4> Collect the metrics every 60s. This is a Golang Duration and is equal to `1m`
+<5> The agent checks for valid certificates in case of https. We skip this check
+<6> This is the password used to talk to Jolokia, which we obtain from a _secret_ -- more below.
+<7> Each metric is tagged with a label `name=<project name>`
+<8> Definition of the metrics to be collected
+
+You can save the above ConfigMap into a file and deploy it into Openshift via `oc create -f <configmap.yml>`.
+
+NOTE: Hosa can also grab data from Prometheus style endpoints. In the future we may switch to use this protocol, as JMX is a very JavaVM-centric concept and Microservices may also be created in non-JVM environments like Node.js or Ruby.
+
+Now the question is how do we tell our deployment to use this config map? In Figure 2 you see, that this gets declared as a volume. In order to do so, we need to go back to our local source code and add a new file `deployment.yml` into `src/main/fabric8/` and re-deploy our source with `mvn package fabric8:deploy -Popenshift`. And as we are doing this, we also want to make sure that the password for Jolokia is not hard coded, but will be obtained from an OpenShift _secret_ 
+
+.deployment.yml
+[source,yml]
+----
+# This gets merged into the main openshift.yml's deployment config via f8 plugin
+spec:
+  template:
+    spec:
+      volumes:
+        - name: hawkular-openshift-agent # <1>
+          configMap:
+            name: obs-java-hosa-config.yml # <2>
+      containers:
+        - env:
+          - name: AB_JOLOKIA_PASSWORD_RANDOM # <3>
+            value: "false"
+          - name: AB_JOLOKIA_PASSWORD # <4>
+            valueFrom:
+              secretKeyRef: # <5>
+                name: hosa-secret
+                key: password
+----
+<1> The magic name of the volume so that Hosa can find it
+<2> The name of the config map to use. See (1) in _Config Map for Hosa_ above.
+<3> Tell Jolokia not to create a random password
+<4> Make OpenShift set the password, which it gets from a _secret_
+<5> The secret to query is named _hosa-secret_ and we want the entry with the name _password_.
+
+Hosa is getting noticed once you redeploy the application, and will see the volume and will try to start monitoring the pod. Which leaves us with the OpenShift _secret_.
+
+==== Creating the secret, _(5)_
+
+To create a secret that holds our password we need to do two things. First we need to encode the password in base 64 format.
+
+.Base64 encoding of the password
+[source,shell]
+----
+$ echo -n "test4hawkular" | base64
+dGVzdDRoYXdrdWxhcgo==
+----
+
+And then we need to create a yml file for the secret.
+
+.hosa-secret.yml
+[source,yml]
+----
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hosa-secret # <1>
+type: Opaque
+data:
+  password: dGVzdDRoYXdrdWxhcg== # <2>
+----
+<1> Name of the secret
+<2> Key is 'password', value is password from previous step
+
+You can deploy that secret with `oc create -f hosa-secret.yml`.
+
+=== Display data with Grafana
+
+Now that we have the agent collecting data and storing in Hawkular-Metrics we can look at them with the help of Grafana.
+Joel Takvorian has http://www.hawkular.org/blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html[described this pretty well], so I am not going to repeat the setup in detail here. 
+
+NOTE: To get quickly started, you can run `$ oc new-app docker.io/hawkular/hawkular-grafana-datasource`. And then when the service is created, click on _Add route_ in the OpenShift UI to expose Grafana to the outside world.
+
+To configure the datasource in Grafana, we can now use the namespace of the project and a token
+
+.Getting host, tenant and token to configure the datasource
+[source,shell]
+----
+$ oc whoami
+developer
+$ oc project
+Using project "myproject" on server "https://pintsize:8443". # <1> 
+$ oc whoami -t 
+JhrqvcFTnEuP3XRPrLbwAAfpbZV4hYmne3-JMIXv4LQ # <2> 
+$ oc login -u system:admin # <3>
+$ oc get svc hawkular-metrics -n openshift-infra # <4> 
+NAME               CLUSTER-IP      EXTERNAL-IP   PORT(S)   AGE
+hawkular-metrics   172.30.236.16   <none>        443/TCP   12d # <5>
+# This is an alternative
+$ oc get route hawkular-metrics -n openshift-infra # <6>
+NAME               HOST/PORT                                
+hawkular-metrics   metrics-openshift-infra.172.31.7.9.xip.io 
+----
+<1> 'myproject' will be the tenant
+<2> The token for authentication
+<3> OpenShift infrastructure is not visible to the developer account
+<4> Get the Cluster-IP of the Hawkular-Metrics service
+<5> Cluster-IP is the host part of the https url of the metrics service, which follows the pattern of `https://<cluster-ip>/hawkular/metrics`
+<6> As alternative get the public host from the OpenShift route
+
+We can then use this information to define our datasource in Grafana. If you want you can also make this the default by ticking the respective checkbox. Access mode needs to be proxy, as the service is not visible (under that IP) from outside of OpenShift. Instead of using the OpenShift-internal service we can also use the external IP defined by the hawkular-metrics route.
+
+.Grafana datasource setup
+ifndef::env-github[]
+image::/img/blog/2017/OBST-Grafana-Datasource.png[Grafana datasource setup]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/OBST-Grafana-Datasource.png[Grafana datasource setup]
+endif::[]
+
+Using a token works well and is quickly done, but it has the caveat that tokens obtained with `oc whoami -t` will expire and thus should only be used to quickly test if the datasource works. 
+
+A better solution is to use a service account _(7)_ instead of the token, which I am going to explain next.
+
+==== Create a service account, _(7)_
+
+Creating a Service Account is easy and can be done via `oc create sa view-metrics`
+
+When you look at it with `oc describe sa/view-metrics`, it shows a list of tokens at the end:
+
+[source, shell]
+----
+$ oc describe sa/view-metrics
+Name:		view-metrics
+Namespace:	myproject
+Labels:		<none>
+
+Image pull secrets:	view-metrics-dockercfg-rmnee
+
+Mountable secrets: 	view-metrics-dockercfg-rmnee
+                   	view-metrics-token-vowtw
+
+Tokens:            	view-metrics-token-t98qw # <1>
+                   	view-metrics-token-vowtw
+----
+<1> The token to be used in the next step
+
+Those tokens are actually secrets, that were populated by OpenShift. Inspecting one of the tokens then reveals a token string, that we can use inside of Grafana
+
+WARNING: Only the Token, which is not the one, that is also listed as mountable secret can be used. The other one will not work and Grafana will report a "Forbidden" message when trying to save the datasource.
+
+----
+$ oc describe secret view-metrics-token-t98qw
+Name:		view-metrics-token-vowtw
+Namespace:	myproject
+Annotations:    kubernetes.io/created-by=openshift.io/create-dockercfg-secrets
+                kubernetes.io/service-account.name=view-metrics # <1>
+[...]
+Data
+====
+namespace:	9 bytes
+service-ca.crt:	2186 bytes
+token:		eyJhbGciOiJS... # <2> 
+----
+<1> This annotation needs to be present for the secret to be usable
+<2> Long token string
+
+.Using the token from the ServiceAccount
+ifndef::env-github[]
+image::/img/blog/2017/OBST-Grafana1.png[Using the token from the ServiceAccount]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/OBST-Grafana1.png[Using the token from the ServiceAccount]
+endif::[]
+
+=== Result
+
+So finally we can see the thread count of our Obsidian sample application:
+
+.Thread count in Grafana
+ifndef::env-github[]
+image::/img/blog/2017/OBST-Grafana-ThreadCount.png[Thread count]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/OBST-Grafana-ThreadCount.png[Thread count]
+endif::[]
+
+In the chart we can now see the thread count of our application. You can see that at around 9am we scaled the app from one to two pods.
+
+
+
