@@ -188,198 +188,6 @@
 
 
 <div class="blog-container">
-            <a href="blog/2017/01/25/hosa-status.html"><h1>Getting the status of Hosa</h1></a>
-            <p>25 January 2017, by Heiko W. Rupp</p>
-            <p><div class="sect1">
-<h2 id="_getting_the_status_of_the_hawkular_openshift_agent">Getting the status of the Hawkular OpenShift Agent</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>In a previous blog post I talked about the <a href="http://www.hawkular.org/blog/2017/01/17/obst-hosa.html">Hawkular OpenShift Agent and how to use it to monitor Microservices</a>.</p>
-</div>
-<div class="paragraph">
-<p>While setting up the agent and the config maps is not complicated, it is always possible to make a typo. Hosa luckily has a status endpoint that exposes what it is currently doing.</p>
-</div>
-<div class="paragraph">
-<p>There are two options available:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>Run some commands on the command line</p>
-</li>
-<li>
-<p>Expose the Hosa status endpoint to a browser</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s have a look at both, command line first</p>
-</div>
-<div class="sect2">
-<h3 id="_hand_out_the_rights_to_do_this">Hand out the rights to do this</h3>
-<div class="paragraph">
-<p>Before continuing, you need to ensure that the current OpenShift user has the rights to do so (the user needs to be able to see things in the <em>openshift-infra</em> project). You can do that with the following command for some user or just use system:admin for this purpose.
-We will continue here with a user called <code>admin</code>.</p>
-</div>
-<div class="listingblock">
-<div class="title">Give user admin super powers</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ oc login -u system:admin
-$ oc adm policy add-cluster-role-to-user cluster-admin admin</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_via_command_line">Via command line</h3>
-<div class="paragraph">
-<p>Now we can log in as <em>admin</em> and get the status:</p>
-</div>
-<div class="listingblock">
-<div class="title">Get the status</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ login -u admin -p admin
-$ curl -k -H "Authorization: Bearer `oc whoami -t`" `oc version | grep 'Server ' | awk '{print $2;}'`/api/v1/namespaces/openshift-infra/pods/`oc get pods -n openshift-infra --selector metrics-infra=agent --no-headers | awk '{print $1;}'`:8080/proxy/status
-name: Hawkular OpenShift Agent
-version: 0.2.0 <b class="conum">(1)</b>
-commit_hash: a24e9a23d3deb1e611dd217966319d2f2b6547ed
-pods: <b class="conum">(2)</b>
-  172.31.7.9/openshift-infra/hawkular-openshift-agent-omf3r/7d48d137-e2ec-11e6-89b4-00219b3e7e23:
-  - openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics
-endpoints: <b class="conum">(3)</b>
-  openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics: OK.
-    Last collection at [Wed, 25 Jan 2017 13:56:58 +0000] gathered [22] metrics in
-    [2.940328ms]
-log: <b class="conum">(4)</b>
-- 'Wed, 25 Jan 2017 11:53:29 +0000: STOP collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
-- 'Wed, 25 Jan 2017 11:53:29 +0000: START collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
-[...]</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Version of the agent (and the commit hash it was built from)</p>
-</li>
-<li>
-<p>List of pods it is monitoring with the endppoint it talks to</p>
-</li>
-<li>
-<p>List of endpoints it monitors + result of last collection</p>
-</li>
-<li>
-<p>Latest log messages of the agent.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>If you don&#8217;t give the appropriate right, the command will fail:</p>
-</div>
-<div class="listingblock">
-<div class="title">Running without cluster rights</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ login -u developer -p developer
-$ curl -k -H [... as above ...]
-Error from server (Forbidden): User "developer" cannot list pods in project "openshift-infra"</code></pre>
-</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-When you have the agent source  <a href="https://github.com/hawkular/hawkular-openshift-agent">checked out from git</a>, you can just run <code>make openshift-status</code> instead of the longish <code>curl</code> command shown above.
-</td>
-</tr>
-</table>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_by_exposing_hosa_status_endpoint">By exposing Hosa status endpoint</h3>
-<div class="paragraph">
-<p>The other option is to expose Hosa, which is deployed as a pod only as service and with a route to be able to visit the <code>/status</code> url of it</p>
-</div>
-<div class="listingblock">
-<div class="title">Definition for service and route, <code>hosa-service-route.yml</code></div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">apiVersion: v1
-kind: Service
-metadata:
-  name: hawkular-openshift-agent
-  labels:
-    metrics-infra: agent
-spec:
-  ports:
-    - protocol: TCP
-      port: 8080 <b class="conum">(1)</b>
-  selector:
-    name: hawkular-openshift-agent
----
-apiVersion: v1
-kind: Route
-metadata:
-  name: hosa
-  namespace: openshift-infra
-  labels:
-    metrics-infra: agent
-spec:
-  path: /status <b class="conum">(2)</b>
-  to:
-    kind: Service
-    name: hawkular-openshift-agent
-    weight: 100</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Expose port 8080</p>
-</li>
-<li>
-<p>Put the status endpoint in the url, so that it opens when clicking in the OpenShift console</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>You can then deploy this into OpenShift via</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ oc project openshift-infra
-$ oc create -f hosa-service-route.yml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>OpenShift will then expose a route in the format <code><a href="http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status" class="bare">http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status</a></code>.</p>
-</div>
-<div class="paragraph">
-<p>Navigate to it in the browser and you will get out put like the one on the command line.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/1-hosa-status.png" alt="Status in browser">
-</div>
-<div class="title">Figure 1. Status display in browser</div>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-Future versions of Hosa will set up service and route when you run <code>make openshift-deploy</code> from within the source code.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
             <a href="blog/2017/01/17/obst-hosa.html"><h1>Monitoring Microservices on OpenShift with HOSA</h1></a>
             <p>17 January 2017, by Heiko W. Rupp</p>
             <p><div class="sect1">
@@ -1578,13 +1386,68 @@ We might have scenarios where only specific events should be grouped.</p>
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2016/12/22/hawkular-hawkinit-cli-tool.html"><h1>Hawkinit</h1></a>
+            <p>22 December 2016, by Jirka Kremser</p>
+            <p><div class="sect1">
+<h2 id="_introducing_hawkinit">Introducing Hawkinit</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This simple CLI tool written in NodeJS will help you to set up the running instance of <a href="http://localhost:8080/hawkular-services/docs/quickstart-guide/">Hawkular Services</a>, multiple instances of Cassandra,
+and also the instances of WildFly servers that have the Hawkular agent installed and configured to report the metrics to the Hawkular Services.</p>
+</div>
+<div class="paragraph">
+<p>User can select if he wants the WildFly server running in the standalone mode or as a managed domain. She can also choose how many instances it should spawn.
+If the domain mode is selected, there are some prepared <a href="https://github.com/Jiri-Kremser/hawkfly-domain-dockerfiles#scenarios">scenarios</a> with different profiles and different amount of servers and server groups per host controller.
+Instead of standalone mode, one can also spawn domain with multiple host controllers simulating the complex real world scenario in couple of seconds.</p>
+</div>
+<div class="paragraph">
+<p>Under the hood, the application dynamically creates a <code>docker-compose.yml</code> file in the temp directory with the parameters obtained as the answers and run the services
+as a linked containers that communicate among themselves. No rocket science, but it can be handy when trying to set up something quickly or when trying the Hawkular ecosystem.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_usage">Usage</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The usage is really simple, assuming the <code>npm</code>, <code>docker</code> and <code>docker-compose</code> are installed and the current user belongs to the docker group;
+ all is needed is running the <code>hawkinit</code> and interactively answer all the questions.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ npm install hawkinit -g
+$ hawkinit</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example">Example</h3>
+<div class="paragraph">
+<p>Here is an example of spinning up two standalone WF servers reporting to Hawkular Services with one Cassandra node.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2016/2016-12-22-demo.gif" alt="usage demo">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_contributions">Contributions</h3>
+<div class="paragraph">
+<p>The github repository is <a href="https://github.com/Jiri-Kremser/hawkinit">here</a> and contributions are more than welcome.
+In case of any issue, do not hesitate and report it <a href="https://github.com/Jiri-Kremser/hawkinit/issues">here</a>.</p>
+</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
-          <li>22 December 2016 - <a href="blog/2016/12/22/hawkular-hawkinit-cli-tool.html">Hawkinit</a></li>
           <li>16 December 2016 - <a href="blog/2016/12/16/hawkular-apm-vertx-opentracing-openshift.html">Hawkular APM improvements for OpenShift</a></li>
           <li>06 December 2016 - <a href="blog/2016/12/06/hawkular-metrics-0.22.0.Final-released.html">Hawkular Metrics 0.22.0 - Release</a></li>
           <li>25 November 2016 - <a href="blog/2016/11/25/hawkular-apm-on-openshift.html">Using Hawkular APM on OpenShift</a></li>
