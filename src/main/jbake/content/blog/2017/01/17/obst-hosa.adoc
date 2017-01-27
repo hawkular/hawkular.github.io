@@ -123,6 +123,8 @@ spec:
 
 Hosa is getting noticed once you redeploy the application, and will see the volume and will try to start monitoring the pod. Which leaves us with the OpenShift _secret_.
 
+IMPORTANT: OpenShift will be stuck in state of "Creating Container" until the secret is added, as it can otherwise not inject the secret's value into the environment of the container. Unfortunately it does not tell this and just seem to hang.
+
 ==== Creating the secret, _(5)_
 
 To create a secret that holds our password we need to do two things. First we need to encode the password in base 64 format.
@@ -157,7 +159,7 @@ You can deploy that secret with `oc create -f hosa-secret.yml`.
 Now that we have the agent collecting data and storing in Hawkular-Metrics we can look at them with the help of Grafana.
 Joel Takvorian has http://www.hawkular.org/blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html[described this pretty well], so I am not going to repeat the setup in detail here. 
 
-NOTE: To get quickly started, you can run `$ oc new-app docker.io/hawkular/hawkular-grafana-datasource`. And then when the service is created, click on _Add route_ in the OpenShift UI to expose Grafana to the outside world.
+TIP: To get quickly started, you can run `$ oc new-app docker.io/hawkular/hawkular-grafana-datasource`. And then when the service is created, click on _Add route_ in the OpenShift UI to expose Grafana to the outside world.
 
 To configure the datasource in Grafana, we can now use the namespace of the project and a token
 
