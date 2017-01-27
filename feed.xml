@@ -6,9 +6,256 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Thu, 26 Jan 2017 07:53:00 +0000</pubDate>
-    <lastBuildDate>Thu, 26 Jan 2017 07:53:00 +0000</lastBuildDate>
+    <pubDate>Fri, 27 Jan 2017 14:43:26 +0000</pubDate>
+    <lastBuildDate>Fri, 27 Jan 2017 14:43:26 +0000</lastBuildDate>
 
+    <item>
+      <title>Getting the status of Hosa</title>
+      <link>http://www.hawkular.org/blog/2017/01/27/hosa-status.html</link>
+      <author>noreply@hawkular.org (Heiko W. Rupp)</author>
+      <pubDate>Fri, 27 Jan 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/01/27/hosa-status.html</guid>
+      	<description>
+	&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_getting_the_status_of_the_hawkular_openshift_agent&quot;&gt;Getting the status of the Hawkular OpenShift Agent&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a previous blog post I talked about the &lt;a href=&quot;http://www.hawkular.org/blog/2017/01/17/obst-hosa.html&quot;&gt;Hawkular OpenShift Agent and how to use it to monitor Microservices&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;While setting up the agent and the config maps is not complicated, it is always possible to make a typo. Hosa luckily has a status endpoint that exposes what it is currently doing.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/1-hosa-status.png&quot; alt=&quot;Status in browser&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1. Status display in browser&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The endpoint is secured by basic authentication. We will see below how to set this up.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_exposing_the_hosa_status_endpoint&quot;&gt;Exposing the Hosa status endpoint&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It is possible to expose the agent&amp;#8217;s status endpoint, which is deployed as a pod only, as service and with a route to be able to visit the &lt;code&gt;/status&lt;/code&gt; url of it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+When you have checked out the agent source code and deployed the agent via &lt;code&gt;make openshift-deploy&lt;/code&gt; you can skip the following, as the make command already did the setup.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We will create a Yaml definition for the service and route and also a secret.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Definition for service and route, &lt;code&gt;hosa-service-route.yml&lt;/code&gt;&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;apiVersion: v1
+kind: Service
+metadata:
+  name: hawkular-openshift-agent
+  labels:
+    metrics-infra: agent
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080 &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+  selector:
+    name: hawkular-openshift-agent
+---
+apiVersion: v1
+kind: Route
+metadata:
+  name: hosa
+  namespace: openshift-infra
+  labels:
+    metrics-infra: agent
+spec:
+  path: /status &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+  to:
+    kind: Service
+    name: hawkular-openshift-agent
+    weight: 100
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hawkular-openshift-agent-status
+    labels:
+      metrics-infra: agent
+  data:
+    username: ZGV2  &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+    password: Y2hhbmdlbWU= &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Expose port 8080&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Put the status endpoint in the url, so that it opens when clicking in the OpenShift console&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Username &lt;em&gt;dev&lt;/em&gt; as base64&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Password &lt;em&gt;changeme&lt;/em&gt; as base64&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can then deploy this into OpenShift via&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;$ oc project openshift-infra
+$ oc create -f hosa-service-route.yml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;OpenShift will then expose a route in the format &lt;code&gt;&lt;a href=&quot;http://hosa-openshift-infra.&amp;lt;nodeip&amp;gt;.xip.io/status&quot; class=&quot;bare&quot;&gt;http://hosa-openshift-infra.&amp;lt;nodeip&amp;gt;.xip.io/status&lt;/a&gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you navigate to it then you will be prompted for basic authentication. In above example use &lt;em&gt;dev/changeme&lt;/em&gt; for the credentials.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect3&quot;&gt;
+&lt;h4 id=&quot;_using_a_different_password_above&quot;&gt;Using a different password above&lt;/h4&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you want to use a different password in the above, you have to supply it in Base64-encoding&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Base64 encoding of the password&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;$ echo -n &quot;test4hawkular&quot; | base64
+dGVzdDRoYXdrdWxhcgo== &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Copy this onto the password line of &lt;code&gt;hosa-service-route.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_use_a_different_password_later_on&quot;&gt;Use a different password later on&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you have already installed the secret and want to change the password, you need to delete and re-create the secret with the new values:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Install the new password&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ oc project openshift-infra
+$ oc delete secret hawkular-openshift-agent-status
+$ oc secret new-basicauth hawkular-openshift-agent-status \ &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+    --username=dev \
+    --password=changeme2 &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Name of the secret&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;New password. No Base64 encoding is needed; OpenShift will take care.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Unfortunately this is not enough as OpenShift does not trigger reloads of pods upon changes of secrets (unlike e.g. for ConfigMaps), so we have to explicitly terminate the running agent to have a new instance pick up the new secret:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Make the agent pick up the new password&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ oc project openshift-infra
+$ oc get pods | grep agent
+hawkular-openshift-agent-upubo   1/1       Running     0          2m
+$ oc delete pod hawkular-openshift-agent-upubo
+pod &quot;hawkular-openshift-agent-upubo&quot; deleted&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_lets_have_a_look_at_the_output&quot;&gt;Lets have a look at the output&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now let&amp;#8217;s have a quick look at the output of the status endpoint. I will use the &lt;code&gt;curl&lt;/code&gt; command for this. The output is similar to what is shown in Figure1 above.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Get the status&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-shell&quot; data-lang=&quot;shell&quot;&gt;$ curl -u dev:changeme2 http://hawkular-openshift-agent-openshift-infra.172.31.7.9.xip.io/status
+name: Hawkular OpenShift Agent
+version: 1.0.1.Final-SNAPSHOT &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+commit_hash: 4655b5cb8363b046e80c052c5fe08723770088ea
+pods: &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+  172.31.7.9/openshift-infra/hawkular-openshift-agent-omf3r/7d48d137-e2ec-11e6-89b4-00219b3e7e23:
+  - openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics
+  172.31.7.9/myproject/obs-demo-3-x9hkg/9ad38a87-e3e5-11e6-a3c6-00219b3e7e23:
+  - myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/
+endpoints: &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+  openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics: OK.
+    Last collection at [Wed, 25 Jan 2017 13:56:58 +0000] gathered [22] metrics in
+    [2.940328ms]
+myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/: &apos;Failed to collect
+    metrics from [myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/] at
+    [Thu, 25 Jan 2017 13:57:06 +0000]. err=Failed to collect metrics from Jolokia
+    endpoint [https://172.17.0.6:8778/jolokia/]. err=Post https://172.17.0.6:8778/jolokia/:
+    x509: cannot validate certificate for 172.17.0.6 because it doesn&apos;&apos;t contain any
+    IP SANs&apos; &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+log: &lt;b class=&quot;conum&quot;&gt;(5)&lt;/b&gt;
+- &apos;Wed, 25 Jan 2017 11:53:29 +0000: STOP collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics&apos;
+- &apos;Wed, 25 Jan 2017 11:53:29 +0000: START collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics&apos;
+[source,java]
+[...]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Version of the agent (and the commit hash it was built from)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;List of pods it is monitoring with the endppoint it talks to&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;List of endpoints it monitors + result of last collection&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;This one shows an error because the endpoint is on https, but the certificate check fails and we have not disabled this check&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Latest log messages of the agent.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+When you have the agent source  &lt;a href=&quot;https://github.com/hawkular/hawkular-openshift-agent&quot;&gt;checked out from git&lt;/a&gt;, you can just run &lt;code&gt;make openshift-status&lt;/code&gt; instead of the &lt;code&gt;curl&lt;/code&gt; command shown above.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Monitoring Microservices on OpenShift with HOSA</title>
       <link>http://www.hawkular.org/blog/2017/01/17/obst-hosa.html</link>
@@ -199,6 +446,18 @@ spec:
 &lt;div class=&quot;paragraph&quot;&gt;
 &lt;p&gt;Hosa is getting noticed once you redeploy the application, and will see the volume and will try to start monitoring the pod. Which leaves us with the OpenShift &lt;em&gt;secret&lt;/em&gt;.&lt;/p&gt;
 &lt;/div&gt;
+&lt;div class=&quot;admonitionblock important&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Important&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+OpenShift will be stuck in state of &quot;Creating Container&quot; until the secret is added, as it can otherwise not inject the secret&amp;#8217;s value into the environment of the container. Unfortunately it does not tell this and just seem to hang.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
 &lt;div class=&quot;sect3&quot;&gt;
 &lt;h4 id=&quot;_creating_the_secret_em_5_em&quot;&gt;Creating the secret, &lt;em&gt;(5)&lt;/em&gt;&lt;/h4&gt;
 &lt;div class=&quot;paragraph&quot;&gt;
@@ -247,11 +506,11 @@ data:
 &lt;p&gt;Now that we have the agent collecting data and storing in Hawkular-Metrics we can look at them with the help of Grafana.
 Joel Takvorian has &lt;a href=&quot;http://www.hawkular.org/blog/2016/10/24/hawkular-metrics-openshift-and-grafana.html&quot;&gt;described this pretty well&lt;/a&gt;, so I am not going to repeat the setup in detail here.&lt;/p&gt;
 &lt;/div&gt;
-&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
 &lt;table&gt;
 &lt;tr&gt;
 &lt;td class=&quot;icon&quot;&gt;
-&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
 &lt;/td&gt;
 &lt;td class=&quot;content&quot;&gt;
 To get quickly started, you can run &lt;code&gt;$ oc new-app docker.io/hawkular/hawkular-grafana-datasource&lt;/code&gt;. And then when the service is created, click on &lt;em&gt;Add route&lt;/em&gt; in the OpenShift UI to expose Grafana to the outside world.

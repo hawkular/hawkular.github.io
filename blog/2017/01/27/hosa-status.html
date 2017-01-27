@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Getting the status of Hosa</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../../css/base.css" rel="stylesheet">
+    <link href="../../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../../css/styles.css" rel="stylesheet">
+    <link href="../../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../../js/moment.min.js"></script>
+    <script src="../../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../../">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../../overview/">Overview</a></li>
+                <li><a href="../../../../blog.html">Blog</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Services<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../hawkular-services/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-submenu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                          <ul class="dropdown-menu">
+                            <li class="menu-item ">
+                              <a href="../../../../docs/rest/rest-alerts.html">Alerting</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../../docs/rest/rest-inventory.html">Inventory</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../../docs/rest/rest-metrics.html">Metrics</a>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular APM<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <li><a href="../../../../hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
+                      <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../../hawkular-metrics/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-metrics/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="../../../../hawkular-clients/">Hawkular Clients</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../../community/docs/getting-involved/">Getting Involved</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../../community/docs/developer-guide/">Developer Guide</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../../community/labs/datamining/">Datamining</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../../hawkular-clients/android-client/">Android client</a>
+                        </li>
+                      </ul>
+                  </li>
+                  <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Getting the status of Hosa</h1>
+            <p>blog post</p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div class="sect1">
+<h2 id="_getting_the_status_of_the_hawkular_openshift_agent">Getting the status of the Hawkular OpenShift Agent</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a previous blog post I talked about the <a href="http://www.hawkular.org/blog/2017/01/17/obst-hosa.html">Hawkular OpenShift Agent and how to use it to monitor Microservices</a>.</p>
+</div>
+<div class="paragraph">
+<p>While setting up the agent and the config maps is not complicated, it is always possible to make a typo. Hosa luckily has a status endpoint that exposes what it is currently doing.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/1-hosa-status.png" alt="Status in browser">
+</div>
+<div class="title">Figure 1. Status display in browser</div>
+</div>
+<div class="paragraph">
+<p>The endpoint is secured by basic authentication. We will see below how to set this up.</p>
+</div>
+<div class="sect2">
+<h3 id="_exposing_the_hosa_status_endpoint">Exposing the Hosa status endpoint</h3>
+<div class="paragraph">
+<p>It is possible to expose the agent&#8217;s status endpoint, which is deployed as a pod only, as service and with a route to be able to visit the <code>/status</code> url of it.</p>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+When you have checked out the agent source code and deployed the agent via <code>make openshift-deploy</code> you can skip the following, as the make command already did the setup.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>We will create a Yaml definition for the service and route and also a secret.</p>
+</div>
+<div class="listingblock">
+<div class="title">Definition for service and route, <code>hosa-service-route.yml</code></div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">apiVersion: v1
+kind: Service
+metadata:
+  name: hawkular-openshift-agent
+  labels:
+    metrics-infra: agent
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080 <b class="conum">(1)</b>
+  selector:
+    name: hawkular-openshift-agent
+---
+apiVersion: v1
+kind: Route
+metadata:
+  name: hosa
+  namespace: openshift-infra
+  labels:
+    metrics-infra: agent
+spec:
+  path: /status <b class="conum">(2)</b>
+  to:
+    kind: Service
+    name: hawkular-openshift-agent
+    weight: 100
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: hawkular-openshift-agent-status
+    labels:
+      metrics-infra: agent
+  data:
+    username: ZGV2  <b class="conum">(3)</b>
+    password: Y2hhbmdlbWU= <b class="conum">(4)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Expose port 8080</p>
+</li>
+<li>
+<p>Put the status endpoint in the url, so that it opens when clicking in the OpenShift console</p>
+</li>
+<li>
+<p>Username <em>dev</em> as base64</p>
+</li>
+<li>
+<p>Password <em>changeme</em> as base64</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>You can then deploy this into OpenShift via</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ oc project openshift-infra
+$ oc create -f hosa-service-route.yml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>OpenShift will then expose a route in the format <code><a href="http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status" class="bare">http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status</a></code>.</p>
+</div>
+<div class="paragraph">
+<p>When you navigate to it then you will be prompted for basic authentication. In above example use <em>dev/changeme</em> for the credentials.</p>
+</div>
+<div class="sect3">
+<h4 id="_using_a_different_password_above">Using a different password above</h4>
+<div class="paragraph">
+<p>When you want to use a different password in the above, you have to supply it in Base64-encoding</p>
+</div>
+<div class="listingblock">
+<div class="title">Base64 encoding of the password</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ echo -n "test4hawkular" | base64
+dGVzdDRoYXdrdWxhcgo== <b class="conum">(1)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Copy this onto the password line of <code>hosa-service-route.yml</code></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_use_a_different_password_later_on">Use a different password later on</h3>
+<div class="paragraph">
+<p>When you have already installed the secret and want to change the password, you need to delete and re-create the secret with the new values:</p>
+</div>
+<div class="listingblock">
+<div class="title">Install the new password</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc project openshift-infra
+$ oc delete secret hawkular-openshift-agent-status
+$ oc secret new-basicauth hawkular-openshift-agent-status \ <b class="conum">(1)</b>
+    --username=dev \
+    --password=changeme2 <b class="conum">(2)</b></code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Name of the secret</p>
+</li>
+<li>
+<p>New password. No Base64 encoding is needed; OpenShift will take care.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Unfortunately this is not enough as OpenShift does not trigger reloads of pods upon changes of secrets (unlike e.g. for ConfigMaps), so we have to explicitly terminate the running agent to have a new instance pick up the new secret:</p>
+</div>
+<div class="listingblock">
+<div class="title">Make the agent pick up the new password</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc project openshift-infra
+$ oc get pods | grep agent
+hawkular-openshift-agent-upubo   1/1       Running     0          2m
+$ oc delete pod hawkular-openshift-agent-upubo
+pod "hawkular-openshift-agent-upubo" deleted</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_lets_have_a_look_at_the_output">Lets have a look at the output</h3>
+<div class="paragraph">
+<p>Now let&#8217;s have a quick look at the output of the status endpoint. I will use the <code>curl</code> command for this. The output is similar to what is shown in Figure1 above.</p>
+</div>
+<div class="listingblock">
+<div class="title">Get the status</div>
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ curl -u dev:changeme2 http://hawkular-openshift-agent-openshift-infra.172.31.7.9.xip.io/status
+name: Hawkular OpenShift Agent
+version: 1.0.1.Final-SNAPSHOT <b class="conum">(1)</b>
+commit_hash: 4655b5cb8363b046e80c052c5fe08723770088ea
+pods: <b class="conum">(2)</b>
+  172.31.7.9/openshift-infra/hawkular-openshift-agent-omf3r/7d48d137-e2ec-11e6-89b4-00219b3e7e23:
+  - openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics
+  172.31.7.9/myproject/obs-demo-3-x9hkg/9ad38a87-e3e5-11e6-a3c6-00219b3e7e23:
+  - myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/
+endpoints: <b class="conum">(3)</b>
+  openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics: OK.
+    Last collection at [Wed, 25 Jan 2017 13:56:58 +0000] gathered [22] metrics in
+    [2.940328ms]
+myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/: 'Failed to collect
+    metrics from [myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/] at
+    [Thu, 25 Jan 2017 13:57:06 +0000]. err=Failed to collect metrics from Jolokia
+    endpoint [https://172.17.0.6:8778/jolokia/]. err=Post https://172.17.0.6:8778/jolokia/:
+    x509: cannot validate certificate for 172.17.0.6 because it doesn''t contain any
+    IP SANs' <b class="conum">(4)</b>
+log: <b class="conum">(5)</b>
+- 'Wed, 25 Jan 2017 11:53:29 +0000: STOP collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
+- 'Wed, 25 Jan 2017 11:53:29 +0000: START collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
+[source,java]
+[...]</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Version of the agent (and the commit hash it was built from)</p>
+</li>
+<li>
+<p>List of pods it is monitoring with the endppoint it talks to</p>
+</li>
+<li>
+<p>List of endpoints it monitors + result of last collection</p>
+</li>
+<li>
+<p>This one shows an error because the endpoint is on https, but the certificate check fails and we have not disabled this check</p>
+</li>
+<li>
+<p>Latest log messages of the agent.</p>
+</li>
+</ol>
+</div>
+<div class="admonitionblock tip">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Tip</div>
+</td>
+<td class="content">
+When you have the agent source  <a href="https://github.com/hawkular/hawkular-openshift-agent">checked out from git</a>, you can just run <code>make openshift-status</code> instead of the <code>curl</code> command shown above.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+        <p><em>Published by Heiko W. Rupp on  27 January 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../../js/behavior.js"></script>
+    <script src="../../../../js/prettify.js"></script>
+    <script src="../../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
