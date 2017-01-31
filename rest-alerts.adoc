@@ -45,7 +45,23 @@ Content-Type: application/json
 
 Get alerts with optional filtering +
  +
-If not criteria defined, it fetches all alerts available in the system.
+If not criteria defined, it fetches all alerts available in the system. + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) 
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+; <identifier> and <simple_value> follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -61,8 +77,9 @@ If not criteria defined, it fetches all alerts available in the system.
 |triggerIds|No|Filter out alerts for unspecified triggers. |string|Comma separated list of trigger IDs.
 |statuses|No|Filter out alerts for unspecified lifecycle status.|string|Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]
 |severities|No|Filter out alerts for unspecified severity. |string|Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]
-|tags|No|Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out alerts for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out alerts for unspecified tags.|string|A tag query expression.
 |startResolvedTime|No|Filter out alerts resolved before this time.|integer|Timestamp in millisecond since epoch.
 |endResolvedTime|No|Filter out alerts resolved after this time.|integer|Timestamp in millisecond since epoch.
 |startAckTime|No|Filter out alerts acknowledged before this time.|integer|Timestamp in millisecond since epoch.
@@ -300,7 +317,23 @@ Send data for alert processing/condition evaluation. +
 Delete alerts with optional filtering. +
  +
 Return number of alerts deleted. + 
-WARNING: If not criteria defined, it deletes all alerts stored in the system.
+WARNING: If not criteria defined, it deletes all alerts stored in the system. + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) 
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+; <identifier> and <simple_value> follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -316,8 +349,9 @@ WARNING: If not criteria defined, it deletes all alerts stored in the system.
 |triggerIds|No|Filter out alerts for unspecified triggers.|string|Comma separated list of trigger IDs.
 |statuses|No|Filter out alerts for unspecified lifecycle status.|string|Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]
 |severities|No|Filter out alerts for unspecified severity.|string|Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]
-|tags|No|Filter out alerts for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out alerts for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out alerts for unspecified tags.|string|A tag query expression.
 |startResolvedTime|No|Filter out alerts resolved before this time.|integer|Timestamp in millisecond since epoch.
 |endResolvedTime|No|Filter out alerts resolved after this time.|integer|Timestamp in millisecond since epoch.
 |startAckTime|No|Filter out alerts acknowledged before this time.|integer|Timestamp in millisecond since epoch.
@@ -1003,7 +1037,23 @@ Get alerts with optional filtering from multiple tenants. +
 If not criteria defined, it fetches all alerts available in the system. + 
  + 
 Multiple tenants are expected on HawkularTenant header as a comma separated list. + 
-i.e. HawkularTenant: tenant1,tenant2,tenant3 +
+i.e. HawkularTenant: tenant1,tenant2,tenant3 + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) 
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+; <identifier> and <simple_value> follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -1019,8 +1069,9 @@ i.e. HawkularTenant: tenant1,tenant2,tenant3 +
 |triggerIds|No|Filter out alerts for unspecified triggers. |string|Comma separated list of trigger IDs.
 |statuses|No|Filter out alerts for unspecified lifecycle status.|string|Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]
 |severities|No|Filter out alerts for unspecified severity. |string|Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]
-|tags|No|Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out alerts for unspecified tags.|string|A tag query expression.
 |startResolvedTime|No|Filter out alerts resolved before this time.|integer|Timestamp in millisecond since epoch.
 |endResolvedTime|No|Filter out alerts resolved after this time.|integer|Timestamp in millisecond since epoch.
 |startAckTime|No|Filter out alerts acknowledged before this time.|integer|Timestamp in millisecond since epoch.
@@ -1061,7 +1112,23 @@ Get events with optional filtering from multiple tenants. +
 If not criteria defined, it fetches all events stored in the system. + 
  + 
 Multiple tenants are expected on HawkularTenant header as a comma separated list. + 
-i.e. HawkularTenant: tenant1,tenant2,tenant3 +
+i.e. HawkularTenant: tenant1,tenant2,tenant3 + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) 
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+; <identifier> and <simple_value> follows pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -1076,8 +1143,9 @@ i.e. HawkularTenant: tenant1,tenant2,tenant3 +
 |eventIds|No|Filter out events for unspecified eventIds.|string|Comma separated list of event IDs.
 |triggerIds|No|Filter out events for unspecified triggers.|string|Comma separated list of trigger IDs.
 |categories|No|Filter out events for unspecified categories. |string|Comma separated list of category values.
-|tags|No|Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out events for unspecified tags.|string|A tag query expression.
 |thin|No|Return only thin events, do not include: evalSets.|boolean|-
 
 |=======================
@@ -1120,7 +1188,23 @@ Specify '*' for value to match all values.
 
 Get events with optional filtering. +
  +
-If not criteria defined, it fetches all events stored in the system.
+If not criteria defined, it fetches all events stored in the system. + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) 
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+; <identifier> and <simple_value> follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -1135,8 +1219,9 @@ If not criteria defined, it fetches all events stored in the system.
 |eventIds|No|Filter out events for unspecified eventIds.|string|Comma separated list of event IDs.
 |triggerIds|No|Filter out events for unspecified triggers.|string|Comma separated list of trigger IDs.
 |categories|No|Filter out events for unspecified categories. |string|Comma separated list of category values.
-|tags|No|Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out events for unspecified tags.|string|A tag query expression.
 |thin|No|Return only thin events, do not include: evalSets.|boolean|-
 
 |=======================
@@ -1259,7 +1344,23 @@ Input events are treated as external data and those are not persisted into the s
 Delete events with optional filtering. +
  +
 Return number of events deleted. + 
-WARNING: If not criteria defined, it deletes all events stored in the system.
+WARNING: If not criteria defined, it deletes all events stored in the system. + 
+Tags Query language (BNF): + 
+[source] 
+---- 
+<tag_query> ::= ( <expression> | "(" <object> ")" | <object> <logical_operator> <object> ) 
+<expression> ::= ( <tag_name> | <not> <tag_name> | <tag_name> <boolean_operator> <tag_value> | <tag_name> <array_operator> <array> ) 
+<not> ::= [ "NOT" | "not" ] 
+<logical_operator> ::= [ "AND" | "OR" | "and" | "or" ] 
+<boolean_operator> ::= [ "==" | "!=" ] 
+<array_operator> ::= [ "IN" | "NOT IN" | "in" | "not in" ] 
+<array> ::= ( "[" "]" | "[" ( "," <tag_value> )* ) +
+<tag_name> ::= <identifier> 
+<tag_value> ::= ( "'" <regexp> "'" | <simple_value> ) 
+; 
+ ; <identifier> and <simple_value> follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]* 
+; <regexp> follows any valid Java Regular Expression format 
+----
 
 
 
@@ -1274,8 +1375,9 @@ WARNING: If not criteria defined, it deletes all events stored in the system.
 |eventIds|No|Filter out events for unspecified eventIds. |string|Comma separated list of event IDs.
 |triggerIds|No|Filter out events for unspecified triggers. |string|Comma separated list of trigger IDs.
 |categories|No|Filter out events for unspecified categories. |string|Comma separated list of category values.
-|tags|No|Filter out alerts for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
+|tags|No|[DEPRECATED] Filter out events for unspecified tags.|string|Comma separated list of tags, each tag of format 'name\|value'. + 
 Specify '*' for value to match all values.
+|tagQuery|No|Filter out events for unspecified tags.|string|A tag query expression.
 
 |=======================
 
@@ -3106,43 +3208,17 @@ There are many options on triggers to help ensure that alerts are not generated 
 including ways of automatically disabling and enabling the trigger. + 
 
 
-
+Subtype of <<Event>>
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|eventType|No|Indicate if this object is an EVENT or an ALERT. This is a read-only field controlled by the system for serialization purposes.|string|EVENT, ALERT|-
 |severity|No|Severity set for a <<Trigger>> and assigned to an alert when it is generated.|string|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
 |status|No|Lifecycle current status.|string|OPEN, ACKNOWLEDGED, RESOLVED|-
-|tenantId|No|Tenant id owner of this event.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
-|id|Yes|Unique identifier for this event.|string|-|-
 |notes|No|Notes attached with this alert.|array of <<Note>>|-|-
-|ctime|Yes|Creation time for this event.|integer|-|-
 |lifecycle|No|List of lifecycle states that this alert has navigated.|array of <<LifeCycle>>|-|-
-|dataSource|No|Optional dataSource for Event. Used for <<Trigger>> in <<EventCondition>> to evaluate events with triplet [tenantId, source, dataId] as unique identifier.|string|Timestamp in milliseconds.|-
 |resolvedEvalSets|No|The Eval Sets that resolved the <<Trigger>> in AUTORESOLVE mode. + 
  Null for non AUTORESOLVE triggers.|array of array of <<ConditionEval>>|-|-
-|dataId|Yes|Data identifier used for Events condition evaluation. Events must supply a valid dataId to be considered for <<EventCondition>> evaluation. + 
-DataIds in an events context should incorporate the source of the event (for uniqueness). + 
-Events generated from a <<Trigger>> will have dataId set to the triggerId, therefore allowing chaining with other <<EventCondition>>. |string|-|-
-|category|Yes|Category of Event. Suitable for display. + 
-Alerts will use ALERT category. + 
-Events generated from <<Trigger>> will use Trigger.eventCategory or TRIGGER category as default.|string|Any category defined by the user.|ALERT or TRIGGER
-|text|Yes|Description of the event. Suitable for display. + 
-Events generated from <<Trigger>> will use Trigger.eventText or Trigger.description/Trigger.name as default.|string|Any description defined by the user.|-
-|context|No|Properties defined by the user for this event. + 
- Events generated from <<Trigger>> will use Trigger.context. + 
-Context cannot be used as part of Event conditions expressions or criteria in finder methods.|object|map[string,string]|-
-|tags|No|Tags defined by the user for this event. + 
- Events generated from <<Trigger>> will use Trigger.tags. + 
-Tags can be used as part of Event conditions expressions and criteria in finder methods. + 
-Tag value cannot be null.|object|map[string,string]|-
-|trigger|No|Trigger that created the event. + 
- Null for API-generated Events.|<<Trigger>>|-|-
-|dampening|No|Dampening defined when the event was created. + 
- Null for API-generated Events.|<<Dampening>>|-|-
-|evalSets|No|The Eval Sets that fired the trigger. + 
- Null for API-generated Events.|array of array of <<ConditionEval>>|-|-
 
 |=======================
 
@@ -3381,7 +3457,7 @@ If not assigned the timestamp will be assigned to current time.
 
 [[Definitions]]
 === Definitions
-Representation of a list of full triggers (trigger, dampenings and conditions) and actions definitions. + 
+Representation of a list of full triggers (trigger, dampenings and conditions),group members triggers and actions definitions. + 
 Used for bulk import/export operations.
 
 
@@ -3390,6 +3466,7 @@ Used for bulk import/export operations.
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |triggers|No|List of full triggers.|array of <<FullTrigger>>|-|-
+|groupMembersInfo|No|List of group member triggers information.|array of <<GroupMemberInfo>>|-|-
 |actions|No|List of action definitions.|array of <<ActionDefinition>>|-|-
 
 |=======================
