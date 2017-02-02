@@ -4,20 +4,24 @@ Joel Takvorian
 :jbake-type: post
 :jbake-status: published
 :jbake-tags: blog, metrics, grafana, events
+:figure-caption!:
 
 The latest release of the link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.7[Hawkular Grafana plugin] (1.0.7) introduced a new feature, implementing link:http://docs.grafana.org/reference/annotations/[Grafana Annotations].
 
+[.text-center]
+.A logged error, associated with a tag
 ifndef::env-github[]
 image::/img/blog/2017/2017-02-03-annotations-tooltip-2.png[Logged error]
 endif::[]
 ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-02-03-annotations-tooltip-2.png[Logged error]
 endif::[]
-_A logged error, associated with a tag_
 
 In Grafana, annotations allow to display vertical bars on charts to illustrate an event in time, with a dedicated tooltip containing a custom text and eventually tags. All annotations are shared across graphs in a given dashboard.
 
-In hawkular-metrics, events can be stored in link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_metric_types[String metrics]. You can send string datapoints, just like you would send gauge or counter datapoints on other metrics. Simply note that these strings are currently limited to 2 KB weight.
+In hawkular-metrics, events can be stored in link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_metric_types[String metrics]. You can send string datapoints, just like you would send gauge or counter datapoints on other metrics. Simply note that these strings are currently limited to 2 KB length.
+
+=== Sample application
 
 As a concrete example, we will reuse the sample application that I described link:http://www.hawkular.org/blog/2017/01/16/hawkular-metrics-with-dropwizard.html[in a previous post], which creates metrics through dropwizard with the pretext of a small benchmarking scenario.
 It will be modified to generate some events: scenario steps and error logs.
@@ -81,6 +85,8 @@ And the whole scenario:
 
 It's pretty much everything for our sample application.
 
+=== Usage in Grafana
+
 Now let's switch to Grafana. From the _manage dashboard_ menu you can access the _Annotations_ settings to add a new one.
 From there you can select your Hawkular datasource and provide in _query_ the name of the _String_ metric used in the applications:
 
@@ -102,13 +108,13 @@ endif::[]
 
 When passing the cursor over the events, a tooltip is displayed:
 
+."Starting the scenario" event, with ehcache tag displayed
 ifndef::env-github[]
 image::/img/blog/2017/2017-02-03-annotations-tooltip-1.png[Starting scenario]
 endif::[]
 ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-02-03-annotations-tooltip-1.png[Starting scenario]
 endif::[]
-_"Starting the scenario" event, with ehcache tag displayed_
 
 So as you can see, annotations are a very simple way to show valuable information in Grafana.
 In this example we send all our events on the same string metric, but of course it's possible to dispatch them on several ones, and thus configure several annotation queries in Grafana with different colors.
