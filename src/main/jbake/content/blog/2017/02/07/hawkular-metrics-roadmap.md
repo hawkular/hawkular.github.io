@@ -18,7 +18,7 @@ First, let's review the progress against the roadmap set at the beginning of las
 
 The project was updated to run on Cassandra 3.x in May ([release 0.15.0](https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0)). The native Grafana integration was released in July ([release 0.17.0](https://github.com/hawkular/hawkular-metrics/releases/tag/0.17.0)) and it is now an [independent project](https://github.com/hawkular/hawkular-grafana-datasource). And lastly, we improved the developer support by creating distributions that include Metrics, Alerting and Cassandra pre-deployed inside Wildlfly to make it extremely simple to download and get the project running.
 
-The pre-computed aggregates were postponed to this year due to te major work done for compressing data at rest released in October ([release 0.20.0](https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0)). The histogram metrics were also carried-over to this year.
+The pre-computed aggregates were postponed to this year due to the major work done for compressing data at rest released in October ([release 0.20.0](https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0)). The histogram metrics were also carried-over to this year.
 
 **Roadmap - 2017**
 
@@ -26,10 +26,10 @@ The pre-computed aggregates were postponed to this year due to te major work don
 * **Administration & Management**
     * Add monitoring and management features for Cassandra and application server; the goal is to unify the configuration and management for Cassandra, Metrics and Alerting.
     * Provide diagnostics and error reports to administrators; automatic or on-demand,  scan the setup and find errors to help debug difficult problems
-    * Allow automatic scaling of both Cassandra and application servers via the HPA
+    * Allow automatic scaling of both Cassandra and application servers via the HPA in OpenShifts
 
 
-* **Pre-computted Aggregates (carry-over from 2016)**
+* **Pre-computed [Aggregates](https://issues.jboss.org/browse/HWKMETRICS-580s) (carry-over from 2016)**
     * Needed to support long term data storage and retrieval for high volume metrics
     * Single metrics roll-ups are also the foundation for pre-computed multi-metric  aggregations, that goal is to work on this subsequent to single metric  roll-ups
 
@@ -44,7 +44,7 @@ The pre-computed aggregates were postponed to this year due to te major work don
 
 
 * **Revamped Metrics Alerter**
-    * The existing external alerter has limited query capability, the goal is to overhaul the query capability to allow more complex queries and time comparisions
+    * The existing external alerter has limited query capability, the goal is to overhaul the query capability to allow more complex queries and time comparisons
     * Make the external alerter distributed
 
 
@@ -54,12 +54,12 @@ The pre-computed aggregates were postponed to this year due to te major work don
 
 
 * **Documentation Improvements**
-    * Make available API documentation for each release; this would resolve a long standing issue where the API documentation is not versioned, and only the current release has the documentation published on the Hawkular website.
-    * Publish perfomance reports related to disk size, memory comsumption, cpu consumption, query throughput, and storage throughput.
+    * Make available API documentation for each release; this would resolve a long standing issue where the API documentation is not versioned, and only the current release has the documentation published on the Hawkular website
+    * Publish performance reports related to disk size, memory consumption, CPU consumption, query throughput, and storage throughput
 
 
 * **HPA Integration**
-    * Provide an endpoint for Hawkular Metrics to be used by the HPA. This will allow any metric stored to be used for autoscaling components in OpenShift/Kubernetes.
+    * Provide an endpoint for Hawkular Metrics to be used by the HPA. This will allow any metric stored to be used for autoscaling components in OpenShift/Kubernetess
 
 
 If you have any other suggestion or would like to contribute to the project, please contact us; feedback is more than welcomed.
