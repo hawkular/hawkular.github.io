@@ -6,9 +6,324 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 13 Feb 2017 07:14:28 +0000</pubDate>
-    <lastBuildDate>Mon, 13 Feb 2017 07:14:28 +0000</lastBuildDate>
+    <pubDate>Mon, 13 Feb 2017 10:02:16 +0000</pubDate>
+    <lastBuildDate>Mon, 13 Feb 2017 10:02:16 +0000</lastBuildDate>
 
+    <item>
+      <title>Monitoring Canary Releases with Hawkular APM</title>
+      <link>http://www.hawkular.org/blog/2017/02/13/monitoring-canary-deployments.html</link>
+      <author>noreply@hawkular.org (Juraci Paixão Kröhling)</author>
+      <pubDate>Mon, 13 Feb 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/02/13/monitoring-canary-deployments.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In our last release, &lt;a href=&quot;/blog/2017/02/04/hawkular-apm-service-deployments.html&quot;&gt;we built a Services screen&lt;/a&gt;
+on top of a feature added a couple of releases ago, the &quot;service name&quot; and &quot;build
+stamps&quot;. These properties can be specified as an environment variable or system
+property, and are automatically detected when the monitored application runs on
+OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-teaser.png&quot; alt=&quot;Bars comparing performance of different service versions&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this blog post, we&amp;#8217;ll show you how to use that screen to monitor a Canary release
+scenario. &lt;a href=&quot;https://martinfowler.com/bliki/CanaryRelease.html&quot;&gt;A Canary&lt;/a&gt; release
+is a technique used to minimize downtime (and risk) between deployments by preparing
+the new version on a completely different production environment and, once this new
+version is ready to serve requests, redirect &lt;em&gt;some&lt;/em&gt; traffic from the &quot;old&quot; version
+to the &quot;new&quot; version. If this new version looks good, it gradually replaces the
+old version, eventually taking over all traffic. This technique builds on top of
+the &lt;a href=&quot;https://martinfowler.com/bliki/BlueGreenDeployment.html&quot;&gt;Blue-Green&lt;/a&gt; deployment
+technique.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_getting_the_example_running&quot;&gt;Getting the example running&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll use our &lt;a href=&quot;https://github.com/hawkular/hawkular-apm/tree/master/examples/vertx-opentracing&quot;&gt;Vert.x OpenTracing example&lt;/a&gt;
+for this demo. First, let&amp;#8217;s deploy the example into OpenShift, along with Hawkular APM,
+by running the following Ansible playbook:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ ansible-playbook vertx-opentracing.yml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After a few minutes, it should print out the address for the Order Manager microservice,
+like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;TASK [Print out the order-manager address] *************************************
+ok: [localhost] =&amp;gt; {
+    &quot;msg&quot;: &quot;The hostname for the Order Manager service is: http://order-manager-order-manager.192.168.2.107.xip.io&quot;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this point, change the &lt;code&gt;genorders.sh&lt;/code&gt; script, to use this host instead of the
+original &lt;code&gt;&lt;a href=&quot;http://localhost:8180&quot; class=&quot;bare&quot;&gt;http://localhost:8180&lt;/a&gt;&lt;/code&gt; on the &lt;code&gt;curl&lt;/code&gt; command. It should then read:
+&lt;code&gt;curl -X POST -H &quot;Content-Type: application/json&quot; -d &quot;$data&quot; &lt;a href=&quot;http://order-manager-order-manager.192.168.2.107.xip.io/orders&quot; class=&quot;bare&quot;&gt;http://order-manager-order-manager.192.168.2.107.xip.io/orders&lt;/a&gt;&lt;/code&gt;.
+Note that your hostname might be different than our example. You can then run
+the &lt;code&gt;genorders.sh&lt;/code&gt; script, which will simulate some random requests to the Order
+Manager. The script will execute until it&amp;#8217;s cancelled with &lt;code&gt;Ctrl+C&lt;/code&gt;, and should
+have an output similar to this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;Creating an order for account=brian item=laptop quantity=3
+{
+  &quot;accountId&quot; : &quot;brian&quot;,
+  &quot;itemId&quot; : &quot;laptop&quot;,
+  &quot;quantity&quot; : 3,
+  &quot;id&quot; : &quot;d3f09a97-6f87-45c5-98c8-b592b6beb501&quot;
+}
+
+Creating an order for account=sarah item=car quantity=4
+Not account found
+
+Creating an order for account=steve item=car quantity=2
+{
+  &quot;accountId&quot; : &quot;steve&quot;,
+  &quot;itemId&quot; : &quot;car&quot;,
+  &quot;quantity&quot; : 2,
+  &quot;id&quot; : &quot;7f095b1e-94a2-4398-8480-01aaea43e021&quot;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular APM should be located under the service name &lt;code&gt;hawkular-apm&lt;/code&gt;, so, the URL
+follows the pattern: &lt;code&gt;&lt;a href=&quot;https://hawkular-apm-order-manager.YOUR-IP.xip.io&quot; class=&quot;bare&quot;&gt;https://hawkular-apm-order-manager.YOUR-IP.xip.io&lt;/a&gt;&lt;/code&gt;. Note
+that you&amp;#8217;ll need to change the &lt;code&gt;YOUR-IP&lt;/code&gt; part.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After a few minutes with our &lt;code&gt;genorders.sh&lt;/code&gt; script running, the following can be
+seen:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-initial-apm-screen-with-data.png&quot; alt=&quot;Hawkular APM Dashboard with Data&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s open the &lt;em&gt;Services&lt;/em&gt; tab, select the service &lt;em&gt;order-manager.account-manager&lt;/em&gt;
+and the &lt;em&gt;order-manager.account-manager-1&lt;/em&gt; version. These names are derived automatically
+from the service name and deployment number provided by OpenShift. Let&amp;#8217;s select
+an &lt;em&gt;Aggregation Interval&lt;/em&gt; of 10 seconds.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-single-service.png&quot; alt=&quot;Hawkular APM Services Tab with One Service&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_introducing_the_blue_deployment_and_the_canary_release&quot;&gt;Introducing the Blue Deployment and the Canary Release&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, we&amp;#8217;ll create a new build and new application for our &quot;Blue&quot; deployment. We
+first set the current deployment to have 4 replicas, so that we&amp;#8217;ll have 80% of
+the traffic going to the old version, and 20% going to the new one.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;cd account-manager/
+oc scale deploymentconfig account-manager --replicas=4
+oc new-build --binary --name=account-manager-blue -l app=account-manager-blue
+oc start-build account-manager-blue --from-dir=. --follow
+oc new-app \
+  account-manager-blue \
+  -l app=account-manager-blue \
+  HAWKULAR_APM_URI=&apos;http://hawkular-apm&apos; \
+  HAWKULAR_APM_USERNAME=&apos;admin&apos; \
+  HAWKULAR_APM_PASSWORD=&apos;password&apos;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This is the expected output for the previous command:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;--&amp;gt; Found image 3f61c6a (37 seconds old) in image stream account-manager-blue under tag &quot;latest&quot; for &quot;account-manager-blue&quot;
+
+    * This image will be deployed in deployment config &quot;account-manager-blue&quot;
+    * The image does not expose any ports - if you want to load balance or send traffic to this component
+      you will need to create a service with &apos;expose dc/account-manager-blue --port=[port]&apos; later
+
+--&amp;gt; Creating resources with label app=account-manager-blue ...
+    deploymentconfig &quot;account-manager-blue&quot; created
+--&amp;gt; Success
+    Run &apos;oc status&apos; to view your app.&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We should also have a new service displayed on OpenShift console. Note the new
+&lt;em&gt;account-manager-blue&lt;/em&gt; deployment, with 1 pod.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-openshift-account-manager-services.png&quot; alt=&quot;OpenShift with Blue/Green deployments for Account Manager&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our Account Manager microservice is a Vert.x Verticle, and reacts on messages sent
+to &lt;code&gt;AccountManager.getAccount&lt;/code&gt;. As we are using a clustered event bus, our new
+&lt;em&gt;account-manager-blue&lt;/em&gt; service will join the cluster and start replying to those
+messages. The Vert.x clustered bus will take care of load balancing the processing
+of the messages for us.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Because of that, we should already have some data being captured and reported to
+our Hawkular APM server. On the &lt;em&gt;Services&lt;/em&gt; screen, add the new service &lt;em&gt;order-manager.account-manager-blue&lt;/em&gt;,
+version &lt;em&gt;order-manager.account-manager-blue-1&lt;/em&gt; to the graphic. It should then look similar
+to this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-account-manager-blue-added.png&quot; alt=&quot;Hawkular APM Services Tab with Blue and Green services&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We should see the bar for our &lt;em&gt;blue&lt;/em&gt; deployment (orange bar on the image) to be
+around a quarter the size of the old version (blue bar on the image). As the number
+of errors is in line with what we expect, we can now reduce the traffic to the old
+version by adding more replicas to the new version and decreasing replicas from
+the old one:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager-blue --replicas=3
+oc scale deploymentconfig account-manager --replicas=2&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s leave it running for a minute or so, and we should see that the new version
+is now responsible for processing around 60% of the traffic, while the old version
+is now processing around 40%. If it still looks good, we&amp;#8217;ll make it 80%/20%:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager-blue --replicas=4
+oc scale deploymentconfig account-manager --replicas=1&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Eventually, we would want to decommission the old version:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager-blue --replicas=5
+oc scale deploymentconfig account-manager --replicas=0&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s now simulate a new build for our &lt;em&gt;Account Manager&lt;/em&gt; microservice, to be deployed
+on the &lt;em&gt;green&lt;/em&gt; service (&lt;em&gt;account-manager&lt;/em&gt;):&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;cd account-manager/
+oc start-build account-manager --from-dir=. --follow&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once it&amp;#8217;s finished, we can direct some of the traffic to this new version:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager --replicas=1
+oc scale deploymentconfig account-manager-blue --replicas=4&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After a few seconds, we should see the new version as a valid option on our &lt;em&gt;Services&lt;/em&gt;
+screen:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-new-version-available.png&quot; alt=&quot;New Green version&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s add it to the graphic, and watch the errors. If this version looks sane,
+we can direct more traffic to it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager --replicas=3
+oc scale deploymentconfig account-manager-blue --replicas=2&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And eventually, direct all traffic to it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc scale deploymentconfig account-manager --replicas=5
+oc scale deploymentconfig account-manager-blue --replicas=0&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;On the next screenshot, we can infer the following from the graphic:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;We started with 100% traffic on &lt;em&gt;order-manager.account-manager-1&lt;/em&gt; (green deployment, blue bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We directed some traffic to &lt;em&gt;order-manager.account-manager-blue-1&lt;/em&gt; (blue deployment, orange bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We switched off &lt;em&gt;order-manager.account-manager-1&lt;/em&gt; (green deployment, blue bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We deployed the new version &lt;em&gt;order-manager.account-manager-2&lt;/em&gt; (green deployment, green bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We directed some traffic to &lt;em&gt;order-manager.account-manager-2&lt;/em&gt; (green deployment, green bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;We switched off &lt;em&gt;order-manager.account-manager-blue-1&lt;/em&gt; (blue deployment, orange bar)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-02-13-final.png&quot; alt=&quot;Final Result&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_closing_notes&quot;&gt;Closing notes&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;On a real world scenario, the manual steps we did would be automated, potentially
+making your Continuous Deployment scripts read data from Hawkular APM in order
+to decide whether to scale up or down a canary release. Thanks to Vert.x, we were
+able to completely abstract the load balancer, controlling the percentage of traffic
+by adjusting the number of replicas on the Green/Blue deployments, but it&amp;#8217;s also
+possible to achieve similar effects with other stacks. The &lt;a href=&quot;http://bit.ly/msa-instructions&quot;&gt;OpenShift Hello World Microservices Architecture&lt;/a&gt;
+shows another way this can be achieved.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Thanks to OpenShift, we were able to instantly see the performance of new versions,
+comparing it with previous versions. Outside of OpenShift, we would be able to get
+the same effect by properly setting the environment variables &lt;em&gt;HAWKULAR_APM_SERVICE_NAME&lt;/em&gt;
+and &lt;em&gt;HAWKULAR_APM_BUILDSTAMP&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Try it out and let us know about your experiments! Should you face any issues, or
+if you want to talk to us, join us at &lt;code&gt;#hawkular&lt;/code&gt; on &lt;code&gt;irc.freenode.net&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Metrics - 2017 Roadmap</title>
       <link>http://www.hawkular.org/blog/2017/02/07/hawkular-metrics-roadmap.html</link>

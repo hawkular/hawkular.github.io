@@ -188,6 +188,317 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/02/13/monitoring-canary-deployments.html"><h1>Monitoring Canary Releases with Hawkular APM</h1></a>
+            <p>13 February 2017, by Juraci Paixão Kröhling</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In our last release, <a href="/blog/2017/02/04/hawkular-apm-service-deployments.html">we built a Services screen</a>
+on top of a feature added a couple of releases ago, the "service name" and "build
+stamps". These properties can be specified as an environment variable or system
+property, and are automatically detected when the monitored application runs on
+OpenShift.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-teaser.png" alt="Bars comparing performance of different service versions">
+</div>
+</div>
+<div class="paragraph">
+<p>In this blog post, we&#8217;ll show you how to use that screen to monitor a Canary release
+scenario. <a href="https://martinfowler.com/bliki/CanaryRelease.html">A Canary</a> release
+is a technique used to minimize downtime (and risk) between deployments by preparing
+the new version on a completely different production environment and, once this new
+version is ready to serve requests, redirect <em>some</em> traffic from the "old" version
+to the "new" version. If this new version looks good, it gradually replaces the
+old version, eventually taking over all traffic. This technique builds on top of
+the <a href="https://martinfowler.com/bliki/BlueGreenDeployment.html">Blue-Green</a> deployment
+technique.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_getting_the_example_running">Getting the example running</h3>
+<div class="paragraph">
+<p>We&#8217;ll use our <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/vertx-opentracing">Vert.x OpenTracing example</a>
+for this demo. First, let&#8217;s deploy the example into OpenShift, along with Hawkular APM,
+by running the following Ansible playbook:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ ansible-playbook vertx-opentracing.yml</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After a few minutes, it should print out the address for the Order Manager microservice,
+like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>TASK [Print out the order-manager address] *************************************
+ok: [localhost] =&gt; {
+    "msg": "The hostname for the Order Manager service is: http://order-manager-order-manager.192.168.2.107.xip.io"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this point, change the <code>genorders.sh</code> script, to use this host instead of the
+original <code><a href="http://localhost:8180" class="bare">http://localhost:8180</a></code> on the <code>curl</code> command. It should then read:
+<code>curl -X POST -H "Content-Type: application/json" -d "$data" <a href="http://order-manager-order-manager.192.168.2.107.xip.io/orders" class="bare">http://order-manager-order-manager.192.168.2.107.xip.io/orders</a></code>.
+Note that your hostname might be different than our example. You can then run
+the <code>genorders.sh</code> script, which will simulate some random requests to the Order
+Manager. The script will execute until it&#8217;s cancelled with <code>Ctrl+C</code>, and should
+have an output similar to this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>Creating an order for account=brian item=laptop quantity=3
+{
+  "accountId" : "brian",
+  "itemId" : "laptop",
+  "quantity" : 3,
+  "id" : "d3f09a97-6f87-45c5-98c8-b592b6beb501"
+}
+
+Creating an order for account=sarah item=car quantity=4
+Not account found
+
+Creating an order for account=steve item=car quantity=2
+{
+  "accountId" : "steve",
+  "itemId" : "car",
+  "quantity" : 2,
+  "id" : "7f095b1e-94a2-4398-8480-01aaea43e021"
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Hawkular APM should be located under the service name <code>hawkular-apm</code>, so, the URL
+follows the pattern: <code><a href="https://hawkular-apm-order-manager.YOUR-IP.xip.io" class="bare">https://hawkular-apm-order-manager.YOUR-IP.xip.io</a></code>. Note
+that you&#8217;ll need to change the <code>YOUR-IP</code> part.</p>
+</div>
+<div class="paragraph">
+<p>After a few minutes with our <code>genorders.sh</code> script running, the following can be
+seen:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-initial-apm-screen-with-data.png" alt="Hawkular APM Dashboard with Data">
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s open the <em>Services</em> tab, select the service <em>order-manager.account-manager</em>
+and the <em>order-manager.account-manager-1</em> version. These names are derived automatically
+from the service name and deployment number provided by OpenShift. Let&#8217;s select
+an <em>Aggregation Interval</em> of 10 seconds.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-single-service.png" alt="Hawkular APM Services Tab with One Service">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_introducing_the_blue_deployment_and_the_canary_release">Introducing the Blue Deployment and the Canary Release</h3>
+<div class="paragraph">
+<p>Now, we&#8217;ll create a new build and new application for our "Blue" deployment. We
+first set the current deployment to have 4 replicas, so that we&#8217;ll have 80% of
+the traffic going to the old version, and 20% going to the new one.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">cd account-manager/
+oc scale deploymentconfig account-manager --replicas=4
+oc new-build --binary --name=account-manager-blue -l app=account-manager-blue
+oc start-build account-manager-blue --from-dir=. --follow
+oc new-app \
+  account-manager-blue \
+  -l app=account-manager-blue \
+  HAWKULAR_APM_URI='http://hawkular-apm' \
+  HAWKULAR_APM_USERNAME='admin' \
+  HAWKULAR_APM_PASSWORD='password'</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This is the expected output for the previous command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>--&gt; Found image 3f61c6a (37 seconds old) in image stream account-manager-blue under tag "latest" for "account-manager-blue"
+
+    * This image will be deployed in deployment config "account-manager-blue"
+    * The image does not expose any ports - if you want to load balance or send traffic to this component
+      you will need to create a service with 'expose dc/account-manager-blue --port=[port]' later
+
+--&gt; Creating resources with label app=account-manager-blue ...
+    deploymentconfig "account-manager-blue" created
+--&gt; Success
+    Run 'oc status' to view your app.</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>We should also have a new service displayed on OpenShift console. Note the new
+<em>account-manager-blue</em> deployment, with 1 pod.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-openshift-account-manager-services.png" alt="OpenShift with Blue/Green deployments for Account Manager">
+</div>
+</div>
+<div class="paragraph">
+<p>Our Account Manager microservice is a Vert.x Verticle, and reacts on messages sent
+to <code>AccountManager.getAccount</code>. As we are using a clustered event bus, our new
+<em>account-manager-blue</em> service will join the cluster and start replying to those
+messages. The Vert.x clustered bus will take care of load balancing the processing
+of the messages for us.</p>
+</div>
+<div class="paragraph">
+<p>Because of that, we should already have some data being captured and reported to
+our Hawkular APM server. On the <em>Services</em> screen, add the new service <em>order-manager.account-manager-blue</em>,
+version <em>order-manager.account-manager-blue-1</em> to the graphic. It should then look similar
+to this:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-account-manager-blue-added.png" alt="Hawkular APM Services Tab with Blue and Green services">
+</div>
+</div>
+<div class="paragraph">
+<p>We should see the bar for our <em>blue</em> deployment (orange bar on the image) to be
+around a quarter the size of the old version (blue bar on the image). As the number
+of errors is in line with what we expect, we can now reduce the traffic to the old
+version by adding more replicas to the new version and decreasing replicas from
+the old one:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager-blue --replicas=3
+oc scale deploymentconfig account-manager --replicas=2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s leave it running for a minute or so, and we should see that the new version
+is now responsible for processing around 60% of the traffic, while the old version
+is now processing around 40%. If it still looks good, we&#8217;ll make it 80%/20%:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager-blue --replicas=4
+oc scale deploymentconfig account-manager --replicas=1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Eventually, we would want to decommission the old version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager-blue --replicas=5
+oc scale deploymentconfig account-manager --replicas=0</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s now simulate a new build for our <em>Account Manager</em> microservice, to be deployed
+on the <em>green</em> service (<em>account-manager</em>):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">cd account-manager/
+oc start-build account-manager --from-dir=. --follow</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once it&#8217;s finished, we can direct some of the traffic to this new version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager --replicas=1
+oc scale deploymentconfig account-manager-blue --replicas=4</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After a few seconds, we should see the new version as a valid option on our <em>Services</em>
+screen:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-new-version-available.png" alt="New Green version">
+</div>
+</div>
+<div class="paragraph">
+<p>Let&#8217;s add it to the graphic, and watch the errors. If this version looks sane,
+we can direct more traffic to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager --replicas=3
+oc scale deploymentconfig account-manager-blue --replicas=2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And eventually, direct all traffic to it:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc scale deploymentconfig account-manager --replicas=5
+oc scale deploymentconfig account-manager-blue --replicas=0</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>On the next screenshot, we can infer the following from the graphic:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>We started with 100% traffic on <em>order-manager.account-manager-1</em> (green deployment, blue bar)</p>
+</li>
+<li>
+<p>We directed some traffic to <em>order-manager.account-manager-blue-1</em> (blue deployment, orange bar)</p>
+</li>
+<li>
+<p>We switched off <em>order-manager.account-manager-1</em> (green deployment, blue bar)</p>
+</li>
+<li>
+<p>We deployed the new version <em>order-manager.account-manager-2</em> (green deployment, green bar)</p>
+</li>
+<li>
+<p>We directed some traffic to <em>order-manager.account-manager-2</em> (green deployment, green bar)</p>
+</li>
+<li>
+<p>We switched off <em>order-manager.account-manager-blue-1</em> (blue deployment, orange bar)</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-02-13-final.png" alt="Final Result">
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_closing_notes">Closing notes</h3>
+<div class="paragraph">
+<p>On a real world scenario, the manual steps we did would be automated, potentially
+making your Continuous Deployment scripts read data from Hawkular APM in order
+to decide whether to scale up or down a canary release. Thanks to Vert.x, we were
+able to completely abstract the load balancer, controlling the percentage of traffic
+by adjusting the number of replicas on the Green/Blue deployments, but it&#8217;s also
+possible to achieve similar effects with other stacks. The <a href="http://bit.ly/msa-instructions">OpenShift Hello World Microservices Architecture</a>
+shows another way this can be achieved.</p>
+</div>
+<div class="paragraph">
+<p>Thanks to OpenShift, we were able to instantly see the performance of new versions,
+comparing it with previous versions. Outside of OpenShift, we would be able to get
+the same effect by properly setting the environment variables <em>HAWKULAR_APM_SERVICE_NAME</em>
+and <em>HAWKULAR_APM_BUILDSTAMP</em>.</p>
+</div>
+<div class="paragraph">
+<p>Try it out and let us know about your experiments! Should you face any issues, or
+if you want to talk to us, join us at <code>#hawkular</code> on <code>irc.freenode.net</code>.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/02/07/hawkular-metrics-roadmap.html"><h1>Hawkular Metrics - 2017 Roadmap</h1></a>
             <p>07 February 2017, by Stefan Negrea</p>
             <p><p><strong>About</strong></p><p>Just like last year, Hawkular Metrics contributors have been working for the past few weeks on the roadmap for the upcoming year. The goal is to give clarity on the project direction, serve as a planning tool for releases, and show our strong commitment to open source.</p><p>For those not familiar with Hawkular Metrics, the project is a high performance and high availability storage engine for large volume metric data. Cassandra is the storage engine because of its flexible data model well suited for time-series data storage and linear scalability with no single point of failure. The distribution includes Hawkular Alerting, an alerts module responsible for defining conditions rules over data events and fire alerts that can be sent by several action plugins.</p><p><strong>Review - 2016</strong></p><p>First, let's review the progress against the roadmap set at the beginning of last year. Due to the competitive space for metrics, metrics storage, and alerting, the community had to constantly balance the plan execution while reacting to community requests. While the majority of goals set to accomplish were completed, there are some carried over to this year and some indefinitely postponed.</p><p>The project was updated to run on Cassandra 3.x in May (<a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.15.0">release 0.15.0</a>). The native Grafana integration was released in July (<a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.17.0">release 0.17.0</a>) and it is now an <a href="https://github.com/hawkular/hawkular-grafana-datasource">independent project</a>. And lastly, we improved the developer support by creating distributions that include Metrics, Alerting and Cassandra pre-deployed inside Wildlfly to make it extremely simple to download and get the project running.</p><p>The pre-computed aggregates were postponed to this year due to the major work done for compressing data at rest released in October (<a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0">release 0.20.0</a>). The histogram metrics were also carried-over to this year.</p><p><strong>Roadmap - 2017</strong></p>
@@ -565,255 +876,13 @@ details about using those images.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/01/27/hosa-status.html"><h1>Getting the status of Hosa</h1></a>
-            <p>27 January 2017, by Heiko W. Rupp</p>
-            <p><div class="sect1">
-<h2 id="_getting_the_status_of_the_hawkular_openshift_agent">Getting the status of the Hawkular OpenShift Agent</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>In a previous blog post I talked about the <a href="http://www.hawkular.org/blog/2017/01/17/obst-hosa.html">Hawkular OpenShift Agent and how to use it to monitor Microservices</a>.</p>
-</div>
-<div class="paragraph">
-<p>While setting up the agent and the config maps is not complicated, it is always possible to make a typo. Hosa luckily has a status endpoint that exposes what it is currently doing.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/1-hosa-status.png" alt="Status in browser">
-</div>
-<div class="title">Figure 1. Status display in browser</div>
-</div>
-<div class="paragraph">
-<p>The endpoint is secured by basic authentication. We will see below how to set this up.</p>
-</div>
-<div class="sect2">
-<h3 id="_exposing_the_hosa_status_endpoint">Exposing the Hosa status endpoint</h3>
-<div class="paragraph">
-<p>It is possible to expose the agent&#8217;s status endpoint, which is deployed as a pod only, as service and with a route to be able to visit the <code>/status</code> url of it.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-When you have checked out the agent source code and deployed the agent via <code>make openshift-deploy</code> you can skip the following, as the make command already did the setup.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>We will create a Yaml definition for the service and route and also a secret.</p>
-</div>
-<div class="listingblock">
-<div class="title">Definition for service and route, <code>hosa-service-route.yml</code></div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">apiVersion: v1
-kind: Service
-metadata:
-  name: hawkular-openshift-agent
-  labels:
-    metrics-infra: agent
-spec:
-  ports:
-    - protocol: TCP
-      port: 8080 <b class="conum">(1)</b>
-  selector:
-    name: hawkular-openshift-agent
----
-apiVersion: v1
-kind: Route
-metadata:
-  name: hosa
-  namespace: openshift-infra
-  labels:
-    metrics-infra: agent
-spec:
-  path: /status <b class="conum">(2)</b>
-  to:
-    kind: Service
-    name: hawkular-openshift-agent
-    weight: 100
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: hawkular-openshift-agent-status
-    labels:
-      metrics-infra: agent
-  data:
-    username: ZGV2  <b class="conum">(3)</b>
-    password: Y2hhbmdlbWU= <b class="conum">(4)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Expose port 8080</p>
-</li>
-<li>
-<p>Put the status endpoint in the url, so that it opens when clicking in the OpenShift console</p>
-</li>
-<li>
-<p>Username <em>dev</em> as base64</p>
-</li>
-<li>
-<p>Password <em>changeme</em> as base64</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>You can then deploy this into OpenShift via</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ oc project openshift-infra
-$ oc create -f hosa-service-route.yml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>OpenShift will then expose a route in the format <code><a href="http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status" class="bare">http://hosa-openshift-infra.&lt;nodeip&gt;.xip.io/status</a></code>.</p>
-</div>
-<div class="paragraph">
-<p>When you navigate to it then you will be prompted for basic authentication. In above example use <em>dev/changeme</em> for the credentials.</p>
-</div>
-<div class="sect3">
-<h4 id="_using_a_different_password_above">Using a different password above</h4>
-<div class="paragraph">
-<p>When you want to use a different password in the above, you have to supply it in Base64-encoding</p>
-</div>
-<div class="listingblock">
-<div class="title">Base64 encoding of the password</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ echo -n "test4hawkular" | base64
-dGVzdDRoYXdrdWxhcgo== <b class="conum">(1)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Copy this onto the password line of <code>hosa-service-route.yml</code></p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_use_a_different_password_later_on">Use a different password later on</h3>
-<div class="paragraph">
-<p>When you have already installed the secret and want to change the password, you need to delete and re-create the secret with the new values:</p>
-</div>
-<div class="listingblock">
-<div class="title">Install the new password</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc project openshift-infra
-$ oc delete secret hawkular-openshift-agent-status
-$ oc secret new-basicauth hawkular-openshift-agent-status \ <b class="conum">(1)</b>
-    --username=dev \
-    --password=changeme2 <b class="conum">(2)</b></code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Name of the secret</p>
-</li>
-<li>
-<p>New password. No Base64 encoding is needed; OpenShift will take care.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Unfortunately this is not enough as OpenShift does not trigger reloads of pods upon changes of secrets (unlike e.g. for ConfigMaps), so we have to explicitly terminate the running agent to have a new instance pick up the new secret:</p>
-</div>
-<div class="listingblock">
-<div class="title">Make the agent pick up the new password</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc project openshift-infra
-$ oc get pods | grep agent
-hawkular-openshift-agent-upubo   1/1       Running     0          2m
-$ oc delete pod hawkular-openshift-agent-upubo
-pod "hawkular-openshift-agent-upubo" deleted</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_lets_have_a_look_at_the_output">Lets have a look at the output</h3>
-<div class="paragraph">
-<p>Now let&#8217;s have a quick look at the output of the status endpoint. I will use the <code>curl</code> command for this. The output is similar to what is shown in Figure1 above.</p>
-</div>
-<div class="listingblock">
-<div class="title">Get the status</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-shell" data-lang="shell">$ curl -u dev:changeme2 http://hawkular-openshift-agent-openshift-infra.172.31.7.9.xip.io/status
-name: Hawkular OpenShift Agent
-version: 1.0.1.Final-SNAPSHOT <b class="conum">(1)</b>
-commit_hash: 4655b5cb8363b046e80c052c5fe08723770088ea
-pods: <b class="conum">(2)</b>
-  172.31.7.9/openshift-infra/hawkular-openshift-agent-omf3r/7d48d137-e2ec-11e6-89b4-00219b3e7e23:
-  - openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics
-  172.31.7.9/myproject/obs-demo-3-x9hkg/9ad38a87-e3e5-11e6-a3c6-00219b3e7e23:
-  - myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/
-endpoints: <b class="conum">(3)</b>
-  openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics: OK.
-    Last collection at [Wed, 25 Jan 2017 13:56:58 +0000] gathered [22] metrics in
-    [2.940328ms]
-myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/: 'Failed to collect
-    metrics from [myproject/obs-demo-3-x9hkg|https://172.17.0.6:8778/jolokia/] at
-    [Thu, 25 Jan 2017 13:57:06 +0000]. err=Failed to collect metrics from Jolokia
-    endpoint [https://172.17.0.6:8778/jolokia/]. err=Post https://172.17.0.6:8778/jolokia/:
-    x509: cannot validate certificate for 172.17.0.6 because it doesn''t contain any
-    IP SANs' <b class="conum">(4)</b>
-log: <b class="conum">(5)</b>
-- 'Wed, 25 Jan 2017 11:53:29 +0000: STOP collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
-- 'Wed, 25 Jan 2017 11:53:29 +0000: START collection: openshift-infra/hawkular-openshift-agent-omf3r|http://172.17.0.2:8080/metrics'
-[source,java]
-[...]</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Version of the agent (and the commit hash it was built from)</p>
-</li>
-<li>
-<p>List of pods it is monitoring with the endppoint it talks to</p>
-</li>
-<li>
-<p>List of endpoints it monitors + result of last collection</p>
-</li>
-<li>
-<p>This one shows an error because the endpoint is on https, but the certificate check fails and we have not disabled this check</p>
-</li>
-<li>
-<p>Latest log messages of the agent.</p>
-</li>
-</ol>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-When you have the agent source  <a href="https://github.com/hawkular/hawkular-openshift-agent">checked out from git</a>, you can just run <code>make openshift-status</code> instead of the <code>curl</code> command shown above.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>27 January 2017 - <a href="blog/2017/01/27/hosa-status.html">Getting the status of Hosa</a></li>
           <li>17 January 2017 - <a href="blog/2017/01/17/obst-hosa.html">Monitoring Microservices on OpenShift with HOSA</a></li>
           <li>16 January 2017 - <a href="blog/2017/01/16/hawkular-metrics-with-dropwizard.html">Reporting Dropwizard metrics to Hawkular</a></li>
           <li>13 January 2017 - <a href="blog/2017/01/13/events-aggregation-extension.html">Extending Complex Event Processing in Hawkular Alerting</a></li>
