@@ -236,6 +236,12 @@
 <li><a href="#_downsampling">Downsampling</a></li>
 </ul>
 </li>
+<li><a href="#_alerting">Alerting</a>
+<ul class="sectlevel2">
+<li><a href="#_stream_based_alerting">Stream-Based Alerting</a></li>
+<li><a href="#_query_based_alerting">Query-Based Alerting</a></li>
+</ul>
+</li>
 <li><a href="#_security">Security</a></li>
 <li><a href="#_links">Links</a></li>
 </ul>
@@ -2442,6 +2448,398 @@ There is currently no API for fetching bucket data points across multiple availa
 </td>
 </tr>
 </table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_alerting">Alerting</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Metrics includes Hawkular Alerting.  This allows users to quickly leverage their metric data
+with robust alerting.</p>
+</div>
+<div class="paragraph">
+<p>Triggers can be defined to act on both the incoming stream of metrics (near real time) or via queries
+of the persisted metric data. This combination of stream and query-based alerting can be powerful.</p>
+</div>
+<div class="paragraph">
+<p>It may be useful to get familiar with the capabilities and terminology of Hawkular Alerting before getting
+into the details of using it with Hawkular Metrics.  For more see the following:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Hawkular Alerting User Guide</a></p>
+</li>
+<li>
+<p><a href="http://www.hawkular.org/docs/rest/rest-alerts.html">Hawkular Alerting REST API</a></p>
+</li>
+<li>
+<p><a href="http://github.com/hawkular/hawkular-alerts/tree/master/examples">Hawkular Alerting Examples</a></p>
+</li>
+</ul>
+</div>
+<div class="sect2">
+<h3 id="_stream_based_alerting">Stream-Based Alerting</h3>
+<div class="paragraph">
+<p>This approach defines triggers using Alerting&#8217;s built-in condition types and evaluates the conditions
+on the incoming metric data. It provides the fastest possible issue detection.  For example, given a response time
+gauge metric named MyAppResponseTime, a trigger could be defined with Threshold condition (MyAppResponseTime &gt; 750).
+There are many condition types and trigger options but the main point here is that the threshold test is evaluated
+on incoming metric data, as it is being persisted.</p>
+</div>
+<div class="sect3">
+<h4 id="_metricid_prefixes">MetricId Prefixes</h4>
+<div class="paragraph">
+<p>There is one technical note.  To use Hawkular Alerting with Hawkular Metrics there is a naming convention
+when defining trigger conditions. For a metric with name 'X', the alerting DataId to reference it will be
+'prefix_X', where the prefix depends on the metric&#8217;s type. For example, the MyAppResponseTime metric,
+used above, is a 'gauge'. The 'hm_g' prefix would be used.  So, the actual condition would be defined as
+(hm_g_MyAppResponseTime &gt; 750).</p>
+</div>
+<div class="paragraph">
+<p>This is done because Hawkular Metrics allows the same metric name for different types, and Hawkular Alerting
+then needs the prefix to uniquely identify the correct metric.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 6. Metric Prefixes</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Prefix</th>
+<th class="tableblock halign-left valign-top">Metric Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_a</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">availability</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_c</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">counter</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_cr</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">counter rate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_g</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gauge</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_gr</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">gauge rate</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">hm_s</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">string</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_query_based_alerting">Query-Based Alerting</h3>
+<div class="paragraph">
+<p>Whereas stream-based alerting is applied to metric data as it arrives, it is often the case that issues
+can be detected by looking at historical behavior of the persisted data.  Hawkular Metrics provides its
+own <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_external_alert_integration">Alerter</a>
+to provide this capability. An Alerter extends Hawkular Alerting by allowing external condition evaluators.
+In this case, the Metrics Alerter performs queries looking for user-defined conditions, and when found it
+then informs Hawkular Alerting, which in turn may fire a trigger and generate an alert.</p>
+</div>
+<div class="paragraph">
+<p>The mechanism is the same as when defining a stream-based trigger, except in this case the trigger uses
+an ExternalCondition.  The ExternalCondition supplies an expression string that is understood and processed by
+the alerter.  The metrics alerter defines a robust language for defining the external condition
+expression string.</p>
+</div>
+<div class="sect3">
+<h4 id="_expression_language">Expression Language</h4>
+<div class="paragraph">
+<p>The expression language allows the user to define one or more queries which can then be incorporated
+into a flexible eval expression.  For example, let&#8217;s say we want to detect an increase in response
+time day over day, using the MyAppResponseTime metric.  We&#8217;d define two queries, let&#8217;s call them
+qNow and q1d.  qNow will query for the most recent MyAppResponseTime data and q1d will query the
+for data 1 day back.  Additionally, our queries would define the duration, let&#8217;s say one hour.  So,
+to detect a 25% increase in the average response time for the most recent hour, compared to the average
+for the same hour yesterday, we could define an eval expression like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  ( q(qNow,avg) &gt; ( 1.25 * q(q1d,avg) ) )</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The eval expressions are built on EvalEx and support many operators and built-in functions.  See
+<a href="https://github.com/uklimaschewski/EvalEx">EvalEx</a> for a complete description of supported
+operators, functions and constants.</p>
+</div>
+<div class="paragraph">
+<p>The query variables are of the format:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  q(&lt;queryName&gt;,&lt;function&gt;)</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Each query variable will be replaced by the actual data fetched from Hawkular Metrics, and then
+the eval expression will be evaluated.  If the evaluation returns true then Hawkular Alerting is
+informed such that the ExternalCondition matches, potentially firing a trigger.</p>
+</div>
+<div class="paragraph">
+<p>The queryName refers to one of the queries defined in the expression.  The functions available
+depend on the MetricType of the data being queried, and are analogous to the /stats endpoints
+in the Metrics REST API.</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 7. Query Functions</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">MetricType</th>
+<th class="tableblock halign-left valign-top">Available Functions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Gauge, Gauge Rate, Counter, Counter Rate</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">avg, max, median, min, percentiles, samples, sum</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Availability</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notUpCount, notUpDuration, samples, upCount, uptimeRatio</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">String</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Not supported by the Alerter, use Stream-Based conditions</p></td>
+</tr>
+</tbody>
+</table>
+<div class="sect4">
+<h5 id="_percentiles">Percentiles</h5>
+<div class="paragraph">
+<p>The percentiles available depend on the percentiles requested in the query definition. By default
+no percentiles are available.  But, requested percentiles can be referenced in the query function.
+For example, the 90th percentile would be referenced like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  q(qNow,%90)</pre>
+</div>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_other_examples">Other Examples</h5>
+<div class="paragraph">
+<p>If 90th percentile &gt; twice the median</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  ( q(qNow,%90) &gt; ( 2 * q(qNow,median) ) )</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If &lt; 2 heartbeat avails have been reported in the last minute</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  ( q(qNow,upCount) &lt; 2 )</pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_conditionexpression">ConditionExpression</h4>
+<div class="paragraph">
+<p>The ConditionExpression fully defines the condition to be evaluated. It is defined as follows and
+is supplied as a JSON string (the ExternalCondition&#8217;s expression value must be a String).</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>ConditionExpression
+  queries        List&lt;Query&gt;
+  frequency      duration string (see below), time between query-executions/evals
+  eval           string, expression determining condition match
+  evalType       string, one of [ALL (default), EACH]. See more below.
+
+
+Query
+  name           string, for referencing the query in the eval
+  type           string, optional, target metric type for query (default=gauge)
+  metrics        Set&lt;String&gt; of metricIds (see more below)
+                   required if tags not specified, otherwise not permitted
+  tags           string, a metrics 'tag query expression' (see more below)
+                   required if metrics not specified, otherwise not permitted
+  percentiles    Set&lt;String&gt;, optional, requested percentiles (e.g. {"90","95"})
+  duration       duration string (see below)
+                   defines length of time range for data to be queried
+  offset         duration string (see below), optional
+                   defines time range offset, Default is no offset.
+                     - start = now - offset - duration
+                     - end = start + duration</pre>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_evaltype">EvalType</h5>
+<div class="paragraph">
+<p><code>ConditionExpression.evalType</code> determines whether the eval expression is performed on <strong>ALL</strong> or <strong>EACH</strong> of the metrics. The <code>Query.metrics</code> and <code>Query.tags</code> fields define the set of metrics that will be involved in the query. The query will result in a set of data points for each metric. This field defines how to perform the <code>ConditionExpression.eval</code> for the resulting data points.</p>
+</div>
+<div class="paragraph">
+<p><strong>ALL:</strong> The data points for all of the metrics will be combined, then aggregated, and <code>ConditionExpression.eval</code> is resolved one time (per run of the ConditionExpression). At most one Event will be sent to Alerting if <code>ConditionExpression.eval</code> resolves to true.</p>
+</div>
+<div class="paragraph">
+<p><strong>EACH:</strong> The data points for each metric will be aggregated separately. <code>ConditionExpression.eval</code> is resolved N times, once for each metric. Up to N Events
+could be sent to Alerting depending on how often <code>ConditionExpression.eval</code> resolves to true.</p>
+</div>
+<div class="paragraph">
+<p>For example, assume we are dealing with two metrics, M1 and M2, the eval is <code>q(qNow,avg) &gt; 100</code>, and qNow is define with an interval of 1h. On each run we get the M1 and M2 data points for the most recent hour. Using <strong>ALL</strong> we combine all of the datapoints, generate the average, and resolve the expression. If true we send an Event to alerting.  Using <strong>EACH</strong> we keep the data points for each metric separate, generate the average for each, and resolve the expression for each. For each true resolution we send an Event to Alerting.  Note that to distinguish the events we provide the metric name in the <code>Event.context</code>. For example: context={"MetricName":"M1"}.</p>
+</div>
+<div class="paragraph">
+<p>A note about using <strong>EACH</strong>.  If multiple queries are involved in the eval expression then that only metrics common to each query will be evaluated.  For example, if the eval above were <code>q(qNow,avg) &gt;  q(qYesterday,avg)</code> and only M1 were common to both queries then the eval would only be resolved using M1 data points.  In general each query will likely use the same metrics so this issue is a corner case.</p>
+</div>
+<div class="paragraph">
+<p>The default is ALL.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_metrics_and_tags">Metrics and Tags</h5>
+<div class="paragraph">
+<p>The <code>Query.metrics</code> and <code>Query.tags</code> fields are used to specify the metrics involved in the query, and therefore the data being retrieved. One of the fields must be specified. They are mutually exclusive, so specifying both is an error.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_duration">Duration</h5>
+<div class="paragraph">
+<p>Fields specified as a Duration follow the standard <a href="http://www.hawkular.org/docs/rest/rest-metrics.html#_custom_string_formats">Duration format</a>.</p>
+</div>
+</div>
+<div class="sect4">
+<h5 id="_events_sent_to_alerting">Events Sent to Alerting</h5>
+<div class="paragraph">
+<p>When <code>ConditionExpression</code>.eval resolves to true the Alerter sends an Event to Alerting.  The Event is designed to match the ExternalCondition from which the expression was built:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<caption class="title">Table 8. Event</caption>
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Field</th>
+<th class="tableblock halign-left valign-top">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ExternalCondition&#8217;s tenantId (from the owning Trigger)</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A generated UUID</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ctime</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">current time in ms</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ExternalCondition&#8217;s dataId</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">category</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"MetricsCondition"</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">text</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Values used in eval (e.g. "{q(qNow,avg)=61.0}")</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">context</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"MetricName":&lt;EvalMetricName&gt;  (Map entry provided when EvalType=EACH)</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>The Events are for matching only and are not persisted in the Alerting database.  Although, for any generated Alert the the Event will be provided in the <code>Alert.conditionEvals</code> in order to help explain the Alert.</p>
+</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_generating_the_json">Generating the JSON</h4>
+<div class="paragraph">
+<p>The ConditionExpression JSON can be generated by hand, but it may be easier to utilize
+the provided Java classes. (TODO: Determine where these classes should be provided and provide
+Maven dependency).  To generate the JSON construct the ConditionExpression and then call:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>  ConditionExpression.toJson()</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The following Code snippet from AlerterITest.groovy is an example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>Query qNow = new Query("qNow", Collections.singleton(metricId), null, null, ResultType.combined, "1mn", null);
+Query q1d = new Query("q1d", "1d", qNow);
+ConditionExpression ce = new ConditionExpression( Arrays.asList(qNow, q1d), "1h",
+            "((q(qNow,avg) - q(q1d,avg)) / q(q1d,avg)) &gt; 0.25" )
+println( JsonOutput.prettyPrint( ce.toJson()) )</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Resulting in:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre>{
+    "queries": [
+        {
+            "name": "qNow",
+            "type": "gauge",
+            "metrics": [
+                "alerts-test-avgd-1484757539171"
+            ],
+            "tags": null,
+            "percentiles": [
+                "90"
+            ],
+            "duration": "1h",
+            "offset": null
+        },
+        {
+            "name": "q1d",
+            "type": "gauge",
+            "metrics": [
+                "alerts-test-avgd-1484757539171"
+            ],
+            "tags": null,
+            "percentiles": [
+                "90"
+            ],
+            "duration": "1h",
+            "offset": "1d"
+        }
+    ],
+    "frequency": "30mn",
+    "evalType": "ALL",
+    "eval": "(q(qNow,avg) &gt; ( 1.25 * q(q1d,avg)))"
+}</pre>
+</div>
 </div>
 </div>
 </div>
