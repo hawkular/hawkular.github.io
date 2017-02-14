@@ -6,8 +6,8 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 13 Feb 2017 10:02:16 +0000</pubDate>
-    <lastBuildDate>Mon, 13 Feb 2017 10:02:16 +0000</lastBuildDate>
+    <pubDate>Tue, 14 Feb 2017 20:48:46 +0000</pubDate>
+    <lastBuildDate>Tue, 14 Feb 2017 20:48:46 +0000</lastBuildDate>
 
     <item>
       <title>Monitoring Canary Releases with Hawkular APM</title>
@@ -322,6 +322,89 @@ and &lt;em&gt;HAWKULAR_APM_BUILDSTAMP&lt;/em&gt;.&lt;/p&gt;
 if you want to talk to us, join us at &lt;code&gt;#hawkular&lt;/code&gt; on &lt;code&gt;irc.freenode.net&lt;/code&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
+	</description>
+    </item>
+    <item>
+      <title>Hawkular Metrics 0.24.0 - Release</title>
+      <link>http://www.hawkular.org/blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html</link>
+      <author>noreply@hawkular.org (Stefan Negrea)</author>
+      <pubDate>Wed, 8 Feb 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html</guid>
+      	<description>
+	&lt;p&gt;I am happy to announce release 0.24.0 of Hawkular Metrics. This release is anchored by a new tag query language and general stability improvements.&lt;/p&gt;&lt;p&gt;Here is a list of major changes:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Tag Query Language&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;A query language was added to support complex constructs for tag based queries for metrics&lt;/li&gt;
+    &lt;li&gt;The old tag query syntax is deprecated but can still be used; the new syntax takes precedence&lt;/li&gt;
+    &lt;li&gt;The new syntax supports:
+    &lt;ul&gt;
+      &lt;li&gt;logical operators: &lt;code&gt;AND&lt;/code&gt;,&lt;code&gt;OR&lt;/code&gt;&lt;/li&gt;
+      &lt;li&gt;equality operators: &lt;code&gt;=&lt;/code&gt;, &lt;code&gt;!=&lt;/code&gt;&lt;/li&gt;
+      &lt;li&gt;value in array operators: &lt;code&gt;IN&lt;/code&gt;, &lt;code&gt;NOT IN&lt;/code&gt;&lt;/li&gt;
+      &lt;li&gt;existential conditions:
+      &lt;ul&gt;
+        &lt;li&gt;tag without any operator is equivalent to &lt;code&gt;= &amp;#39;*&amp;#39;&lt;/code&gt;&lt;/li&gt;
+        &lt;li&gt;tag preceded by the NOT operator matches only instances without the tag defined&lt;/li&gt;
+      &lt;/ul&gt;&lt;/li&gt;
+      &lt;li&gt;all the values in between single quotes are treated as regex expressions&lt;/li&gt;
+      &lt;li&gt;simple text values do not need single quotes&lt;/li&gt;
+      &lt;li&gt;spaces before and after equality operators are not necessary&lt;/li&gt;
+    &lt;/ul&gt;&lt;/li&gt;
+    &lt;li&gt;For more details please see: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/pull/725&quot;&gt;Pull Request 725&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-523&quot;&gt;HWKMETRICS-523&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;Sample queries:&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;pre&gt;&lt;code&gt;a1 = &amp;#39;bcd&amp;#39; OR a2 != &amp;#39;efg&amp;#39;
+a1=&amp;#39;bcd&amp;#39; OR a2!=&amp;#39;efg&amp;#39;
+a1 = efg AND ( a2 = &amp;#39;hijk&amp;#39; OR a2 = &amp;#39;xyz&amp;#39; )
+a1 = &amp;#39;efg&amp;#39; AND ( a2 IN [&amp;#39;hijk&amp;#39;, &amp;#39;xyz&amp;#39;] )
+a1 = &amp;#39;efg&amp;#39; AND a2 NOT IN [&amp;#39;hijk&amp;#39;]
+a1 = &amp;#39;d&amp;#39; OR ( a1 != &amp;#39;ab&amp;#39; AND ( c1 = &amp;#39;*&amp;#39; ) )
+a1 OR a2
+NOT a1 AND a2
+a1 = &amp;#39;a&amp;#39; AND NOT b2
+a1 = a AND NOT b2
+&lt;/code&gt;&lt;/pre&gt;
+&lt;ul&gt;
+  &lt;li&gt;&lt;strong&gt;Performance&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Updated compaction strategies for data tables from size tiered compaction (STCS) to time window compaction (TWCS) (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-556&quot;&gt;HWKMETRICS-556&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Jobs now execute on RxJava&apos;s I/O scheduler thread pool&lt;br/&gt;(&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-579&quot;&gt;HWKMETRICS-579&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Administration&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;The admin tenant is now configurable via &lt;code&gt;ADMIN_TENANT&lt;/code&gt; environment variable (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-572&quot;&gt;HWKMETRICS-572&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Internal metric collection is disabled by default (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-578&quot;&gt;HWKMETRICS-578&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Resolved a null pointer exception in DropWizardReporter due to admin tenant changes (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-577&quot;&gt;HWKMETRICS-577&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Job Scheduler&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Resolved an issue where the compression job would stop running after a few days (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-564&quot;&gt;HWKMETRICS-564&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Updated the job scheduler to renew job locks during job execution (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-570&quot;&gt;HWKMETRICS-570&lt;/a&gt;)&lt;/li&gt;
+    &lt;li&gt;Updated the job scheduler to reacquire job lock after server restarts (&lt;a href=&quot;https://issues.jboss.org/browse/HWKMETRICS-583&quot;&gt;HWKMETRICS-583&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;strong&gt;Hawkular Alerting - Major Updates&lt;/strong&gt;
+  &lt;ul&gt;
+    &lt;li&gt;Resolved several issues where schema upgrades were not applied after the initial schema install (&lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS-220&quot;&gt;HWKALERTS-220&lt;/a&gt;, &lt;a href=&quot;https://issues.jboss.org/browse/HWKALERTS-222&quot;&gt;HWKALERTS-222&lt;/a&gt;)&lt;/li&gt;
+  &lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Alerting - Included&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Version &lt;a href=&quot;https://issues.jboss.org/projects/HWKALERTS/versions/12333065&quot;&gt;1.5.1&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Project details and repository: &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts&quot;&gt;Github&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Documentation: &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html&quot;&gt;REST API&lt;/a&gt;, &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples&quot;&gt;Examples&lt;/a&gt;, &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html&quot;&gt;Developer Guide&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;&lt;strong&gt;Hawkular Metrics Clients&lt;/strong&gt;&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Python: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-python&quot;&gt;https://github.com/hawkular/hawkular-client-python&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Go: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-go&quot;&gt;https://github.com/hawkular/hawkular-client-go&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Ruby: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-ruby&quot;&gt;https://github.com/hawkular/hawkular-client-ruby&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Java: &lt;a href=&quot;https://github.com/hawkular/hawkular-client-java&quot;&gt;https://github.com/hawkular/hawkular-client-java&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;h3&gt;Release Links&lt;/h3&gt;
+&lt;ul&gt;
+  &lt;li&gt;Github Release: &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/releases/tag/0.24.0&quot;&gt;https://github.com/hawkular/hawkular-metrics/releases/tag/0.24.0&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;JBoss Nexus Maven artifacts: &lt;a href=&quot;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&quot;&gt;http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Jira release tracker: &lt;a href=&quot;https://issues.jboss.org/projects/HWKMETRICS/versions/12332966&quot;&gt;https://issues.jboss.org/projects/HWKMETRICS/versions/12332966&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;p&gt;A big &quot;Thank you&quot; goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.&lt;/p&gt;
 	</description>
     </item>
     <item>
