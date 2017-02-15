@@ -118,6 +118,9 @@
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/android-client/">Android client</a>
                         </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                        </li>
                       </ul>
                   </li>
                   <li>
