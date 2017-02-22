@@ -1,0 +1,148 @@
+= Processing Hawkular-Metrics data with Python Pandas
+Michael Burman
+2017-02-22
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, timeseries, analytics
+
+Storing the time series is not worth much if we can't actually do something valuable with it. For some time, many data analytics have used Python tools to extract valuable information from the available data. Today, lets look at one of the popular options, http://pandas.pydata.org[Pandas]. In this blog post I will show how to fetch data from the Hawkular-Metrics and turn it to a processable form for the Pandas and do something with the data.
+
+As a data, I've taken some real world values from my current air-to-water heat pump and how it has functioned in some non-ideal circumstances. To make things more difficult, I've started logging the information after there's been historical data already so the starting values are not from the same point of time. To make things a bit more complicated I've also included some temperature values.
+
+Lets start by introducing a helper function and initialize pandas. You can install Pandas with ``pip install pandas`` or with ``dnf`` or ``apt``.
+
+[source, python]
+----
+import numpy as np
+import pandas as pd
+from hawkular import *
+
+c = HawkularMetricsClient(tenant_id='pandas_test', port=8080)
+
+def read_hawkular(c, id):    
+    s = c.query_metric(MetricType.Gauge, id, fromEarliest='true')    
+    df2 = pd.DataFrame(s, columns=['timestamp', 'value'])
+    df2['timestamp'] = pd.to_datetime(df2['timestamp'], unit='ms')    
+    df2 = df2.set_index('timestamp')
+    df2 = df2.rename(columns={'value': id})
+    return df2
+----
+
+Now, with the read_hawkular we can fetch data from the Hawkular-Metrics using the given id. I've hardcoded Gauge as the metric type in this case as that's the type of the values we're processing today. We'll also make the id as the column name for these values and use the timestamp as our index. Pandas will automatically convert the values to float64 and with our hints use the timestamps as the indexing value.
+
+Lets insert some data:
+
+[source,python]
+----
+c.push(MetricType.Gauge, 'pollucom.reading', 41955, timestamp=1487192074052)
+c.push(MetricType.Gauge, 'meter.reading', 584.22, timestamp=1487192074145)
+c.push(MetricType.Gauge, 'temperature.reading', 0.0, timestamp=1487192075645)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42007, timestamp=1487272174104)
+c.push(MetricType.Gauge, 'meter.reading', 606.41, timestamp=1487272174467)
+c.push(MetricType.Gauge, 'temperature.reading', 1.6, timestamp=1487272176067)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42075, timestamp=1487403934003)
+c.push(MetricType.Gauge, 'meter.reading', 636.60, timestamp=1487403934732)
+c.push(MetricType.Gauge, 'temperature.reading', 0.7, timestamp=1487403932678)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42234, timestamp=1487663134340)
+c.push(MetricType.Gauge, 'meter.reading', 702.29, timestamp=1487663134230)
+c.push(MetricType.Gauge, 'temperature.reading', -3.3, timestamp=1487663134678)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42296, timestamp=1487745987030)
+c.push(MetricType.Gauge, 'meter.reading', 732.32, timestamp=1487745987575)
+c.push(MetricType.Gauge, 'temperature.reading', -8.8, timestamp=1487745987976)
+----
+
+As you can already see from the data, we use millisecond precision when fetching the data and the timestamps have some variance in them. Now, using the previously defined function we will fetch the data to a Pandas DataFrame:
+
+[source,python]
+----
+# Read the data
+
+pollu = read_hawkular(c, 'pollucom.reading')
+meter = read_hawkular(c, 'meter.reading')
+temperature = read_hawkular(c, 'temperature.reading')
+
+# Lets rename the columns
+
+temperature = temperature.rename(columns={'temperature.reading': 'temperature'})
+meter = meter.rename(columns={'meter.reading': 'electricity'})
+pollu = pollu.rename(columns={'pollucom.reading': 'heat'})
+----
+
+Three distinct series are now stored in three distinct DataFrames. Combining them and looking at the data reveals something interesting:
+
+[source,python]
+----
+stats = pd.concat([pollu, meter, temperature]).sort_index()
+>>> stats
+                         electricity   heat  temperature
+timestamp                                               
+2017-02-15 20:54:34.052          NaN  41955          NaN
+2017-02-15 20:54:34.145       584.22    NaN          NaN
+2017-02-15 20:54:35.645          NaN    NaN          0.0
+2017-02-16 19:09:34.104          NaN  42007          NaN
+2017-02-16 19:09:34.467       606.41    NaN          NaN
+2017-02-16 19:09:36.067          NaN    NaN          1.6
+2017-02-18 07:45:32.678          NaN    NaN          0.7
+2017-02-18 07:45:34.003          NaN  42075          NaN
+2017-02-18 07:45:34.732       636.60    NaN          NaN
+2017-02-21 07:45:34.230       702.29    NaN          NaN
+2017-02-21 07:45:34.340          NaN  42234          NaN
+2017-02-21 07:45:34.678          NaN    NaN         -3.3
+2017-02-22 06:46:27.030          NaN  42296          NaN
+2017-02-22 06:46:27.575       732.32    NaN          NaN
+2017-02-22 06:46:27.976          NaN    NaN         -8.8
+>>> 
+----
+
+Now we see a very common problem for the time series processing. All the timestamps are close to each other, but they're not quite aligned. So we can't read from the same row what statistics we had for each value. If we wanted to fill the values from previous rows, we could do that easily with ``fillna`` function of the Pandas. However, in this case it makes more sense to resample the data to a one-day buckets and then drop the duplicate rows:
+
+[source,python]
+----
+stats = stats.resample('D', fill_method='ffill').drop_duplicates()
+
+>>> stats
+            electricity   heat  temperature
+timestamp                                  
+2017-02-15       584.22  41955          0.0
+2017-02-16       606.41  42007          1.6
+2017-02-18       636.60  42075          0.7
+2017-02-21       702.29  42234         -3.3
+2017-02-22       732.32  42296         -8.8
+>>>
+----
+
+That's much better. Now we can easily see the statistics for each day and how the counters had behaved. In this example it does not matter that we're missing data, but there's lots of tools in the Pandas to generate that missing data based on the rows we have. In this example, lets look at how to calculate from the values our coefficiency ratio (amount of heat generated divided by electricity used). We'll do this by taking the difference of previous row to the current row from both heat as well as electricity:
+
+[source,python]
+----
+stats['cop'] = stats.diff().apply(lambda row: row['heat'] / row['electricity'], axis=1)
+
+>>> stats
+            electricity   heat  temperature       cop
+timestamp                                            
+2017-02-15       584.22  41955          0.0       NaN
+2017-02-16       606.41  42007          1.6  2.343398
+2017-02-18       636.60  42075          0.7  2.252401
+2017-02-21       702.29  42234         -3.3  2.420460
+2017-02-22       732.32  42296         -8.8  2.064602
+>>>
+----
+
+The first row shows ``NaN`` as we don't have any information prior to it for calculation. The coefficiency numbers show something worrysome, they don't seem to follow a pattern normally associated with them (higher temperature gives higher coefficiency). For a simple check, lets check the Pearson correlation between avg temperature and coefficiency:
+
+[source,python]
+----
+>>> stats.temperature.corr(stats.cop)
+0.65064171188572928
+>>>
+----
+
+I'll leave the interpretation to the viewer, but lets comment quickly that the number of datapoints is too low in this example to have a meaningful value. 
+
+== Conclusion
+
+This was a short example on how to get started with Pandas and Hawkular-Metrics, but even with it we were able to calculate how efficiently our heat pump was working and actually notice that it's working sub-optimally when temperature is high in this small sample scenario. The Pandas library gives multiple tools to process time series to a form that they can be used for further analytical processing, including but not limited to resampling, shifting, frequency conversions and periodic calculations. After modifying the data it can be easily further processed with other Python tools and even sent back to the Hawkular-Metrics in the processed form for storage purposes.
