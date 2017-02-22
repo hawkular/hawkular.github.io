@@ -5,11 +5,11 @@ Michael Burman
 :jbake-status: published
 :jbake-tags: blog, metrics, timeseries, analytics
 
-Storing the time series is not worth much if we can't actually do something valuable with it. For some time, many data analytics have used Python tools to extract valuable information from the available data. Today, lets look at the one of the popular options, http://pandas.pydata.org[Pandas]. In this blog post I will show how to fetch data from the Hawkular-Metrics and turn it to a processable form for the Pandas and do something with the data.
+Storing the time series is not worth much if we can't actually do something valuable with it. For some time, many data analytics have used Python tools to extract valuable information from the available data. Today, lets look at one of the popular options, http://pandas.pydata.org[Pandas]. In this blog post I will show how to fetch data from the Hawkular-Metrics and turn it to a processable form for the Pandas and do something with the data.
 
 As a data, I've taken some real world values from my current air-to-water heat pump and how it has functioned in some non-ideal circumstances. To make things more difficult, I've started logging the information after there's been historical data already so the starting values are not from the same point of time. To make things a bit more complicated I've also included some temperature values.
 
-Lets start by introducing a helper function and initialize pandas. You can install pandas with ``pip install pandas`` or with ``dnf`` or ``apt``.
+Lets start by introducing a helper function and initialize pandas. You can install Pandas with ``pip install pandas`` or with ``dnf`` or ``apt``.
 
 [source, python]
 ----
@@ -55,7 +55,7 @@ c.push(MetricType.Gauge, 'meter.reading', 732.32, timestamp=1487745987575)
 c.push(MetricType.Gauge, 'temperature.reading', -8.8, timestamp=1487745987976)
 ----
 
-As you can see already from the data, we use millisecond precision when fetching the data and the timestamps have some variance in them. Now, using the previously defined function we will fetch the data to a Pandas DataFrame
+As you can already see from the data, we use millisecond precision when fetching the data and the timestamps have some variance in them. Now, using the previously defined function we will fetch the data to a Pandas DataFrame:
 
 [source,python]
 ----
@@ -72,7 +72,7 @@ meter = meter.rename(columns={'meter.reading': 'electricity'})
 pollu = pollu.rename(columns={'pollucom.reading': 'heat'})
 ----
 
-Three distinct series are now stored to three DataFrames. Combining them and looking at the data reveals something interesting:
+Three distinct series are now stored in three distinct DataFrames. Combining them and looking at the data reveals something interesting:
 
 [source,python]
 ----
@@ -98,7 +98,7 @@ timestamp
 >>> 
 ----
 
-Now we see very common problem for the time series processing. All the timestamps are close to each other, but they're not quite aligned. So we can't read from the same row what statistics we had for each value. If we wanted to fill the values from previous rows, we could do that easily with ``fillna`` function of the Pandas. However, in this case it makes more sense to resample the data to a one-day buckets and then drop the duplicate rows:
+Now we see a very common problem for the time series processing. All the timestamps are close to each other, but they're not quite aligned. So we can't read from the same row what statistics we had for each value. If we wanted to fill the values from previous rows, we could do that easily with ``fillna`` function of the Pandas. However, in this case it makes more sense to resample the data to a one-day buckets and then drop the duplicate rows:
 
 [source,python]
 ----
