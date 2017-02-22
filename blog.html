@@ -191,6 +191,172 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/02/22/pandas-and-hawkular-metrics.html"><h1>Processing Hawkular-Metrics data with Python Pandas</h1></a>
+            <p>22 February 2017, by Michael Burman</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Storing the time series is not worth much if we can&#8217;t actually do something valuable with it. For some time, many data analytics have used Python tools to extract valuable information from the available data. Today, lets look at one of the popular options, <a href="http://pandas.pydata.org">Pandas</a>. In this blog post I will show how to fetch data from the Hawkular-Metrics and turn it to a processable form for the Pandas and do something with the data.</p>
+</div>
+<div class="paragraph">
+<p>As a data, I&#8217;ve taken some real world values from my current air-to-water heat pump and how it has functioned in some non-ideal circumstances. To make things more difficult, I&#8217;ve started logging the information after there&#8217;s been historical data already so the starting values are not from the same point of time. To make things a bit more complicated I&#8217;ve also included some temperature values.</p>
+</div>
+<div class="paragraph">
+<p>Lets start by introducing a helper function and initialize pandas. You can install Pandas with <code>pip install pandas</code> or with <code>dnf</code> or <code>apt</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">import numpy as np
+import pandas as pd
+from hawkular import *
+
+c = HawkularMetricsClient(tenant_id='pandas_test', port=8080)
+
+def read_hawkular(c, id):
+    s = c.query_metric(MetricType.Gauge, id, fromEarliest='true')
+    df2 = pd.DataFrame(s, columns=['timestamp', 'value'])
+    df2['timestamp'] = pd.to_datetime(df2['timestamp'], unit='ms')
+    df2 = df2.set_index('timestamp')
+    df2 = df2.rename(columns={'value': id})
+    return df2</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, with the read_hawkular we can fetch data from the Hawkular-Metrics using the given id. I&#8217;ve hardcoded Gauge as the metric type in this case as that&#8217;s the type of the values we&#8217;re processing today. We&#8217;ll also make the id as the column name for these values and use the timestamp as our index. Pandas will automatically convert the values to float64 and with our hints use the timestamps as the indexing value.</p>
+</div>
+<div class="paragraph">
+<p>Lets insert some data:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">c.push(MetricType.Gauge, 'pollucom.reading', 41955, timestamp=1487192074052)
+c.push(MetricType.Gauge, 'meter.reading', 584.22, timestamp=1487192074145)
+c.push(MetricType.Gauge, 'temperature.reading', 0.0, timestamp=1487192075645)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42007, timestamp=1487272174104)
+c.push(MetricType.Gauge, 'meter.reading', 606.41, timestamp=1487272174467)
+c.push(MetricType.Gauge, 'temperature.reading', 1.6, timestamp=1487272176067)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42075, timestamp=1487403934003)
+c.push(MetricType.Gauge, 'meter.reading', 636.60, timestamp=1487403934732)
+c.push(MetricType.Gauge, 'temperature.reading', 0.7, timestamp=1487403932678)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42234, timestamp=1487663134340)
+c.push(MetricType.Gauge, 'meter.reading', 702.29, timestamp=1487663134230)
+c.push(MetricType.Gauge, 'temperature.reading', -3.3, timestamp=1487663134678)
+
+c.push(MetricType.Gauge, 'pollucom.reading', 42296, timestamp=1487745987030)
+c.push(MetricType.Gauge, 'meter.reading', 732.32, timestamp=1487745987575)
+c.push(MetricType.Gauge, 'temperature.reading', -8.8, timestamp=1487745987976)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As you can already see from the data, we use millisecond precision when fetching the data and the timestamps have some variance in them. Now, using the previously defined function we will fetch the data to a Pandas DataFrame:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python"># Read the data
+
+pollu = read_hawkular(c, 'pollucom.reading')
+meter = read_hawkular(c, 'meter.reading')
+temperature = read_hawkular(c, 'temperature.reading')
+
+# Lets rename the columns
+
+temperature = temperature.rename(columns={'temperature.reading': 'temperature'})
+meter = meter.rename(columns={'meter.reading': 'electricity'})
+pollu = pollu.rename(columns={'pollucom.reading': 'heat'})</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Three distinct series are now stored in three distinct DataFrames. Combining them and looking at the data reveals something interesting:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats = pd.concat([pollu, meter, temperature]).sort_index()
+&gt;&gt;&gt; stats
+                         electricity   heat  temperature
+timestamp
+2017-02-15 20:54:34.052          NaN  41955          NaN
+2017-02-15 20:54:34.145       584.22    NaN          NaN
+2017-02-15 20:54:35.645          NaN    NaN          0.0
+2017-02-16 19:09:34.104          NaN  42007          NaN
+2017-02-16 19:09:34.467       606.41    NaN          NaN
+2017-02-16 19:09:36.067          NaN    NaN          1.6
+2017-02-18 07:45:32.678          NaN    NaN          0.7
+2017-02-18 07:45:34.003          NaN  42075          NaN
+2017-02-18 07:45:34.732       636.60    NaN          NaN
+2017-02-21 07:45:34.230       702.29    NaN          NaN
+2017-02-21 07:45:34.340          NaN  42234          NaN
+2017-02-21 07:45:34.678          NaN    NaN         -3.3
+2017-02-22 06:46:27.030          NaN  42296          NaN
+2017-02-22 06:46:27.575       732.32    NaN          NaN
+2017-02-22 06:46:27.976          NaN    NaN         -8.8
+&gt;&gt;&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now we see a very common problem for the time series processing. All the timestamps are close to each other, but they&#8217;re not quite aligned. So we can&#8217;t read from the same row what statistics we had for each value. If we wanted to fill the values from previous rows, we could do that easily with <code>fillna</code> function of the Pandas. However, in this case it makes more sense to resample the data to a one-day buckets and then drop the duplicate rows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats = stats.resample('D', fill_method='ffill').drop_duplicates()
+
+&gt;&gt;&gt; stats
+            electricity   heat  temperature
+timestamp
+2017-02-15       584.22  41955          0.0
+2017-02-16       606.41  42007          1.6
+2017-02-18       636.60  42075          0.7
+2017-02-21       702.29  42234         -3.3
+2017-02-22       732.32  42296         -8.8
+&gt;&gt;&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>That&#8217;s much better. Now we can easily see the statistics for each day and how the counters had behaved. In this example it does not matter that we&#8217;re missing data, but there&#8217;s lots of tools in the Pandas to generate that missing data based on the rows we have. In this example, lets look at how to calculate from the values our coefficiency ratio (amount of heat generated divided by electricity used). We&#8217;ll do this by taking the difference of previous row to the current row from both heat as well as electricity:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats['cop'] = stats.diff().apply(lambda row: row['heat'] / row['electricity'], axis=1)
+
+&gt;&gt;&gt; stats
+            electricity   heat  temperature       cop
+timestamp
+2017-02-15       584.22  41955          0.0       NaN
+2017-02-16       606.41  42007          1.6  2.343398
+2017-02-18       636.60  42075          0.7  2.252401
+2017-02-21       702.29  42234         -3.3  2.420460
+2017-02-22       732.32  42296         -8.8  2.064602
+&gt;&gt;&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The first row shows <code>NaN</code> as we don&#8217;t have any information prior to it for calculation. The coefficiency numbers show something worrysome, they don&#8217;t seem to follow a pattern normally associated with them (higher temperature gives higher coefficiency). For a simple check, lets check the Pearson correlation between avg temperature and coefficiency:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-python" data-lang="python">&gt;&gt;&gt; stats.temperature.corr(stats.cop)
+0.65064171188572928
+&gt;&gt;&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>I&#8217;ll leave the interpretation to the viewer, but lets comment quickly that the number of datapoints is too low in this example to have a meaningful value.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This was a short example on how to get started with Pandas and Hawkular-Metrics, but even with it we were able to calculate how efficiently our heat pump was working and actually notice that it&#8217;s working sub-optimally when temperature is high in this small sample scenario. The Pandas library gives multiple tools to process time series to a form that they can be used for further analytical processing, including but not limited to resampling, shifting, frequency conversions and periodic calculations. After modifying the data it can be easily further processed with other Python tools and even sent back to the Hawkular-Metrics in the processed form for storage purposes.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/02/15/hawkular-services-0.32-released.html"><h1>Hawkular Services 0.32.Final</h1></a>
             <p>15 February 2017, by Heiko W. Rupp</p>
             <p><div id="preamble">
@@ -812,55 +978,13 @@ a1 = a AND NOT b2
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/02/04/hawkular-apm-service-deployments.html"><h1>Hawkular APM: Comparing performance of service versions</h1></a>
-            <p>04 February 2017, by Gary Brown</p>
-            <p><div class="paragraph">
-<p>With the release of <a href="https://github.com/hawkular/hawkular-apm/releases/tag/0.14.0.Final">0.14.0.Final on Hawkular APM</a> we have introduced a new feature in support of continuous deployment of microservices.
-When a new version of a service is deployed, potentially as part of a deployment strategy (such as Canary, A/B, Blue/Green), it is important
-to be able to assess the impact the new version of the service has in comparison to existing/previous versions.</p>
-</div>
-<div class="paragraph">
-<p>The new "Services" tab in the UI provides just such a feature. When trace data is reported by the Hawkular APM OpenTracing provider (Java
-or JavaScript), it identifies the service name and optional version (known as a buildStamp). When the services are deployed within OpenShift
-the details are automatically obtained from the environment - however when running services outside of OpenShift, these values can be provided
-as environment variables (<em>HAWKULAR_APM_SERVICE_NAME</em> and <em>HAWKULAR_APM_BUILDSTAMP</em> respectively).</p>
-</div>
-<div class="paragraph">
-<p>At the top of the new page, you can select the service name and then a particular version (or <em>All</em>) to see the performance of that service/version
-over the defined time span. The number of transactions and faults are also shown. Once the 'Add' button is pressed, the details will be displayed.</p>
-</div>
-<div class="paragraph">
-<p>To perform a comparison with either the same service, but different version, or between different services - simply select their details and press
-'Add' again. The combined information will be shown in the same charts, allowing direct comparison of their information.</p>
-</div>
-<div class="paragraph">
-<p>The following image shows the deployment of three versions of the Account Manager service from the <a href="https://github.com/hawkular/hawkular-apm/tree/master/examples/vertx-opentracing">OpenTracing vertx example</a>.
-The first version of the service (shown in blue) is being used for a while before the second version (shown in orange) is introduced. After a while of running these versions together the first version is stopped. Then a third version (shown in green) is started and runs along side the second version.</p>
-</div>
-<div class="paragraph">
-<p>The top chart shows that after the initial spikes when the new versions are first introduced, they settle down and perform at approximately the same levels.</p>
-</div>
-<div class="paragraph">
-<p>The bottom chart shows the number of transactions, and the subset that resulted in a fault, for each of the three versions. As you can see, when the new versions are introduced, the invocations are split between available versions indicating the services are sharing the load. Using this technique, it would be possible to see whether a newer version is suffering from a greater level of errors than a precedessor.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-02-04-apm-service-deployment.png" alt="Comparison of service/version information">
-</div>
-</div>
-<div class="paragraph">
-<p>If you need any assistance, feel free to join us via IRC at <code>#hawkular</code>
-on Freenode.</p>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>04 February 2017 - <a href="blog/2017/02/04/hawkular-apm-service-deployments.html">Hawkular APM: Comparing performance of service versions</a></li>
           <li>03 February 2017 - <a href="blog/2017/02/03/grafana-events.html">Display custom events in Grafana</a></li>
           <li>31 January 2017 - <a href="blog/2017/01/31/hawkular-services-0.30-released.html">Hawkular Services 0.30.0.Final</a></li>
           <li>27 January 2017 - <a href="blog/2017/01/27/hosa-status.html">Getting the status of Hosa</a></li>
