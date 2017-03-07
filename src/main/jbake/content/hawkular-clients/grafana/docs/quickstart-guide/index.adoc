@@ -29,8 +29,8 @@ Download the source code and copy the content of `dist` to `hawkular` inside Gra
 GRAFANA_PLUGINS=/var/lib/grafana/plugins
 wget https://github.com/hawkular/hawkular-grafana-datasource/archive/release.zip -O hawkular-grafana-datasource-release.zip
 unzip hawkular-grafana-datasource-release.zip
-mkdir ${GRAFANA_PLUGINS}/hawkular
-cp -R hawkular-grafana-datasource-release/dist/* ${GRAFANA_PLUGINS}/hawkular
+mkdir ${GRAFANA_PLUGINS}/hawkular-datasource
+cp -R hawkular-grafana-datasource-release/dist/* ${GRAFANA_PLUGINS}/hawkular-datasource
 ----
 
 === From the Grafana plugin directory
@@ -46,13 +46,15 @@ grafana-cli plugins install hawkular-datasource
 
 The datasource URL must point to the Hawkular Metrics service, e.g. `http://myhost:8080/hawkular/metrics`
 
-Access: both `proxy` and `direct` modes should work in most configurations. Some earlier versions of Hawkular Metrics had a bug with CORS headers, that prevented the use of `direct` mode here.
+Access: `proxy` mode is recommended, since it doesn't leak any authentication information to the browser.
+
+Both `proxy` and `direct` modes should work in most configurations. Some earlier versions of Hawkular Metrics had a bug with CORS headers, that prevented the use of `direct` mode here.
 If you want to use `direct` mode (that is, direct calls from client browser to Hawkular REST API), and if you have setup CORS restrictions in Hawkular, make sure to allow the Grafana server origin in Metrics' configuration.
 If you're unsure, just use `proxy` mode and you should be fine.
 
 Authentication must be set when working with a Hawkular server. Check the 'Basic Auth' box and fill the user and password fields.
 
-Select the tenant. On Hawkular servers, use `hawkular`.
+Select the tenant. For hawkular-services, use `hawkular`. For Openshift, the tenant is the project name. Custom tenants can also be used if you manage writing metrics to Hawkular's REST API.
 
 Openshift-Metrics users must provide an authentication token.
 
@@ -137,7 +139,7 @@ grunt
 ----
 
 Files are generated under the `dist` directory.
-To test your build, copy these files to `${GRAFANA_PLUGINS}/hawkular` and restart grafana-server.
+To test your build, copy these files to `${GRAFANA_PLUGINS}/hawkular-datasource` and restart grafana-server.
 
 == Running with Docker
 
