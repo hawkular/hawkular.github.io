@@ -29,8 +29,8 @@ Download the source code and copy the content of `dist` to `hawkular` inside Gra
 GRAFANA_PLUGINS=/var/lib/grafana/plugins
 wget https://github.com/hawkular/hawkular-grafana-datasource/archive/release.zip -O hawkular-grafana-datasource-release.zip
 unzip hawkular-grafana-datasource-release.zip
-mkdir ${GRAFANA_PLUGINS}/hawkular
-cp -R hawkular-grafana-datasource-release/dist/* ${GRAFANA_PLUGINS}/hawkular
+mkdir ${GRAFANA_PLUGINS}/hawkular-datasource
+cp -R hawkular-grafana-datasource-release/dist/* ${GRAFANA_PLUGINS}/hawkular-datasource
 ----
 
 === From the Grafana plugin directory
@@ -46,13 +46,15 @@ grafana-cli plugins install hawkular-datasource
 
 The datasource URL must point to the Hawkular Metrics service, e.g. `http://myhost:8080/hawkular/metrics`
 
-Access: both `proxy` and `direct` modes should work in most configurations. Some earlier versions of Hawkular Metrics had a bug with CORS headers, that prevented the use of `direct` mode here.
+Access: `proxy` mode is recommended, since it doesn't leak any authentication information to the browser.
+
+Both `proxy` and `direct` modes should work in most configurations. Some earlier versions of Hawkular Metrics had a bug with CORS headers, that prevented the use of `direct` mode here.
 If you want to use `direct` mode (that is, direct calls from client browser to Hawkular REST API), and if you have setup CORS restrictions in Hawkular, make sure to allow the Grafana server origin in Metrics' configuration.
 If you're unsure, just use `proxy` mode and you should be fine.
 
 Authentication must be set when working with a Hawkular server. Check the 'Basic Auth' box and fill the user and password fields.
 
-Select the tenant. On Hawkular servers, use `hawkular`.
+Select the tenant. For Hawkular-Services, use `hawkular`. For Openshift, the tenant is the project name. Custom tenants can also be used if you manage writing metrics to Hawkular's REST API.
 
 Openshift-Metrics users must provide an authentication token.
 
@@ -60,9 +62,9 @@ Openshift-Metrics users must provide an authentication token.
 
 === Queries
 
-When adding a Graph panel, the Metrics tab allows you fetch _Gauges_, _Counters_ and _Availability_ metrics in Hawkular. You can either search by metric id or by tag, assuming your version of hawkular-metrics is at least 0.20.0. Prior versions only allow searching by id.
+When adding a Graph panel, the Metrics tab allows you fetch _Gauges_, _Counters_ and _Availability_ metrics in Hawkular. You can either search by metric id or by tag, assuming your version of Hawkular Metrics is at least 0.20.0. Prior versions only allow searching by id.
 
-TIP: To know your version of hawkular-metrics, check the "status" endpoint. E.g. `http://myhost:8080/hawkular/metrics/status`
+TIP: To know your version of Hawkular Metrics, check the "status" endpoint. E.g. `http://myhost:8080/hawkular/metrics/status`
 
 When searching by id, you must provide the exact metric id (or use variables, as discussed later).
 
@@ -137,7 +139,7 @@ grunt
 ----
 
 Files are generated under the `dist` directory.
-To test your build, copy these files to `${GRAFANA_PLUGINS}/hawkular` and restart grafana-server.
+To test your build, copy these files to `${GRAFANA_PLUGINS}/hawkular-datasource` and restart grafana-server.
 
 == Running with Docker
 
@@ -173,13 +175,13 @@ oc process -f https://raw.githubusercontent.com/hawkular/hawkular-grafana-dataso
 
 * Check the URL: `[host]/hawkular/metrics`. Make sure there's no ending slash. When you open up this URL in a browser you should see the Hawkular logo, the installed version and a mention that the service is started.
 
-* Make sure the credentials or token match your installation. In general, if you installed a **standalone hawkular-metrics** server without any specific configuration you probably don't have any authentication information to provide. If you installed **hawkular-services** using its link:http://www.hawkular.org/hawkular-services/docs/installation-guide/[installation guide] you will probably have to fill-in the basic auth fields. If you are using **Hawkular from OpenShift**, you have to provide a Bearer token in the `Token` field. Tokens can be link:https://docs.openshift.com/enterprise/3.1/architecture/additional_concepts/authentication.html[generated temporarily] (go to `[OpenShift host]/oauth/token/request`) or from a link:https://docs.openshift.com/container-platform/3.3/rest_api/index.html#rest-api-serviceaccount-tokens[Service account] in OpenShift.
+* Make sure the credentials or token match your installation. In general, if you installed a **standalone Hawkular Metrics** server without any specific configuration you probably don't have any authentication information to provide. If you installed **Hawkular-Services** using its link:http://www.hawkular.org/hawkular-services/docs/installation-guide/[installation guide] you will probably have to fill-in the basic auth fields. If you are using **Hawkular from OpenShift**, you have to provide a Bearer token in the `Token` field. Tokens can be link:https://docs.openshift.com/enterprise/3.1/architecture/additional_concepts/authentication.html[generated temporarily] (go to `[OpenShift host]/oauth/token/request`) or from a link:https://docs.openshift.com/container-platform/3.3/rest_api/index.html#rest-api-serviceaccount-tokens[Service account] in OpenShift.
 
 * Check the javascript debugging tool of your browser. If you see an error mentioning issues with CORS, switch to `proxy` mode in the datasource configuration.
 
 ### I can't query by tag, the option is not displayed
 
-Querying by tag was introduced before the plugin was properly versioned, so if you have a version >= 1.0.2 you should have it. However it is only enabled when Grafana talks to hawkular-metrics >= 0.20.0. To check your version of hawkular-metrics just open its status page in a browser (`[host]/hawkular/metrics` or `[host]/hawkular/metrics/status`).
+Querying by tag was introduced before the plugin was properly versioned, so if you have a version >= 1.0.2 you should have it. However it is only enabled when Grafana talks to Hawkular Metrics >= 0.20.0. To check your version of Hawkular Metrics just open its status page in a browser (`[host]/hawkular/metrics` or `[host]/hawkular/metrics/status`).
 
 ### Connection is OK but I can't get any metric
 
@@ -197,4 +199,4 @@ Also note that in Hawkular, data has a retention period of 7 days by default (li
 
 ### I'm running Hawkular in OpenShift, connection is OK but I can't get any metric
 
-Check your version of hawkular-metrics (`[host]/hawkular/metrics` or `[host]/hawkular/metrics/status`). Prior to 0.16.0, metric names containing slashes, like in OpenShift, were unfortunately not showing up in Grafana. You can consider link:https://docs.openshift.org/latest/install_config/upgrading/manual_upgrades.html#manual-upgrading-cluster-metrics[upgrading metrics].
+Check your version of Hawkular Metrics (`[host]/hawkular/metrics` or `[host]/hawkular/metrics/status`). Prior to 0.16.0, metric names containing slashes, like in OpenShift, were unfortunately not showing up in Grafana. You can consider link:https://docs.openshift.org/latest/install_config/upgrading/manual_upgrades.html#manual-upgrading-cluster-metrics[upgrading metrics].
