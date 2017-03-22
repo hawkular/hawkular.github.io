@@ -6,9 +6,484 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 17 Mar 2017 08:06:40 +0000</pubDate>
-    <lastBuildDate>Fri, 17 Mar 2017 08:06:40 +0000</lastBuildDate>
+    <pubDate>Wed, 22 Mar 2017 15:47:48 +0000</pubDate>
+    <lastBuildDate>Wed, 22 Mar 2017 15:47:48 +0000</lastBuildDate>
 
+    <item>
+      <title>Adjusting sampling rates for Hawkular APM on OpenShift</title>
+      <link>http://www.hawkular.org/blog/2017/03/22/apm-adjusting-sampling-rate.html</link>
+      <author>noreply@hawkular.org (Juraci Paixão Kröhling)</author>
+      <pubDate>Wed, 22 Mar 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/03/22/apm-adjusting-sampling-rate.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When doing distributed tracing of a busy application, it&amp;#8217;s a good practice
+to limit the amount of data being collected or stored. The techniques for that
+are diverse, ranging from a simple &quot;percentage based sampling&quot; of the
+incoming requests, up to complex heuristics to keep/discard traces based on the
+code path.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-03-22-teaser.png&quot; alt=&quot;Final result&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s also a good practice to empower the admin, or an automated monitoring system,
+with the capability of adjusting the sampling based on the current conditions.
+For instance, we&amp;#8217;d probably want to get more traces from a
+&lt;a href=&quot;/blog/2017/02/13/monitoring-canary-deployments.html&quot;&gt;newly deployed version&lt;/a&gt;
+of an existing application. We might want to compare the performance and adjust
+the percentage in steps. Similarly, if we are experiencing traffic peaks and need
+every resource available, we might enable tracing only to a small percentage of
+the incoming requests.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For the simple scenario, let&amp;#8217;s call it &quot;percentage based sampling&quot;, we have a few
+alternatives on how to implement it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_application_based_decision&quot;&gt;Application-based decision&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this scenario, we embed the logic into the application, using the percentage
+as the probability a random number is within a range. In other words: 20% sampling
+would be 20% chance that a number is lower or equal to 2 on a range of 1-10.
+Anything more complex than that would be &quot;too much&quot; for our scenario.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As hinted before, we want to externalize the percentage so that an external
+actor can change this. One solution is to store this percentage number into an
+environment variable on the Deployment Configuration (DC). This will, however,
+rollout a new deployment after every change, which might not be desirable in some
+scenarios.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Another solution is to externalize this into a Configuration Map (ConfigMap),
+but then, we also need to let our application listen to events related to this
+ConfigMap. For a microservice, we might end up with a bunch of unrelated
+dependencies, just to decide whether or not to trace a request.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_openshift_based_decision&quot;&gt;OpenShift-based decision&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this scenario, we delegate the decision to our runtime environment. Similar
+to a simple A/B testing scenario, our deployment architecture would allow for
+quick changes in the routing decision. It does require a simple change to our
+application, but it&amp;#8217;s a small compromise for the benefits it provides.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For that, we&amp;#8217;ll use one single Image Stream (&lt;code&gt;is&lt;/code&gt;) with our code, two Deployment
+Configurations (&lt;code&gt;dc&lt;/code&gt;), two Services (&lt;code&gt;svc&lt;/code&gt;) and one Route object. Each one of our
+&lt;code&gt;dc&lt;/code&gt; objects would have a different value for an environment variable called
+&lt;code&gt;TRACER_ENABLED&lt;/code&gt;. Each &lt;code&gt;svc&lt;/code&gt; has its own &lt;code&gt;dc&lt;/code&gt;, and the router sends a
+percentage of the requests to each of the &lt;code&gt;svc&lt;/code&gt; instances. The main advantage of
+this approach is that the application image is the same for both &lt;code&gt;tracing-enabled&lt;/code&gt;
+and &lt;code&gt;tracing-disabled&lt;/code&gt; scenarios.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;h1 id=&quot;_doing_it&quot; class=&quot;sect0&quot;&gt;Doing it!&lt;/h1&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Enough talk, let&amp;#8217;s start doing it. The first step is to create an OpenShift
+cluster. The following commands will give us a recent version of OpenShift Origin
+and will deploy Hawkular APM on it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ oc cluster up --version=latest
+$ oc create -f https://raw.githubusercontent.com/jboss-dockerfiles/hawkular-apm/master/openshift-templates/hawkular-apm-server-deployment.yml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll now bootstrap a vert.x application from scratch via
+&lt;a href=&quot;http://start.prod-preview.openshift.io/&quot;&gt;Obsidian Toaster&lt;/a&gt;. For our example,
+click on &quot;&amp;#8230;&amp;#8203; selecting a runtime project framework&quot;, select &quot;Vert.x&quot; and give
+it a name like &lt;code&gt;conditional-tracer&lt;/code&gt; (leave the package name as &lt;code&gt;com.example&lt;/code&gt;
+and the version as &lt;code&gt;1.0.0-SNAPSHOT&lt;/code&gt;). On the next step, set the Vert.x version
+to &lt;code&gt;3.3.3&lt;/code&gt; and select &lt;code&gt;Vert.x Web&lt;/code&gt;. Scroll down the list and click &lt;code&gt;Finish&lt;/code&gt; and
+download the ZIP file.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Obsidian Toaster is still in alpha. If it&amp;#8217;s not working for some reason,
+we have a ZIP file ready for you to download link:
+&lt;a href=&quot;/data/blog/2017/2017-03-22-conditional-tracer.zip&quot;&gt;conditional-tracer.zip&lt;/a&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s add our Hawkular APM dependencies to our new project by adding the following
+lines to the &lt;code&gt;pom.xml&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-xml&quot; data-lang=&quot;xml&quot;&gt;&amp;lt;dependency&amp;gt;
+  &amp;lt;groupId&amp;gt;org.hawkular.apm&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;hawkular-apm-trace-publisher-rest-client&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;0.14.2.Final&amp;lt;/version&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&amp;lt;dependency&amp;gt;
+  &amp;lt;groupId&amp;gt;org.hawkular.apm&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;hawkular-apm-client-opentracing&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;0.14.2.Final&amp;lt;/version&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&amp;lt;dependency&amp;gt;
+  &amp;lt;groupId&amp;gt;com.fasterxml.jackson.core&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;jackson-core&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;2.6.0&amp;lt;/version&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&amp;lt;dependency&amp;gt;
+  &amp;lt;groupId&amp;gt;com.fasterxml.jackson.core&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;jackson-annotations&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;2.6.0&amp;lt;/version&amp;gt;
+&amp;lt;/dependency&amp;gt;
+&amp;lt;dependency&amp;gt;
+  &amp;lt;groupId&amp;gt;com.fasterxml.jackson.core&amp;lt;/groupId&amp;gt;
+  &amp;lt;artifactId&amp;gt;jackson-databind&amp;lt;/artifactId&amp;gt;
+  &amp;lt;version&amp;gt;2.6.0&amp;lt;/version&amp;gt;
+&amp;lt;/dependency&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+we need to override the Jackson dependencies because of incompatibilities
+between the version Hawkular APM uses and the one Vert.x uses.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We now remove the &lt;code&gt;src/main/fabric8/svc.yml&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ rm src/main/fabric8/svc.yml&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll create two service files instead:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/fabric8/no-tracer-svc.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;apiVersion: v1
+kind: Service
+metadata:
+  name: conditional-tracer-disabled
+  labels:
+    tracer: disabled
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    group: com.example
+    project: conditional-tracer
+    tracer: disabled
+  type: ClusterIP&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/fabric8/tracer-svc.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;apiVersion: v1
+kind: Service
+metadata:
+  name: conditional-tracer-enabled
+  labels:
+    tracer: enabled
+spec:
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+  selector:
+    group: com.example
+    project: conditional-tracer
+    tracer: enabled
+  type: ClusterIP&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We now create our two &lt;code&gt;dc&lt;/code&gt; objects:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/fabric8/no-tracer-dc.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    group: com.example
+    project: conditional-tracer
+    tracer: disabled
+  name: conditional-tracer-disabled
+spec:
+  replicas: 1
+  selector:
+    group: com.example
+    project: conditional-tracer
+    tracer: disabled
+  template:
+    metadata:
+      labels:
+        group: com.example
+        project: conditional-tracer
+        tracer: disabled
+    spec:
+      containers:
+      - env:
+        - name: HAWKULAR_APM_URI
+          value: http://hawkular-apm
+        - name: HAWKULAR_APM_USERNAME
+          value: admin
+        - name: HAWKULAR_APM_PASSWORD
+          value: password
+        - name: TRACER_ENABLED
+          value: false
+        - name: JAVA_APP_DIR
+          value: /deployments
+        - name: JAVA_MAIN_CLASS
+          value: io.vertx.core.Launcher
+        name: java-exec
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - java-exec
+      from:
+        kind: ImageStreamTag
+        name: conditional-tracer:latest
+    type: ImageChange&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/fabric8/tracer-dc.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  labels:
+    group: com.example
+    project: conditional-tracer
+    tracer: enabled
+  name: conditional-tracer-enabled
+spec:
+  replicas: 1
+  selector:
+    group: com.example
+    project: conditional-tracer
+    tracer: enabled
+  template:
+    metadata:
+      labels:
+        group: com.example
+        project: conditional-tracer
+        tracer: enabled
+    spec:
+      containers:
+      - env:
+        - name: HAWKULAR_APM_URI
+          value: http://hawkular-apm
+        - name: HAWKULAR_APM_USERNAME
+          value: admin
+        - name: HAWKULAR_APM_PASSWORD
+          value: password
+        - name: TRACER_ENABLED
+          value: true
+        - name: JAVA_APP_DIR
+          value: /deployments
+        - name: JAVA_MAIN_CLASS
+          value: io.vertx.core.Launcher
+        name: java-exec
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+      dnsPolicy: ClusterFirst
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - java-exec
+      from:
+        kind: ImageStreamTag
+        name: conditional-tracer:latest
+    type: ImageChange&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And finally, we change our &lt;code&gt;route.yml&lt;/code&gt; to alternate the requests among the
+services:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/fabric8/route.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;apiVersion: v1
+kind: Route
+metadata:
+  name: conditional-tracer
+spec:
+  alternateBackends:
+  - kind: Service
+    name: conditional-tracer-disabled
+    weight: 80
+  to:
+    kind: Service
+    name: conditional-tracer-enabled
+    weight: 20&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The only remaining change is within our Java code, to use a &lt;code&gt;NoopTracer&lt;/code&gt; by
+default, using a concrete tracer (&lt;code&gt;APMTracer&lt;/code&gt;) if the environment variable
+&lt;code&gt;TRACER_ENABLED&lt;/code&gt; parses to &lt;code&gt;true&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/com/example/MainVerticle.java&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;public class MainVerticle extends AbstractVerticle {
+    private Tracer tracer = NoopTracerFactory.create();
+
+    @Override
+    public void start() {
+        boolean tracerEnabled = Boolean.parseBoolean(System.getenv(&quot;TRACER_ENABLED&quot;));
+        if (tracerEnabled) {
+            tracer = new APMTracer();
+        }
+        vertx.createHttpServer()
+                .requestHandler((req) -&amp;gt; {
+                    Span span = tracer.buildSpan(&quot;hello-world-request&quot;).start();
+                    span.setTag(&quot;enabled&quot;, tracerEnabled);
+                    req.response().end(String.format(&quot;Hello World! Are we tracing this request? %s&quot;, System.getenv(&quot;TRACER_ENABLED&quot;)));
+                    span.finish();
+                })
+                .listen(8080);
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this point, we are ready to test it! As we already have an OpenShift cluster
+running with our Hawkular APM server, we just need to run:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ mvn clean fabric8:deploy&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once the build finishes running, we should see the following on OpenShift&amp;#8217;s Web
+Console:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-03-22-final-result.png&quot; alt=&quot;Final result&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To check whether our tracing is working, we can use a script like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ export URL=&quot;http://conditional-tracer-myproject.192.168.2.107.xip.io&quot;
+$ for i in `seq 1 10` ; do curl ${URL} 2&amp;gt;/dev/null | awk &apos;{print $NF}&apos; ; done | sort | uniq -c&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An output similar to this one should be printed out:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;8 false
+2 true&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This means that 8 didn&amp;#8217;t have their traces published and two requests had
+their traces published to Hawkular APM. You can check that by logging into Hawkular
+APM (username: &lt;code&gt;admin&lt;/code&gt;, password: &lt;code&gt;password&lt;/code&gt;) and looking into the
+&lt;code&gt;Distributed Tracing&lt;/code&gt; screen. There should be only two traces there.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock tip&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Tip&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+You might be tempted to try opening the URL in your browser and hitting
+refresh, but you&amp;#8217;ll notice that the OpenShift router tries to send you to the same
+backend service all the time. For this reason, it makes more sense to test on
+the command line with &lt;code&gt;curl&lt;/code&gt;.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;From this point and on, we can adjust the percentage by changing the route. One
+way to do that is by issuing the command &lt;code&gt;oc edit route conditional-tracer&lt;/code&gt;,
+or by navigating on the UI to &lt;code&gt;Applications - Routes - conditional-tracer -
+Actions - Edit&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-03-22-edit-route.png&quot; alt=&quot;Final result&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_wrapping_up&quot;&gt;Wrapping up&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Deciding whether a transaction should be traced or not is a decision that should
+be outsourced as much as possible to the underlying Tracer, possibly with data
+coming from different sources. Having a simple switch on the code loading the
+Tracer, however, might prove invaluable to admins in determined situations.
+Given the simplicity of this solution, there&amp;#8217;s no reason not to have it!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The full source code for this example can be found at
+&lt;a href=&quot;https://github.com/hawkular/conditional-tracer&quot;&gt;github.com/hawkular/conditional-tracer&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Distributed Tracing Workshop and OpenTracing Collaboration</title>
       <link>http://www.hawkular.org/blog/2017/03/15/hawkular-opentracing-otsc.html</link>
