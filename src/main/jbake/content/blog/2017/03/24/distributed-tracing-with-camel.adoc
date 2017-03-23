@@ -7,7 +7,7 @@ Gary Brown
 
 In this post we will discuss how the http://opentracing.io/[OpenTracing standard] is being supported in the upcoming release of Apache Camel (version 2.19).
 
-OpenTracing is the vendor neutral open standard for distributed tracing, supported across many languages and with a growing number of tracer implementations and framework integrations.
+OpenTracing is the vendor neutral open standard for distributed tracing, supported across many languages and with a growing number of tracer implementations and framework integrations. To illustrate the vendor neutrality, we will demonstrate two examples, each using a different OpenTracing compliant Tracer.
 
 ifndef::env-github[]
 image::/img/blog/2017/2017-03-24-camel-loanbroker-jms-instance.png[caption="Figure 1: ", title="Distributed trace for the Camel Loan Broker JMS example"]
@@ -16,13 +16,13 @@ ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-03-24-camel-loanbroker-jms-instance.png[caption="Figure 1: ", title="Distributed trace for the Camel Loan Broker JMS example"]
 endif::[]
 
-=== How to Instrument a Camel Application
+== How to Instrument a Camel Application
 
 The first thing to note is that it is not necessary to modify the Camel routes to have them instrumented using an OpenTracing compliant Tracer. The only requirement is to add some relevant dependencies and initialize the tracer on the `CamelContext`.
 
 This can be achieved in three ways:
 
-==== Explicit initialization
+=== Explicit initialization
 
 The dependencies required to explicitly initialize OpenTracing are
 
@@ -35,7 +35,7 @@ The dependencies required to explicitly initialize OpenTracing are
 
 and any other dependencies specific to the OpenTracing compliant Tracer implementation being used.
 
-Then either add the initialization of the tracer to the spring configuration,
+Then either add the initialization of the tracer to the Spring configuration,
 
 ```xml
   <bean id="tracer" class="..."/>
@@ -61,7 +61,7 @@ public class MyApplication {
 
 See the https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/client[camel-opentracing example client application] for an example.
 
-==== Spring Boot Annotation
+=== Spring Boot Annotation
 
 The dependencies required to use OpenTracing in a Spring Boot application are simply
 
@@ -87,7 +87,7 @@ public class MyApplication {
 
 See the https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/service1[camel-opentracing example service1 application] for an example.
 
-==== Java Agent
+=== Java Agent
 
 This approach uses a `javaagent` to handle the initialization, so does not require any code/configuration changes. The dependencies required are:
 
@@ -107,7 +107,7 @@ Changes are also required in the `pom.xml` to download the `opentracing-agent.ja
 
 See the https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/service2[camel-opentracing example service2 application] for an example.
 
-=== Instrumenting Some Examples
+== Instrumenting Some Examples
 
 This section will show how two examples can be instrumented using two different OpenTracing compliant Tracer implementations.
 
@@ -115,16 +115,14 @@ The first is a new example introduced to demonstrate the three ways a Camel appl
 
 The second shows how an existing example (Loan Broker JMS) can be instrumented using the http://www.hawkular.org/hawkular-apm/[Hawkular APM] project.
 
-'''
 
-==== Camel OpenTracing Example
+=== Camel OpenTracing Example
 
 This section will show how the new example, which uses a simple _logging_ tracer implementation by default, can be changed to use Zipkin.
 
 First edit each of the client/service1/service2 `pom.xml` files to:
 
 * Add properties
-
 ```xml
   <properties>
     ...
@@ -134,7 +132,6 @@ First edit each of the client/service1/service2 `pom.xml` files to:
 ```
 
 * Replace the `camel-example-opentracing-loggingtracer` dependency with:
-
 ```xml
     <dependency>
       <groupId>io.opentracing.brave</groupId>
@@ -148,8 +145,9 @@ First edit each of the client/service1/service2 `pom.xml` files to:
     </dependency>
 ```
 
-* Common code for ClientApplication Service1Application and ServiceApplication
+Then the following Java code changes are required:
 
+* Common code for ClientApplication, Service1Application and Service2Application
 ```java
 import brave.opentracing.BraveTracer;
 import io.opentracing.Tracer;
@@ -185,7 +183,7 @@ Once the changes have all been made, compile the example using `mvn compile` fro
 docker run -p 9411:9411 openzipkin/zipkin
 ```
 
-Then follow the instructions in the REAMDE.md for running the three applications. Before running each command, you will need to run:
+Then follow the instructions in the README.md for running the three applications. Before running each command, you will need to run:
 
 ```bash
 export ZIPKIN_SERVER_URL=http://localhost:9411
@@ -200,11 +198,10 @@ ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-03-24-camel-opentracing-example-zipkin.png[caption="Figure 2: ", title="Zipkin trace instance showing communication between client, service1 and service2"]
 endif::[]
 
-'''
 
-==== Camel Loan Broker JMS Example
+=== Camel Loan Broker JMS Example
 
-The standard example can be found in `examples/camel-example-loan-broker-jms` folder within the Apache Camel source code. To enable tracing, against the Hawkular APM server, you still need to edit the `pom.xml` based on the
+The standard example can be found in `examples/camel-example-loan-broker-jms` folder within the Apache Camel source code. To enable tracing, against the Hawkular APM server, you need to edit the `pom.xml` based on the
 ifndef::env-github[]
 link:/data/blog/2017/2017-03-24-loanbroker-apm.patch[differences shown here]
 endif::[]
@@ -213,7 +210,7 @@ link:../../../../../assets/data/blog/2017/2017-03-24-loanbroker-apm.patch[differ
 endif::[]
 . This patch file can be used to quickly update the example.
 
-These differences are can be broken down into three main changes:
+These differences can be broken down into three main changes:
 
 * Added dependencies, including the `camel-opentracing` component, `opentracing-agent` and `hawkular-apm` (OpenTracing client and REST client publisher)
 * Retrieval of the `opentracing-agent.jar`, which is placed in a local `lib` folder for subsequent use
@@ -257,11 +254,11 @@ endif::[]
 
 Selecting the _Show 1 Instance(s) Details_ button will show the trace instance shown in Figure 1 above.
 
-'''
 
-=== Summary
+== Summary
 
-This post has shown how OpenTracing can be used to provide distributed tracing capabilities for Camel applications. This capability will be introduced in version 2.19 of Apache Camel, but we would encourage anyone interested in this functionality to obtain a snapshot version to try it out. If you find any issues, or would like additional capabilities prior to the release, then please get in touch.
+This post has shown how OpenTracing can be used to provide distributed tracing capabilities for Camel applications. This capability will be introduced in version 2.19 of Apache Camel, but we would encourage anyone interested in this functionality to obtain a snapshot version to try it out. If you find any issues, or would like additional capabilities prior to the release, then please http://www.hawkular.org/community/docs/getting-involved/[get in touch].
 
+For any Apache Camel users currently using the `camel-zipkin` component we would encourage you to try out the new `camel-opentracing` component with the `brave-opentracing` bridge.
 
 
