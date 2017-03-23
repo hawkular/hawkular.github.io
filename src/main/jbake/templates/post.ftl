@@ -13,6 +13,12 @@
         <br/><br/>
     	<p>${content.body}</p>
     	<hr /><br /><br />
+    	        <p><strong>Tags:</strong> <#list content.tags as tag>
+          <#if tag != "blog">
+            <a href="/tags/${tag}.html">${tag}</a> 
+          </#if>
+        </#list></p>
+
         <p><em>Published by ${content.author} on  ${content.date?string("dd MMMM yyyy")}</em></p>
 
     <#include "disqus.ftl">
