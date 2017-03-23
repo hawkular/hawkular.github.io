@@ -1,0 +1,125 @@
+From 0cf837916cb59fe027a5672e081024ea56f13376 Mon Sep 17 00:00:00 2001
+From: Gary Brown <gary@brownuk.com>
+Date: Tue, 21 Mar 2017 17:18:13 +0000
+Subject: [PATCH] Updated version of loanbroker-jms example using
+ OpenTracing/JavaAgent + Hawkular APM
+
+---
+ examples/camel-example-loan-broker-jms/pom.xml | 76 ++++++++++++++++++++++----
+ 1 file changed, 65 insertions(+), 11 deletions(-)
+
+diff --git a/examples/camel-example-loan-broker-jms/pom.xml b/examples/camel-example-loan-broker-jms/pom.xml
+index 186036b..9074d97 100644
+--- a/examples/camel-example-loan-broker-jms/pom.xml
++++ b/examples/camel-example-loan-broker-jms/pom.xml
+@@ -34,6 +34,7 @@
+   <properties>
+     <category>EIP</category>
+     <title>Loan Broker JMS</title>
++    <opentracing-agent.lib>${project.build.directory}/lib</opentracing-agent.lib>
+   </properties>
+ 
+   <dependencies>
+@@ -97,6 +98,35 @@
+       <artifactId>log4j-slf4j-impl</artifactId>
+       <scope>runtime</scope>
+     </dependency>
++    <dependency>
++      <groupId>org.slf4j</groupId>
++      <artifactId>slf4j-jdk14</artifactId>
++      <version>${slf4j-version}</version>
++   </dependency>
++
++    <!-- OpenTracing dependencies -->
++    <dependency>
++      <groupId>org.apache.camel</groupId>
++      <artifactId>camel-opentracing</artifactId>
++    </dependency>
++    <dependency>
++      <groupId>io.opentracing.contrib</groupId>
++      <artifactId>opentracing-agent</artifactId>
++      <version>${opentracing-java-agent-version}</version>
++      <scope>provided</scope>
++    </dependency>
++
++    <!-- OpenTracing compliant Tracer dependencies -->
++    <dependency>
++      <groupId>org.hawkular.apm</groupId>
++      <artifactId>hawkular-apm-client-opentracing</artifactId>
++      <version>0.14.4.Final</version>
++    </dependency>
++    <dependency>
++      <groupId>org.hawkular.apm</groupId>
++      <artifactId>hawkular-apm-trace-publisher-rest-client</artifactId>
++      <version>0.14.4.Final</version>
++    </dependency>
+ 
+     <!-- testing -->
+     <dependency>
+@@ -114,7 +144,7 @@
+ 
+   <build>
+     <plugins>
+-    
++
+      <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>build-helper-maven-plugin</artifactId>
+@@ -145,20 +175,44 @@
+         </configuration>
+       </plugin>
+ 
+-      <!-- Allows the example to be run via 'mvn compile exec:java' -->
++      <!-- Retrieve the OpenTracing Java Agent -->
++      <plugin>
++        <groupId>org.apache.maven.plugins</groupId>
++        <artifactId>maven-dependency-plugin</artifactId>
++        <executions>
++          <execution>
++            <id>get-agent</id>
++            <phase>compile</phase>
++            <goals>
++              <goal>copy</goal>
++            </goals>
++            <configuration>
++              <artifactItems>
++                <artifactItem>
++                  <groupId>io.opentracing.contrib</groupId>
++                  <artifactId>opentracing-agent</artifactId>
++                  <overWrite>true</overWrite>
++                  <outputDirectory>${opentracing-agent.lib}</outputDirectory>
++                  <destFileName>opentracing-agent.jar</destFileName>
++                </artifactItem>
++              </artifactItems>
++            </configuration>
++          </execution>
++        </executions>
++      </plugin>
++
++      <!-- Allows the example to be run via 'mvn compile exec:exec' -->
+       <plugin>
+         <groupId>org.codehaus.mojo</groupId>
+         <artifactId>exec-maven-plugin</artifactId>
+         <configuration>
+-          <mainClass>${target.main.class}</mainClass>
+-          <includePluginDependencies>false</includePluginDependencies>
+-          <classpathScope>runtime</classpathScope>
+-          <systemProperties>
+-            <property>
+-              <key>java.util.logging.config.file</key>
+-              <value>logging.properties</value>
+-            </property>
+-          </systemProperties>
++          <executable>java</executable>
++          <arguments>
++            <argument>-javaagent:${opentracing-agent.lib}/opentracing-agent.jar</argument>
++            <argument>-classpath</argument>
++            <classpath/>
++            <argument>${target.main.class}</argument>
++          </arguments>
+         </configuration>
+       </plugin>
+     </plugins>
+-- 
+2.5.5
+

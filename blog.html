@@ -191,6 +191,360 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/03/24/distributed-tracing-with-camel.html"><h1>Distributed Tracing with Apache Camel and OpenTracing</h1></a>
+            <p>24 March 2017, by Gary Brown</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In this post we will discuss how the <a href="http://opentracing.io/">OpenTracing standard</a> is being supported in the upcoming release of Apache Camel (version 2.19).</p>
+</div>
+<div class="paragraph">
+<p>OpenTracing is the vendor neutral open standard for distributed tracing, supported across many languages and with a growing number of tracer implementations and framework integrations. To illustrate the vendor neutrality, we will demonstrate two examples, each using a different OpenTracing compliant Tracer.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-03-24-camel-loanbroker-jms-instance.png" alt="2017 03 24 camel loanbroker jms instance">
+</div>
+<div class="title">Figure 1: Distributed trace for the Camel Loan Broker JMS example</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_to_instrument_a_camel_application">How to Instrument a Camel Application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The first thing to note is that it is not necessary to modify the Camel routes to have them instrumented using an OpenTracing compliant Tracer. The only requirement is to add some relevant dependencies and initialize the tracer on the <code>CamelContext</code>.</p>
+</div>
+<div class="paragraph">
+<p>This can be achieved in three ways:</p>
+</div>
+<div class="sect2">
+<h3 id="_explicit_initialization">Explicit initialization</h3>
+<div class="paragraph">
+<p>The dependencies required to explicitly initialize OpenTracing are</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;org.apache.camel&lt;/groupId&gt;
+      &lt;artifactId&gt;camel-opentracing&lt;/artifactId&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and any other dependencies specific to the OpenTracing compliant Tracer implementation being used.</p>
+</div>
+<div class="paragraph">
+<p>Then either add the initialization of the tracer to the Spring configuration,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;bean id="tracer" class="..."/&gt;
+
+  &lt;bean id="ottracer" class="org.apache.camel.opentracing.OpenTracingTracer"&gt;
+    &lt;property name="tracer" ref="tracer"/&gt;
+  &lt;/bean&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>or create an observer on the <code>CamelContextStartingEvent</code> to trigger the initialization of the tracer,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@ContextName("....")
+public class MyApplication {
+    public void setupCamel(@Observes CamelContextStartingEvent event) {
+	// Location for initializing the Tracer if not implicitly loaded
+        OpenTracingTracer ottracer = new OpenTracingTracer();
+        ottracer.init(event.getContext());
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See the <a href="https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/client">camel-opentracing example client application</a> for an example.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_spring_boot_annotation">Spring Boot Annotation</h3>
+<div class="paragraph">
+<p>The dependencies required to use OpenTracing in a Spring Boot application are simply</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;org.apache.camel&lt;/groupId&gt;
+      &lt;artifactId&gt;camel-opentracing-starter&lt;/artifactId&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>and any other dependencies specific to the OpenTracing compliant Tracer implementation being used. Then simply annotate the application using <code>CamelOpenTracing</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@SpringBootApplication
+@CamelOpenTracing
+public class MyApplication {
+    public static void main(String[] args) {
+	// Location for initializing the Tracer if not implicitly loaded
+        SpringApplication.run(MyApplication.class, args);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>See the <a href="https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/service1">camel-opentracing example service1 application</a> for an example.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_java_agent">Java Agent</h3>
+<div class="paragraph">
+<p>This approach uses a <code>javaagent</code> to handle the initialization, so does not require any code/configuration changes. The dependencies required are:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;org.apache.camel&lt;/groupId&gt;
+      &lt;artifactId&gt;camel-opentracing&lt;/artifactId&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;io.opentracing.contrib&lt;/groupId&gt;
+      &lt;artifactId&gt;opentracing-agent&lt;/artifactId&gt;
+      &lt;scope&gt;provided&lt;/scope&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Changes are also required in the <code>pom.xml</code> to download the <code>opentracing-agent.jar</code> and then execute the application supplying the java agent on the command line.</p>
+</div>
+<div class="paragraph">
+<p>See the <a href="https://github.com/apache/camel/tree/master/examples/camel-example-opentracing/service2">camel-opentracing example service2 application</a> for an example.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_instrumenting_some_examples">Instrumenting Some Examples</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This section will show how two examples can be instrumented using two different OpenTracing compliant Tracer implementations.</p>
+</div>
+<div class="paragraph">
+<p>The first is a new example introduced to demonstrate the three ways a Camel application can be instrumented with OpenTracing, and will be updated to use the <a href="http://zipkin.io/">Zipkin</a> project.</p>
+</div>
+<div class="paragraph">
+<p>The second shows how an existing example (Loan Broker JMS) can be instrumented using the <a href="http://www.hawkular.org/hawkular-apm/">Hawkular APM</a> project.</p>
+</div>
+<div class="sect2">
+<h3 id="_camel_opentracing_example">Camel OpenTracing Example</h3>
+<div class="paragraph">
+<p>This section will show how the new example, which uses a simple <em>logging</em> tracer implementation by default, can be changed to use Zipkin.</p>
+</div>
+<div class="paragraph">
+<p>First edit each of the client/service1/service2 <code>pom.xml</code> files to:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Add properties</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;properties&gt;
+    ...
+    &lt;version.brave.opentracing&gt;0.18.3&lt;/version.brave.opentracing&gt;
+    &lt;version.zipkin.reporter&gt;0.6.12&lt;/version.zipkin.reporter&gt;
+  &lt;/properties&gt;</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Replace the <code>camel-example-opentracing-loggingtracer</code> dependency with:</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;io.opentracing.brave&lt;/groupId&gt;
+      &lt;artifactId&gt;brave-opentracing&lt;/artifactId&gt;
+      &lt;version&gt;${version.brave.opentracing}&lt;/version&gt;
+    &lt;/dependency&gt;
+    &lt;dependency&gt;
+      &lt;groupId&gt;io.zipkin.reporter&lt;/groupId&gt;
+      &lt;artifactId&gt;zipkin-sender-urlconnection&lt;/artifactId&gt;
+      &lt;version&gt;${version.zipkin.reporter}&lt;/version&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then the following Java code changes are required:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Common code for ClientApplication, Service1Application and Service2Application</p>
+</li>
+</ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">import brave.opentracing.BraveTracer;
+import io.opentracing.Tracer;
+import io.opentracing.contrib.global.GlobalTracer;
+import zipkin.Span;
+import zipkin.reporter.AsyncReporter;
+import zipkin.reporter.Reporter;
+import zipkin.reporter.urlconnection.URLConnectionSender;
+
+....
+
+    public static void initTracer() {
+        System.out.println("Using Zipkin Tracer");
+        String zipkinServerUrl = String.format("%s/api/v1/spans", System.getenv("ZIPKIN_SERVER_URL"));
+        Reporter&lt;Span&gt; reporter = AsyncReporter.builder(URLConnectionSender.create(zipkinServerUrl)).build();
+        brave.Tracer tracer = brave.Tracer.newBuilder().localServiceName("client").reporter(reporter).build();
+        GlobalTracer.register(BraveTracer.wrap(tracer));
+    }</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Invoking the <code>initTracer</code> method</p>
+<div class="ulist">
+<ul>
+<li>
+<p>In <code>ClientApplication.java</code> it should be called at the end of the <code>setupCamel</code> method.</p>
+</li>
+<li>
+<p>In <code>Service1Application.java</code> it should be called before the <code>SpringApplication.run</code> method.</p>
+</li>
+<li>
+<p>In <code>Service2Application.java</code> it should be called as the first statement in the <code>main</code> method.</p>
+</li>
+</ul>
+</div>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Once the changes have all been made, compile the example using <code>mvn compile</code> from the <code>examples/camel-example-opentracing</code> folder. Next step is to start the Zipkin server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run -p 9411:9411 openzipkin/zipkin</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then follow the instructions in the README.md for running the three applications. Before running each command, you will need to run:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">export ZIPKIN_SERVER_URL=http://localhost:9411</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After the example has executed, start up the <a href="http://localhost:9411/">Zipkin UI</a> in a brower. Select the <code>client</code> service and you should see some traces:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-03-24-camel-opentracing-example-zipkin.png" alt="2017 03 24 camel opentracing example zipkin">
+</div>
+<div class="title">Figure 2: Zipkin trace instance showing communication between client, service1 and service2</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_camel_loan_broker_jms_example">Camel Loan Broker JMS Example</h3>
+<div class="paragraph">
+<p>The standard example can be found in <code>examples/camel-example-loan-broker-jms</code> folder within the Apache Camel source code. To enable tracing, against the Hawkular APM server, you need to edit the <code>pom.xml</code> based on the
+<a href="/data/blog/2017/2017-03-24-loanbroker-apm.patch">differences shown here</a>
+. This patch file can be used to quickly update the example.</p>
+</div>
+<div class="paragraph">
+<p>These differences can be broken down into three main changes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Added dependencies, including the <code>camel-opentracing</code> component, <code>opentracing-agent</code> and <code>hawkular-apm</code> (OpenTracing client and REST client publisher)</p>
+</li>
+<li>
+<p>Retrieval of the <code>opentracing-agent.jar</code>, which is placed in a local <code>lib</code> folder for subsequent use</p>
+</li>
+<li>
+<p>Changes to the <code>exec-maven-plugin</code> configuration to enable the services to be started with the <code>opentracing-agent.jar</code> (using <code>mvn exec:exec</code> instead of <code>mvn exec:java</code>)</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>To try out the example, it is first necessary to start the Hawkular APM server:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run -p 8180:8080 jboss/hawkular-apm-server-dev</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The next step is to open up two command windows and setup the environment variables in each:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">export HAWKULAR_APM_USERNAME=admin
+export HAWKULAR_APM_PASSWORD=password
+export HAWKULAR_APM_URI=http://localhost:8180</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Then run the following in the first window:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">mvn compile
+mvn exec:java -PQueue.LoanBroker</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once fully started, then run the following in the second window:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">mvn exec:java -PQueue.Client</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>After the client has finished, open a <a href="http://localhost:8180">browser window</a> and log in using username <code>admin</code> password <code>password</code>, and view the <em>Distributed Tracing</em> page to view the dependencies between the JMS endpoints:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-03-24-camel-loanbroker-jms-dependencies.png" alt="2017 03 24 camel loanbroker jms dependencies">
+</div>
+<div class="title">Figure 3: Service endpoint dependencies for the loan broker JMS example</div>
+</div>
+<div class="paragraph">
+<p>Selecting the <em>Show 1 Instance(s) Details</em> button will show the trace instance shown in Figure 1 above.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_summary">Summary</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This post has shown how OpenTracing can be used to provide distributed tracing capabilities for Camel applications. This capability will be introduced in version 2.19 of Apache Camel, but we would encourage anyone interested in this functionality to obtain a snapshot version to try it out. If you find any issues, or would like additional capabilities prior to the release, then please <a href="http://www.hawkular.org/community/docs/getting-involved/">get in touch</a>.</p>
+</div>
+<div class="paragraph">
+<p>For any Apache Camel users currently using the <code>camel-zipkin</code> component we would encourage you to try out the new <code>camel-opentracing</code> component with the <code>brave-opentracing</code> bridge.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/03/22/apm-adjusting-sampling-rate.html"><h1>Adjusting sampling rates for Hawkular APM on OpenShift</h1></a>
             <p>22 March 2017, by Juraci Paixão Kröhling</p>
             <p><div id="preamble">
@@ -917,178 +1271,13 @@ Tenant: T9a116f18-28cf-41b3-8ff8-c9752ac60e26232
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/02/22/pandas-and-hawkular-metrics.html"><h1>Processing Hawkular-Metrics data with Python Pandas</h1></a>
-            <p>22 February 2017, by Michael Burman</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>Storing the time series is not worth much if we can&#8217;t actually do something valuable with it. For some time, many data analytics have used Python tools to extract valuable information from the available data. Today, lets look at one of the popular options, <a href="http://pandas.pydata.org">Pandas</a>. In this blog post I will show how to fetch data from the Hawkular-Metrics and turn it to a processable form for the Pandas and do something with the data.</p>
-</div>
-<div class="paragraph">
-<p>As a data, I&#8217;ve taken some real world values from my current air-to-water heat pump and how it has functioned in some non-ideal circumstances. To make things more difficult, I&#8217;ve started logging the information after there&#8217;s been historical data already so the starting values are not from the same point of time. To make things a bit more complicated I&#8217;ve also included some temperature values.</p>
-</div>
-<div class="paragraph">
-<p>Lets start by introducing a helper function and initialize pandas. You can install Pandas with <code>pip install pandas</code> or with <code>dnf</code> or <code>apt</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">import numpy as np
-import pandas as pd
-from hawkular import *
-
-c = HawkularMetricsClient(tenant_id='pandas_test', port=8080)
-
-def read_hawkular(c, id):
-    s = c.query_metric(MetricType.Gauge, id, fromEarliest='true')
-    df2 = pd.DataFrame(s, columns=['timestamp', 'value'])
-    df2['timestamp'] = pd.to_datetime(df2['timestamp'], unit='ms')
-    df2 = df2.set_index('timestamp')
-    df2 = df2.rename(columns={'value': id})
-    return df2</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now, with the read_hawkular we can fetch data from the Hawkular-Metrics using the given id. I&#8217;ve hardcoded Gauge as the metric type in this case as that&#8217;s the type of the values we&#8217;re processing today. We&#8217;ll also make the id as the column name for these values and use the timestamp as our index. Pandas will automatically convert the values to float64 and with our hints use the timestamps as the indexing value.</p>
-</div>
-<div class="paragraph">
-<p>Lets insert some data:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">c.push(MetricType.Gauge, 'pollucom.reading', 41955, timestamp=1487192074052)
-c.push(MetricType.Gauge, 'meter.reading', 584.22, timestamp=1487192074145)
-c.push(MetricType.Gauge, 'temperature.reading', 0.0, timestamp=1487192075645)
-
-c.push(MetricType.Gauge, 'pollucom.reading', 42007, timestamp=1487272174104)
-c.push(MetricType.Gauge, 'meter.reading', 606.41, timestamp=1487272174467)
-c.push(MetricType.Gauge, 'temperature.reading', 1.6, timestamp=1487272176067)
-
-c.push(MetricType.Gauge, 'pollucom.reading', 42075, timestamp=1487403934003)
-c.push(MetricType.Gauge, 'meter.reading', 636.60, timestamp=1487403934732)
-c.push(MetricType.Gauge, 'temperature.reading', 0.7, timestamp=1487403932678)
-
-c.push(MetricType.Gauge, 'pollucom.reading', 42234, timestamp=1487663134340)
-c.push(MetricType.Gauge, 'meter.reading', 702.29, timestamp=1487663134230)
-c.push(MetricType.Gauge, 'temperature.reading', -3.3, timestamp=1487663134678)
-
-c.push(MetricType.Gauge, 'pollucom.reading', 42296, timestamp=1487745987030)
-c.push(MetricType.Gauge, 'meter.reading', 732.32, timestamp=1487745987575)
-c.push(MetricType.Gauge, 'temperature.reading', -8.8, timestamp=1487745987976)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>As you can already see from the data, we use millisecond precision when fetching the data and the timestamps have some variance in them. Now, using the previously defined function we will fetch the data to a Pandas DataFrame:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python"># Read the data
-
-pollu = read_hawkular(c, 'pollucom.reading')
-meter = read_hawkular(c, 'meter.reading')
-temperature = read_hawkular(c, 'temperature.reading')
-
-# Lets rename the columns
-
-temperature = temperature.rename(columns={'temperature.reading': 'temperature'})
-meter = meter.rename(columns={'meter.reading': 'electricity'})
-pollu = pollu.rename(columns={'pollucom.reading': 'heat'})</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Three distinct series are now stored in three distinct DataFrames. Combining them and looking at the data reveals something interesting:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats = pd.concat([pollu, meter, temperature]).sort_index()
-&gt;&gt;&gt; stats
-                         electricity   heat  temperature
-timestamp
-2017-02-15 20:54:34.052          NaN  41955          NaN
-2017-02-15 20:54:34.145       584.22    NaN          NaN
-2017-02-15 20:54:35.645          NaN    NaN          0.0
-2017-02-16 19:09:34.104          NaN  42007          NaN
-2017-02-16 19:09:34.467       606.41    NaN          NaN
-2017-02-16 19:09:36.067          NaN    NaN          1.6
-2017-02-18 07:45:32.678          NaN    NaN          0.7
-2017-02-18 07:45:34.003          NaN  42075          NaN
-2017-02-18 07:45:34.732       636.60    NaN          NaN
-2017-02-21 07:45:34.230       702.29    NaN          NaN
-2017-02-21 07:45:34.340          NaN  42234          NaN
-2017-02-21 07:45:34.678          NaN    NaN         -3.3
-2017-02-22 06:46:27.030          NaN  42296          NaN
-2017-02-22 06:46:27.575       732.32    NaN          NaN
-2017-02-22 06:46:27.976          NaN    NaN         -8.8
-&gt;&gt;&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now we see a very common problem for the time series processing. All the timestamps are close to each other, but they&#8217;re not quite aligned. So we can&#8217;t read from the same row what statistics we had for each value. If we wanted to fill the values from previous rows, we could do that easily with <code>fillna</code> function of the Pandas. However, in this case it makes more sense to resample the data to a one-day buckets and then drop the duplicate rows:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats = stats.resample('D', fill_method='ffill').drop_duplicates()
-
-&gt;&gt;&gt; stats
-            electricity   heat  temperature
-timestamp
-2017-02-15       584.22  41955          0.0
-2017-02-16       606.41  42007          1.6
-2017-02-18       636.60  42075          0.7
-2017-02-21       702.29  42234         -3.3
-2017-02-22       732.32  42296         -8.8
-&gt;&gt;&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>That&#8217;s much better. Now we can easily see the statistics for each day and how the counters had behaved. In this example it does not matter that we&#8217;re missing data, but there&#8217;s lots of tools in the Pandas to generate that missing data based on the rows we have. In this example, lets look at how to calculate from the values our coefficiency ratio (amount of heat generated divided by electricity used). We&#8217;ll do this by taking the difference of previous row to the current row from both heat as well as electricity:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">stats['cop'] = stats.diff().apply(lambda row: row['heat'] / row['electricity'], axis=1)
-
-&gt;&gt;&gt; stats
-            electricity   heat  temperature       cop
-timestamp
-2017-02-15       584.22  41955          0.0       NaN
-2017-02-16       606.41  42007          1.6  2.343398
-2017-02-18       636.60  42075          0.7  2.252401
-2017-02-21       702.29  42234         -3.3  2.420460
-2017-02-22       732.32  42296         -8.8  2.064602
-&gt;&gt;&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The first row shows <code>NaN</code> as we don&#8217;t have any information prior to it for calculation. The coefficiency numbers show something worrysome, they don&#8217;t seem to follow a pattern normally associated with them (higher temperature gives higher coefficiency). For a simple check, lets check the Pearson correlation between avg temperature and coefficiency:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-python" data-lang="python">&gt;&gt;&gt; stats.temperature.corr(stats.cop)
-0.65064171188572928
-&gt;&gt;&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>I&#8217;ll leave the interpretation to the viewer, but lets comment quickly that the number of datapoints is too low in this example to have a meaningful value.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>This was a short example on how to get started with Pandas and Hawkular-Metrics, but even with it we were able to calculate how efficiently our heat pump was working and actually notice that it&#8217;s working sub-optimally when temperature is high in this small sample scenario. The Pandas library gives multiple tools to process time series to a form that they can be used for further analytical processing, including but not limited to resampling, shifting, frequency conversions and periodic calculations. After modifying the data it can be easily further processed with other Python tools and even sent back to the Hawkular-Metrics in the processed form for storage purposes.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>22 February 2017 - <a href="blog/2017/02/22/pandas-and-hawkular-metrics.html">Processing Hawkular-Metrics data with Python Pandas</a></li>
           <li>15 February 2017 - <a href="blog/2017/02/15/hawkular-services-0.32-released.html">Hawkular Services 0.32.Final</a></li>
           <li>13 February 2017 - <a href="blog/2017/02/13/monitoring-canary-deployments.html">Monitoring Canary Releases with Hawkular APM</a></li>
           <li>08 February 2017 - <a href="blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html">Hawkular Metrics 0.24.0 - Release</a></li>
