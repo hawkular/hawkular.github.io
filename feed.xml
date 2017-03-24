@@ -6,8 +6,8 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 24 Mar 2017 10:34:08 +0000</pubDate>
-    <lastBuildDate>Fri, 24 Mar 2017 10:34:08 +0000</lastBuildDate>
+    <pubDate>Fri, 24 Mar 2017 14:35:40 +0000</pubDate>
+    <lastBuildDate>Fri, 24 Mar 2017 14:35:40 +0000</lastBuildDate>
 
     <item>
       <title>Distributed Tracing with Apache Camel and OpenTracing</title>
@@ -362,6 +362,101 @@ mvn exec:java -PQueue.LoanBroker&lt;/code&gt;&lt;/pre&gt;
 &lt;/div&gt;
 &lt;div class=&quot;paragraph&quot;&gt;
 &lt;p&gt;For any Apache Camel users currently using the &lt;code&gt;camel-zipkin&lt;/code&gt; component we would encourage you to try out the new &lt;code&gt;camel-opentracing&lt;/code&gt; component with the &lt;code&gt;brave-opentracing&lt;/code&gt; bridge.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
+    <item>
+      <title>Introducing Hawkular Java Agent</title>
+      <link>http://www.hawkular.org/blog/2017/03/24/hawkular-java-agent.html</link>
+      <author>noreply@hawkular.org (John Mazzitelli)</author>
+      <pubDate>Fri, 24 Mar 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/03/24/hawkular-java-agent.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A new Hawkular Agent has been published.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Based on the Hawkular WildFly Agent, this new agent - the &lt;strong&gt;Hawkular Java Agent&lt;/strong&gt; - has an easier deployment model.
+Unlike the Hawkular WildFly Agent, the Hawkular Java Agent does not need to be deployed inside an EAP or WildFly container.
+It runs as a simple Java Agent in any JVM.
+It also is configured by an independent YAML file, not within a WildFly standalone.xml configuration file.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_installation&quot;&gt;Installation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To install the Hawkular Java Agent, you simply pass in a &lt;code&gt;-javaagent&lt;/code&gt; JVM command line argument to your Java or JVM application start command.
+You must have the agent jar
+(&lt;a href=&quot;https://repository.jboss.org/nexus/content/groups/public/org/hawkular/agent/hawkular-javaagent/&quot;&gt;&lt;code&gt;hawkular-javaagent-#.#.#.jar&lt;/code&gt;&lt;/a&gt;)
+and its YAML configuration file located somewhere on your file system, and pass in an argument such as this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;-javaagent:hawkular-javaagent-*.jar=config=hawkular-javaagent-config.yaml,delay=60&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Of course, make sure the path names point to the correct Hawkular Java Agent jar and its configuration file.
+The &lt;code&gt;delay&lt;/code&gt; option tells the agent to delay its start up the given number of seconds.
+This is useful to give your main application time to start up before the agent starts monitoring it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_installing_inside_a_wildfly_or_eap_server&quot;&gt;Installing Inside a WildFly or EAP Server&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It is recommended you copy the Hawkular Java Agent jar to the WildFly/EAP &lt;code&gt;bin/&lt;/code&gt; directory and its configuration file
+to the &lt;code&gt;standalone/configuration&lt;/code&gt; directory, but their locations really do not matter so long as you refer to their
+proper file paths in the &lt;code&gt;-javaagent&lt;/code&gt; command line argument
+(e.g. &lt;code&gt;-javaagent:&amp;lt;path-to-jar&amp;gt;=config=&amp;lt;path-to-config-file&amp;gt;,delay=60&lt;/code&gt;).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock important&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Important&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Due to the way the logging implementations are loaded, you must change your WildFly/EAP server&amp;#8217;s &lt;code&gt;standalone.conf&lt;/code&gt; file slightly:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;# Hawkular Java Agent: Add &quot;org.jboss.logmanager&quot; to the JBoss Modules system packages
+if [ &quot;x$JBOSS_MODULES_SYSTEM_PKGS&quot; = &quot;x&quot; ]; then
+   JBOSS_MODULES_SYSTEM_PKGS=&quot;org.jboss.byteman,org.jboss.logmanager&quot;
+fi
+
+# Hawkular Java Agent:
+#   Explicitly tell the VM to use the JBoss Log Manager via -Djava.util.logging.manager system property.
+#   Use the -javaagent VM option to load the Hawkular Java Agent with its config file.
+JAVA_OPTS=&quot;$JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager -javaagent:$JBOSS_HOME/bin/hawkular-javaagent-*.jar=config=$JBOSS_HOME/standalone/configuration/hawkular-javaagent-config.yaml,delay=60&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_configuration&quot;&gt;Configuration&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The Hawkular Java Agent is configured with a YAML configuration file, though if you have used the Hawkular WildFly Agent,
+the YAML configuration properties will look familiar. The configuration model and the names themselves closely mimic that of the
+Hawkular WildFly Agent standalone.xml configuration settings.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For an example configuration that instructs the Hawkular Java Agent to monitor a EAP 7.0 or 7.1 server, see &lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config.yaml&quot;&gt;this config file&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For an example configuration that instructs the Hawkular Java Agent to monitor a simple JMX application, see &lt;a href=&quot;https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config-jmx.yaml&quot;&gt;this config file&lt;/a&gt;.&lt;/p&gt;
 &lt;/div&gt;
 &lt;/div&gt;
 &lt;/div&gt;
