@@ -63,5 +63,9 @@
   });
 </script>
 
+<div class="container">
+  <hr/><h4>Tags:</h4>
+  <#include "show_all_tags.ftl">
+</div>
 
 <#include "footer.ftl">
