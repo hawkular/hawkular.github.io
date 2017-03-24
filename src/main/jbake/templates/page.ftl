@@ -16,5 +16,16 @@
         ${content.body}
       </div>
     </section>
+    <#if (content.tags)?? >
+<div class="container">
+      <p><strong>Tags:</strong> 
+        <#list content.tags as tag>
+          <#if tag != "blog">
+            | <a href="/tags/${tag}.html">${tag}</a> 
+          </#if>
+        </#list>
+         | </p>
+      </div>  
+    </#if>    
 
 <#include "footer.ftl">
