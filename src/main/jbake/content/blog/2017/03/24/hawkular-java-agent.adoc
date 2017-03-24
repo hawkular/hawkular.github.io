@@ -1,0 +1,61 @@
+= Introducing Hawkular Java Agent
+John Mazzitelli
+2017-03-24
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, agent, metrics
+
+A new Hawkular Agent has been published.
+
+Based on the Hawkular WildFly Agent, this new agent - the *Hawkular Java Agent* - has an easier deployment model.
+Unlike the Hawkular WildFly Agent, the Hawkular Java Agent does not need to be deployed inside an EAP or WildFly container.
+It runs as a simple Java Agent in any JVM.
+It also is configured by an independent YAML file, not within a WildFly standalone.xml configuration file.
+
+== Installation
+
+To install the Hawkular Java Agent, you simply pass in a `-javaagent` JVM command line argument to your Java or JVM application start command.
+You must have the agent jar
+(https://repository.jboss.org/nexus/content/groups/public/org/hawkular/agent/hawkular-javaagent/[`hawkular-javaagent-\#.#.#.jar`])
+and its YAML configuration file located somewhere on your file system, and pass in an argument such as this:
+
+```
+-javaagent:hawkular-javaagent-*.jar=config=hawkular-javaagent-config.yaml,delay=60"
+```
+
+Of course, make sure the path names point to the correct Hawkular Java Agent jar and its configuration file.
+The `delay` option tells the agent to delay its start up the given number of seconds.
+This is useful to give your main application time to start up before the agent starts monitoring it.
+
+=== Installing Inside a WildFly or EAP Server
+
+It is recommended you copy the Hawkular Java Agent jar to the WildFly/EAP `bin/` directory and its configuration file
+to the `standalone/configuration` directory, but their locations really do not matter so long as you refer to their
+proper file paths in the `-javaagent` command line argument
+(e.g. `-javaagent:<path-to-jar>=config=<path-to-config-file>,delay=60`).
+
+[IMPORTANT]
+====
+Due to the way the logging implementations are loaded, you must change your WildFly/EAP server's `standalone.conf` file slightly:
+```
+# Hawkular Java Agent: Add "org.jboss.logmanager" to the JBoss Modules system packages
+if [ "x$JBOSS_MODULES_SYSTEM_PKGS" = "x" ]; then
+   JBOSS_MODULES_SYSTEM_PKGS="org.jboss.byteman,org.jboss.logmanager"
+fi
+
+# Hawkular Java Agent:
+#   Explicitly tell the VM to use the JBoss Log Manager via -Djava.util.logging.manager system property.
+#   Use the -javaagent VM option to load the Hawkular Java Agent with its config file.
+JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager -javaagent:$JBOSS_HOME/bin/hawkular-javaagent-*.jar=config=$JBOSS_HOME/standalone/configuration/hawkular-javaagent-config.yaml,delay=60"
+```
+====
+
+== Configuration
+
+The Hawkular Java Agent is configured with a YAML configuration file, though if you have used the Hawkular WildFly Agent,
+the YAML configuration properties will look familiar. The configuration model and the names themselves closely mimic that of the
+Hawkular WildFly Agent standalone.xml configuration settings.
+
+For an example configuration that instructs the Hawkular Java Agent to monitor a EAP 7.0 or 7.1 server, see https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config.yaml[this config file].
+
+For an example configuration that instructs the Hawkular Java Agent to monitor a simple JMX application, see https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config-jmx.yaml[this config file].
