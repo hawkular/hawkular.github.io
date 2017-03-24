@@ -21,10 +21,10 @@
       <p><strong>Tags:</strong> 
         <#list content.tags as tag>
           <#if tag != "blog">
-            <a href="/tags/${tag}.html">${tag}</a> 
+            | <a href="/tags/${tag}.html">${tag}</a> 
           </#if>
         </#list>
-        </p>
+         | </p>
       </div>  
     </#if>    
 
