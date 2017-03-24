@@ -22,11 +22,17 @@
   </#list>
 </#if>   
 
+<!-- now blog posts -->
+<#assign posts = [] />
+<#list tagged_documents as post>
+  <#if post.type == 'post'>
+    <#assign posts = posts + [ post ] />
+  </#if>
+</#list>  
 
-
+<#if posts?has_content >
 	<h2>Blog posts</h2> 
-    <#list tagged_documents as post>
-    <#if post.type == 'post'>
+    <#list posts as post>
     <#if (last_month)??>
         <#if post.date?string("MMMM yyyy") != last_month>
             </ul>
@@ -40,9 +46,9 @@
     
     <li>${post.date?string("dd")} - <a href="/${post.uri}">${post.title}</a></li>
     <#assign last_month = post.date?string("MMMM yyyy")>
-    </#if>
     </#list>
   </ul>
+</#if>
 
 <p>
 <h2>Tags</h2>
