@@ -1,11 +1,11 @@
 <#include "header.ftl">
 
 	<#include "navigation.ftl">
-	
+<div class="blog-container">	
 	<div class="page-header">
 		<h1>Tag: ${tag}</h1>
 	</div>
-<div class="blog-container">
+
 
 <#assign posts = [] />
 <#list tagged_documents as post>
