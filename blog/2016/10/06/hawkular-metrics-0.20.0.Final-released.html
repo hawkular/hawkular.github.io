@@ -184,36 +184,51 @@
     <section class="main-banner blog-mainbanner">
         <div class="container">
             <h1>Hawkular Metrics 0.20.0 - Release</h1>
-            <p>blog post</p>
+            <p>A blog post by Stefan Negrea</p>
+            <p><strong>Tags:</strong> 
+                           | <a href="/tags/metrics.html">metrics</a> 
+                           | <a href="/tags/release.html">release</a> 
+             |</p>
+            
         </div>
     </section>
 
     <div class="blog-container">
         <br/><br/>
-    	<p><p>I am happy to announce release 0.20.0 of Hawkular Metrics.This is a major release anchored by the inclusion of <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting</a> in the distribution, a brand new compression algorithm, and numerous API enhancements and fixes.</p><p><strong>Hawkular Metrics + Alerting</strong></p><p>Hawkular Metrics now includes Hawkular Alerting out of the box; it's no longer necessary to install and manage two separate components. Hawkular Metrics delivers a single EAR file containing components from both projects. Incoming metric data is efficiently filtered and evaluated, generating alerts and events for defined triggers. The combined EAR artifact is the primary binary distribution of Hawkular Metrics going forward. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-491">HWKMETRICS-491</a></p><p>Hawkular Alerting Details</p>
+    	<p><p>I am happy to announce release 0.20.0 of Hawkular Metrics.This is a major release anchored by the inclusion of <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting</a> in the distribution, a brand new compression algorithm, and numerous API enhancements and fixes.</p>
+<p><strong>Hawkular Metrics + Alerting</strong></p>
+<p>Hawkular Metrics now includes Hawkular Alerting out of the box; it's no longer necessary to install and manage two separate components. Hawkular Metrics delivers a single EAR file containing components from both projects. Incoming metric data is efficiently filtered and evaluated, generating alerts and events for defined triggers. The combined EAR artifact is the primary binary distribution of Hawkular Metrics going forward. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-491">HWKMETRICS-491</a></p>
+<p>Hawkular Alerting Details</p>
 <ul>
   <li>Version <a href="https://issues.jboss.org/browse/HWKALERTS/fixforversion/12331699/">1.2.1</a> is included in this release</li>
   <li>Project details and repository: <a href="https://github.com/hawkular/hawkular-alerts">Hawkular Alerting - Github</a></li>
   <li>Documentation: <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">Hawkular Alerting REST API Documentation</a>, <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">Hawkular Alerting Examples</a>,<br/><a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Hawkular Alerting Developer Guide</a></li>
-</ul><p>Deployment Notes</p>
+</ul>
+<p>Deployment Notes</p>
 <ol>
   <li>Deployment Naming
-  <ul>
-    <li>The new EAR should be deployed as 'hawkular-metrics.ear' in WildFly. This naming is required to allow for proper dependencies to be established by the EAR components.</li>
-  </ul></li>
+    <ul>
+      <li>The new EAR should be deployed as 'hawkular-metrics.ear' in WildFly. This naming is required to allow for proper dependencies to be established by the EAR components.</li>
+    </ul>
+  </li>
   <li><code>standalone.xml</code> Configuration
-  <ul>
-    <li>The following snippet must be added to <code>standalone.xml</code> to support the Hawkular Alerting component. Add this additional cache-container entry after the existing cache-container entries:<br/><code>xml
-&lt;cache-container name=&quot;hawkular-alerts&quot; module=&quot;org.jboss.as.clustering.infinispan&quot;&gt;
+    <ul>
+      <li>
+      <p>The following snippet must be added to <code>standalone.xml</code> to support the Hawkular Alerting component. Add this additional cache-container entry after the existing cache-container entries:</p>
+      <pre><code class="xml">&lt;cache-container name=&quot;hawkular-alerts&quot; module=&quot;org.jboss.as.clustering.infinispan&quot;&gt;
 &lt;local-cache name=&quot;partition&quot;/&gt;
 &lt;local-cache name=&quot;triggers&quot;/&gt;
 &lt;local-cache name=&quot;data&quot;/&gt;
 &lt;local-cache name=&quot;publish&quot;/&gt;
 &lt;local-cache name=&quot;schema&quot;/&gt;
 &lt;/cache-container&gt;
-</code></li>
-  </ul></li>
-</ol><p>Usage Notes</p><p>To use Hawkular Alerting with Hawkular Metrics there is a naming convention when defining trigger conditions. For a metric with name 'X', the alerting DataId to reference it will be '<prefix>_X', where the <prefix> depends on the metric's type. For example, let's consider a metric with name 'HeapUsed' and type 'gauge'. This example defines a trigger condition to test if the used heap exceeded 80%: <code>hm_g_HeapUsed &gt; .8</code>. The 'hm_g_' prefix indicates that HeapUsed is a gauge.</p><p>Because Hawkular Metrics allows the same metric name for different types, the prefix is needed to make clear the target metric. The prefixes are:</p>
+</code></pre></li>
+    </ul>
+  </li>
+</ol>
+<p>Usage Notes</p>
+<p>To use Hawkular Alerting with Hawkular Metrics there is a naming convention when defining trigger conditions. For a metric with name 'X', the alerting DataId to reference it will be '<prefix>_X', where the <prefix> depends on the metric's type. For example, let's consider a metric with name 'HeapUsed' and type 'gauge'. This example defines a trigger condition to test if the used heap exceeded 80%: <code>hm_g_HeapUsed &gt; .8</code>. The 'hm_g_' prefix indicates that HeapUsed is a gauge.</p>
+<p>Because Hawkular Metrics allows the same metric name for different types, the prefix is needed to make clear the target metric. The prefixes are:</p>
 <ul>
   <li>hm_a: availability</li>
   <li>hm_c: counter</li>
@@ -221,58 +236,74 @@
   <li>hm_g: gauge</li>
   <li>hm_gr: gauge rate</li>
   <li>hm_s: string</li>
-</ul><p><strong>Compression</strong></p><p>Hawkular Metrics will now compress all the data with a compression scheme based on Facebook's Gorilla paper. A job will be run every two hours that compresses data received during the 2 hour block since last compression (there's one hour time for out-of-order writes to be written to the Cassandra). These data points are then written to a new storage format that's designed after the Gorilla compression and also compressed with the LZ4 algorithm to give even better compression ratio. Benefits include a faster reading time of larger block of datapoints and very large disk space savings. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-464">HWKMETRICS-464</a></p><p><strong>Other major changes</strong></p>
+</ul>
+<p><strong>Compression</strong></p>
+<p>Hawkular Metrics will now compress all the data with a compression scheme based on Facebook's Gorilla paper. A job will be run every two hours that compresses data received during the 2 hour block since last compression (there's one hour time for out-of-order writes to be written to the Cassandra). These data points are then written to a new storage format that's designed after the Gorilla compression and also compressed with the LZ4 algorithm to give even better compression ratio. Benefits include a faster reading time of larger block of datapoints and very large disk space savings. For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-464">HWKMETRICS-464</a></p>
+<p><strong>Other major changes</strong></p>
 <ul>
-  <li><p>REST API - Query Improvements</p>
-  <ul>
-    <li>Querying raw &amp; rate data by tags is now also possible via POST <code>{metric_type}/query</code> endpoints for all types of metrics (<a href="https://issues.jboss.org/browse/HWKMETRICS-466">HWKMETRICS-466</a>)</li>
-    <li>Added new POST endpoints for stats <code>gauges/stats/query</code> and <code>counters/stats/query</code> (<a href="https://issues.jboss.org/browse/HWKMETRICS-465">HWKMETRICS-465</a>)</li>
-    <li>It is now possible to fetch metric definitions filtered by a list of ids not just tags (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
-  </ul></li>
-  <li><p>Cassandra Driver Configuration</p>
-  <ul>
-    <li>Driver configuration options are now exposed for connection and request timeouts</li>
-    <li>Connection timeout can be configured via <code>CASSANDRA_CONNECTION_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.connection.timeout</code> system property; value is specified in milliseconds and defaults to 5 seconds.</li>
-    <li>Request timeout can be configured via <code>CASSANDRA_REQUEST_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.request.timeout</code> system property; value is specified in milliseconds and defaults to 12 seconds.</li>
-    <li>For more details: (<a href="https://issues.jboss.org/browse/HWKMETRICS-490">HWKMETRICS-490</a>)</li>
-  </ul></li>
-  <li><p>Job Scheduler</p>
-  <ul>
-    <li>Duplicate instances of jobs were wrongly scheduled on server restart because the job scheduler was not checking if the job was already scheduled (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
-    <li>Triggers now have a delay to properly schedule jobs in the future (<a href="https://issues.jboss.org/browse/HWKMETRICS-224">HWKMETRICS-224</a>)</li>
-    <li>Resolved an issue where long running job can miss future executions because the current execution takes longer than the repeat interval (<a href="https://issues.jboss.org/browse/HWKMETRICS-477">HWKMETRICS-477</a>)</li>
-    <li>Prevent execution of a job multiple times for the same execution time (<a href="https://issues.jboss.org/browse/HWKMETRICS-486">HWKMETRICS-486</a>)</li>
-    <li>RepeatingTrigger now allows specifying trigger start time (<a href="https://issues.jboss.org/browse/HWKMETRICS-476">HWKMETRICS-476</a>)</li>
-  </ul></li>
-  <li><p>Admin Endpoints</p>
-  <ul>
-    <li>Admin related endpoints are going to be protected via an admin token, to be sent for admin related REST endpoints via Hawkular-Admin-Token request header</li>
-    <li>The first endpoint to be protected by this mechanism is <code>/tenants</code> since its functionality is cross tenant</li>
-    <li>The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints</li>
-    <li>This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)</li>
-    <li>The details:
+  <li>
+    <p>REST API - Query Improvements</p>
     <ul>
-      <li>system property key: hawkular.metrics.admin-token</li>
-      <li>environment variable: ADMIN_TOKEN</li>
-      <li>default value: null (admin endpoints are not accessible until set)</li>
-      <li>header name: Hawkular-Admin-Token</li>
-      <li>stored on the system config using one way hashing</li>
-    </ul></li>
-    <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-478">HWKMETRICS-478</a></li>
-  </ul></li>
-</ul><p><strong>Hawkular Metrics Clients</strong></p>
+      <li>Querying raw &amp; rate data by tags is now also possible via POST <code>{metric_type}/query</code> endpoints for all types of metrics (<a href="https://issues.jboss.org/browse/HWKMETRICS-466">HWKMETRICS-466</a>)</li>
+      <li>Added new POST endpoints for stats <code>gauges/stats/query</code> and <code>counters/stats/query</code> (<a href="https://issues.jboss.org/browse/HWKMETRICS-465">HWKMETRICS-465</a>)</li>
+      <li>It is now possible to fetch metric definitions filtered by a list of ids not just tags (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
+    </ul>
+  </li>
+  <li>
+    <p>Cassandra Driver Configuration</p>
+    <ul>
+      <li>Driver configuration options are now exposed for connection and request timeouts</li>
+      <li>Connection timeout can be configured via <code>CASSANDRA_CONNECTION_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.connection.timeout</code> system property; value is specified in milliseconds and defaults to 5 seconds.</li>
+      <li>Request timeout can be configured via <code>CASSANDRA_REQUEST_TIMEOUT</code> environment variable, or <code>hawkular-metrics.cassandra.request.timeout</code> system property; value is specified in milliseconds and defaults to 12 seconds.</li>
+      <li>For more details: (<a href="https://issues.jboss.org/browse/HWKMETRICS-490">HWKMETRICS-490</a>)</li>
+    </ul>
+  </li>
+  <li>
+    <p>Job Scheduler</p>
+    <ul>
+      <li>Duplicate instances of jobs were wrongly scheduled on server restart because the job scheduler was not checking if the job was already scheduled (<a href="https://issues.jboss.org/browse/HWKMETRICS-461">HWKMETRICS-461</a>)</li>
+      <li>Triggers now have a delay to properly schedule jobs in the future (<a href="https://issues.jboss.org/browse/HWKMETRICS-224">HWKMETRICS-224</a>)</li>
+      <li>Resolved an issue where long running job can miss future executions because the current execution takes longer than the repeat interval (<a href="https://issues.jboss.org/browse/HWKMETRICS-477">HWKMETRICS-477</a>)</li>
+      <li>Prevent execution of a job multiple times for the same execution time (<a href="https://issues.jboss.org/browse/HWKMETRICS-486">HWKMETRICS-486</a>)</li>
+      <li>RepeatingTrigger now allows specifying trigger start time (<a href="https://issues.jboss.org/browse/HWKMETRICS-476">HWKMETRICS-476</a>)</li>
+    </ul>
+  </li>
+  <li>
+    <p>Admin Endpoints</p>
+    <ul>
+      <li>Admin related endpoints are going to be protected via an admin token, to be sent for admin related REST endpoints via Hawkular-Admin-Token request header</li>
+      <li>The first endpoint to be protected by this mechanism is <code>/tenants</code> since its functionality is cross tenant</li>
+      <li>The admin token can be set via command line arguments or environment variable at container startup; by default it is not set which means no access to protected endpoints</li>
+      <li>This is the foundation for adding more admin related functionality in upcoming releases (such as Cassandra cluster metrics, system telemetry, or admin operations)</li>
+      <li>The details:
+        <ul>
+          <li>system property key: hawkular.metrics.admin-token</li>
+          <li>environment variable: ADMIN_TOKEN</li>
+          <li>default value: null (admin endpoints are not accessible until set)</li>
+          <li>header name: Hawkular-Admin-Token</li>
+          <li>stored on the system config using one way hashing</li>
+        </ul>
+      </li>
+      <li>For more details: <a href="https://issues.jboss.org/browse/HWKMETRICS-478">HWKMETRICS-478</a></li>
+    </ul>
+  </li>
+</ul>
+<p><strong>Hawkular Metrics Clients</strong></p>
 <ul>
   <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
   <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
   <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
   <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
-</ul><h3>Release Links</h3>
+</ul>
+<h3>Release Links</h3>
 <ul>
   <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.20.0</a></li>
   <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
   <li>Jira release tracker: <a href="https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331360">https://issues.jboss.org/browse/HWKMETRICS/fixforversion/12331360</a></li>
-</ul><p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
+</ul>
+<p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
     	<hr /><br /><br />
+
         <p><em>Published by Stefan Negrea on  06 October 2016</em></p>
 
     <div id="disqus_thread"></div>
