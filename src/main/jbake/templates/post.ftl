@@ -6,15 +6,7 @@
         <div class="container">
             <h1><#escape x as x?xml>${content.title}</#escape></h1>
             <p>A blog post by ${content.author}</p>
-        <#if (content.tags)??>
-            <p><strong>Tags:</strong> 
-            <#list content.tags as tag>
-              <#if tag != "blog">
-               | <a href="/tags/${tag}.html">${tag}</a> 
-              </#if>
-            </#list> |</p>
-        </#if>    
-            
+        <#include "tags_on_page.ftl">            
         </div>
     </section>
 
