@@ -6,6 +6,7 @@
       <#assign tmp_list = tmp_list + [ tag ] />
     </#if>  
   </#list>
+  <#assign tmp_list = tmp_list?sort>
   <#assign i = 0>
    <p> 
     <#list tmp_list as tag>
