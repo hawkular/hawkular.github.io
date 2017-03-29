@@ -126,7 +126,10 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
                         <li class="menu-item ">
-                          <a href="../../hawkular-metrics/docs/user-guide/">User Guide</a>
+                          <a href="../../hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="../../community/docs/developer-guide/alerts.html">Alerting User Guide</a>
                         </li>
                         <li class="menu-item ">
                           <a href="../../docs/rest/rest-metrics.html">Metrics REST API</a>
@@ -190,7 +193,7 @@
 
       </section>
 
-	<!--<p><em>27 March 2017</em></p>-->
+	<!--<p><em>29 March 2017</em></p>-->
 
 	<section>
       <div class="container">
@@ -245,6 +248,7 @@
 <li><a href="#LifeCycle">LifeCycle</a></li>
 <li><a href="#MissingCondition">MissingCondition</a></li>
 <li><a href="#MissingConditionEval">MissingConditionEval</a></li>
+<li><a href="#NelsonCondition">NelsonCondition</a></li>
 <li><a href="#Note">Note</a></li>
 <li><a href="#RateCondition">RateCondition</a></li>
 <li><a href="#RateConditionEval">RateConditionEval</a></li>
@@ -338,6 +342,9 @@
 </li>
 <li>
 <p><a href="#PUT__tags">Add tags to existing Alerts.</a></p>
+</li>
+<li>
+<p><a href="#GET__watch">Watch alerts with optional filtering</a></p>
 </li>
 <li>
 <p><a href="#DELETE___alertId_">Delete an existing Alert.</a></p>
@@ -474,6 +481,20 @@ Specify '*' for value to match all values.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">endAckTime</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle state before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle after this time.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
 </tr>
@@ -1046,6 +1067,20 @@ Specify '*' for value to match all values.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
 </tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle state before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
 </tbody>
 </table>
 <div class="paragraph">
@@ -1574,6 +1609,207 @@ Each tag of format 'name|value'.</p></td>
 <tr>
 <td class="tableblock halign-center valign-top"><p class="tableblock">500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Internal server error.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__watch" class="paragraph">
+<p><strong>Endpoint GET <code>/watch</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Watch alerts with optional filtering<br>
+<br>
+Return a stream of alerts ordered by the current lifecycle stime.<br>
+Changes on lifecycle alert are monitored and sent by the watcher.<br>
+<br>
+If not criteria defined, it fetches all alerts available in the system.<br>
+<br>
+Time criterias are used only for the initial query.<br>
+After initial query, time criterias are discarded, watching alerts by current lifecycle stime.<br>
+Non time criterias are active.<br>
+<br>
+If not criteria defined, it fetches all alerts available in the system.<br>
+Tags Query language (BNF):<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;tag_query&gt; ::= ( &lt;expression&gt; | "(" &lt;object&gt; ")" | &lt;object&gt; &lt;logical_operator&gt; &lt;object&gt; )
+&lt;expression&gt; ::= ( &lt;tag_name&gt; | &lt;not&gt; &lt;tag_name&gt; | &lt;tag_name&gt; &lt;boolean_operator&gt; &lt;tag_value&gt; | &lt;tag_name&gt; &lt;array_operator&gt; &lt;array&gt; )
+&lt;not&gt; ::= [ "NOT" | "not" ]
+&lt;logical_operator&gt; ::= [ "AND" | "OR" | "and" | "or" ]
+&lt;boolean_operator&gt; ::= [ "==" | "!=" ]
+&lt;array_operator&gt; ::= [ "IN" | "NOT IN" | "in" | "not in" ]
+&lt;array&gt; ::= ( "[" "]" | "[" ( "," &lt;tag_value&gt; )* )
+&lt;tag_name&gt; ::= &lt;identifier&gt;
+&lt;tag_value&gt; ::= ( "'" &lt;regexp&gt; "'" | &lt;simple_value&gt; )
+;
+; &lt;identifier&gt; and &lt;simple_value&gt; follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]*
+; &lt;regexp&gt; follows any valid Java Regular Expression format</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">alertIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified alertIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of alert IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">statuses</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified lifecycle status.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">severities</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified severity.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[DEPRECATED] Filter out alerts for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tagQuery</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">A tag query expression.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle state before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">watchInterval</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define interval when watcher notifications will be sent.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Interval in seconds</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin alerts, do not include: evalSets, resolvedEvalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Errors will close the stream. Description is sent before stream is closed.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
 </tr>
 </tbody>
@@ -2378,6 +2614,12 @@ WARNING: If not criteria defined, it deletes all actions history stored in the s
 <li>
 <p><a href="#GET__admin_events">Get events with optional filtering from multiple tenants.</a></p>
 </li>
+<li>
+<p><a href="#GET__admin_watch_alerts">Watch alerts with optional filtering from multiple tenants.</a></p>
+</li>
+<li>
+<p><a href="#GET__admin_watch_events">Watch events with optional filtering from multiple tenants.</a></p>
+</li>
 </ol>
 </div>
 <div class="exampleblock">
@@ -2513,6 +2755,20 @@ Specify '*' for value to match all values.</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">endAckTime</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle state before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle after this time.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
 </tr>
@@ -2713,6 +2969,362 @@ Specify '*' for value to match all values.</p></td>
 </table>
 </div>
 </div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__admin_watch_alerts" class="paragraph">
+<p><strong>Endpoint GET <code>/admin/watch/alerts</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Watch alerts with optional filtering from multiple tenants.<br>
+<br>
+Return a stream of alerts ordered by the current lifecycle stime.<br>
+Changes on lifecycle alert are monitored and sent by the watcher.<br>
+<br>
+If not criteria defined, it fetches all alerts available in the system.<br>
+<br>
+Time criterias are used only for the initial query.<br>
+After initial query, time criterias are discarded, watching alerts by current lifecycle stime.<br>
+Non time criterias are active.<br>
+<br>
+Multiple tenants are expected on HawkularTenant header as a comma separated list.<br>
+i.e. HawkularTenant: tenant1,tenant2,tenant3<br>
+Tags Query language (BNF):<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;tag_query&gt; ::= ( &lt;expression&gt; | "(" &lt;object&gt; ")" | &lt;object&gt; &lt;logical_operator&gt; &lt;object&gt; )
+&lt;expression&gt; ::= ( &lt;tag_name&gt; | &lt;not&gt; &lt;tag_name&gt; | &lt;tag_name&gt; &lt;boolean_operator&gt; &lt;tag_value&gt; | &lt;tag_name&gt; &lt;array_operator&gt; &lt;array&gt; )
+&lt;not&gt; ::= [ "NOT" | "not" ]
+&lt;logical_operator&gt; ::= [ "AND" | "OR" | "and" | "or" ]
+&lt;boolean_operator&gt; ::= [ "==" | "!=" ]
+&lt;array_operator&gt; ::= [ "IN" | "NOT IN" | "in" | "not in" ]
+&lt;array&gt; ::= ( "[" "]" | "[" ( "," &lt;tag_value&gt; )* )
+&lt;tag_name&gt; ::= &lt;identifier&gt;
+&lt;tag_value&gt; ::= ( "'" &lt;regexp&gt; "'" | &lt;simple_value&gt; )
+;
+; &lt;identifier&gt; and &lt;simple_value&gt; follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]*
+; &lt;regexp&gt; follows any valid Java Regular Expression format</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">alertIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified alertIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of alert IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">statuses</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified lifecycle status.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [OPEN, ACKNOWLEDGED, RESOLVED]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">severities</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified severity.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of [LOW, MEDIUM, HIGH, CRITICAL]</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[DEPRECATED] Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tagQuery</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">A tag query expression.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endResolvedTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts resolved after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endAckTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts acknowledged after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle state before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endStatusTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out alerts with some lifecycle after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">watchInterval</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define interval when watcher notifications will be sent.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Interval in seconds</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin alerts, do not include: evalSets, resolvedEvalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Errors will close the stream. Description is sent before stream is closed.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__admin_watch_events" class="paragraph">
+<p><strong>Endpoint GET <code>/admin/watch/events</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Watch events with optional filtering from multiple tenants.<br>
+<br>
+Return a stream of events ordered by ctime.<br>
+<br>
+If not criteria defined, it fetches all events stored in the system.<br>
+<br>
+Time criterias are used only for the initial query.<br>
+After initial query, time criterias are discarded, watching events by ctime.<br>
+Non time criterias are active.<br>
+<br>
+If not criteria defined, it fetches all events stored in the system.<br>
+<br>
+Multiple tenants are expected on HawkularTenant header as a comma separated list.<br>
+i.e. HawkularTenant: tenant1,tenant2,tenant3<br>
+Tags Query language (BNF):<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;tag_query&gt; ::= ( &lt;expression&gt; | "(" &lt;object&gt; ")" | &lt;object&gt; &lt;logical_operator&gt; &lt;object&gt; )
+&lt;expression&gt; ::= ( &lt;tag_name&gt; | &lt;not&gt; &lt;tag_name&gt; | &lt;tag_name&gt; &lt;boolean_operator&gt; &lt;tag_value&gt; | &lt;tag_name&gt; &lt;array_operator&gt; &lt;array&gt; )
+&lt;not&gt; ::= [ "NOT" | "not" ]
+&lt;logical_operator&gt; ::= [ "AND" | "OR" | "and" | "or" ]
+&lt;boolean_operator&gt; ::= [ "==" | "!=" ]
+&lt;array_operator&gt; ::= [ "IN" | "NOT IN" | "in" | "not in" ]
+&lt;array&gt; ::= ( "[" "]" | "[" ( "," &lt;tag_value&gt; )* )
+&lt;tag_name&gt; ::= &lt;identifier&gt;
+&lt;tag_value&gt; ::= ( "'" &lt;regexp&gt; "'" | &lt;simple_value&gt; )
+;
+; &lt;identifier&gt; and &lt;simple_value&gt; follows pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]*
+; &lt;regexp&gt; follows any valid Java Regular Expression format</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified eventIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of event IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">categories</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified categories.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of category values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[DEPRECATED] Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tagQuery</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">A tag query expression.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">watchInterval</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define interval when watcher notifications will be sent.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Interval in seconds</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin events, do not include: evalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Errors will close the stream. Description is sent before stream is closed.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div class="sect2">
 <h3 id="__events_event_handling">[ /events ] Event Handling</h3>
@@ -2738,6 +3350,9 @@ Specify '*' for value to match all values.</p></td>
 </li>
 <li>
 <p><a href="#PUT__events_tags">Add tags to existing Events.</a></p>
+</li>
+<li>
+<p><a href="#GET__events_watch">Watch events with optional filtering.</a></p>
 </li>
 <li>
 <p><a href="#DELETE__events__eventId_">Delete an existing Event.</a></p>
@@ -3451,6 +4066,156 @@ Each tag of format 'name|value'.</p></td>
 <tr>
 <td class="tableblock halign-center valign-top"><p class="tableblock">500</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Internal server error.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="GET__events_watch" class="paragraph">
+<p><strong>Endpoint GET <code>/events/watch</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Watch events with optional filtering.<br>
+<br>
+Return a stream of events ordered by ctime.<br>
+<br>
+If not criteria defined, it fetches all events stored in the system.<br>
+<br>
+Time criterias are used only for the initial query.<br>
+After initial query, time criterias are discarded, watching events by ctime.<br>
+Non time criterias are active.<br>
+If not criteria defined, it fetches all events stored in the system.<br>
+Tags Query language (BNF):<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;tag_query&gt; ::= ( &lt;expression&gt; | "(" &lt;object&gt; ")" | &lt;object&gt; &lt;logical_operator&gt; &lt;object&gt; )
+&lt;expression&gt; ::= ( &lt;tag_name&gt; | &lt;not&gt; &lt;tag_name&gt; | &lt;tag_name&gt; &lt;boolean_operator&gt; &lt;tag_value&gt; | &lt;tag_name&gt; &lt;array_operator&gt; &lt;array&gt; )
+&lt;not&gt; ::= [ "NOT" | "not" ]
+&lt;logical_operator&gt; ::= [ "AND" | "OR" | "and" | "or" ]
+&lt;boolean_operator&gt; ::= [ "==" | "!=" ]
+&lt;array_operator&gt; ::= [ "IN" | "NOT IN" | "in" | "not in" ]
+&lt;array&gt; ::= ( "[" "]" | "[" ( "," &lt;tag_value&gt; )* )
+&lt;tag_name&gt; ::= &lt;identifier&gt;
+&lt;tag_value&gt; ::= ( "'" &lt;regexp&gt; "'" | &lt;simple_value&gt; )
+;
+; &lt;identifier&gt; and &lt;simple_value&gt; follow pattern [a-zA-Z_0-9][\-a-zA-Z_0-9]*
+; &lt;regexp&gt; follows any valid Java Regular Expression format</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Query parameters</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 11.1111%;">
+<col style="width: 38.8888%;">
+<col style="width: 16.6666%;">
+<col style="width: 16.6669%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Parameter</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">startTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created before this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">endTime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events created after this time.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in millisecond since epoch.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified eventIds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of event IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">triggerIds</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of trigger IDs.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">categories</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified categories.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of category values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">[DEPRECATED] Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Comma separated list of tags, each tag of format 'name|value'.<br>
+Specify '*' for value to match all values.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tagQuery</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Filter out events for unspecified tags.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">A tag query expression.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">watchInterval</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define interval when watcher notifications will be sent.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Interval in seconds</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">thin</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Return only thin events, do not include: evalSets.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Errors will close the stream. Description is sent before stream is closed.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">ApiError</a></p></td>
 </tr>
 </tbody>
@@ -7066,9 +7831,6 @@ Alert can attach a list of notes defined by the user.<br>
 There are many options on triggers to help ensure that alerts are not generated too frequently,<br>
 including ways of automatically disabling and enabling the trigger.<br></p>
 </div>
-<div class="paragraph">
-<p>Subtype of <a href="#Event">Event</a></p>
-</div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
 <col style="width: 14.2857%;">
@@ -7090,6 +7852,14 @@ including ways of automatically disabling and enabling the trigger.<br></p>
 </thead>
 <tbody>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">eventType</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Indicate if this object is an EVENT or an ALERT. This is a read-only field controlled by the system for serialization purposes.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">EVENT, ALERT</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">severity</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Severity set for a <a href="#Trigger">Trigger</a> and assigned to an alert when it is generated.</p></td>
@@ -7106,10 +7876,34 @@ including ways of automatically disabling and enabling the trigger.<br></p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tenantId</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tenant id owner of this event.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Tenant is overwritten from Hawkular-Tenant HTTP header parameter request</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">id</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Unique identifier for this event.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">notes</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Notes attached with this alert.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">array of <a href="#Note">Note</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">ctime</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Creation time for this event.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
@@ -7122,10 +7916,95 @@ including ways of automatically disabling and enabling the trigger.<br></p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dataSource</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Optional dataSource for Event. Used for <a href="#Trigger">Trigger</a> in <a href="#EventCondition">EventCondition</a> to evaluate events with triplet [tenantId, source, dataId] as unique identifier.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Timestamp in milliseconds.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">resolvedEvalSets</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">The Eval Sets that resolved the <a href="#Trigger">Trigger</a> in AUTORESOLVE mode.<br>
  Null for non AUTORESOLVE triggers.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">array of array of <a href="#ConditionEval">ConditionEval</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for Events condition evaluation. Events must supply a valid dataId to be considered for <a href="#EventCondition">EventCondition</a> evaluation.<br>
+DataIds in an events context should incorporate the source of the event (for uniqueness).<br>
+Events generated from a <a href="#Trigger">Trigger</a> will have dataId set to the triggerId, therefore allowing chaining with other <a href="#EventCondition">EventCondition</a>.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">category</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Category of Event. Suitable for display.<br>
+Alerts will use ALERT category.<br>
+Events generated from <a href="#Trigger">Trigger</a> will use Trigger.eventCategory or TRIGGER category as default.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Any category defined by the user.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">ALERT or TRIGGER</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">text</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Description of the event. Suitable for display.<br>
+Events generated from <a href="#Trigger">Trigger</a> will use Trigger.eventText or Trigger.description/Trigger.name as default.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Any description defined by the user.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">context</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this event.<br>
+ Events generated from <a href="#Trigger">Trigger</a> will use Trigger.context.<br>
+Context cannot be used as part of Event conditions expressions or criteria in finder methods.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">tags</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Tags defined by the user for this event.<br>
+ Events generated from <a href="#Trigger">Trigger</a> will use Trigger.tags.<br>
+Tags can be used as part of Event conditions expressions and criteria in finder methods.<br>
+Tag value cannot be null.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">trigger</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Trigger that created the event.<br>
+ Null for API-generated Events.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#Trigger">Trigger</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">dampening</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Dampening defined when the event was created.<br>
+ Null for API-generated Events.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#Dampening">Dampening</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">evalSets</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">The Eval Sets that fired the trigger.<br>
+ Null for API-generated Events.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">array of array of <a href="#ConditionEval">ConditionEval</a></p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
@@ -8697,7 +9576,7 @@ This allows the expression of a group external condition to be automatically cus
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">memberDescription</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Trigger name for member Trigger.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Trigger description for member Trigger.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
@@ -8945,6 +9824,56 @@ A MissingCondition will be evaluated to true when a data/event has not been rece
 <td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="NelsonCondition">NelsonCondition</h3>
+<div class="paragraph">
+<p>A condition to detect instability based on historical data.<br>
+<br>
+From one to all of the defined Nelson rules can be evaluated. See<br>
+<a href="https://en.wikipedia.org/wiki/Nelson_rules" class="bare">https://en.wikipedia.org/wiki/Nelson_rules</a> for a description of the rules.</p>
+</div>
+<div class="paragraph">
+<p>Subtype of <a href="#Condition">Condition</a></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 14.2857%;">
+<col style="width: 9.5238%;">
+<col style="width: 33.3333%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2857%;">
+<col style="width: 14.2858%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Name</th>
+<th class="tableblock halign-center valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Type</th>
+<th class="tableblock halign-center valign-top">Allowable Values</th>
+<th class="tableblock halign-center valign-top">Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">activeRules</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Set of NelsonRule to evaluate.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">array of string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Rule1, Rule2, Rule3, Rule4, Rule5, Rule6, Rule7, Rule8</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">All Rules</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">sampleSize</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Number of samples used to establish baseline information (mean, standard deviation).</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">integer</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">50</p></td>
 </tr>
 </tbody>
 </table>
