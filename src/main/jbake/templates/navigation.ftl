@@ -79,7 +79,10 @@
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">User Guide</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Alerting User Guide</a>
                         </li>
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">Metrics REST API</a>
