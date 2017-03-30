@@ -1679,6 +1679,8 @@ then needs the prefix to uniquely identify the correct metric.
 
 |===
 
+Metrics has some special support for stream-based alerting, see <<Metrics Group Triggers>> for the details.
+
 
 === Query-Based Alerting
 Whereas stream-based alerting is applied to metric data as it arrives, it is often the case that issues
@@ -1768,6 +1770,7 @@ ConditionExpression
   frequency      duration string (see below), time between query-executions/evals
   eval           string, expression determining condition match
   evalType       string, one of [ALL (default), EACH]. See more below.
+  quietCount     int, >= 0, default=0. See more below.
  
  
 Query
@@ -1799,6 +1802,11 @@ For example, assume we are dealing with two metrics, M1 and M2, the eval is `q(q
 A note about using *EACH*.  If multiple queries are involved in the eval expression then that only metrics common to each query will be evaluated.  For example, if the eval above were `q(qNow,avg) >  q(qYesterday,avg)` and only M1 were common to both queries then the eval would only be resolved using M1 data points.  In general each query will likely use the same metrics so this issue is a corner case.
 
 The default is ALL.
+
+===== QuietCount
+Setting `ConditionExpression.evalType=EACH` means the expression is evaluated for each metric targeted by the query. It allows one trigger definition to apply to many different metrics, which can be powerful. But the downside is that using trigger options like autoDisable or AutoResolve becomes difficult. If the trigger fires because of metric A, and then disables, it may miss issues fo metric B.  Autoresolve has the same problem, it is hard to apply due to the variety of metrics that may have fired the trigger.
+
+Although not a replacement for the options mentioned above, setting `ConditionExpression.quietCount` can be useful. If set > 0 it suppresses redundant firing for the same metric until that metric has returned to a steady state.  Put another way, if set to N it means: after the trigger fired metric A, stay quiet (no firing for A) until after we see N false evaluations for metric A.  The count is tracked independently per metric, so a firing for metric A does not affect metric B.
 
 ===== Metrics and Tags
 The `Query.metrics` and `Query.tags` fields are used to specify the metrics involved in the query, and therefore the data being retrieved. One of the fields must be specified. They are mutually exclusive, so specifying both is an error.  
@@ -1888,9 +1896,154 @@ Resulting in:
     ],
     "frequency": "30mn",
     "evalType": "ALL",
-    "eval": "(q(qNow,avg) > ( 1.25 * q(q1d,avg)))"
+    "eval": "(q(qNow,avg) > ( 1.25 * q(q1d,avg) ))"
 }
 ----
+
+=== Metrics Group Triggers
+Metrics Group Triggers (MGT) is an extension of the link:http://www.hawkular.org/community/docs/developer-guide/alerts.html#_group_triggers[group trigger feature] in Hawkular Alerting.  It provides a way to define a single trigger and have it apply to an unknown and changing set of metrics.  The single trigger is knows a __Group Trigger__ and it acts like a template for a set of __Member Triggers__.   For example, let's say you want to fire an alert whenever `FreeSpace < 10%` on any file system.  We'd like to define a single trigger and have it apply to every file system.  We can do this with a Metrics Group Trigger.
+
+The MGT could look something like this (as an hAlerting full trigger JSON):
+
+----
+{
+"trigger": {
+  "type": "GROUP",
+  "tenantId": "MyProject",
+  "id": "MGT-FreeSpace",
+  "name": "MGT FreeSpace",
+  "description": "An alert to notify admins that disk space is running low.",
+  "autoDisable": true,
+  "enabled": true,
+  "tags": {
+    "HawkularMetrics": "GroupTrigger",
+    "DataIds": "FreeSpace",
+    "FreeSpace": "name = FreeSpace",
+    "SourceBy": "*"
+  }
+},
+"conditions": [
+  {
+    "type": "THRESHOLD",
+    "dataId": "FreeSpace",
+    "operator": "LT",
+    "threshold": 10
+  }
+]
+}
+----
+
+Pay careful attention to the tagging on the trigger, it's the tags that make this a Metrics Group Trigger.
+
+* `"HawkularMetrics": "GroupTrigger"`
+** This tag identifies the group trigger as an MGT to be processed by the hMetrics alerter.
+* `"DataIds": "FreeSpace"`
+** This tag declares the dataIds used in the group trigger conditions.
+** In our example we have only one condition using only one dataId, "FreeSpace".
+* `"FreeSpace": "name = FreeSpace"`
+** This tag provides the metrics tag query that identifies the set of metrics to use for member trigger creation.
+** In this example each metric tagged with {"name": "FreeSpace"} will be used.
+** See <<Tag Filtering>> for more details.
+* `"SourceBy": "*"`
+** This tag is used to make ensure member triggers use related metrics. It is described in more detail below.
+** When using a single dataId it will commonly be set to "*" because relating multiple metrics is not applicable.
+
+==== Tagging
+To use Metrics Group Triggers there is necessary tagging to be applied not only the MGT itself but in most cases the metric definitions also require tags.  This section discusses both the trigger and metric tagging.
+
+===== Metric Group Trigger Tagging
+Each Metrics Group Trigger has several tags to guide its handling:
+
+|===
+|Tag Name |Tag Value |Notes
+
+|"HawkularMetrics"
+|"GroupTrigger"
+| Required to be processed as Metrics Group Trigger
+
+|"DataIds"
+|DataId1..DataIdN
+|The DataIds used in the trigger conditions, required
+
+|DataId1
+|tag query
+|Metrics tag query for dataId1 metrics
+
+|...
+|...
+|...
+
+|DataIdN
+|tag query
+|Metrics tag query for dataId1 metrics
+
+|"SourceBy"
+|TagName1..TagNameN
+.|see <<SourceBy>> below
+
+|===
+
+====== SourceBy
+The __SourceBy__ tag specifies the metric tag names used to determine the member trigger population. As an example, consider an MGT with one CompareCondition: `HeapUsed > 80% HeapMax`. We want to compare `HeapUsed` to `HeapMax` but of course each comparison should be done on metrics from the same machine. We don't want to compare all `HeapUsed` to all `HeapMax` for every machine in the data center. We would tag our MGT something like this:
+
+----
+"HawkularMetrics" : "GroupTrigger"
+"DataIds"         : "HeapUsed,HeapMax"
+"HeapUsed"        : name = "HeapUsed"
+"HeapMax"         : name = "HeapMax"
+"SourceBy"        : Machine
+---- 
+
+This would result in one member trigger per machine, for machine names common to HeapUsed and HeapMax metrics.  If we had the following metrics in the database, tagged as specified:
+
+----
+|machine0|HeapUsed    {name=HeapUsed, Machine=machine0}
+|machine0|HeapMax     {name=HeapMax , Machine=machine0}
+|machine1|HeapUsed    {name=HeapUsed, Machine=machine1}
+|machine1|HeapMax     {name=HeapMax , Machine=machine1}
+|machine2|HeapUsed    {name=HeapUsed}
+|machine2|HeapMax     {name=HeapMax}
+|machine3|HeapUsed    {name=HeapUsed, Machine=machine3}
+|machine4|HeapMax     {name=HeapMax , Machine=machine4}
+----
+ 
+It would result in two member triggers, one each testing:
+
+----
+|machine0|HeapUsed < 80% |machine0|HeapMax
+|machine1|HeapUsed < 80% |machine1|HeapMax
+----
+ 
+We would not have a 3rd member trigger because machine2 metrics don't have the necessary tags, machine3 does not have the HeapMax metric, and machine4 does not have the HeapUsed metric.
+
+SourceBy is required, but can be set to '*' to generate member triggers for all value combinations (not recommended when multiple dataIds are involved).
+
+===== Metric Definition Tagging
+Although technically not required it is generally the case that to effectively use MGTs some level of tagging will be needed on the metric defintions.
+
+====== DataId Tag Query Tags
+Each MGT declares one or more DataIds in its conditions. Each of those DataIds is to be replaced by an actual metric name in a member trigger. The set of metrics applied to the DataId is determined via the taq query defined for the DataId in its GMT tag.  In many cases the convention will be for this to be a generic 'name' tag, but the query can be as complex as needed, as allowed by the hMetrics tag query language.
+
+====== SourceBy Tags
+When an MGT uses multiple DataIds the metric names replacing them will typically be related, or from the same __source__.  To allow that to happen the metric definitions will need to be tagged such that the source information is available.  For example, a member trigger likely wants to be applied to data from the same machine.  If we have N machines in M datacenters, we would need each metric tagged with datacenter=<someDataCenter> and machine=<someMachine>.  Then we can declare SourceBy:dataCenter,machine.
+
+==== Configuration
+These system properties can be defined to affect the MGT handling.
+
+[cols="2,1,2"]
+|===
+|System Property |Default |Description
+
+|hawkular-metrics.alerter.mgt.pool-size
+|20
+|Thread pool size for handling MGT refresh. Each MGT has it's own thread.
+
+|hawkular-metrics.alerter.mgt.job-period-seconds
+|3600 (one hour)
+|The number of seconds between MGT refresh.  Each refresh determines the current metrics via the tag queries, and then updates the member trigger set accordingly.
+
+|===
+
 
 
 == Security
