@@ -1,0 +1,44 @@
+= Deploying Hawkular OpenShift Agent Easily
+John Mazzitelli
+2017-04-05
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, agent, openshift
+
+The https://github.com/hawkular/hawkular-openshift-agent[Hawkular OpenShift Agent] has its docker images released on https://hub.docker.com/r/hawkular/hawkular-openshift-agent[Docker Hub]. So it is easily deployed in your OpenShift nodes.
+
+You simply need to run some "oc" commands to create the agent and its configmap using a few https://github.com/hawkular/hawkular-openshift-agent/tree/master/deploy/openshift[OpenShift templates].
+
+To make deploying the agent easier - especially for someone just wanting to try it out - a new https://github.com/hawkular/hawkular-openshift-agent/blob/master/hack/deploy-openshift-agent.sh[deploy-openshift-agent.sh] script has been provided.
+
+Now all you need to do in order to deploy HOSA is run this one command:
+
+```
+wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/hack/deploy-openshift-agent.sh && sh ./deploy-openshift-agent.sh
+```
+
+This will deploy the latest agent version in your OpenShift node in the "default" OpenShift project. If you wish to install a different version, use the DOCKER_VERSION environment variable like this:
+
+```
+wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/hack/deploy-openshift-agent.sh && DOCKER_VERSION=1.4.0.Final sh ./deploy-openshift-agent.sh
+```
+
+Note that this script will ask you for your OpenShift credentials if you are not yet logged in - it runs "oc login" which requires you to enter your username and password at the prompts. You may optionally log in ahead of time by running the "oc login" command prior to running this deploy script.
+
+== Deploying the Examples
+
+Now that you have the Hawkular OpenShift Agent deployed, you can just as easily deploy some of the examples to see the agent work. There is a similar script located in the `examples` directory called https://github.com/hawkular/hawkular-openshift-agent/blob/master/examples/deploy-example.sh[deploy-example.sh]. You pass to it a command line argument whose value is the name of an example. The names of the examples are found in the https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples[examples] directory - names such as `jolokia-wildfly-example` and `multiple-endpoints-example`.
+
+All you need to do in order to deploy an example is run this one command (note that this deploys the `jolokia-wildfly-example` but you can pass in any example name you want):
+
+```
+wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/examples/deploy-example.sh && sh ./deploy-example.sh jolokia-wildfly-example
+```
+
+This will deploy the latest example version in your OpenShift node in your user's default OpenShift project. If you wish to install a different version, use the DOCKER_VERSION environment variable. If you wish to install your example in a different OpenShift project, use the EXAMPLE_NAMESPACE environment variable:
+
+```
+wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/examples/deploy-example.sh && DOCKER_VERSION=1.4.0.Final EXAMPLE_NAMESPACE=myproject sh ./deploy-example.sh jolokia-wildfly-example
+```
+
+If you have already logged into OpenShift, the script will not ask you to log in again. It will only log you into OpenShift if you have not yet done so.
