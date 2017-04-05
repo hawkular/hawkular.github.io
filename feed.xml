@@ -6,9 +6,242 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Thu, 30 Mar 2017 15:13:48 +0000</pubDate>
-    <lastBuildDate>Thu, 30 Mar 2017 15:13:48 +0000</lastBuildDate>
+    <pubDate>Wed, 5 Apr 2017 14:49:22 +0000</pubDate>
+    <lastBuildDate>Wed, 5 Apr 2017 14:49:22 +0000</lastBuildDate>
 
+    <item>
+      <title>Alerts and Notifications for Elasticsearch using Hawkular Alerting</title>
+      <link>http://www.hawkular.org/blog/2017/04/06/hawkular-alerting-elasticsearch.html</link>
+      <author>noreply@hawkular.org (Lucas Ponce)</author>
+      <pubDate>Thu, 6 Apr 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/04/06/hawkular-alerting-elasticsearch.html</guid>
+      	<description>
+	&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_elasticsearch_alerter&quot;&gt;Elasticsearch Alerter&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting includes a new &lt;em&gt;Alerter&lt;/em&gt; capable to query &lt;em&gt;Elasticsearch&lt;/em&gt; servers and represent documents as &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html#Event&quot;&gt;Hawkular Events&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Managing &lt;em&gt;Elasticsearch&lt;/em&gt; documents as Events allows Hawkular Alerting to define rich and complex conditions using &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-alerts.html#EventCondition&quot;&gt;EventConditions&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Triggers tagged with &lt;em&gt;Elasticsearch&lt;/em&gt; will be used to schedule a periodic query to an &lt;em&gt;Elasticsearch&lt;/em&gt; server. Trigger&amp;#8217;s context will be used to define the interval between queries, additional query filtering or mapping options that will be used by the alerter to convert documents into events.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For example,&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    &quot;tags&quot;: {
+      &quot;Elasticsearch&quot;: &quot;Localhost instance&quot; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+    },
+    &quot;context&quot;: {
+      &quot;timestamp&quot;: &quot;@timestamp&quot;, &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+      &quot;interval&quot;: &quot;30s&quot;, &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+      &quot;index&quot;: &quot;log&quot;,  &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+      &quot;filter&quot;: &quot;{\&quot;match\&quot;:{\&quot;app\&quot;:\&quot;AppA\&quot;}}&quot;, &lt;b class=&quot;conum&quot;&gt;(5)&lt;/b&gt;
+      &quot;mapping&quot;: &quot;level:category,@timestamp:ctime,message:text,app:dataId,index:tags&quot; &lt;b class=&quot;conum&quot;&gt;(6)&lt;/b&gt;
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;em&gt;Elasticsearch&lt;/em&gt; tag is used by the alerter to schedule a query from this trigger&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;em&gt;Elasticsearch&lt;/em&gt; field &quot;@timestamp&quot; will be used to fetch documents in regular intervals&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Interval between queries will be &lt;em&gt;30&lt;/em&gt; seconds&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Documents are fetched from &lt;em&gt;log&lt;/em&gt; index&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Optional filtering to refine the query&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Mapping between &lt;em&gt;Elasticsearch&lt;/em&gt; document fields and &lt;em&gt;Hawkular Events&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The full reference of the &lt;em&gt;Elasticsearch&lt;/em&gt; Alerter can be found under
+&lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_alerter&quot;&gt;Elasticsearch Alerter&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_elasticsearch_plugin&quot;&gt;Elasticsearch Plugin&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;Hawkular Alerting&lt;/em&gt; also includes a new &lt;em&gt;Action Plugin&lt;/em&gt; capable to transform Hawkular Events and Alerts into &lt;em&gt;Elasticsearch&lt;/em&gt; documents.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;em&gt;Elasticsearch Plugin&lt;/em&gt; properties allows to define how an Event or Alert will be transformed in a document and under which index and type will be stored.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For example,&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    {
+      &quot;actionPlugin&quot;: &quot;elasticsearch&quot;,
+      &quot;actionId&quot;: &quot;write-partial-alert&quot;,
+      &quot;properties&quot;: {
+        &quot;index&quot;: &quot;alerts_summary&quot;,  &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+        &quot;timestamp_pattern&quot;: &quot;yyyy-MM-dd&apos;T&apos;HH:mm:ss.SSSSSSZ&quot;,   &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+        &quot;transform&quot;: &quot;{\&quot;tenantId\&quot;:\&quot;tenant\&quot;,\&quot;ctime\&quot;:\&quot;timestamp\&quot;,\&quot;text\&quot;:\&quot;trigger\&quot;,\&quot;context\&quot;:{\&quot;interval\&quot;:\&quot;fetch-interval\&quot;},\&quot;evalSets\&quot;:\&quot;details\&quot;}&quot; &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+      }
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Index used to store documents transformed by this plugin&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;This &lt;em&gt;timestamp_pattern&lt;/em&gt; indicates that all timestamp fields of Events/Alerts should be transformed into strings using this pattern&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;JSON &amp;#8594; JSON mapping to convert Events/Alerts into document using &lt;a href=&quot;http://jolt-demo.appspot.com/&quot;&gt;JOLT Shiftr&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The full reference of the &lt;em&gt;Elasticsearch&lt;/em&gt; Plugin can be found under &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_action_plugin&quot;&gt;Elasticsearch Plugin&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_logging_example&quot;&gt;Logging Example&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An small but rich example can be found under &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples/elasticsearch&quot;&gt;Elasticsearch example&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This example simulates different logs entries that are stored in &lt;em&gt;Elasticsearch&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These entries define a log level &lt;em&gt;(INFO, WARN or ERROR)&lt;/em&gt;, a source application &lt;em&gt;(AppA, AppB and AppC)&lt;/em&gt; and in the body message describes some reference about the subcomponent related &lt;em&gt;(Security, Frontend or Backend)&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These logs are stored in &lt;em&gt;Elasticsearch&lt;/em&gt; with the following format:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;{
+    &quot;@timestamp&quot;:&quot;2017-04-05T14:23:13.360447+0200&quot;,
+    &quot;level&quot;:&quot;ERROR&quot;,
+    &quot;app&quot;:&quot;AppA&quot;,
+    &quot;message&quot;:&quot;Message 6167 from Security&quot;
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the example a first trigger is defined to fetch documents just for AppA, for this, the in the context we define a &lt;em&gt;match&lt;/em&gt; filter as&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    &quot;context&quot;: {
+      &quot;timestamp&quot;: &quot;@timestamp&quot;,
+      &quot;filter&quot;: &quot;{\&quot;match\&quot;:{\&quot;app\&quot;:\&quot;AppA\&quot;}}&quot;, &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+      &quot;interval&quot;: &quot;30s&quot;,
+      &quot;index&quot;: &quot;log&quot;,
+      &quot;mapping&quot;: &quot;level:category,@timestamp:ctime,message:text,app:dataId,index:tags&quot; &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;From all possible documents, only AppA are interested for this trigger&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Note that &lt;em&gt;app&lt;/em&gt; field is used as dataId for Events&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once events are mapped we can define an &lt;em&gt;EventsCondition&lt;/em&gt; to detect any &lt;em&gt;ERROR&lt;/em&gt; log related to &lt;em&gt;Backend&lt;/em&gt; components.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;      &quot;conditions&quot;:[
+        {
+          &quot;type&quot;: &quot;EVENT&quot;,
+          &quot;dataId&quot;: &quot;AppA&quot;,
+          &quot;expression&quot;: &quot;category == &apos;ERROR&apos;,text contains &apos;Backend&apos;&quot;
+        }
+      ]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a similar way, a second trigger is defined in the example to fetch documents for AppB.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;    &quot;context&quot;: {
+      ...
+      &quot;filter&quot;: &quot;{\&quot;match\&quot;:{\&quot;app\&quot;:\&quot;AppB\&quot;}}&quot;, &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+    }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;From all possible documents, only AppB are interested for this trigger&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;On this second trigger, we want to detect when we have a suspected high number of WARN messages in the log. There are several ways to map this, in the example we are going to use a &lt;em&gt;Dampening&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;      &quot;dampenings&quot;: [
+        {
+          &quot;triggerMode&quot;: &quot;FIRING&quot;,
+          &quot;type&quot;:&quot;RELAXED_COUNT&quot;,
+          &quot;evalTrueSetting&quot;: 3,
+          &quot;evalTotalSetting&quot;: 10
+        }
+      ],
+      &quot;conditions&quot;:[
+        {
+          &quot;type&quot;: &quot;EVENT&quot;,
+          &quot;dataId&quot;: &quot;AppB&quot;,
+          &quot;expression&quot;: &quot;category == &apos;WARN&apos;&quot;
+        }
+      ]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;So, this second trigger will alert when more than 3 WARN messages are detected in a rate of 10 messages processed.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Finally, the example defines several ways of notifications: sending an email to administrators and writting back into &lt;em&gt;Elasticsearch&lt;/em&gt; the alerts fired.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_elasticsearch_integration&quot;&gt;Elasticsearch Integration&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a result, we can combine all the Logs and Alerts in custom searches and provide them a UI dashboard in Kibana.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/Kibana-Hawkular-Alerting.png&quot; alt=&quot;Kibana - Hawkular Alerting&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Collecting Application Metrics Within OpenShift</title>
       <link>http://www.hawkular.org/blog/2017/03/25/collecting-application-metrics-openshift.html</link>
