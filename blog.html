@@ -423,6 +423,62 @@
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2017/04/04/hawkular-metrics-0.26.0.Final-released.html"><h1>Hawkular Metrics 0.26.0 - Release</h1></a>
+            <p>04 April 2017, by Stefan Negrea</p>
+            <p><p>I am happy to announce release 0.26.0 of Hawkular Metrics. This release is anchored by performance improvements and enhancements.</p>
+<p>Here is a list of major changes:</p>
+<ul>
+  <li><strong>REST API - Updates</strong>
+    <ul>
+      <li>Added an endpoint to delete a single metric - <code>DELETE /{metric_type}/{metric_id}</code>. NOTE: deleting a metric using this endpoint will immediately delete all uncompressed data, tags, and index entries for a single metric; the compressed data will not be deleted but will expire using the preset data retention; <a href="https://issues.jboss.org/browse/HWKMETRICS-612">HWKMETRICS-612</a></li>
+      <li>Added a mixed stats batch query endpoint to request multiple stats queries at the same time, <code>POST /metrics/stats/batch/query</code>. For a sample query and reply please visit: <a href="https://issues.jboss.org/browse/HWKMETRICS-618">HWKMETRICS-618</a></li>
+      <li>Enabled GZIP content compression when the client accepts it; <a href="https://issues.jboss.org/browse/HWKMETRICS-623">HWKMETRICS-623</a></li>
+      <li>Min and max timestamp for metric definitions are now fetched only when explicitly requested. To enable min and max timestamps please use <code>timestamps=true</code> query parameter. <a href="https://issues.jboss.org/browse/HWKMETRICS-625">HWKMETRICS-625</a></li>
+    </ul>
+  </li>
+  <li><strong>Cassandra</strong>
+    <ul>
+      <li>Cassandra 3.0.12 is now the supported version of Cassandra.</li>
+      <li>Support for previous versions of Cassandra 3.0.x is deprecated.</li>
+      <li>For more details please visit: <a href="https://issues.jboss.org/browse/HWKMETRICS-622">HWKMETRICS-622</a></li>
+    </ul>
+  </li>
+  <li><strong>External Metrics Alerter - Enhancements</strong>
+    <ul>
+      <li>Added 'quietCount' option to the ConditionExpression to prevent alert repetition. If set then redundant firings for the same metric are suppressed until after N false evaluations. This applies to each metric individually. <a href="https://issues.jboss.org/browse/HWKMETRICS-630">HWKMETRICS-630</a></li>
+      <li>Added support for metrics group triggers, a way to define a single trigger and have it apply to an unknown and changing set of metrics. For documentation regarding this feature please visit <a href="http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_metrics_group_triggers">Metrics Group Triggers</a>, and <a href="https://issues.jboss.org/browse/HWKMETRICS-640">HWKMETRICS-640</a></li>
+    </ul>
+  </li>
+  <li><strong>Internal Updates</strong>
+    <ul>
+      <li>Resolved an issue where schema installation on multi Cassandra node cluster may fail; <a href="https://issues.jboss.org/browse/HWKMETRICS-637">HWKMETRICS-637</a></li>
+      <li>Added an internal job that deletes metrics definitions after all the associated data (compressed and uncompressed) expires. This will remove the tags and index entries for metrics that are no longer in use. <a href="https://issues.jboss.org/browse/HWKMETRICS-613">HWKMETRICS-613</a></li>
+    </ul>
+  </li>
+</ul>
+<p><strong>Hawkular Alerting - Included</strong></p>
+<ul>
+  <li>Version <a href="https://issues.jboss.org/projects/HWKALERTS/versions/12333585">1.6.0</a></li>
+  <li>Project details and repository: <a href="https://github.com/hawkular/hawkular-alerts">Github</a></li>
+  <li>Documentation: <a href="http://www.hawkular.org/docs/rest/rest-alerts.html">REST API</a>, <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">Examples</a>, <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html">Developer Guide</a></li>
+</ul>
+<p><strong>Hawkular Metrics Clients</strong></p>
+<ul>
+  <li>Python: <a href="https://github.com/hawkular/hawkular-client-python">https://github.com/hawkular/hawkular-client-python</a></li>
+  <li>Go: <a href="https://github.com/hawkular/hawkular-client-go">https://github.com/hawkular/hawkular-client-go</a></li>
+  <li>Ruby: <a href="https://github.com/hawkular/hawkular-client-ruby">https://github.com/hawkular/hawkular-client-ruby</a></li>
+  <li>Java: <a href="https://github.com/hawkular/hawkular-client-java">https://github.com/hawkular/hawkular-client-java</a></li>
+</ul>
+<h3>Release Links</h3>
+<ul>
+  <li>Github Release: <a href="https://github.com/hawkular/hawkular-metrics/releases/tag/0.26.0">https://github.com/hawkular/hawkular-metrics/releases/tag/0.26.0</a></li>
+  <li>JBoss Nexus Maven artifacts: <a href="http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/">http://origin-repository.jboss.org/nexus/content/repositories/public/org/hawkular/metrics/</a></li>
+  <li>Jira release tracker: <a href="https://issues.jboss.org/projects/HWKMETRICS/versions/12333957">https://issues.jboss.org/projects/HWKMETRICS/versions/12333957</a></li>
+</ul>
+<p>A big "Thank you" goes to John Sanda, Matt Wringe, Michael Burman, Joel Takvorian, Jay Shaughnessy, Lucas Ponce, and Heiko Rupp for their project contributions.</p></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/03/25/collecting-application-metrics-openshift.html"><h1>Collecting Application Metrics Within OpenShift</h1></a>
             <p>25 March 2017, by John Mazzitelli</p>
             <p><div class="sect1">
@@ -1082,484 +1138,13 @@ Hawkular WildFly Agent standalone.xml configuration settings.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/03/22/apm-adjusting-sampling-rate.html"><h1>Adjusting sampling rates for Hawkular APM on OpenShift</h1></a>
-            <p>22 March 2017, by Juraci Paixão Kröhling</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>When doing distributed tracing of a busy application, it&#8217;s a good practice
-to limit the amount of data being collected or stored. The techniques for that
-are diverse, ranging from a simple "percentage based sampling" of the
-incoming requests, up to complex heuristics to keep/discard traces based on the
-code path.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-22-teaser.png" alt="Final result">
-</div>
-</div>
-<div class="paragraph">
-<p>It&#8217;s also a good practice to empower the admin, or an automated monitoring system,
-with the capability of adjusting the sampling based on the current conditions.
-For instance, we&#8217;d probably want to get more traces from a
-<a href="/blog/2017/02/13/monitoring-canary-deployments.html">newly deployed version</a>
-of an existing application, as we might want to compare the performance and adjust
-the percentage in steps. Or even, we want more information from an application
-that we suspect to be behaving badly. Similarly, if we are experiencing
-expected traffic peaks and need every resource available, we might enable tracing
-only to a small percentage of the incoming requests.</p>
-</div>
-<div class="paragraph">
-<p>For the simple scenario, let&#8217;s call it "percentage based sampling", we have a few
-alternatives on how to implement it:</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_application_based_decision">Application-based decision</h3>
-<div class="paragraph">
-<p>In this scenario, we embed the logic into the application, using the percentage
-as the probability a random number is within a range. In other words: 20% sampling
-would be 20% chance that a number is lower or equal to 2 on a range of 1-10.
-Anything more complex than that would be "too much" for our scenario.</p>
-</div>
-<div class="paragraph">
-<p>As hinted before, we want to externalize the percentage so that an external
-actor can change this. One solution is to store this percentage number into an
-environment variable on the Deployment Configuration (DC). This will, however,
-rollout a new deployment after every change, which might not be desirable in some
-scenarios.</p>
-</div>
-<div class="paragraph">
-<p>Another solution is to externalize this into a Configuration Map (ConfigMap),
-but then, we also need to let our application listen to events related to this
-ConfigMap. For a microservice, we might end up with a bunch of unrelated
-dependencies, just to decide whether or not to trace a request.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_openshift_based_decision">OpenShift-based decision</h3>
-<div class="paragraph">
-<p>In this scenario, we delegate the decision to our runtime environment. Similar
-to a simple A/B testing scenario, our deployment architecture would allow for
-quick changes in the routing decision. It does require a simple change to our
-application, but it&#8217;s a small compromise for the benefits it provides.</p>
-</div>
-<div class="paragraph">
-<p>For that, we&#8217;ll use one single Image Stream (<code>is</code>) with our code, two Deployment
-Configurations (<code>dc</code>), two Services (<code>svc</code>) and one Route object. Each one of our
-<code>dc</code> objects would have a different value for an environment variable called
-<code>TRACER_ENABLED</code>. Each <code>svc</code> has its own <code>dc</code>, and the router sends a
-percentage of the requests to each of the <code>svc</code> instances. The main advantage of
-this approach is that the application image is the same for both <code>tracing-enabled</code>
-and <code>tracing-disabled</code> scenarios.</p>
-</div>
-</div>
-<h1 id="_doing_it" class="sect0">Doing it!</h1>
-<div class="paragraph">
-<p>Enough talk, let&#8217;s start doing it. The first step is to create an OpenShift
-cluster. The following commands will give us a recent version of OpenShift Origin
-and will deploy Hawkular APM on it:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ oc cluster up --version=latest
-$ oc create -f https://raw.githubusercontent.com/jboss-dockerfiles/hawkular-apm/master/openshift-templates/hawkular-apm-server-deployment.yml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We&#8217;ll now bootstrap a vert.x application from scratch via
-<a href="http://start.prod-preview.openshift.io/">Obsidian Toaster</a>. For our example,
-click on "&#8230;&#8203; selecting a runtime project framework", select "Vert.x" and give
-it a name like <code>conditional-tracer</code> (leave the package name as <code>com.example</code>
-and the version as <code>1.0.0-SNAPSHOT</code>). On the next step, set the Vert.x version
-to <code>3.3.3</code> and select <code>Vert.x Web</code>. Scroll down the list and click <code>Finish</code> and
-download the ZIP file.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-Obsidian Toaster is still in alpha. If it&#8217;s not working for some reason,
-we have a ZIP file ready for you to download link:
-<a href="/data/blog/2017/2017-03-22-conditional-tracer.zip">conditional-tracer.zip</a>
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Let&#8217;s add our Hawkular APM dependencies to our new project by adding the following
-lines to the <code>pom.xml</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">&lt;dependency&gt;
-  &lt;groupId&gt;org.hawkular.apm&lt;/groupId&gt;
-  &lt;artifactId&gt;hawkular-apm-trace-publisher-rest-client&lt;/artifactId&gt;
-  &lt;version&gt;0.14.2.Final&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;org.hawkular.apm&lt;/groupId&gt;
-  &lt;artifactId&gt;hawkular-apm-client-opentracing&lt;/artifactId&gt;
-  &lt;version&gt;0.14.2.Final&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;com.fasterxml.jackson.core&lt;/groupId&gt;
-  &lt;artifactId&gt;jackson-core&lt;/artifactId&gt;
-  &lt;version&gt;2.6.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;com.fasterxml.jackson.core&lt;/groupId&gt;
-  &lt;artifactId&gt;jackson-annotations&lt;/artifactId&gt;
-  &lt;version&gt;2.6.0&lt;/version&gt;
-&lt;/dependency&gt;
-&lt;dependency&gt;
-  &lt;groupId&gt;com.fasterxml.jackson.core&lt;/groupId&gt;
-  &lt;artifactId&gt;jackson-databind&lt;/artifactId&gt;
-  &lt;version&gt;2.6.0&lt;/version&gt;
-&lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-we need to override the Jackson dependencies because of incompatibilities
-between the version Hawkular APM uses and the one Vert.x uses.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>We now remove the <code>src/main/fabric8/svc.yml</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ rm src/main/fabric8/svc.yml</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We&#8217;ll create two service files instead:</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/fabric8/no-tracer-svc.yml</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">apiVersion: v1
-kind: Service
-metadata:
-  name: conditional-tracer-disabled
-  labels:
-    tracer: disabled
-spec:
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-  selector:
-    group: com.example
-    project: conditional-tracer
-    tracer: disabled
-  type: ClusterIP</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p><code>src/main/fabric8/tracer-svc.yml</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">apiVersion: v1
-kind: Service
-metadata:
-  name: conditional-tracer-enabled
-  labels:
-    tracer: enabled
-spec:
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-  selector:
-    group: com.example
-    project: conditional-tracer
-    tracer: enabled
-  type: ClusterIP</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>We now create our two <code>dc</code> objects:</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/fabric8/no-tracer-dc.yml</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">apiVersion: v1
-kind: DeploymentConfig
-metadata:
-  labels:
-    group: com.example
-    project: conditional-tracer
-    tracer: disabled
-  name: conditional-tracer-disabled
-spec:
-  replicas: 1
-  selector:
-    group: com.example
-    project: conditional-tracer
-    tracer: disabled
-  template:
-    metadata:
-      labels:
-        group: com.example
-        project: conditional-tracer
-        tracer: disabled
-    spec:
-      containers:
-      - env:
-        - name: HAWKULAR_APM_URI
-          value: http://hawkular-apm
-        - name: HAWKULAR_APM_USERNAME
-          value: admin
-        - name: HAWKULAR_APM_PASSWORD
-          value: password
-        - name: TRACER_ENABLED
-          value: false
-        - name: JAVA_APP_DIR
-          value: /deployments
-        - name: JAVA_MAIN_CLASS
-          value: io.vertx.core.Launcher
-        name: java-exec
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-      dnsPolicy: ClusterFirst
-  triggers:
-  - type: ConfigChange
-  - imageChangeParams:
-      automatic: true
-      containerNames:
-      - java-exec
-      from:
-        kind: ImageStreamTag
-        name: conditional-tracer:latest
-    type: ImageChange</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p><code>src/main/fabric8/tracer-dc.yml</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">apiVersion: v1
-kind: DeploymentConfig
-metadata:
-  labels:
-    group: com.example
-    project: conditional-tracer
-    tracer: enabled
-  name: conditional-tracer-enabled
-spec:
-  replicas: 1
-  selector:
-    group: com.example
-    project: conditional-tracer
-    tracer: enabled
-  template:
-    metadata:
-      labels:
-        group: com.example
-        project: conditional-tracer
-        tracer: enabled
-    spec:
-      containers:
-      - env:
-        - name: HAWKULAR_APM_URI
-          value: http://hawkular-apm
-        - name: HAWKULAR_APM_USERNAME
-          value: admin
-        - name: HAWKULAR_APM_PASSWORD
-          value: password
-        - name: TRACER_ENABLED
-          value: true
-        - name: JAVA_APP_DIR
-          value: /deployments
-        - name: JAVA_MAIN_CLASS
-          value: io.vertx.core.Launcher
-        name: java-exec
-        ports:
-        - containerPort: 8080
-          name: http
-          protocol: TCP
-      dnsPolicy: ClusterFirst
-  triggers:
-  - type: ConfigChange
-  - imageChangeParams:
-      automatic: true
-      containerNames:
-      - java-exec
-      from:
-        kind: ImageStreamTag
-        name: conditional-tracer:latest
-    type: ImageChange</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And finally, we change our <code>route.yml</code> to alternate the requests among the
-services:</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/fabric8/route.yml</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>apiVersion: v1
-kind: Route
-metadata:
-  name: conditional-tracer
-spec:
-  alternateBackends:
-  - kind: Service
-    name: conditional-tracer-disabled
-    weight: 80
-  to:
-    kind: Service
-    name: conditional-tracer-enabled
-    weight: 20</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The only remaining change is within our Java code, to use a <code>NoopTracer</code> by
-default, using a concrete tracer (<code>APMTracer</code>) if the environment variable
-<code>TRACER_ENABLED</code> parses to <code>true</code>:</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/com/example/MainVerticle.java</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class MainVerticle extends AbstractVerticle {
-    private Tracer tracer = NoopTracerFactory.create();
-
-    @Override
-    public void start() {
-        boolean tracerEnabled = Boolean.parseBoolean(System.getenv("TRACER_ENABLED"));
-        if (tracerEnabled) {
-            tracer = new APMTracer();
-        }
-        vertx.createHttpServer()
-                .requestHandler((req) -&gt; {
-                    Span span = tracer.buildSpan("hello-world-request").start();
-                    span.setTag("enabled", tracerEnabled);
-                    req.response().end(String.format("Hello World! Are we tracing this request? %s", System.getenv("TRACER_ENABLED")));
-                    span.finish();
-                })
-                .listen(8080);
-    }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>At this point, we are ready to test it! As we already have an OpenShift cluster
-running with our Hawkular APM server, we just need to run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ mvn clean fabric8:deploy</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once the build finishes running, we should see the following on OpenShift&#8217;s Web
-Console:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-22-final-result.png" alt="Final result">
-</div>
-</div>
-<div class="paragraph">
-<p>To check whether our tracing is working, we can use a script like this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ export URL="http://conditional-tracer-myproject.192.168.2.107.xip.io"
-$ for i in `seq 1 10` ; do curl ${URL} 2&gt;/dev/null | awk '{print $NF}' ; done | sort | uniq -c</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>An output similar to this one should be printed out:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>8 false
-2 true</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This means that 8 didn&#8217;t have their traces published and two requests had
-their traces published to Hawkular APM. You can check that by logging into Hawkular
-APM (username: <code>admin</code>, password: <code>password</code>) and looking into the
-<code>Distributed Tracing</code> screen. There should be only two traces there.</p>
-</div>
-<div class="admonitionblock tip">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Tip</div>
-</td>
-<td class="content">
-You might be tempted to try opening the URL in your browser and hitting
-refresh, but you&#8217;ll notice that the OpenShift router tries to send you to the same
-backend service all the time. For this reason, it makes more sense to test on
-the command line with <code>curl</code>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>From this point and on, we can adjust the percentage by changing the route. One
-way to do that is by issuing the command <code>oc edit route conditional-tracer</code>,
-or by navigating on the UI to <code>Applications - Routes - conditional-tracer -
-Actions - Edit</code>:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-22-edit-route.png" alt="Final result">
-</div>
-</div>
-<div class="sect1">
-<h2 id="_wrapping_up">Wrapping up</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Deciding whether a transaction should be traced or not is a decision that should
-be outsourced as much as possible to the underlying Tracer, possibly with data
-coming from different sources. Having a simple switch on the code loading the
-Tracer, however, might prove invaluable to admins in determined situations.
-Given the simplicity of this solution, there&#8217;s no reason not to have it!</p>
-</div>
-<div class="paragraph">
-<p>The full source code for this example can be found at
-<a href="https://github.com/jpkrohling/conditional-tracer">github.com/jpkrohling/conditional-tracer</a>.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>22 March 2017 - <a href="blog/2017/03/22/apm-adjusting-sampling-rate.html">Adjusting sampling rates for Hawkular APM on OpenShift</a></li>
           <li>15 March 2017 - <a href="blog/2017/03/15/hawkular-opentracing-otsc.html">Distributed Tracing Workshop and OpenTracing Collaboration</a></li>
           <li>14 March 2017 - <a href="blog/2017/03/14/hawkular-alerting-tutorial.html">Hawkular Alerting: Tutorial Now Available!</a></li>
           <li>07 March 2017 - <a href="blog/2017/03/07/hawkular-metrics-0.25.0.Final-released.html">Hawkular Metrics 0.25.0 - Release</a></li>
