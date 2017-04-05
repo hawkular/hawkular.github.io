@@ -1,0 +1,164 @@
+= Alerts and Notifications for Elasticsearch using Hawkular Alerting
+Lucas Ponce
+2017-04-06
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, alerts, elasticsearch, notifications
+
+== Elasticsearch Alerter
+
+Hawkular Alerting includes a new _Alerter_ capable to query _Elasticsearch_ servers and represent documents as link:http://www.hawkular.org/docs/rest/rest-alerts.html#Event[Hawkular Events].
+
+Managing _Elasticsearch_ documents as Events allows Hawkular Alerting to define rich and complex conditions using link:http://www.hawkular.org/docs/rest/rest-alerts.html#EventCondition[EventConditions].
+
+Triggers tagged with _Elasticsearch_ will be used to schedule a periodic query to an _Elasticsearch_ server. Trigger's context will be used to define the interval between queries, additional query filtering or mapping options that will be used by the alerter to convert documents into events.
+
+For example,
+
+[source,json]
+----
+    "tags": {
+      "Elasticsearch": "Localhost instance" // <1>
+    },
+    "context": {
+      "timestamp": "@timestamp", // <2>
+      "interval": "30s", // <3>
+      "index": "log",  // <4>
+      "filter": "{\"match\":{\"app\":\"AppA\"}}", // <5>
+      "mapping": "level:category,@timestamp:ctime,message:text,app:dataId,index:tags" // <6>
+    }
+----
+
+<1> _Elasticsearch_ tag is used by the alerter to schedule a query from this trigger
+<2> _Elasticsearch_ field "@timestamp" will be used to fetch documents in regular intervals
+<3> Interval between queries will be _30_ seconds
+<4> Documents are fetched from _log_ index
+<5> Optional filtering to refine the query
+<6> Mapping between _Elasticsearch_ document fields and _Hawkular Events_
+
+The full reference of the _Elasticsearch_ Alerter can be found under
+link:http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_alerter[Elasticsearch Alerter].
+
+== Elasticsearch Plugin
+
+_Hawkular Alerting_ also includes a new _Action Plugin_ capable to transform Hawkular Events and Alerts into _Elasticsearch_ documents.
+
+The _Elasticsearch Plugin_ properties allows to define how an Event or Alert will be transformed in a document and under which index and type will be stored.
+
+For example,
+
+[source,json]
+----
+    {
+      "actionPlugin": "elasticsearch",
+      "actionId": "write-partial-alert",
+      "properties": {
+        "index": "alerts_summary",  // <1>
+        "timestamp_pattern": "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ",   // <2>
+        "transform": "{\"tenantId\":\"tenant\",\"ctime\":\"timestamp\",\"text\":\"trigger\",\"context\":{\"interval\":\"fetch-interval\"},\"evalSets\":\"details\"}" // <3>
+      }
+    }
+----
+
+<1> Index used to store documents transformed by this plugin
+<2> This _timestamp_pattern_ indicates that all timestamp fields of Events/Alerts should be transformed into strings using this pattern
+<3> JSON -> JSON mapping to convert Events/Alerts into document using link:http://jolt-demo.appspot.com/[JOLT Shiftr]
+
+The full reference of the _Elasticsearch_ Plugin can be found under link:http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_action_plugin[Elasticsearch Plugin].
+
+== Logging Example
+
+An small but rich example can be found under link:https://github.com/hawkular/hawkular-alerts/tree/master/examples/elasticsearch[Elasticsearch example].
+
+This example simulates different logs entries that are stored in _Elasticsearch_.
+
+These entries define a log level _(INFO, WARN or ERROR)_, a source application _(AppA, AppB and AppC)_ and in the body message describes some reference about the subcomponent related _(Security, Frontend or Backend)_.
+
+These logs are stored in _Elasticsearch_ with the following format:
+
+[source,json]
+----
+{
+    "@timestamp":"2017-04-05T14:23:13.360447+0200",
+    "level":"ERROR",
+    "app":"AppA",
+    "message":"Message 6167 from Security"
+}
+----
+
+In the example a first trigger is defined to fetch documents just for AppA, for this, the in the context we define a _match_ filter as
+
+[source,json]
+----
+    "context": {
+      "timestamp": "@timestamp",
+      "filter": "{\"match\":{\"app\":\"AppA\"}}", // <1>
+      "interval": "30s",
+      "index": "log",
+      "mapping": "level:category,@timestamp:ctime,message:text,app:dataId,index:tags" // <2>
+    }
+----
+
+<1> From all possible documents, only AppA are interested for this trigger
+<2> Note that _app_ field is used as dataId for Events
+
+Once events are mapped we can define an _EventsCondition_ to detect any _ERROR_ log related to _Backend_ components.
+
+[source,json]
+----
+      "conditions":[
+        {
+          "type": "EVENT",
+          "dataId": "AppA",
+          "expression": "category == 'ERROR',text contains 'Backend'"
+        }
+      ]
+----
+
+In a similar way, a second trigger is defined in the example to fetch documents for AppB.
+
+[source,json]
+----
+    "context": {
+      ...
+      "filter": "{\"match\":{\"app\":\"AppB\"}}", // <1>
+    }
+----
+
+<1> From all possible documents, only AppB are interested for this trigger
+
+On this second trigger, we want to detect when we have a suspected high number of WARN messages in the log. There are several ways to map this, in the example we are going to use a _Dampening_
+
+[source,json]
+----
+      "dampenings": [
+        {
+          "triggerMode": "FIRING",
+          "type":"RELAXED_COUNT",
+          "evalTrueSetting": 3,
+          "evalTotalSetting": 10
+        }
+      ],
+      "conditions":[
+        {
+          "type": "EVENT",
+          "dataId": "AppB",
+          "expression": "category == 'WARN'"
+        }
+      ]
+----
+
+So, this second trigger will alert when more than 3 WARN messages are detected in a rate of 10 messages processed.
+
+Finally, the example defines several ways of notifications: sending an email to administrators and writting back into _Elasticsearch_ the alerts fired.
+
+== Elasticsearch Integration
+
+As a result, we can combine all the Logs and Alerts in custom searches and provide them a UI dashboard in Kibana.
+
+ifndef::env-github[]
+image::/img/blog/2017/Kibana-Hawkular-Alerting.png[Kibana - Hawkular Alerting]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/Kibana-Hawkular-Alerting.png[Kibana - Hawkular Alerting]
+endif::[]
