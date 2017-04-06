@@ -921,8 +921,8 @@ public class MyApplication {
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;properties&gt;
     ...
-    &lt;version.brave.opentracing&gt;0.18.3&lt;/version.brave.opentracing&gt;
-    &lt;version.zipkin.reporter&gt;0.6.12&lt;/version.zipkin.reporter&gt;
+    &lt;version.brave.opentracing&gt;0.19.0&lt;/version.brave.opentracing&gt;
+    &lt;version.zipkin.reporter&gt;0.6.13&lt;/version.zipkin.reporter&gt;
   &lt;/properties&gt;</code></pre>
 </div>
 </div>
@@ -961,42 +961,49 @@ public class MyApplication {
 <div class="content">
 <pre class="prettyprint highlight"><code class="language-java" data-lang="java">import brave.opentracing.BraveTracer;
 import io.opentracing.Tracer;
-import io.opentracing.contrib.global.GlobalTracer;
 import zipkin.Span;
 import zipkin.reporter.AsyncReporter;
 import zipkin.reporter.Reporter;
 import zipkin.reporter.urlconnection.URLConnectionSender;
 
 ....
-
-    public static void initTracer() {
+    public static Tracer initTracer() {
         System.out.println("Using Zipkin Tracer");
         String zipkinServerUrl = String.format("%s/api/v1/spans", System.getenv("ZIPKIN_SERVER_URL"));
         Reporter&lt;Span&gt; reporter = AsyncReporter.builder(URLConnectionSender.create(zipkinServerUrl)).build();
-        brave.Tracer tracer = brave.Tracer.newBuilder().localServiceName("client").reporter(reporter).build();
-        GlobalTracer.register(BraveTracer.wrap(tracer));
+        brave.Tracer tracer = brave.Tracer.newBuilder().localServiceName("service2").reporter(reporter).build();
+        return BraveTracer.wrap(tracer);
     }</code></pre>
 </div>
 </div>
 <div class="ulist">
 <ul>
 <li>
-<p>Invoking the <code>initTracer</code> method</p>
-<div class="ulist">
-<ul>
-<li>
-<p>In <code>ClientApplication.java</code> it should be called at the end of the <code>setupCamel</code> method.</p>
-</li>
-<li>
-<p>In <code>Service1Application.java</code> it should be called before the <code>SpringApplication.run</code> method.</p>
-</li>
-<li>
-<p>In <code>Service2Application.java</code> it should be called as the first statement in the <code>main</code> method.</p>
+<p>In <code>ClientApplication.java</code> add <code>ottracer.setTracer(initTracer())</code>, e.g.</p>
 </li>
 </ul>
 </div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">        OpenTracingTracer ottracer = new OpenTracingTracer();
+        ottracer.setTracer(initTracer());</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In <code>Service1Application.java</code>, simply add the <code>@Bean</code> annotation above the <code>initTracer()</code> method.</p>
+</li>
+<li>
+<p>In <code>Service2Application.java</code>, add the tracer from <code>initTracer()</code> to the registry, e.g.</p>
 </li>
 </ul>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">        Main main = new Main();
+        main.bind("tracer", initTracer());</code></pre>
+</div>
 </div>
 <div class="paragraph">
 <p>Once the changes have all been made, compile the example using <code>mvn compile</code> from the <code>examples/camel-example-opentracing</code> folder. Next step is to start the Zipkin server:</p>
