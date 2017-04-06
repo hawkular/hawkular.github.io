@@ -423,6 +423,70 @@
             <br />
             <hr /><br />
             <br />
+            <a href="blog/2017/04/05/deploy-hosa-easily.html"><h1>Deploying Hawkular OpenShift Agent Easily</h1></a>
+            <p>05 April 2017, by John Mazzitelli</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>The <a href="https://github.com/hawkular/hawkular-openshift-agent">Hawkular OpenShift Agent</a> has its docker images released on <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent">Docker Hub</a>. So it is easily deployed in your OpenShift nodes.</p>
+</div>
+<div class="paragraph">
+<p>You simply need to run some "oc" commands to create the agent and its configmap using a few <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/deploy/openshift">OpenShift templates</a>.</p>
+</div>
+<div class="paragraph">
+<p>To make deploying the agent easier - especially for someone just wanting to try it out - a new <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/hack/deploy-openshift-agent.sh">deploy-openshift-agent.sh</a> script has been provided.</p>
+</div>
+<div class="paragraph">
+<p>Now all you need to do in order to deploy HOSA is run this one command:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/hack/deploy-openshift-agent.sh &amp;&amp; sh ./deploy-openshift-agent.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will deploy the latest agent version in your OpenShift node in the "default" OpenShift project. If you wish to install a different version, use the DOCKER_VERSION environment variable like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/hack/deploy-openshift-agent.sh &amp;&amp; DOCKER_VERSION=1.4.0.Final sh ./deploy-openshift-agent.sh</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that this script will ask you for your OpenShift credentials if you are not yet logged in - it runs "oc login" which requires you to enter your username and password at the prompts. You may optionally log in ahead of time by running the "oc login" command prior to running this deploy script.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_deploying_the_examples">Deploying the Examples</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that you have the Hawkular OpenShift Agent deployed, you can just as easily deploy some of the examples to see the agent work. There is a similar script located in the <code>examples</code> directory called <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/examples/deploy-example.sh">deploy-example.sh</a>. You pass to it a command line argument whose value is the name of an example. The names of the examples are found in the <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples">examples</a> directory - names such as <code>jolokia-wildfly-example</code> and <code>multiple-endpoints-example</code>.</p>
+</div>
+<div class="paragraph">
+<p>All you need to do in order to deploy an example is run this one command (note that this deploys the <code>jolokia-wildfly-example</code> but you can pass in any example name you want):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/examples/deploy-example.sh &amp;&amp; sh ./deploy-example.sh jolokia-wildfly-example</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>This will deploy the latest example version in your OpenShift node in your user&#8217;s default OpenShift project. If you wish to install a different version, use the DOCKER_VERSION environment variable. If you wish to install your example in a different OpenShift project, use the EXAMPLE_NAMESPACE environment variable:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>wget https://raw.githubusercontent.com/hawkular/hawkular-openshift-agent/master/examples/deploy-example.sh &amp;&amp; DOCKER_VERSION=1.4.0.Final EXAMPLE_NAMESPACE=myproject sh ./deploy-example.sh jolokia-wildfly-example</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you have already logged into OpenShift, the script will not ask you to log in again. It will only log you into OpenShift if you have not yet done so.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/04/04/hawkular-metrics-0.26.0.Final-released.html"><h1>Hawkular Metrics 0.26.0 - Release</h1></a>
             <p>04 April 2017, by Stefan Negrea</p>
             <p><p>I am happy to announce release 0.26.0 of Hawkular Metrics. This release is anchored by performance improvements and enhancements.</p>
@@ -1047,103 +1111,13 @@ mvn exec:java -PQueue.LoanBroker</code></pre>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/03/24/hawkular-java-agent.html"><h1>Introducing Hawkular Java Agent</h1></a>
-            <p>24 March 2017, by John Mazzitelli</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>A new Hawkular Agent has been published.</p>
-</div>
-<div class="paragraph">
-<p>Based on the Hawkular WildFly Agent, this new agent - the <strong>Hawkular Java Agent</strong> - has an easier deployment model.
-Unlike the Hawkular WildFly Agent, the Hawkular Java Agent does not need to be deployed inside an EAP or WildFly container.
-It runs as a simple Java Agent in any JVM.
-It also is configured by an independent YAML file, not within a WildFly standalone.xml configuration file.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_installation">Installation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To install the Hawkular Java Agent, you simply pass in a <code>-javaagent</code> JVM command line argument to your Java or JVM application start command.
-You must have the agent jar
-(<a href="https://repository.jboss.org/nexus/content/groups/public/org/hawkular/agent/hawkular-javaagent/"><code>hawkular-javaagent-#.#.#.jar</code></a>)
-and its YAML configuration file located somewhere on your file system, and pass in an argument such as this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>-javaagent:hawkular-javaagent-*.jar=config=hawkular-javaagent-config.yaml,delay=60"</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Of course, make sure the path names point to the correct Hawkular Java Agent jar and its configuration file.
-The <code>delay</code> option tells the agent to delay its start up the given number of seconds.
-This is useful to give your main application time to start up before the agent starts monitoring it.</p>
-</div>
-<div class="sect2">
-<h3 id="_installing_inside_a_wildfly_or_eap_server">Installing Inside a WildFly or EAP Server</h3>
-<div class="paragraph">
-<p>It is recommended you copy the Hawkular Java Agent jar to the WildFly/EAP <code>bin/</code> directory and its configuration file
-to the <code>standalone/configuration</code> directory, but their locations really do not matter so long as you refer to their
-proper file paths in the <code>-javaagent</code> command line argument
-(e.g. <code>-javaagent:&lt;path-to-jar&gt;=config=&lt;path-to-config-file&gt;,delay=60</code>).</p>
-</div>
-<div class="admonitionblock important">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Important</div>
-</td>
-<td class="content">
-<div class="paragraph">
-<p>Due to the way the logging implementations are loaded, you must change your WildFly/EAP server&#8217;s <code>standalone.conf</code> file slightly:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code># Hawkular Java Agent: Add "org.jboss.logmanager" to the JBoss Modules system packages
-if [ "x$JBOSS_MODULES_SYSTEM_PKGS" = "x" ]; then
-   JBOSS_MODULES_SYSTEM_PKGS="org.jboss.byteman,org.jboss.logmanager"
-fi
-
-# Hawkular Java Agent:
-#   Explicitly tell the VM to use the JBoss Log Manager via -Djava.util.logging.manager system property.
-#   Use the -javaagent VM option to load the Hawkular Java Agent with its config file.
-JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager -javaagent:$JBOSS_HOME/bin/hawkular-javaagent-*.jar=config=$JBOSS_HOME/standalone/configuration/hawkular-javaagent-config.yaml,delay=60"</code></pre>
-</div>
-</div>
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_configuration">Configuration</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The Hawkular Java Agent is configured with a YAML configuration file, though if you have used the Hawkular WildFly Agent,
-the YAML configuration properties will look familiar. The configuration model and the names themselves closely mimic that of the
-Hawkular WildFly Agent standalone.xml configuration settings.</p>
-</div>
-<div class="paragraph">
-<p>For an example configuration that instructs the Hawkular Java Agent to monitor a EAP 7.0 or 7.1 server, see <a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config.yaml">this config file</a>.</p>
-</div>
-<div class="paragraph">
-<p>For an example configuration that instructs the Hawkular Java Agent to monitor a simple JMX application, see <a href="https://github.com/hawkular/hawkular-agent/blob/master/hawkular-javaagent/src/test/resources/real-config-jmx.yaml">this config file</a>.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>24 March 2017 - <a href="blog/2017/03/24/hawkular-java-agent.html">Introducing Hawkular Java Agent</a></li>
           <li>22 March 2017 - <a href="blog/2017/03/22/apm-adjusting-sampling-rate.html">Adjusting sampling rates for Hawkular APM on OpenShift</a></li>
           <li>15 March 2017 - <a href="blog/2017/03/15/hawkular-opentracing-otsc.html">Distributed Tracing Workshop and OpenTracing Collaboration</a></li>
           <li>14 March 2017 - <a href="blog/2017/03/14/hawkular-alerting-tutorial.html">Hawkular Alerting: Tutorial Now Available!</a></li>
