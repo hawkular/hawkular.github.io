@@ -59,7 +59,7 @@ If you want to automate this, you can pass in the -noprompt command line argumen
 
 Now that your keystore is generated and trusted, you have to tell the Hawkular Server to use your keystore when using SSL.
 
-First, you must add a security-realm in standalone/configuration/standalone.xml:
+First, you must add two security-realm elements in standalone/configuration/standalone.xml. Note that we create one for use by the Undertow web connector and one for use by the Hawkular Agent that comes with the Hawkular Server.
 
 [source,xml]
 ----
@@ -71,6 +71,11 @@ First, you must add a security-realm in standalone/configuration/standalone.xml:
           <keystore path="hawkular.keystore" relative-to="jboss.server.config.dir" keystore-password="hawkular" key-password="hawkular" alias="hawkular" />
         </ssl>
       </server-identities>
+    </security-realm>
+    <security-realm name="HawkularAgentRealm">
+      <authentication>
+        <truststore path="hawkular.keystore" relative-to="jboss.server.config.dir" keystore-password="hawkular" />
+      </authentication>
     </security-realm>
 ----
 
@@ -88,7 +93,7 @@ Finally, turn on SSL in the agent by adding these two attributes to the <storage
 
 [source,xml]
 ----
-  <storage-adapter use-ssl="true" security-realm="UndertowRealm" ... />
+  <storage-adapter use-ssl="true" security-realm="HawkularAgentRealm" ... />
 ----
 
 === Ready
@@ -151,7 +156,7 @@ The above only configured the managed WildFly Server itself. You then have to te
     <security-realm name="ManagedWildFlyRealm">
       <authentication>
         <truststore path="your-wildfly.keystore" relative-to="jboss.server.config.dir" keystore-password="your-password"/>
-      <authentication>
+      </authentication>
     </security-realm>
 ----
 
