@@ -283,7 +283,7 @@ If you want to automate this, you can pass in the -noprompt command line argumen
 <p>Now that your keystore is generated and trusted, you have to tell the Hawkular Server to use your keystore when using SSL.</p>
 </div>
 <div class="paragraph">
-<p>First, you must add a security-realm in standalone/configuration/standalone.xml:</p>
+<p>First, you must add two security-realm elements in standalone/configuration/standalone.xml. Note that we create one for use by the Undertow web connector and one for use by the Hawkular Agent that comes with the Hawkular Server.</p>
 </div>
 <div class="listingblock">
 <div class="content">
@@ -295,6 +295,11 @@ If you want to automate this, you can pass in the -noprompt command line argumen
           &lt;keystore path="hawkular.keystore" relative-to="jboss.server.config.dir" keystore-password="hawkular" key-password="hawkular" alias="hawkular" /&gt;
         &lt;/ssl&gt;
       &lt;/server-identities&gt;
+    &lt;/security-realm&gt;
+    &lt;security-realm name="HawkularAgentRealm"&gt;
+      &lt;authentication&gt;
+        &lt;truststore path="hawkular.keystore" relative-to="jboss.server.config.dir" keystore-password="hawkular" /&gt;
+      &lt;/authentication&gt;
     &lt;/security-realm&gt;</code></pre>
 </div>
 </div>
@@ -314,7 +319,7 @@ If you want to automate this, you can pass in the -noprompt command line argumen
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;storage-adapter use-ssl="true" security-realm="UndertowRealm" ... /&gt;</code></pre>
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">  &lt;storage-adapter use-ssl="true" security-realm="HawkularAgentRealm" ... /&gt;</code></pre>
 </div>
 </div>
 </div>
@@ -399,7 +404,7 @@ to the Hawkular Server can do so over "wss://localhost:8443".</p>
     &lt;security-realm name="ManagedWildFlyRealm"&gt;
       &lt;authentication&gt;
         &lt;truststore path="your-wildfly.keystore" relative-to="jboss.server.config.dir" keystore-password="your-password"/&gt;
-      &lt;authentication&gt;
+      &lt;/authentication&gt;
     &lt;/security-realm&gt;</code></pre>
 </div>
 </div>
