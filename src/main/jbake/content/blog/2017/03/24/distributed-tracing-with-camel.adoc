@@ -161,10 +161,12 @@ import zipkin.reporter.urlconnection.URLConnectionSender;
         System.out.println("Using Zipkin Tracer");
         String zipkinServerUrl = String.format("%s/api/v1/spans", System.getenv("ZIPKIN_SERVER_URL"));
         Reporter<Span> reporter = AsyncReporter.builder(URLConnectionSender.create(zipkinServerUrl)).build();
-        brave.Tracer tracer = brave.Tracer.newBuilder().localServiceName("service2").reporter(reporter).build();
+        brave.Tracer tracer = brave.Tracer.newBuilder().localServiceName("SERVICE_NAME").reporter(reporter).build();
         return BraveTracer.wrap(tracer);
     }
 ```
+
+NOTE: Don't forget to change the `SERVICE_NAME` to something appropriate (e.g. client, service1 and service2 respectively).
 
 * In `ClientApplication.java` add `ottracer.setTracer(initTracer())`, e.g.
 
