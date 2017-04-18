@@ -1,0 +1,135 @@
+= Tags and String metrics in Hawkular Metrics
+John Sanda
+2016-05-04
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, hawkular, metrics, cassandra
+
+Hawkular Metrics 0.15.0 has just been released. It include a number of new features, among those being data point tagging
+and a new string metric type.
+
+== Tags
+Hawkular Metrics has had support for tags for a while now. Tags come in the form of key/value pairs, and they can be
+applied to the metric (also commonly referred to as metric definition or time series). Tags can now also be added to
+individual data points. Let's first review how tags can be used up until now.
+
+=== Metric Tags
+Tags can be supplied when creating a metric.
+
+[source,shell]
+.Create metric with tags
+----
+curl -X POST http://server/hawkular/metrics/gauges -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+{
+  "id": "request_size",
+  "tags": {
+    "datacenter": "dc1",
+    "env": "stage"
+    "units": "bytes"
+  }
+}
+----
+
+This request creates a metric named request_size that has three tags. Tags can be added, updated, and removed. Tags can
+also be used in queries for filtering and grouping data across multiple metrics. See the
+link:http://www.hawkular.org/docs/components/metrics/index.html#_tagging[user guide] for examples.
+
+=== Data Point Tags
+The 0.15.0 release introduces support for data point tags. Tags can be supplied when adding data points.
+
+[source,shell]
+.Add data points with tags
+----
+curl -X POST http://server/hawkular/metrics/gauges/request_size -d @request.json \
+-H "Content-Type: application/json" -H "Hawkular-Tenant: com.acme"
+----
+
+[source,javascript]
+.request.json
+----
+[
+  {
+    "timestamp": 12345,
+    "value": 3.14
+    "tags": {
+      "hostname": "server01"
+    }
+  },
+  {
+    "timestamp": 56789,
+    "value": 3.14
+    "tags": {
+      "hostname": "server02"
+    }
+  },
+  {
+    "timestamp": 90123,
+    "value": 3.14
+    "tags": {
+      "hostname": "server03"
+    }
+  }
+]
+----
+
+Data points, including their tags, are immutable. Unlike metric tags data point tags cannot be modified, nor can they
+be deleted. This is an important distinction. Data point tags can be used to group data points when querying a single
+metric.
+
+=== Which One Should I Use?
+At this point you might be asking when should I use metric tags instead of data point tags and vice versa. As often the
+case, some examples help answer these types of questions. Let's use the request_size metric from the previous examples.
+We want to add a hostname tag. The source of this metric is an HTTP server, and we want to monitor the overall request
+sizes it handles over some period of time. The data points will always come from the same host; consequently, a metric
+tag should be used in this case.
+
+Now suppose the request_size metric is tracking the request size across multiple HTTP servers, each of which is running
+on a separate host. We want the ability to correlate data points with the host from which they come. In this instance,
+the hostname tag should be supplied with each data point.
+
+Let's take the example of tracking request size across multiple servers one step further. We also want to know in which
+data center we are collecting metrics. Let's assume (for the sake of the example) that our HTTP servers only receive
+requests from clients running in the same data center. We can make use of a `datacenter` tag. Because we need to store
+the `hostname` tag per data point, we might also be tempted to do the same with the `datacenter` tag.
+Assuming environments are isolated from one another, we do not want to do this. We should store `env` as a metric tag
+and `hostname` as a data point tag. Storing `env` as a metric tag requires less storage overhead than it would as a
+data point tag and also provides additional query filtering capabilities. This is further explained in the next
+section.
+
+=== Implementation Notes
+There are a couple details worth mentioning. First, data point tags are immutable whereas metric tags are mutable. Data
+point tags are stored on disk right along side their corresponding data points. For high volume write scenarios, it is
+often desirable to store data as an append-only commit log. When done this way, Cassandra can perform compactions
+more efficiently. It also simplifies how and when data can be purged. For these reasons data points are immutable.
+
+The second implementation detail has to do with indexing. Data point tags are not indexed. There is some filtering and
+grouping capabilities with data point tags, but it has to be performed on the client side. Note that in this context
+client refers to the Cassandra client which would be a Hawkular Metrics instance. Metric tags on the other hand are
+indexed which allows for more filtering to be done on the server side. Note that I say _more_ filtering as opposed to
+all filtering. With Cassandra it is fairly common to perform filtering and other query work like applying aggregation
+functions on the client side even when indexes are in place.
+
+== String Metric Type
+Another new feature introduced in the 0.15.0 release is support for a string metric type. It is considered experimental
+at this point. We anticipate it being useful for a number of scenarios. Hawkular Metrics already has an availability
+metric type. It has a predefined number of states - up, down, unknown. There may be situations where different and/or
+additional states are preferred. Adding more states requires code changes. The string metric type offers a lot more
+flexibility in this regard because clients can store any values.
+
+Be aware that there is a fixed, 2 KB size limit on string data points. This may become configurable in a future
+release. This size
+
+Another interesting use case came up in a recent discussion I was having about tags. Suppose we have metric tags
+whose values change somewhat regularly, and we want to track those changes. We can use string metrics to track the
+changes. The string metric id would include the tag name. Whenever the tag is updated, we could store a new data point
+with the tag value.
+
+The REST API for strings is limited to reading and writing raw data points for now. As we consider different use cases
+and as we (hopefully) get community feedback, the API will evolve to include more advanced querying capabilities.
