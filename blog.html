@@ -194,6 +194,56 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/04/19/hawkular-apm-jaeger.html"><h1>Hawkular APM: The Future</h1></a>
+            <p>19 April 2017, by Gary Brown</p>
+            <p><div class="paragraph">
+<p>Since October last year, the Hawkular APM project has been actively working on supporting, and contributing to,
+the <a href="http://opentracing.io/">OpenTracing</a> standard.</p>
+</div>
+<div class="paragraph">
+<p>We began by implementing our own Java OpenTracing provider, followed by a Node.js/Javascript implementation. We have
+also been active in the OpenTracing community, developing Java framework integrations and more recently a
+Java Agent that can be used to automatically install those framework integrations without any changes to the
+application code.</p>
+</div>
+<div class="paragraph">
+<p>However we realised that the core model used in Hawkular APM (fragments of call traces)
+was not particularly well aligned with the model used in OpenTracing (span based). This made it more complicated to
+implement client providers, as they need to build the call trace fragments from multiple spans, and it means
+the information stored in the server wasn&#8217;t in the same form expected by users of the OpenTracing API.</p>
+</div>
+<div class="paragraph">
+<p>Therefore at the beginning of this year we made the decision to change the core model used by Hawkular APM to be
+compatible with the model used by the OpenTracing API - and essentially provide an "OpenTracing" native solution.</p>
+</div>
+<div class="paragraph">
+<p>During the initial design meetings to discuss the proposed changes, we became aware of a
+<a href="https://eng.uber.com/distributed-tracing/">blog post from Uber</a>
+regarding the future of their <a href="https://github.com/uber/jaeger">Jaeger</a> project.
+Up until that point Jaeger used the <a href="http://zipkin.io/">Zipkin</a> project to provide its
+backend tracing solution.</p>
+</div>
+<div class="paragraph">
+<p>This new version of Jaeger provides very similar functionality to Zipkin, which is focused on visualising individual
+traces. It does not have the aggregated views currently supported in Hawkular APM - however from discussions with the
+Jaeger project, they are keen to be able to provide aggregated views.</p>
+</div>
+<div class="paragraph">
+<p>Therefore we have made the decision that, rather than refactor the Hawkular APM project&#8217;s model to be more
+OpenTracing compatible, it makes more sense to collaborate on the Jaeger project.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-04-19-jaeger-trace.png" alt="2017 04 19 jaeger trace">
+</div>
+<div class="title">Figure 1: Individual trace captured from the Jaeger HotRod example</div>
+</div>
+<div class="paragraph">
+<p>The current Hawkular APM codebase will still be available as an OpenTracing solution - however our intention is to focus more effort on the Jaeger project, initially with the aim of making it easy to use within OpenShift, and then adding aggregated views.</p>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/04/07/cloudnativecon-summary.html"><h1>CloudNativeCon summary</h1></a>
             <p>07 April 2017, by Juraci Paixão Kröhling</p>
             <p><div class="paragraph">
@@ -619,226 +669,13 @@ is a great alternative and can be used as a standalone solution!</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/03/25/collecting-application-metrics-openshift.html"><h1>Collecting Application Metrics Within OpenShift</h1></a>
-            <p>25 March 2017, by John Mazzitelli</p>
-            <p><div class="sect1">
-<h2 id="_introducing_hawkular_openshift_agent">Introducing Hawkular OpenShift Agent</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular supports the collection of application metrics within an OpenShift cluster via the Hawkular OpenShift Agent (HOSA). Metrics are stored in the OpenShift-provided Hawkular-Metrics storage facility providing out-of-box, scalable long term storage of metric data allowing for future analytics of your performance data in additional to graphing recent data within the OpenShift UI Console. Alerting on metric data is also provided via the Hawkular-Alerts component within Hawkular-Metrics.</p>
-</div>
-<div class="paragraph">
-<p>HOSA provides ease-of-use for end customers of OpenShift since once HOSA is deployed in a node, the only thing pod developers need to do to collect and store their metrics as well as display them in the OpenShift console is to publish a configmap declaring what metrics that pod wants collected.</p>
-</div>
-<div class="paragraph">
-<p>HOSA dynamically discovers pods when they are deployed in the node (regardless of what project they are in). HOSA will automatically begin collecting metrics from the discovered pods. Metric collection is opt-in - only those pods that declare a specific config map containing HOSA metric configuration will have their metrics collected by HOSA. This allows pod developers to choose what they want to collect and how often they want them collected.</p>
-</div>
-<div class="paragraph">
-<p>Pods may expose their metric data as either Prometheus endpoints (using either the binary or text formats), Jolokia/JMX endpoints (using Jolokia&#8217;s REST API), or as simple JSON documents (as is how, for example, Go&#8217;s expvar data is exposed).</p>
-</div>
-<div class="paragraph">
-<p>HOSA tags each metric with name/value pairs for easy querying and graphing. In addition to the tags defined specifically by HOSA itself, pod developers can attach their own custom tags to their metrics allowing for further customization of the metadata attached to each metric.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-25-hosa-on-openshift-node.png" alt="2017 03 25 hosa on openshift node">
-</div>
-<div class="title">Figure 1: Hawkular OpenShift Agent Monitoring Pods on an OpenShift Node</div>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-25-hosa-on-openshift-cluster.png" alt="2017 03 25 hosa on openshift cluster">
-</div>
-<div class="title">Figure 2: Hawkular OpenShift Agent Monitoring Pods on an OpenShift Cluster</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_installation">Installation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To install HOSA, you can use the latest release published on <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent/tags/">Docker Hub</a>. HOSA can be deployed in your OpenShift node as a daemon set. For example, here is an <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/deploy/openshift/hawkular-openshift-agent.yaml">OpenShift YAML template</a> along with its <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/deploy/openshift/hawkular-openshift-agent-configmap.yaml">config map configuration</a> which you can use to deploy HOSA.</p>
-</div>
-<div class="paragraph">
-<p>HOSA requires additional roles in order to function - you must have the rights to give HOSA its additional roles. Without these additional roles, HOSA will not operate properly.</p>
-</div>
-<div class="paragraph">
-<p>To deploy HOSA:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p><code>oc create -f <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/deploy/openshift/hawkular-openshift-agent-configmap.yaml">deploy/openshift/hawkular-openshift-agent-configmap.yaml</a> -n default</code></p>
-</li>
-<li>
-<p><code>oc process -f <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/deploy/openshift/hawkular-openshift-agent.yaml">deploy/openshift/hawkular-openshift-agent.yaml</a> -v IMAGE_VERSION=latest | oc create -n deafult -f -</code></p>
-</li>
-<li>
-<p><code>oc adm policy add-cluster-role-to-user hawkular-openshift-agent system:serviceaccount:default:hawkular-openshift-agent</code></p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Or, if you wish, clone the <a href="https://github.com/hawkular/hawkular-openshift-agent.git">HOSA github repo</a> and run <code>make openshift-deploy</code> and it will run the commands you need to deploy. You first must log into OpenShift via <code>oc login</code> prior to running that <code>make</code> command.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_defining_application_metrics_to_be_collected">Defining Application Metrics To Be Collected</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>HOSA is only installed by the OpenShift administrator and only one need be installed per node. Once installed, the only thing for pod developers to do in order for HOSA to begin collecting application metrics (and thus allowing the OpenShift Console to graph their data) is to create a config map that defines the metrics that are to be collected.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-In order to declare to HOSA which config map to use, the pod must configure a volume named "hawkular-openshift-agent" which refers to the config map. For more details on this, consult one of the example yamls or see the <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/README.adoc#pod-volumes">HOSA README</a>.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>A pod may have one or more endpoints exposing one or more metrics. HOSA can collect any number of metrics from any number of endpoints from any number of pods from any number of projects within the node. Note that HOSA is configured to limit the number of metrics any one pod may ask to be collected - this is to avoid a "pod hog" who asks HOSA to collect large amounts of data. HOSA will thus limit the amount of resources any one pod can use for metric storage.</p>
-</div>
-<div class="paragraph">
-<p>Here&#8217;s what a pod config map can look like - this tells HOSA to collect all metrics from the pod&#8217;s Prometheus endpoint:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>endpoints:
-- type: prometheus
-  protocol: http
-  port: 8181
-  path: /metrics
-  collection_interval: 30s</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Here&#8217;s what a pod config map can look like if the pod emits Jolokia/JMX metrics:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>endpoints:
-- type: jolokia
-  protocol: http
-  port: 8778
-  path: /jolokia/
-  collection_interval: 15s
-  metrics:
-  - name: java.lang:type=OperatingSystem#OpenFileDescriptorCount
-    type: gauge
-    description: Open File Descriptor Count
-  - name: java.lang:type=Memory#HeapMemoryUsage#*
-    type: gauge
-    description: Heap Memory Used ${2}
-    units: B
-  - name: jboss.as:subsystem=datasources,data-source=*,statistics=jdbc#*
-    type: gauge
-    description: Data Source ${data-source} JDBC Statistic ${1}</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_examples">Examples</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There are several examples published in the HOSA git repo and docker hub to see how different types of metrics can be configured.</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>A pod deployed with a Python application that emits metrics via a Prometheus endpoint:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Source: <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/prometheus-python-example" class="bare">https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/prometheus-python-example</a></p>
-</li>
-<li>
-<p>Image on Docker Hub: <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-prometheus-python" class="bare">https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-prometheus-python</a></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>A pod deployed with a WildFly application server that emits metrics via a secured Jolokia/JMX endpoint:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Source: <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/jolokia-wildfly-example" class="bare">https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/jolokia-wildfly-example</a></p>
-</li>
-<li>
-<p>Image on Docker Hub: <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-jolokia-wildfly/" class="bare">https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-jolokia-wildfly/</a></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>A pod deployed with a Python application that emits metrics over several Prometheus endpoints:</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Source: <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/multiple-endpoints-example" class="bare">https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/multiple-endpoints-example</a></p>
-</li>
-<li>
-<p>Image on Docker Hub: <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-multiple-endpoints/" class="bare">https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-multiple-endpoints/</a></p>
-</li>
-</ul>
-</div>
-</li>
-<li>
-<p>A pod deployed with a Go application that emits metrics in a JSON document (using Go&#8217;s expvar feature):</p>
-<div class="ulist">
-<ul>
-<li>
-<p>Source: <a href="https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/go-expvar-example" class="bare">https://github.com/hawkular/hawkular-openshift-agent/tree/master/examples/go-expvar-example</a></p>
-</li>
-<li>
-<p>Image on Docker Hub: <a href="https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-go-expvar/" class="bare">https://hub.docker.com/r/hawkular/hawkular-openshift-agent-example-go-expvar/</a></p>
-</li>
-</ul>
-</div>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>To see HOSA collect metrics from these example pods, deploy one or more of these in OpenShift. If you git cloned the HOSA git repo, you can use the Makefiles in the example directories to deploy them - within an example directory, run <code>make openshift-deploy</code>.</p>
-</div>
-<div class="paragraph">
-<p>Once HOSA is collecting and storing your application metrics, the OpenShift Console will display graphs of your data in the pod&#8217;s Metrics tab:</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-03-25-hosa-os-ui.png" alt="2017 03 25 hosa os ui">
-</div>
-<div class="title">Figure 3: OpenShift Application Metrics Collected and Stored By Hawkular</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_for_more_details">For More Details</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Take a look at the <a href="https://github.com/hawkular/hawkular-openshift-agent/blob/master/README.adoc">HOSA README file</a> for more details. You may ask questions in the #hawkular chat room on freenode IRC or send an email to the <a href="https://lists.jboss.org/mailman/listinfo/hawkular-dev">hawkular-dev mailing list</a>.</p>
-</div>
-<div class="paragraph">
-<p>You can also check out an earlier blog on this topic - <a href="http://www.hawkular.org/blog/2017/01/17/obst-hosa.html">Monitoring Microservices on Openshift with the Hawkular Openshift Agent</a></p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>25 March 2017 - <a href="blog/2017/03/25/collecting-application-metrics-openshift.html">Collecting Application Metrics Within OpenShift</a></li>
           <li>24 March 2017 - <a href="blog/2017/03/24/distributed-tracing-with-camel.html">Distributed Tracing with Apache Camel and OpenTracing</a></li>
           <li>24 March 2017 - <a href="blog/2017/03/24/hawkular-java-agent.html">Introducing Hawkular Java Agent</a></li>
           <li>22 March 2017 - <a href="blog/2017/03/22/apm-adjusting-sampling-rate.html">Adjusting sampling rates for Hawkular APM on OpenShift</a></li>
