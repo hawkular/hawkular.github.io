@@ -1,0 +1,219 @@
+= Inventory v3: technical details
+Joel Takvorian
+2017-04-27
+:icons: font
+:jbake-type: page
+:jbake-status: published
+:jbake-tags: inventory
+:toc: macro
+:toc-title:
+
+toc::[]
+
+== Producing data (Hawkular Agents)
+
+=== Before
+
+Inventories were sent to `hawkular/inventory` upon discovery or add/remove resource events. In both cases, the whole subtree of the root resource that was modified was synced. Resource types and metric types were synced only once, assuming they never change in the agent lifetime. Hawkular Inventory was responsible for computing hashes and updating whatever was necessary.
+
+=== Now
+
+The global algorithm remains almost identical: inventories are sent to `hawkular/metrics` upon discovery or add/remove resource events, and the whole subtree is serialized as a json blob. Each subtree is entirely updated at once. However now, during discovery, the necessity to perform an update is also related to the TTL expiration, which is anticipated. So, updates could potentially be sent even on non-modified resources and types.
+
+=== Algorithm
+
+The serialization process of a given root resource is as follow:
+
+- The whole _inventory structure_ object related to that resource is Jsonified. That _inventory structure_ comes from the existing inventory API and hasn't been changed. It is however encapsulated into an object that also contain index maps. That will be explained below (<<indexes, section Indexes>>).
+- It is gzipped
+- It's eventually split into chunks of 1536 bytes
+footnote:[The byte array being base64-encoded, the resulting String max size must be less than 2048 (max string metrics size in Hawkular metrics)
+and 1536 = 2048 * 3 / 4, due to base64 4:3 overhead ratio.]
+(contiguous pieces of the byte array)
+- Each piece is converted into a datapoint. The first one uses current timestamp, every following chunk `'i'` uses `'timestamp-i'`.
+- If there's several chunks, the first one (call it 'master') is associated with a datapoint tag `chunks` that gives the number of chunks, including itself.
+- Note that, during Json conversion of the datapoint object, the byte array is base64-stringified. It's the default behaviour of Jackson for byte[].
+- Datapoints are sent on `hawkular/metrics/strings/{id}/raw`. `{id}` is built after the following pattern:
+	 * `inventory.{feedId}.{type}.{id}`
+   * `{type}` being `r` in the case of root resources, `rt` for resource types and `mt` for metric types.
+   * `{id}` being the id of the root resource / resource type / metric type
+   * The whole metric id is url-encoded.
+- The metric is tagged and associated with a data retention of 7 days. Tags are (with same variables as described above):
+  * `module:inventory`
+  * `feed:{feedId}`
+  * `type:{type}`
+  * `id:{id}`
+- Root resources are also tagged with resource types and metric types as described below (<<indexes, section Indexes>>).
+
+The serialization process of resource types and metric types is almost identical, except that there is no associated index maps and no resource types / metric types tags.
+
+[[indexes]]
+==== Indexes
+
+Two index maps are added to the json, one for resource types, the other for metric types. They are useful for some common query patterns.
+
+- They're in the form of `Map<String, Collection<String>>`; the map key is the resource/metric type; the collection is the list of relative paths of the elements of that type. So, each resource and metric in the subtree (including the root resource itself) appears in one of the map.
+- These maps are stored in the json blob along with root resources inventory structure. They're part of the compressed & chunked data.
+- The map keys are also stored in tags on root resource metrics:
+  * `restypes:{list of resource types separated with "|"}`
+  * `mtypes:{list of metric types separated with "|"}`
+
+Note that, unlike in previous inventory, feeds have no existence by themselves. You cannot explicitely create a feed anymore, you just implicitely create them by associating a feedId to root resources.
+
+== Curl examples
+
+=== List all feeds
+```bash
+$ curl -u jdoe:password -H 'Hawkular-Tenant: hawkular' http://localhost:8080/hawkular/metrics/strings/tags/module:inventory,feed:*
+
+{"feed":["aa87aba58bf5"],"module":["inventory"]}
+```
+
+=== List all resource types for that feed
+```bash
+$ curl -u jdoe:password -X POST -H 'Hawkular-Tenant: hawkular' -H 'Content-Type: application/json' -d '{"fromEarliest":"true","order":"DESC","tags":"feed:aa87aba58bf5,type:rt"}' http://localhost:8080/hawkular/metrics/strings/raw/query
+
+[{"id":"inventory.aa87aba58bf5.rt.Message Driven EJB","data":[{"timestamp":1493279847648,"value":"..."}]},{"id":"inventory.aa87aba58bf5.rt.Platform_Memory","data":[{"timestamp":1493279844927,"value":"..."}]},{"id":"inventory.aa87aba58bf5.rt.JMS Topic","data":[{"timestamp":1493279847697,"value":"..."}]},{"id":"inventory.aa87aba58bf5.rt.Socket Binding Group","data":[{"timestamp":1493279847788,"value":"..."}]},{"id":"inventory.aa87aba58bf5.rt.Stateful Session EJB","data":[{"timestamp":1493279847637,"value":"..."}]},(etc.)]
+```
+
+=== Get root resource "Local~~"
+```bash
+$ curl -u jdoe:password -X POST -H 'Hawkular-Tenant: hawkular' -H 'Content-Type: application/json' -d '{"fromEarliest":"true","order":"DESC","tags":"feed:aa87aba58bf5,type:r,id:Local~~"}' http://localhost:8080/hawkular/metrics/strings/raw/query
+
+[{"id":"inventory.aa87aba58bf5.r.Local~~","data":[{"timestamp":1493279847975,"value":"...","tags":{"chunks":"9","size":"13488"}},{"timestamp":1493279847974,"value":"..."},{"timestamp":1493279847973,"value":"..."},(etc. til timestamp 1493279847967)]}]
+```
+
+=== Get all resources of type "WildFly Server"
+```bash
+$ curl -u jdoe:password -X POST -H 'Hawkular-Tenant: hawkular' -H 'Content-Type: application/json' -d '{"fromEarliest":"true","order":"DESC","tags":"feed:aa87aba58bf5,type:r,restypes:.*\\|WildFly Server\\|.*"}' http://localhost:8080/hawkular/metrics/strings/raw/query
+
+[{"id":"inventory.aa87aba58bf5.r.Local~~","data":[{"timestamp":1493279847975,"value":"...","tags":{"chunks":"9","size":"13488"}},{"timestamp":1493279847974,"value":"..."},{"timestamp":1493279847973,"value":"..."},(etc. til timestamp 1493279847967)]}]
+```
+
+Of course here, only the matching root resources are returned. But in each of those, you can quickly access relevant children through resource types index lookup.
+
+== Reading data
+
+As now, there's two implementations of a "reader" for inventory content, in Java (link:https://github.com/hawkular/hawkular-agent/blob/master/hawkular-agent-itest-util/src/main/java/org/hawkular/agent/itest/util/ITestHelper.java[hawkular-agent integration tests])
+and in Ruby (link:https://github.com/hawkular/hawkular-client-ruby/blob/master/lib/hawkular/inventory/inventory_api.rb[hawkular-client-ruby]), one being essentially a translation of the other in another language.
+
+Following serialization algorithm in the reverse order, we get:
+
+- Do some query on `@post hawkular/metrics/strings/raw/query` with `fromEarliest=true`, `order=DESC` and the real query parameters are in `tags`, as seen above. The response is an array of metrics, each containing an array of datapoints (see curl examples above).
+- For each metric:
+	* Take the first datapoint, get its tag `chunks` if any; if there isn't we can consider there's 1 chunk.
+	* Note that it is important to rely on that datapoint tag and not read every datapoints, because if the resource has been updated you would get more datapoints than necessary.
+	* If the language allows, we can pre-allocate a byte array: the tag `size` gives the total byte size.
+	* For each chunk to read, base64-decode it to bytes and concatenate with the previous.
+	* Un-gzip the result.
+	* Parse as json.
+- So now you should have an array of _inventory structures_ with their associated index maps. Something like:
+
+```json
+{
+  "inventoryStructure": {
+    "type": "resource",
+    "data": {
+      "properties": {},
+      "id": "Local~~",
+      "name": "WildFly Server [Local]",
+      "outgoing": {},
+      "incoming": {},
+      "resourceTypePath": "/t;hawkular/f;aa87aba58bf5/rt;WildFly%20Server"
+    },
+    "children": {
+      "metric": [
+        {
+          "data": {
+            "properties": {},
+            "id": "AI~R~[aa87aba58bf5/Local~~]~AT~Server Availability~Server Availability",
+            "name": "Server Availability",
+            "outgoing": {},
+            "incoming": {},
+            "metricTypePath": "/t;hawkular/f;aa87aba58bf5/mt;Server%20Availability~Server%20Availability",
+            "collectionInterval": null
+          },
+          "children": {}
+        }
+      ],
+      "resource": [
+        {
+          "data": {
+            "properties": {},
+            "id": "Local~/deployment=hawkular-command-gateway-war.war",
+            "name": "Deployment [hawkular-command-gateway-war.war]",
+            "outgoing": {},
+            "incoming": {},
+            "resourceTypePath": "/t;hawkular/f;aa87aba58bf5/rt;Deployment"
+          },
+          "children": {
+            "metric": [
+              {
+                "data": {
+                  "properties": {},
+                  "id": "AI~R~[aa87aba58bf5/Local~/deployment=hawkular-command-gateway-war.war]~AT~Deployment Status~Deployment Status",
+                  "name": "Deployment Status",
+                  "outgoing": {},
+                  "incoming": {},
+                  "metricTypePath": "/t;hawkular/f;aa87aba58bf5/mt;Deployment%20Status~Deployment%20Status",
+                  "collectionInterval": null
+                },
+                "children": {}
+              }
+            ]
+          }
+        }
+      ],
+      "dataEntity": [
+        {
+          "data": {
+            "properties": {},
+            "id": "configuration",
+            "name": null,
+            "outgoing": {},
+            "incoming": {},
+            "value": {
+              "Immutable": "true",
+              "Bound Address": "0.0.0.0",
+              "Home Directory": "/opt/jboss/wildfly",
+              "Node Name": "aa87aba58bf5",
+              "Server State": "running",
+              "Product Name": "Hawkular",
+              "Hostname": "aa87aba58bf5",
+              "In Container": "true",
+              "Name": "aa87aba58bf5",
+              "Suspend State": "RUNNING",
+              "Running Mode": "NORMAL",
+              "Version": "0.36.0.Final",
+              "UUID": "03eca767-e48f-4f0b-9a8a-d8f46112c9a5"
+            },
+            "role": "configuration"
+          },
+          "children": {}
+        }
+      ]
+    }
+  },
+  "typesIndex": {
+    "Deployment": [
+      "r;Local~%2Fdeployment%3Dhawkular-command-gateway-war.war"
+    ],
+    "WildFly Server": [
+      ""
+    ]
+  },
+  "metricTypesIndex": {
+    "Deployment Status~Deployment Status": [
+      "r;Local~%2Fdeployment%3Dhawkular-command-gateway-war.war/m;AI~R~%5Baa87aba58bf5%2FLocal~%2Fdeployment%3Dhawkular-command-gateway-war.war%5D~AT~Deployment%20Status~Deployment%20Status"
+    ],
+    "Server Availability~Server Availability": [
+      "m;AI~R~%5Baa87aba58bf5%2FLocal~~%5D~AT~Server%20Availability~Server%20Availability"
+    ]
+  }
+}
+```
+
+_Note: this is a drastically shortened example of Json taken from what we get when starting hawkular-services. Full Json dumped here: link:full-example.json[full-example.json]._
+
+- Now to exploit this structure, for instance if you were looking for a specific canonical path, you go down in the tree children following your path.
+- If you were querying against one of the index, for instance "all resources of type 'Deployment'", the `typesIndex` key in json will give you all associated relative paths that you can find in the subtree. Just parse it and go down through it. In Java, the CanonicalPath class, from existing inventory API, is still very helpful here for parsing and going down (it's in hawkular-commons). It has been kind of ported in the ruby client in a simpler way but sufficiant for what we need.
