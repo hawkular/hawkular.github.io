@@ -24,7 +24,7 @@ The global algorithm remains almost identical: inventories are sent to `hawkular
 
 The serialization process of a given root resource is as follow:
 
-- The whole _inventory structure_ object related to that resource is Jsonified. That _inventory structure_ comes from the existing inventory API and hasn't been changed. It is however encapsulated into an object that also contain index maps. That will be explained below (<<indexes, section Indexes>>).
+- The whole _inventory structure_ object related to that resource is Jsonified. That _inventory structure_ comes from the existing inventory API and hasn't been changed. It is however encapsulated into an object that also contains index maps. That will be explained below (<<indexes, section Indexes>>).
 - It is gzipped
 - It's eventually split into chunks of 1536 bytes
 footnote:[The byte array being base64-encoded, the resulting String max size must be less than 2048 (max string metrics size in Hawkular metrics)
@@ -33,11 +33,11 @@ and 1536 = 2048 * 3 / 4, due to base64 4:3 overhead ratio.]
 - Each piece is converted into a datapoint. The first one uses current timestamp, every following chunk `'i'` uses `'timestamp-i'`.
 - If there's several chunks, the first one (call it 'master') is associated with a datapoint tag `chunks` that gives the number of chunks, including itself.
 - Note that, during Json conversion of the datapoint object, the byte array is base64-stringified. It's the default behaviour of Jackson for byte[].
-- Datapoints are sent on `hawkular/metrics/strings/{id}/raw`. `{id}` is built after the following pattern:
+- Datapoints are sent on `hawkular/metrics/strings/{metricId}/raw`. `{metricId}` is built after the following pattern:
 	 * `inventory.{feedId}.{type}.{id}`
    * `{type}` being `r` in the case of root resources, `rt` for resource types and `mt` for metric types.
    * `{id}` being the id of the root resource / resource type / metric type
-   * The whole metric id is url-encoded.
+   * The whole metricId is url-encoded.
 - The metric is tagged and associated with a data retention of 7 days. Tags are (with same variables as described above):
   * `module:inventory`
   * `feed:{feedId}`
@@ -213,7 +213,13 @@ Following serialization algorithm in the reverse order, we get:
 }
 ```
 
-_Note: this is a drastically shortened example of Json taken from what we get when starting hawkular-services. Full Json dumped here: link:full-example.json[full-example.json]._
+_Note: this is a drastically shortened example of Json taken from what we get when starting hawkular-services. Full Json dumped here:_
+ifndef::env-github[]
+_link:/data/docs/inventory/inventory-v3-full-example.json[full-example.json]_
+endif::[]
+ifdef::env-github[]
+_link:../../../../assets/data/docs/inventory/inventory-v3-full-example.json[full-example.json]_
+endif::[]
 
 - Now to exploit this structure, for instance if you were looking for a specific canonical path, you go down in the tree children following your path.
 - If you were querying against one of the index, for instance "all resources of type 'Deployment'", the `typesIndex` key in json will give you all associated relative paths that you can find in the subtree. Just parse it and go down through it. In Java, the CanonicalPath class, from existing inventory API, is still very helpful here for parsing and going down (it's in hawkular-commons). It has been kind of ported in the ruby client in a simpler way but sufficiant for what we need.
