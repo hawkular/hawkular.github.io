@@ -3764,17 +3764,43 @@ There are many options on triggers to help ensure that alerts are not generated 
 including ways of automatically disabling and enabling the trigger. + 
 
 
-Subtype of <<Event>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
+|eventType|No|Indicate if this object is an EVENT or an ALERT. This is a read-only field controlled by the system for serialization purposes.|string|EVENT, ALERT|-
 |severity|No|Severity set for a <<Trigger>> and assigned to an alert when it is generated.|string|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
 |status|No|Lifecycle current status.|string|OPEN, ACKNOWLEDGED, RESOLVED|-
+|tenantId|No|Tenant id owner of this event.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
+|id|Yes|Unique identifier for this event.|string|-|-
 |notes|No|Notes attached with this alert.|array of <<Note>>|-|-
+|ctime|Yes|Creation time for this event.|integer|-|-
 |lifecycle|No|List of lifecycle states that this alert has navigated.|array of <<LifeCycle>>|-|-
+|dataSource|No|Optional dataSource for Event. Used for <<Trigger>> in <<EventCondition>> to evaluate events with triplet [tenantId, source, dataId] as unique identifier.|string|Timestamp in milliseconds.|-
 |resolvedEvalSets|No|The Eval Sets that resolved the <<Trigger>> in AUTORESOLVE mode. + 
  Null for non AUTORESOLVE triggers.|array of array of <<ConditionEval>>|-|-
+|dataId|Yes|Data identifier used for Events condition evaluation. Events must supply a valid dataId to be considered for <<EventCondition>> evaluation. + 
+DataIds in an events context should incorporate the source of the event (for uniqueness). + 
+Events generated from a <<Trigger>> will have dataId set to the triggerId, therefore allowing chaining with other <<EventCondition>>. |string|-|-
+|category|Yes|Category of Event. Suitable for display. + 
+Alerts will use ALERT category. + 
+Events generated from <<Trigger>> will use Trigger.eventCategory or TRIGGER category as default.|string|Any category defined by the user.|ALERT or TRIGGER
+|text|Yes|Description of the event. Suitable for display. + 
+Events generated from <<Trigger>> will use Trigger.eventText or Trigger.description/Trigger.name as default.|string|Any description defined by the user.|-
+|context|No|Properties defined by the user for this event. + 
+ Events generated from <<Trigger>> will use Trigger.context. + 
+Context cannot be used as part of Event conditions expressions or criteria in finder methods.|object|map[string,string]|-
+|tags|No|Tags defined by the user for this event. + 
+ Events generated from <<Trigger>> will use Trigger.tags. + 
+Tags can be used as part of Event conditions expressions and criteria in finder methods. + 
+Tag value cannot be null.|object|map[string,string]|-
+|trigger|No|Trigger that created the event. + 
+ Null for API-generated Events.|<<Trigger>>|-|-
+|dampening|No|Dampening defined when the event was created. + 
+ Null for API-generated Events.|<<Dampening>>|-|-
+|evalSets|No|The Eval Sets that fired the trigger. + 
+ Null for API-generated Events.|array of array of <<ConditionEval>>|-|-
 
 |=======================
 
@@ -4060,42 +4086,41 @@ Tag value cannot be null.|object|map[string,string]|-
 === EventCondition
 An EventCondition is used for condition evaluations over Event data using expressions. + 
  + 
-Expression is a comma separated list of the following 3 tokens structure: + 
+Expression is a comma separated list of the following 3-token structure: + 
  + 
-<event.field> <operator> <constant> [,<event.field> <operator> <constant>]* + 
+<eventField> <operator> <constant> [,<eventField> <operator> <constant>]* + 
  + 
-<event.field> represent a fixed field of event structure or a key of tags. + 
-Supported fields are the following: + 
-- tenantId + 
-- id + 
-- ctime + 
-- text + 
-- category + 
-- tags.<key> + 
+<eventField> represents a fixed field of the Event structure, or a tag key. + 
+Supported eventFields: + 
+- tenantId (String) + 
+- id (String) + 
+- ctime (Numeric time since epoch in milliseconds) + 
+- text (String) + 
+- category (String) + 
+- tags.<key> (String) + 
  + 
-<operator> is a string representing a string/numeric operator, supported ones are: + 
+<operator> is a string representing a string/numeric operator. 
+Supported operators: + 
+"starts" starts with String + 
+"ends" ends with String + 
+"contains" contains String + 
+"match" regex match String + 
 "==" equals + 
 "!=" not equals + 
-"starts" starts with String operator + 
-"ends" ends with String operator + 
-"contains" contains String operator + 
-"match" match String operator + 
 "<" less than + 
-"<=" less or equals than + 
+"<=" less than or equals + 
 ">" greater than + 
-">=" greater or equals than + 
-"==" equals + 
+">=" greater than or equals + 
  + 
-<constant> is a string that might be interpreted as a number if is not closed with single quotes or a string constant if it is closed with single quotes + 
-i.e. 23, 'test' + 
+A String <constant> must be enclosed in single-quotes. Special characters must be + 
+escaped with a backslash. Examples: 'test', '\,test\\' 
  + 
-A constant string can contain special character comma but escaped with backslash. + 
-i.e '\,test', 'test\,' + 
+A Numeric <constant> must be a valid number. Examples: 0, 23, 90.5, -10 
  + 
-So, putting everything together, a valid expression might look like: + 
-event.id starts 'IDXYZ', event.tag.category == 'Server', event.tag.from end '.com' + 
+Example of a valid expression: + 
+id starts 'IDXYZ', category == 'Server', tags.from ends '.com' + 
  + 
-A non valid expression will return false. + 
+An invalid expression will always return false. + 
 
 
 Subtype of <<Condition>>
