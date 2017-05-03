@@ -1,0 +1,86 @@
+= Hawkular Services 0.37.Final
+Heiko W. Rupp
+2017-05-3
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, release, hawkular-services
+
+Hawkular services is a ready to run distribution of Hawkular-Metrics with Alerts, Inventory, the WildFly agent and other components.
+The version https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.37.0.Final/hawkular-services-dist-0.37.0.Final.zip[0.37.0.Final] has just been released and is ready to be tested and integrated with other projects.
+
+
+== What's in this release
+
+
+This release includes those changes:
+
+* Inventory.v3 (already introduced in 0.36). This version of inventory stores its data inside of Hawkular-Metrics as String metrics.
+ See http://www.hawkular.org/hawkular-services/docs/user-guide/inventory/inventory-v3-details.html[this page for technical details]
+  * This does no longer need Postgres for Inventory storage
+* Agent version 1.0.0.CR2
+* The agent inside the Hawkular-services server is now the javaagent instead of the subsystem-based agent.
+* Hawkular-Metrics version 0.26.0
+* Better support for running on OpenShift
+* Ruby client gem v 3.0.1 to support Inventory.v3
+
+// ^ End of list
+
+NOTE: Inventory.v3 is incompatible with the previous version of Inventory. We made this change
+ to be able to get rid of the SQL database (Postgres) what was needed with the previous inventory. You need to
+ use ruby client gem version 3.0.1+ to use Inventory.v3. Similar agent version 1.0.0.CR1 and later.
+
+Hawkular Services is released every week on Tuesdays.
+
+== Get started
+To get started with Hawkular Services, https://repository.jboss.org/nexus/content/groups/public/org/hawkular/services/hawkular-services-dist/0.37.0.Final/hawkular-services-dist-0.37.0.Final.zip[download the latest release], unzip it,
+add a user and set the Agent to use the credentials for the user just added.
+
+It can be accomplished with the following commands:
+
+[source,bash]
+----
+export HAWKULAR_HOME="/path/to/hawkular-services"
+export HAWKULAR_USERNAME="jdoe"
+export HAWKULAR_PASSWORD="password"
+
+cd "${HAWKULAR_HOME}"
+"${HAWKULAR_HOME}/bin/add-user.sh" \
+  -a \
+  -u "${HAWKULAR_USERNAME}" \
+  -p "${HAWKULAR_PASSWORD}" \
+  -g read-write,read-only
+"${HAWKULAR_HOME}/bin/standalone.sh" -Dhawkular.rest.user="${HAWKULAR_USERNAME}" -Dhawkular.rest.password="${HAWKULAR_PASSWORD}"
+----
+
+Before starting the server, you need to have Cassandra 3.0.9 up and running.
+
+=== Get started via Docker builds
+
+There are official Docker images of the release available on
+DockerHub at https://hub.docker.com/r/hawkular/hawkular-services/[Hawkular services]
+
+The `latest` tag will always point to the latest release.
+
+NOTE:: There are also images with a `devel` tag, which are pushed by internal CI on individual commits.
+
+
+=== Build from master and Cassandra
+
+If you build from master, you can pass `-Pembeddedc` to get a distribution with embedded Cassandra for local development.
+Similarly if you build via `-Pdev` a default user of _jdoe/password_ will be installed and also be used with the agent.
+
+== Use Grafana with Hawkular-services
+
+We do now have a Grafana datasource to make it easier to connect to Hawkular-services from Grafana.
+You can download it from https://grafana.net/plugins/hawkular-datasource[Grafana.net].
+The https://github.com/hawkular/hawkular-grafana-datasource[website of the datasource tells more].
+
+
+=== Unofficial WildFly + agent
+There is also an instrumented WildFly server available at
+https://hub.docker.com/r/pilhuhn/hawkfly/[Instrumented WildFly].
+
+Both images have been instrumented with the _jdoe/password_ user for the Hawkular server and the agent.
+
+See also http://pilhuhn.blogspot.de/2016/06/using-hawkular-services-via-docker.html on some more
+details about using those images.
