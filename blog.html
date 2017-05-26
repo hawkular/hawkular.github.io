@@ -194,6 +194,51 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/05/25/jaeger-contributions.html"><h1>Kubernetes and OpenShift Templates for Jaeger</h1></a>
+            <p>25 May 2017, by Pavol Loffay</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>I am happy to announce that we have made it easier to deploy Jaeger on Kubernetes.
+This work has been carried out in a new github organization <a href="https://github.com/jaegertracing">Jaegertracing</a>
+established to contain contributions for the Jaeger ecosystem. At the moment this organization holds
+repositories for Kubernetes and OpenShift templates.</p>
+</div>
+<div class="paragraph">
+<p>Currently, we provide templates for deploying an all-in-one distribution. These bits are designed for demo
+and test purposes since they use only in-memory database. Be careful and do not use it in production!
+More sophisticated templates using a pure microservice approach and Cassandra storage will be available soon.</p>
+</div>
+<div class="paragraph">
+<p>The templates have been tested against minikube and minishift using an excellent integration testing framework
+<a href="https://github.com/arquillian/arquillian-cube">Arquillian Cube</a>.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/jaeger-openshift.png" alt="jaeger openshift">
+</div>
+<div class="title">Figure 1: Jaeger deployed on OpenShift</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_links">Links</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>Kubernetes templates: <a href="https://github.com/jaegertracing/jaeger-kubernetes" class="bare">https://github.com/jaegertracing/jaeger-kubernetes</a></p>
+</li>
+<li>
+<p>Openshift templates: <a href="https://github.com/jaegertracing/jaeger-openshift" class="bare">https://github.com/jaegertracing/jaeger-openshift</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/05/03/hawkular-services-0.37-released.html"><h1>Hawkular Services 0.37.Final</h1></a>
             <p>03 May 2017, by Heiko W. Rupp</p>
             <p><div id="preamble">
@@ -530,241 +575,13 @@ is a great alternative and can be used as a standalone solution!</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/04/06/hawkular-alerting-elasticsearch.html"><h1>Alerts and Notifications for Elasticsearch using Hawkular Alerting</h1></a>
-            <p>06 April 2017, by Lucas Ponce</p>
-            <p><div class="sect1">
-<h2 id="_elasticsearch_alerter">Elasticsearch Alerter</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerting includes a new <em>Alerter</em> capable to query <em>Elasticsearch</em> servers and represent documents as <a href="http://www.hawkular.org/docs/rest/rest-alerts.html#Event">Hawkular Events</a>.</p>
-</div>
-<div class="paragraph">
-<p>Managing <em>Elasticsearch</em> documents as Events allows Hawkular Alerting to define rich and complex conditions using <a href="http://www.hawkular.org/docs/rest/rest-alerts.html#EventCondition">EventConditions</a>.</p>
-</div>
-<div class="paragraph">
-<p>Triggers tagged with <em>Elasticsearch</em> will be used to schedule a periodic query to an <em>Elasticsearch</em> server. Trigger&#8217;s context will be used to define the interval between queries, additional query filtering or mapping options that will be used by the alerter to convert documents into events.</p>
-</div>
-<div class="paragraph">
-<p>For example,</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    "tags": {
-      "Elasticsearch": "Localhost instance" <b class="conum">(1)</b>
-    },
-    "context": {
-      "timestamp": "@timestamp", <b class="conum">(2)</b>
-      "interval": "30s", <b class="conum">(3)</b>
-      "index": "log",  <b class="conum">(4)</b>
-      "filter": "{\"match\":{\"app\":\"AppA\"}}", <b class="conum">(5)</b>
-      "mapping": "level:category,@timestamp:ctime,message:text,app:dataId,index:tags" <b class="conum">(6)</b>
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p><em>Elasticsearch</em> tag is used by the alerter to schedule a query from this trigger</p>
-</li>
-<li>
-<p><em>Elasticsearch</em> field "@timestamp" will be used to fetch documents in regular intervals</p>
-</li>
-<li>
-<p>Interval between queries will be <em>30</em> seconds</p>
-</li>
-<li>
-<p>Documents are fetched from <em>log</em> index</p>
-</li>
-<li>
-<p>Optional filtering to refine the query</p>
-</li>
-<li>
-<p>Mapping between <em>Elasticsearch</em> document fields and <em>Hawkular Events</em></p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>The full reference of the <em>Elasticsearch</em> Alerter can be found under
-<a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_alerter">Elasticsearch Alerter</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_elasticsearch_plugin">Elasticsearch Plugin</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p><em>Hawkular Alerting</em> also includes a new <em>Action Plugin</em> capable to transform Hawkular Events and Alerts into <em>Elasticsearch</em> documents.</p>
-</div>
-<div class="paragraph">
-<p>The <em>Elasticsearch Plugin</em> properties allows to define how an Event or Alert will be transformed in a document and under which index and type will be stored.</p>
-</div>
-<div class="paragraph">
-<p>For example,</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    {
-      "actionPlugin": "elasticsearch",
-      "actionId": "write-partial-alert",
-      "properties": {
-        "index": "alerts_summary",  <b class="conum">(1)</b>
-        "timestamp_pattern": "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ",   <b class="conum">(2)</b>
-        "transform": "{\"tenantId\":\"tenant\",\"ctime\":\"timestamp\",\"text\":\"trigger\",\"context\":{\"interval\":\"fetch-interval\"},\"evalSets\":\"details\"}" <b class="conum">(3)</b>
-      }
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Index used to store documents transformed by this plugin</p>
-</li>
-<li>
-<p>This <em>timestamp_pattern</em> indicates that all timestamp fields of Events/Alerts should be transformed into strings using this pattern</p>
-</li>
-<li>
-<p>JSON &#8594; JSON mapping to convert Events/Alerts into document using <a href="http://jolt-demo.appspot.com/">JOLT Shiftr</a></p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>The full reference of the <em>Elasticsearch</em> Plugin can be found under <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_elasticsearch_action_plugin">Elasticsearch Plugin</a>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_logging_example">Logging Example</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>An small but rich example can be found under <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples/elasticsearch">Elasticsearch example</a>.</p>
-</div>
-<div class="paragraph">
-<p>This example simulates different logs entries that are stored in <em>Elasticsearch</em>.</p>
-</div>
-<div class="paragraph">
-<p>These entries define a log level <em>(INFO, WARN or ERROR)</em>, a source application <em>(AppA, AppB and AppC)</em> and in the body message describes some reference about the subcomponent related <em>(Security, Frontend or Backend)</em>.</p>
-</div>
-<div class="paragraph">
-<p>These logs are stored in <em>Elasticsearch</em> with the following format:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-    "@timestamp":"2017-04-05T14:23:13.360447+0200",
-    "level":"ERROR",
-    "app":"AppA",
-    "message":"Message 6167 from Security"
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In the example a first trigger is defined to fetch documents just for AppA, for this, the in the context we define a <em>match</em> filter as</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    "context": {
-      "timestamp": "@timestamp",
-      "filter": "{\"match\":{\"app\":\"AppA\"}}", <b class="conum">(1)</b>
-      "interval": "30s",
-      "index": "log",
-      "mapping": "level:category,@timestamp:ctime,message:text,app:dataId,index:tags" <b class="conum">(2)</b>
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>From all possible documents, only AppA are interested for this trigger</p>
-</li>
-<li>
-<p>Note that <em>app</em> field is used as dataId for Events</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Once events are mapped we can define an <em>EventsCondition</em> to detect any <em>ERROR</em> log related to <em>Backend</em> components.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">      "conditions":[
-        {
-          "type": "EVENT",
-          "dataId": "AppA",
-          "expression": "category == 'ERROR',text contains 'Backend'"
-        }
-      ]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>In a similar way, a second trigger is defined in the example to fetch documents for AppB.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">    "context": {
-      ...
-      "filter": "{\"match\":{\"app\":\"AppB\"}}", <b class="conum">(1)</b>
-    }</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>From all possible documents, only AppB are interested for this trigger</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>On this second trigger, we want to detect when we have a suspected high number of WARN messages in the log. There are several ways to map this, in the example we are going to use a <em>Dampening</em></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">      "dampenings": [
-        {
-          "triggerMode": "FIRING",
-          "type":"RELAXED_COUNT",
-          "evalTrueSetting": 3,
-          "evalTotalSetting": 10
-        }
-      ],
-      "conditions":[
-        {
-          "type": "EVENT",
-          "dataId": "AppB",
-          "expression": "category == 'WARN'"
-        }
-      ]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>So, this second trigger will alert when more than 3 WARN messages are detected in a rate of 10 messages processed.</p>
-</div>
-<div class="paragraph">
-<p>Finally, the example defines several ways of notifications: sending an email to administrators and writting back into <em>Elasticsearch</em> the alerts fired.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_elasticsearch_integration">Elasticsearch Integration</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>As a result, we can combine all the Logs and Alerts in custom searches and provide them a UI dashboard in Kibana.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/Kibana-Hawkular-Alerting.png" alt="Kibana - Hawkular Alerting">
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>06 April 2017 - <a href="blog/2017/04/06/hawkular-alerting-elasticsearch.html">Alerts and Notifications for Elasticsearch using Hawkular Alerting</a></li>
           <li>05 April 2017 - <a href="blog/2017/04/05/deploy-hosa-easily.html">Deploying Hawkular OpenShift Agent Easily</a></li>
           <li>04 April 2017 - <a href="blog/2017/04/04/hawkular-metrics-0.26.0.Final-released.html">Hawkular Metrics 0.26.0 - Release</a></li>
           <li>25 March 2017 - <a href="blog/2017/03/25/collecting-application-metrics-openshift.html">Collecting Application Metrics Within OpenShift</a></li>
