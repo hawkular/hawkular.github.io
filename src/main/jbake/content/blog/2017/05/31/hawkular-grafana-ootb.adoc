@@ -83,7 +83,7 @@ docker-compose up
 The first run may take some time since the docker engine has to download several images.
 Also, the Hawkular first start is longer because it has to setup schema in Cassandra.
 
-Then open Grafana (http://localhost:3000), log in (_admin_/_admin_), you will see that a dashboard is already listed:
+Then open Grafana (http://localhost:3000), log in (_admin_/_admin_), click on "Home" and you will see that a dashboard is already listed:
 
 [.text-center]
 ifndef::env-github[]
@@ -108,7 +108,7 @@ You can see it's updated regularly with your host's CPU usage (to be more accura
 === How does it work?
 
 It's actually very simple. A link:https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/cpudemo/push-cpu.sh[shell script] runs `top` and extracts the system load average.
-That value is pushed to Hawkular every 10 seconds under the tenant `$TENANT` and gauge `cpu`.
+That value is pushed to Hawkular every 10 seconds under the tenant `$TENANT` and gauge `load-avg`.
 
 [source,bash]
 ----
@@ -117,7 +117,7 @@ do
   cpu=`top -bn1 | grep load | awk -F', |: ' '{printf $(NF-2)}'`
   ux_timestamp=`date +%s`
   timestamp=$(($ux_timestamp * 1000))
-  curl -u jdoe:password -X POST http://hawkular:8080/hawkular/metrics/gauges/cpu/raw \
+  curl -u jdoe:password -X POST http://hawkular:8080/hawkular/metrics/gauges/load-avg/raw \
     -d "[{\"timestamp\": $timestamp, \"value\": $cpu}]" \
     -H "Content-Type: application/json" -H "Hawkular-Tenant: $TENANT"
   sleep 10
@@ -166,7 +166,7 @@ and added a section for our new image `jotak/hawkular-grafana-cpudemo` with the 
 Building Hawkular self monitoring is even simpler as there's no outside application involved.
 Take link:https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/hawkular/docker-compose.yml[this docker-compose file] and put it up
 (make sure you've stopped the other one before, to avoid port conflicts).
-After several minutes of monitoring, Grafana would display something like this:
+After several minutes of monitoring (be patient, some metrics take longer than others to gather), Grafana would display something like this:
 
 [.text-center]
 ifndef::env-github[]
