@@ -3764,43 +3764,17 @@ There are many options on triggers to help ensure that alerts are not generated 
 including ways of automatically disabling and enabling the trigger. + 
 
 
-
+Subtype of <<Event>>
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|eventType|No|Indicate if this object is an EVENT or an ALERT. This is a read-only field controlled by the system for serialization purposes.|string|EVENT, ALERT|-
 |severity|No|Severity set for a <<Trigger>> and assigned to an alert when it is generated.|string|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
 |status|No|Lifecycle current status.|string|OPEN, ACKNOWLEDGED, RESOLVED|-
-|tenantId|No|Tenant id owner of this event.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
-|id|Yes|Unique identifier for this event.|string|-|-
 |notes|No|Notes attached with this alert.|array of <<Note>>|-|-
-|ctime|Yes|Creation time for this event.|integer|-|-
 |lifecycle|No|List of lifecycle states that this alert has navigated.|array of <<LifeCycle>>|-|-
-|dataSource|No|Optional dataSource for Event. Used for <<Trigger>> in <<EventCondition>> to evaluate events with triplet [tenantId, source, dataId] as unique identifier.|string|Timestamp in milliseconds.|-
 |resolvedEvalSets|No|The Eval Sets that resolved the <<Trigger>> in AUTORESOLVE mode. + 
  Null for non AUTORESOLVE triggers.|array of array of <<ConditionEval>>|-|-
-|dataId|Yes|Data identifier used for Events condition evaluation. Events must supply a valid dataId to be considered for <<EventCondition>> evaluation. + 
-DataIds in an events context should incorporate the source of the event (for uniqueness). + 
-Events generated from a <<Trigger>> will have dataId set to the triggerId, therefore allowing chaining with other <<EventCondition>>. |string|-|-
-|category|Yes|Category of Event. Suitable for display. + 
-Alerts will use ALERT category. + 
-Events generated from <<Trigger>> will use Trigger.eventCategory or TRIGGER category as default.|string|Any category defined by the user.|ALERT or TRIGGER
-|text|Yes|Description of the event. Suitable for display. + 
-Events generated from <<Trigger>> will use Trigger.eventText or Trigger.description/Trigger.name as default.|string|Any description defined by the user.|-
-|context|No|Properties defined by the user for this event. + 
- Events generated from <<Trigger>> will use Trigger.context. + 
-Context cannot be used as part of Event conditions expressions or criteria in finder methods.|object|map[string,string]|-
-|tags|No|Tags defined by the user for this event. + 
- Events generated from <<Trigger>> will use Trigger.tags. + 
-Tags can be used as part of Event conditions expressions and criteria in finder methods. + 
-Tag value cannot be null.|object|map[string,string]|-
-|trigger|No|Trigger that created the event. + 
- Null for API-generated Events.|<<Trigger>>|-|-
-|dampening|No|Dampening defined when the event was created. + 
- Null for API-generated Events.|<<Dampening>>|-|-
-|evalSets|No|The Eval Sets that fired the trigger. + 
- Null for API-generated Events.|array of array of <<ConditionEval>>|-|-
 
 |=======================
 
@@ -3840,12 +3814,21 @@ An availability condition definition. +
 Examples: + 
 X is DOWN
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |operator|Yes|Availability operator.|string|DOWN, NOT_UP, UP|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -3873,14 +3856,23 @@ Examples: +
 X > 80% of Y, FreeSpace < 20% of TotalSpace + 
 
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |operator|Yes|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|string|LT, GT, LTE, GTE|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |data2Id|Yes|Data identifier of the metric used for comparison.|string|-|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
 |data2Multiplier|Yes|Straight multiplier to be applied to data2Id on the comparison. Final comparison expression can be read as "dataId <operator> data2Multiplier*data2Id".|number|-|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4123,12 +4115,21 @@ id starts 'IDXYZ', category == 'Server', tags.from ends '.com' +
 An invalid expression will always return false. + 
 
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |expression|Yes|Event expression used for this condition.|string|-|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4157,13 +4158,22 @@ has already evaluated to true. +
  + 
 The Alerting engine assumes a true evaluation for the data being sent in from the external engine. In other words, every <<ExternalConditionEval>> will have a true evaluation and therefore, for triggers with only a single external condition, and with default dampening, an alert will be fired for each data submission.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |alerterId|Yes|An identifier assigned by the external alerter to identify this condition as being handled by that. It should be unique enough such that external AlerterIds are unique.|string|-|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |expression|Yes|The operator/pattern/expression/description of the external condition. The use of this field is up to the external engine, It may be a pattern, expression or operator used to configure/drive an external evaluation engine or may just be a static description of the externally defined event.|string|-|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4319,12 +4329,21 @@ A MissingCondition is used to evaluate when a data or an event has not been rece
  + 
 A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time starting to count from trigger was enabled or last received data/event.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |interval|Yes|A time interval defined in milliseconds.|integer|-|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4402,15 +4421,24 @@ By specifying the SessionCount data as increasing, we know to ignore/reset if th
  + 
 Note that rate of change is always determined as an absolute value. So threshold values should be >= 0.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |direction|Yes|Indicate if a metric is increasing/decreasing.|string|DECREASING, INCREASING, NA|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |period|Yes|Time period used for the evaluation.|string|SECOND, MINUTE, HOUR, DAY, WEEK|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
 |operator|Yes|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|string|LT, GT, LTE, GTE|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
 |threshold|Yes|Condition threshold.|number|-|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4438,14 +4466,23 @@ Subtype of <<ConditionEval>>
 === StringCondition
 A string comparison condition.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |operator|Yes|String operator.|string|EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, MATCH|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |pattern|Yes|Pattern to be used with the string operator.|string|-|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
 |ignoreCase|No|Flag to indicate whether pattern should ignore case in the string operator expression.|boolean|-|false
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4469,13 +4506,22 @@ Subtype of <<ConditionEval>>
 === ThresholdCondition
 A numeric threshold condition.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |operator|Yes|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|string|LT, GT, LTE, GTE|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |threshold|Yes|Condition threshold.|number|-|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
@@ -4499,16 +4545,25 @@ Subtype of <<ConditionEval>>
 === ThresholdRangeCondition
 A numeric threshold range condition.
 
-Subtype of <<Condition>>
+
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
 |operatorLow|Yes|Define whether low threshold value is inclusive or exclusive.|string|INCLUSIVE, EXCLUSIVE|-
+|tenantId|Yes|Tenant id owner of this condition.|string|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|-
 |operatorHigh|Yes|Define whether high threshold value is inclusive or exclusive.|string|INCLUSIVE, EXCLUSIVE|-
+|triggerId|No|The owning trigger.|string|triggerId is set up from REST request parameters|-
 |thresholdLow|Yes|Low threshold of the range interval.|number|-|-
+|triggerMode|Yes|The owning trigger's mode when this condition is active.|string|FIRING, AUTORESOLVE|-
 |thresholdHigh|Yes|High threshold of the range interval.|number|-|-
+|type|Yes|The type of the condition defined. Each type has its specific properties defined on its subtype of condition.|string|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|-
+|conditionSetSize|No|Number of conditions associated with a particular trigger. This is a read-only value defined by the system.|integer|-|-
 |inRange|Yes|Flag to indicate if condition will match when value is within the range interval or outside the range interval.|boolean|-|-
+|conditionSetIndex|No|Index of the current condition. This is a read-only value defined by the system.|integer|-|-
+|conditionId|No|A composed key for the condition. This is a read-only value defined by the system.|string|-|-
+|context|No|Properties defined by the user for this condition.|object|map[string,string]|-
+|dataId|Yes|Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.|string|-|-
 
 |=======================
 
