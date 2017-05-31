@@ -6,9 +6,340 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 26 May 2017 09:05:34 +0000</pubDate>
-    <lastBuildDate>Fri, 26 May 2017 09:05:34 +0000</lastBuildDate>
+    <pubDate>Wed, 31 May 2017 15:06:10 +0000</pubDate>
+    <lastBuildDate>Wed, 31 May 2017 15:06:10 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular and Grafana Out of the Box</title>
+      <link>http://www.hawkular.org/blog/2017/05/31/hawkular-grafana-ootb.html</link>
+      <author>noreply@hawkular.org (Joel Takvorian)</author>
+      <pubDate>Wed, 31 May 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/05/31/hawkular-grafana-ootb.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;a href=&quot;https://github.com/jotak/hawkular-grafana-outofthebox&quot;&gt;Hawkular and Grafana Out of the Box&lt;/a&gt; is a new way to quickly setup Hawkular and Grafana together with very little work.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Assuming you already have docker installed and recent enough (you need at least Compose 1.6.0 and Docker Engine 1.10.0),
+you&amp;#8217;re just 2 lines of YAML edition and a &lt;code&gt;docker-compose up&lt;/code&gt; away from having Hawkular + Grafana running and pre-configured.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+It is NOT intended for production/long-term usage unless you do some extra work to make it secured.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_how_does_it_work&quot;&gt;How does it work?&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s have a look to the docker-compose file:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;docker-compose.yml&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;version: &apos;2&apos; &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+services:
+  hawkular:
+    image: &quot;hawkular/hawkular-services:latest&quot; &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+    ports:
+      - &quot;8080:8080&quot;
+      - &quot;8443:8443&quot;
+      - &quot;9990:9990&quot;
+    # volumes: &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+    #   - /tmp/opt/hawkular/server:/opt/data:Z
+    environment:
+      - CASSANDRA_NODES=hawkular-cassandra
+      - ADMIN_TOKEN
+      - HAWKULAR_AGENT_ENABLE=false &lt;b class=&quot;conum&quot;&gt;(4)&lt;/b&gt;
+  hawkular-cassandra: &lt;b class=&quot;conum&quot;&gt;(5)&lt;/b&gt;
+    image: cassandra:3.0.9
+    environment:
+      - CASSANDRA_START_RPC=true
+  grafana: &lt;b class=&quot;conum&quot;&gt;(6)&lt;/b&gt;
+    image: &quot;hawkular/hawkular-grafana-datasource:latest&quot;
+    ports:
+      - &quot;3000:3000&quot;
+  bootstrap: &lt;b class=&quot;conum&quot;&gt;(7)&lt;/b&gt;
+    image: &quot;jotak/hawkular-grafana-bootstrap:latest&quot;
+    environment:
+      - TENANT=put_your_tenant_here
+      - DASHBOARDS=put_dashboard_file_names_here&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Docker-compose format v2 brings some networking improvements that proved to be useful here, that&amp;#8217;s why you&amp;#8217;ll need docker 1.10.0+ and docker-compose 1.6.0+.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Using the official Hawkular Services image. Accessible on &lt;a href=&quot;http://localhost:8080/hawkular/metrics&quot; class=&quot;bare&quot;&gt;http://localhost:8080/hawkular/metrics&lt;/a&gt; or &lt;a href=&quot;http://localhost:8080/hawkular/alerts&quot; class=&quot;bare&quot;&gt;http://localhost:8080/hawkular/alerts&lt;/a&gt;, with credentials &lt;em&gt;jdoe&lt;/em&gt;/&lt;em&gt;password&lt;/em&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The volume is commented-out, so data is not persisted if you run &lt;code&gt;docker-compose down&lt;/code&gt;. To persist data, uncomment these lines and eventually set something different than &lt;code&gt;/tmp/opt/hawkular/server&lt;/code&gt; as the host directory. Make sure this directory exists on your host.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The Hawkular agent is disabled by default, which means Hawkular is not self-monitored. You can enable it if you want, and use the &lt;code&gt;hawkular-self&lt;/code&gt; dashboard.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The Cassandra node. Note that it&amp;#8217;s not exposed outside of the compose&amp;#8217;s subnetwork.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The Grafana server with pre-installed Hawkular plugin, accessible on &lt;a href=&quot;http://localhost:3000&quot; class=&quot;bare&quot;&gt;http://localhost:3000&lt;/a&gt;, with credentials &lt;em&gt;admin&lt;/em&gt;/&lt;em&gt;admin&lt;/em&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;This image contains a bootstrap script that configures a Grafana datasource with the &lt;code&gt;TENANT&lt;/code&gt; defined as environment variable, which is also injected in dashboard templates defined here (&lt;code&gt;DASHBOARDS&lt;/code&gt;). Those dashboards are sent to Grafana through its REST API. Current available dashboard templates are listed below.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If you want to have more than one tenant configured, you can add other sections to this compose file (&lt;em&gt;bootstrap2&lt;/em&gt;, &lt;em&gt;bootstrap3&lt;/em&gt;, etc. the name doesn&amp;#8217;t matter),
+with the same docker image and different environment variables. You are limited, however, in the number of tenants per dashboard (a single dashboard cannot use several tenants).
+You need to duplicate dashboards, or create them manually.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_available_dashboard_templates&quot;&gt;Available dashboard templates&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Only a few are available right now, but the list should grow and pull requests are welcome!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Some dashboards may be very specific, dedicated to the demos presented here, while others aim to be generic and reusable. The next step will be to inject custom dashboards through volume in docker-compose without having the rebuild the bootstrap image. Anyway, the current list is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;vertx-hwk&lt;/strong&gt;: for Vert.X applications that use the &lt;a href=&quot;http://vertx.io/docs/vertx-hawkular-metrics/java/&quot;&gt;vertx-hawkular-metrics&lt;/a&gt; module.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;vertx-dw&lt;/strong&gt;: for Vert.X applications that use the &lt;a href=&quot;http://vertx.io/docs/vertx-dropwizard-metrics/java/&quot;&gt;vertx-dropwizard-metrics&lt;/a&gt; module along with the &lt;a href=&quot;https://github.com/hawkular/hawkular-metrics/tree/master/clients/dropwizard&quot;&gt;Hawkular reporter&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;hawkular-self&lt;/strong&gt;: for Hawkular self monitoring using its WildFly agent (but could work with other WF apps)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;cpudemo&lt;/strong&gt;: for the CPU demo (explained below)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;strong&gt;falco&lt;/strong&gt;: for the game/demo &quot;&lt;a href=&quot;https://github.com/jotak/falco-demo&quot;&gt;Falco the Hawk&lt;/a&gt;&quot;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_cpu_demo&quot;&gt;CPU Demo&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Want a demo? Take the docker-compose file located in &lt;code&gt;cpudemo/&lt;/code&gt; (&lt;a href=&quot;https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/cpudemo/docker-compose.yml&quot;&gt;yes, this one&lt;/a&gt;) and store it locally. From its location run:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;docker-compose up&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first run may take some time since the docker engine has to download several images.
+Also, the Hawkular first start is longer because it has to setup schema in Cassandra.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Then open Grafana (&lt;a href=&quot;http://localhost:3000&quot; class=&quot;bare&quot;&gt;http://localhost:3000&lt;/a&gt;), log in (&lt;em&gt;admin&lt;/em&gt;/&lt;em&gt;admin&lt;/em&gt;), click on &quot;Home&quot; and you will see that a dashboard is already listed:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-startup.png&quot; alt=&quot;Grafana startup&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Open it:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-cpudemo.png&quot; alt=&quot;Grafana CPU demo&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can see it&amp;#8217;s updated regularly with your host&amp;#8217;s CPU usage (to be more accurate, it&amp;#8217;s the &lt;a href=&quot;https://en.wikipedia.org/wiki/Load_(computing)&quot;&gt;system load average&lt;/a&gt; over the past minute).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_how_does_it_work_2&quot;&gt;How does it work?&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s actually very simple. A &lt;a href=&quot;https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/cpudemo/push-cpu.sh&quot;&gt;shell script&lt;/a&gt; runs &lt;code&gt;top&lt;/code&gt; and extracts the system load average.
+That value is pushed to Hawkular every 10 seconds under the tenant &lt;code&gt;$TENANT&lt;/code&gt; and gauge &lt;code&gt;load-avg&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;while :
+do
+  cpu=`top -bn1 | grep load | awk -F&apos;, |: &apos; &apos;{printf $(NF-2)}&apos;`
+  ux_timestamp=`date +%s`
+  timestamp=$(($ux_timestamp * 1000))
+  curl -u jdoe:password -X POST http://hawkular:8080/hawkular/metrics/gauges/load-avg/raw \
+    -d &quot;[{\&quot;timestamp\&quot;: $timestamp, \&quot;value\&quot;: $cpu}]&quot; \
+    -H &quot;Content-Type: application/json&quot; -H &quot;Hawkular-Tenant: $TENANT&quot;
+  sleep 10
+done&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This script is then included in a docker image (&lt;code&gt;jotak/hawkular-grafana-cpudemo&lt;/code&gt;) with a simple Dockerfile:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-docker&quot; data-lang=&quot;docker&quot;&gt;FROM centos:7
+ADD ./push-cpu.sh /tmp/push-cpu.sh
+RUN chmod +x /tmp/push-cpu.sh
+ENTRYPOINT [&quot;/tmp/push-cpu.sh&quot;]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The docker image is on dockerhub so you don&amp;#8217;t have to worry about building it.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And finally, all the glue is done in the docker-compose file:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;docker-compose.yml&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;hawkular:
+  # (same as before)
+hawkular-cassandra:
+  # (same as before)
+grafana:
+  # (same as before)
+bootstrap:
+  image: &quot;jotak/hawkular-grafana-bootstrap:latest&quot;
+  environment:
+    - TENANT=cpudemo
+    - DASHBOARDS=cpudemo
+cpudemo:
+  image: &quot;jotak/hawkular-grafana-cpudemo:latest&quot;
+  environment:
+    - TENANT=cpudemo&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As you can see, we just configured the tenant and dashboards in &lt;code&gt;bootstrap&lt;/code&gt;,
+and added a section for our new image &lt;code&gt;jotak/hawkular-grafana-cpudemo&lt;/code&gt; with the same tenant configured.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_hawkular_self_monitoring&quot;&gt;Hawkular self monitoring&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Building Hawkular self monitoring is even simpler as there&amp;#8217;s no outside application involved.
+Take &lt;a href=&quot;https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/hawkular/docker-compose.yml&quot;&gt;this docker-compose file&lt;/a&gt; and put it up
+(make sure you&amp;#8217;ve stopped the other one before, to avoid port conflicts).
+After several minutes of monitoring (be patient, some metrics take longer than others to gather), Grafana would display something like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-hawkular.png&quot; alt=&quot;Grafana Hawkular selfmon&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-hawkular2.png&quot; alt=&quot;Grafana Hawkular selfmon&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This dashboard can be reused for other WildFly application that uses the Hawkular WildFly agent, since the metrics come from there.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_how_does_it_work_3&quot;&gt;How does it work?&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Just some tweaks in the docker-compose file were needed:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;docker-compose.yml&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yaml&quot; data-lang=&quot;yaml&quot;&gt;hawkular:
+  image: &quot;hawkular/hawkular-services:latest&quot;
+  ports:
+    - &quot;8080:8080&quot;
+    - &quot;8443:8443&quot;
+    - &quot;9990:9990&quot;
+  environment:
+    - CASSANDRA_NODES=hawkular-cassandra
+    - ADMIN_TOKEN
+    - HAWKULAR_AGENT_ENABLE=true &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+hawkular-cassandra:
+  # (same as before)
+grafana:
+  # (same as before)
+bootstrap:
+  image: &quot;jotak/hawkular-grafana-bootstrap:latest&quot;
+  environment: &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+    - TENANT=hawkular
+    - DASHBOARDS=hawkular-self&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Hawkular environment variable &lt;code&gt;HAWKULAR_AGENT_ENABLE&lt;/code&gt; was set to true to enable collecting agent&amp;#8217;s metrics&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;In &lt;code&gt;bootstrap&lt;/code&gt;, &lt;em&gt;TENANT&lt;/em&gt; is set to &lt;em&gt;hawkular&lt;/em&gt; (this is the tenant used internally to collect agent&amp;#8217;s metrics) and the dashboard template is &lt;em&gt;hawkular-self&lt;/em&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_falco_the_hawk&quot;&gt;Falco the Hawk&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&quot;&lt;a href=&quot;https://github.com/jotak/falco-demo&quot;&gt;Falco the Hawk&lt;/a&gt;&quot; is a demo game developed for the occasion. It runs with Vert.X with metrics enabled, and also provide its own game metrics to Hawkular.
+You can download its &lt;code&gt;docker-compose.yml&lt;/code&gt; and put it up:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;wget -O docker-compose.yml https://raw.githubusercontent.com/jotak/falco-demo/master/docker-compose.yml
+
+docker-compose up&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;You can open &lt;a href=&quot;http://localhost:8081&quot; class=&quot;bare&quot;&gt;http://localhost:8081&lt;/a&gt; to play the game (beware, 8bits-style music inside!), and see the metrics at the same time on &lt;a href=&quot;http://localhost:3000&quot; class=&quot;bare&quot;&gt;http://localhost:3000&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-falco.png&quot; alt=&quot;Grafana Falco the Hawk&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-05-30-hgootb-grafana-vertx.png&quot; alt=&quot;Grafana Vert.X&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_next&quot;&gt;Next&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;That&amp;#8217;s all for now. Please don&amp;#8217;t hesitate to give feedback, ask for feature requests, maybe new dashboard templates, ask for help or submit pull requests. One link for that: &lt;a href=&quot;https://github.com/jotak/hawkular-grafana-outofthebox&quot; class=&quot;bare&quot;&gt;https://github.com/jotak/hawkular-grafana-outofthebox&lt;/a&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Kubernetes and OpenShift Templates for Jaeger</title>
       <link>http://www.hawkular.org/blog/2017/05/25/jaeger-contributions.html</link>
