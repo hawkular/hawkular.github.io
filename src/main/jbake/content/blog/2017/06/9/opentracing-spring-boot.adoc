@@ -1,6 +1,6 @@
 = OpenTracing Spring Boot Instrumentation
 Pavol Loffay
-2017-6-9
+2017-6-13
 :icons: font
 :jbake-type: post
 :jbake-status: published
@@ -9,12 +9,12 @@ Pavol Loffay
 In this demo series we are going to look at how simple it is to instrument various Java frameworks using
 http://opentracing.io[OpenTracing]. You will see that it requires minimal changes to the
 application code. In the last demo we will have microservice apps deployed on Kubernetes and
-all services will be traced with OpenTracing complaint tracing system.
+all services will be traced with an OpenTracing compliant tracing system.
 
-In this first demo we are going to develop and trace simple Spring Boot app.
+In this first demo we are going to develop and trace a simple Spring Boot app.
 
 == Create a web application
-First let's write a simple web app, no let's generate it! All we have to do is just to select a web dependency.
+First let's write a simple web app. Or better, let's generate it! All we have to do is just to select a web dependency.
 
 ifndef::env-github[]
 image::/img/blog/2017/spring-initializr.png[caption="Figure 1: ", title="Spring boot generator."]
@@ -24,7 +24,7 @@ image::../../../../../assets/img/blog/2017/spring-initializr.png[caption="Figure
 endif::[]
 
 Now the application is generated, but it does not contain any web controller. We are going to implement a simple
-controller with two methods. One will return hello world string and the other creates HTTP request which calls
+controller with two methods. One will return a greeting and the other creates HTTP request which calls
 hello endpoint. This demonstrates simple request chaining between services. Do not worry all the code is
 on https://github.com/pavolloffay/opentracing-java-examples[GitHub]. At the bottom of this article you will
 find all necessary links.
@@ -65,19 +65,19 @@ dependency to the classpath:
 </dependency>
 ----
 
-This dependency requires only one thing and that is tracer bean which will be used to report data to the chosen
+This dependency requires only one thing and that is a tracer bean which will be used to report data to the chosen
 tracing system. If we don't specify this bean auto-configuration will choose `NoopTracer`.
 
 Because we are using OpenTracing instrumentation we are not bound to any specific tracing system.
-We will now show how to first use Jaeger and then switch to Zipkin. We will see that changing tracing system is just
+We will now show how to first use Jaeger and then switch to Zipkin. We will see that changing the tracing system is just
 a matter of configuration.
 
 As we mentioned the only tracing configuration needed here is to provide a tracer bean.
 
 === Jaeger
-To create Jaeger tracer is very simple. It just requires sampler configuration and because it is a demo we are going
-to sample all requests. Note that we are not specifying URL to Jaeger server. By default it will assume that it
-runs on the localhost.
+To create a Jaeger tracer is very simple. It just requires a sampler configuration and because it is a demo we are going
+to sample all requests. Note that we are not specifying the URL to Jaeger server. By default it will assume that it
+runs on localhost.
 
 ----
 @Bean
@@ -87,7 +87,7 @@ public io.opentracing.Tracer jaegerTracer() {
         .getTracer();
 ----
 
-Now we can start Jaeger server using `docker run --rm -it --network=host jaegertracing/all-in-one`, compile and
+Now we can start the Jaeger server using `docker run --rm -it --network=host jaegertracing/all-in-one`, compile and
 run our app. When everything is up and running generate some requests to URL's defined in the previous section.
 
 Open the Jaeger UI on `http://localhost:16686`:
@@ -101,7 +101,7 @@ endif::[]
 
 === Zipkin
 Now let's benefit from OpenTracing and switch tracing system with O(1) effort. To do that we just need to
-provide an instance of Zipkin tracer bean. Do not forget comment out Jaeger tracer bean, otherwise instrumentation
+provide an instance of Zipkin tracer bean. Do not forget to comment out the Jaeger tracer bean, otherwise instrumentation
 would not know which tracer to use.
 
 Zipkin configuration is very similar it just requires to know Zipkin URL:
@@ -131,9 +131,9 @@ video::RvCcWltMY7U[youtube, width=853, height=480]
 
 == Conclusion
 We have seen how simple it is to instrument Spring Boot with OpenTracing. This instrumentation leverages all
-key OpenTracing benefits like: vendor-neutrality, O(1) change of tracing system. In the next blog post we will look at
-JAX-RS instrumentation and in the last demo all applications will be deployed on Kubernetes and traced using Jaeger's
-production deployment with Cassandra cluster.
+key OpenTracing http://opentracing.io/documentation/#why-opentracing[benefits] like: vendor-neutrality,
+O(1) change of tracing system or wiring different instrumentations together. In the next blog post we will look at JAX-RS instrumentation and in the
+last demo all applications will be deployed on Kubernetes and traced using Jaeger's production deployment with Cassandra cluster.
 
 == Links
 * OpenTracing: http://opentracing.io
