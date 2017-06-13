@@ -6,9 +6,215 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Tue, 6 Jun 2017 21:38:26 +0000</pubDate>
-    <lastBuildDate>Tue, 6 Jun 2017 21:38:26 +0000</lastBuildDate>
+    <pubDate>Tue, 13 Jun 2017 13:45:20 +0000</pubDate>
+    <lastBuildDate>Tue, 13 Jun 2017 13:45:20 +0000</lastBuildDate>
 
+    <item>
+      <title>OpenTracing Spring Boot Instrumentation</title>
+      <link>http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html</link>
+      <author>noreply@hawkular.org (Pavol Loffay)</author>
+      <pubDate>Tue, 13 Jun 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/06/9/opentracing-spring-boot.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this demo series we are going to look at how simple it is to instrument various Java frameworks using
+&lt;a href=&quot;http://opentracing.io&quot;&gt;OpenTracing&lt;/a&gt;. You will see that it requires minimal changes to the
+application code. In the last demo we will have microservice apps deployed on Kubernetes and
+all services will be traced with an OpenTracing compliant tracing system.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this first demo we are going to develop and trace a simple Spring Boot app.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_create_a_web_application&quot;&gt;Create a web application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;First let&amp;#8217;s write a simple web app. Or better, let&amp;#8217;s generate it! All we have to do is just to select a web dependency.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/spring-initializr.png&quot; alt=&quot;spring initializr&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Spring boot generator.&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now the application is generated, but it does not contain any web controller. We are going to implement a simple
+controller with two methods. One will return a greeting and the other creates HTTP request which calls
+hello endpoint. This demonstrates simple request chaining between services. Do not worry all the code is
+on &lt;a href=&quot;https://github.com/pavolloffay/opentracing-java-examples&quot;&gt;GitHub&lt;/a&gt;. At the bottom of this article you will
+find all necessary links.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Hello Controller:&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@RestController
+public class HelloController {
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @RequestMapping(&quot;/hello&quot;)
+    public String hello() {
+        return &quot;Hello from Spring Boot!&quot;;
+    }
+
+    @RequestMapping(&quot;/chaining&quot;)
+    public String chaining() {
+        ResponseEntity&amp;lt;String&amp;gt; response = restTemplate.getForEntity(&quot;http://localhost:8080/hello&quot;, String.class);
+        return &quot;Chaining + &quot; + response.getBody();
+    }
+}&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now the application can serve requests for URLs &lt;code&gt;&lt;a href=&quot;http://localhost:8080/hello&quot; class=&quot;bare&quot;&gt;http://localhost:8080/hello&lt;/a&gt;&lt;/code&gt; and &lt;code&gt;&lt;a href=&quot;http://localhost:8080/chaining&quot; class=&quot;bare&quot;&gt;http://localhost:8080/chaining&lt;/a&gt;&lt;/code&gt;.
+The app is still not instrumented, we won&amp;#8217;t see any data coming to a tracing system.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_instrumentation&quot;&gt;Instrumentation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Instrumentation with OpenTracing integrations is very simple. For Spring Boot there is
+an auto-configuration which instruments all REST controllers and &lt;code&gt;RestTemplate&lt;/code&gt; beans. Just add the following
+dependency to the classpath:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;io.opentracing.contrib&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;opentracing-spring-web-autoconfigure&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This dependency requires only one thing and that is a tracer bean which will be used to report data to the chosen
+tracing system. If we don&amp;#8217;t specify this bean auto-configuration will choose &lt;code&gt;NoopTracer&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Because we are using OpenTracing instrumentation we are not bound to any specific tracing system.
+We will now show how to first use Jaeger and then switch to Zipkin. We will see that changing the tracing system is just
+a matter of configuration.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As we mentioned the only tracing configuration needed here is to provide a tracer bean.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_jaeger&quot;&gt;Jaeger&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To create a Jaeger tracer is very simple. It just requires a sampler configuration and because it is a demo we are going
+to sample all requests. Note that we are not specifying the URL to Jaeger server. By default it will assume that it
+runs on localhost.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@Bean
+public io.opentracing.Tracer jaegerTracer() {
+    return new Configuration(&quot;spring-boot&quot;, new Configuration.SamplerConfiguration(ProbabilisticSampler.TYPE, 1),
+        new Configuration.ReporterConfiguration())
+        .getTracer();&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we can start the Jaeger server using &lt;code&gt;docker run --rm -it --network=host jaegertracing/all-in-one&lt;/code&gt;, compile and
+run our app. When everything is up and running generate some requests to URL&amp;#8217;s defined in the previous section.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Open the Jaeger UI on &lt;code&gt;&lt;a href=&quot;http://localhost:16686&quot; class=&quot;bare&quot;&gt;http://localhost:16686&lt;/a&gt;&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/boot-jaeger-traces.png&quot; alt=&quot;boot jaeger traces&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Jaeger showing reported traces.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_zipkin&quot;&gt;Zipkin&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now let&amp;#8217;s benefit from OpenTracing and switch tracing system with O(1) effort. To do that we just need to
+provide an instance of Zipkin tracer bean. Do not forget to comment out the Jaeger tracer bean, otherwise instrumentation
+would not know which tracer to use.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Zipkin configuration is very similar it just requires to know Zipkin URL:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@Bean
+public io.opentracing.Tracer zipkinTracer() {
+    OkHttpSender okHttpSender = OkHttpSender.create(&quot;http://localhost:9411/api/v1/spans&quot;);
+    AsyncReporter&amp;lt;Span&amp;gt; reporter = AsyncReporter.builder(okHttpSender).build();
+    Tracing braveTracer = Tracing.newBuilder().localServiceName(&quot;spring-boot&quot;).reporter(reporter).build();
+    return BraveTracer.create(braveTracer);
+}&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Zipkin server can be started with &lt;code&gt;docker run --rm -it -p 9411:9411 openzipkin/zipkin&lt;/code&gt;. Now we have to rebuild and
+start our demo app and generate requests.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/boot-zipkin-traces.png&quot; alt=&quot;boot zipkin traces&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Zipkin showing reported traces.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_video&quot;&gt;Video&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;videoblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;iframe width=&quot;853&quot; height=&quot;480&quot; src=&quot;http://www.hawkular.org/https://www.youtube.com/embed/RvCcWltMY7U?rel=0&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We have seen how simple it is to instrument Spring Boot with OpenTracing. This instrumentation leverages all
+key OpenTracing &lt;a href=&quot;http://opentracing.io/documentation/#why-opentracing&quot;&gt;benefits&lt;/a&gt; like: vendor-neutrality,
+O(1) change of tracing system or wiring different instrumentations together. In the next blog post we will look at JAX-RS instrumentation and in the
+last demo all applications will be deployed on Kubernetes and traced using Jaeger&amp;#8217;s production deployment with Cassandra cluster.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing: &lt;a href=&quot;http://opentracing.io&quot; class=&quot;bare&quot;&gt;http://opentracing.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Github repository with demo: &lt;a href=&quot;https://github.com/pavolloffay/opentracing-java-examples&quot; class=&quot;bare&quot;&gt;https://github.com/pavolloffay/opentracing-java-examples&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing Spring Boot instrumentation: &lt;a href=&quot;https://github.com/opentracing-contrib/java-spring-web&quot; class=&quot;bare&quot;&gt;https://github.com/opentracing-contrib/java-spring-web&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jaeger: &lt;a href=&quot;https://github.com/uber/jaeger&quot; class=&quot;bare&quot;&gt;https://github.com/uber/jaeger&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Zipkin: &lt;a href=&quot;https://github.com/openzipkin/zipkin&quot; class=&quot;bare&quot;&gt;https://github.com/openzipkin/zipkin&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Metrics 0.27.0 - Release</title>
       <link>http://www.hawkular.org/blog/2017/06/06/hawkular-metrics-0.27.0.Final-released.html</link>
