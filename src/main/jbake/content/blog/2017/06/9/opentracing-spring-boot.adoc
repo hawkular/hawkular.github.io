@@ -99,6 +99,9 @@ ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/boot-jaeger-traces.png[caption="Figure 1: ", title="Jaeger showing reported traces."]
 endif::[]
 
+On the picture we can see traces for the request to the `/chaining` endpoint. There are three spans: one representing
+server processing of `/chaining`, the second a client request to `/hello` and the third server processing of `/hello` endpoint.
+
 === Zipkin
 Now let's benefit from OpenTracing and switch tracing system with O(1) effort. To do that we just need to
 provide an instance of Zipkin tracer bean. Do not forget to comment out the Jaeger tracer bean, otherwise instrumentation
@@ -125,6 +128,10 @@ endif::[]
 ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/boot-zipkin-traces.png[caption="Figure 1: ", title="Zipkin showing reported traces."]
 endif::[]
+
+This screenshot also show traces for invocation of `/chaining` endpoint. In this case it shows only two spans because Zipkin
+uses a shared span model which means that client and server invocation of `/hello` uses the same span.
+This is a great example that shows how different OpenTracing providers might model and show things differently.
 
 == Video
 video::RvCcWltMY7U[youtube, width=853, height=480]
