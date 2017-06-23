@@ -26,59 +26,58 @@ is:
 ----
     @RequestMapping("/account")
     public String getAccount() throws InterruptedException {
-        Thread.sleep(1 + (long)(Math.random()*500));
-        if (Math.random() > 0.8) {
+        Thread.sleep(1 + (long)(Math.random()*500)); <1>
+        if (Math.random() > 0.8) { <2>
             throw new RuntimeException("Failed to find account");
         }
         return "Account details";
     }
 ----
 
-The first line simply introduces a random delay, to make the collected metrics more interesting. The next three
-lines randomly cause an exception which will result in the span (associated with the REST endpoint invocation)
-being tagged as an error with associated log events identifying the error details.
+<1> This line simply introduces a random delay, to make the collected metrics more interesting.
+<2> These three lines randomly cause an exception which will result in the span (associated with the REST
+endpoint invocation) being tagged as an error with associated log events identifying the error details.
 
 _ordermgr_ presents three REST endpoints for use by an end user. These are:
 
-.Service 1's Txn Controller:
+.Order Manager's Controller:
 ----
     @Autowired
-    private io.opentracing.Tracer tracer;
+    private io.opentracing.Tracer tracer; <1>
 
     @RequestMapping("/buy")
     public String buy() throws InterruptedException {
-        Thread.sleep(1 + (long)(Math.random()*500));
-        tracer.activeSpan().setBaggageItem("transaction", "buy");
+        Thread.sleep(1 + (long)(Math.random()*500)); <2>
+        tracer.activeSpan().setBaggageItem("transaction", "buy"); <3>
         ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/account", String.class);
         return "BUY + " + response.getBody();
     }
 
     @RequestMapping("/sell")
     public String sell() throws InterruptedException {
-        Thread.sleep(1 + (long)(Math.random()*500));
-        tracer.activeSpan().setBaggageItem("transaction", "sell");
+        Thread.sleep(1 + (long)(Math.random()*500)); <2>
+        tracer.activeSpan().setBaggageItem("transaction", "sell"); <3>
         ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/account", String.class);
         return "SELL + " + response.getBody();
     }
 
     @RequestMapping("/fail")
     public String fail() throws InterruptedException {
-        Thread.sleep(1 + (long)(Math.random()*500));
-        ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/missing", String.class);
+        Thread.sleep(1 + (long)(Math.random()*500)); <2>
+        ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/missing", String.class); <4>
         return "FAIL + " + response.getBody();
     }
 ----
 
-All three methods introduce a random delay.
-
-The `buy` and `sell` methods additional set a baggage item `transaction` with the name of the business
+<1> The service injects the OpenTracing `Tracer` to enable access to the active span.
+<2> All three methods introduce a random delay.
+<3> The `buy` and `sell` methods additional set a baggage item `transaction` with the name of the business
 transaction being performed (i.e. buy or sell). For those not familiar with OpenTracing, the
 https://github.com/opentracing/specification/blob/master/specification.md#set-a-baggage-item[baggage concept]
 allows information to be carried _in band_ with the trace context between invoked services. We will show
 you how a baggage item can be used to isolate the metrics relevant only for a particular business transaction.
-
-Finally, the first two methods call the `/account` endpoint on _accountmgr_, while the third method invokes
-a non-existent endpoint on _accountmgr_, which will lead to an error being reported in the trace and metric
+<4> Invoking a non-existent endpoint on _accountmgr_ will lead to an error being reported in the trace and
+metric
 data.
 
 
