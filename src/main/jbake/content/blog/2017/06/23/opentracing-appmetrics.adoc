@@ -165,16 +165,42 @@ https://github.com/objectiser/opentracing-prometheus-example[example codebase]. 
 
 * Start https://kubernetes.io/docs/getting-started-guides/minikube[minikube]
 
-* Deploy Prometheus - using the https://github.com/coreos/prometheus-operator[Prometheus Operation] project to
+```
+minikube start
+minikube dashboard
+```
+
+* Deploy Prometheus - using the https://github.com/coreos/prometheus-operator[Prometheus Operator] project to
 capture metrics from the services
 
+```
+kubectl create -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/bundle.yaml
+
+# Wait until pods are green, then add configuration to locate service monitors based on label "team: frontend":
+kubectl create -f https://raw.githubusercontent.com/objectiser/opentracing-prometheus-example/master/prometheus-kubernetes.yml
+
+# Wait until these pods are green, then get the URL from the following command and open in browser:
+minikube service prometheus --url
+```
+
 * Deploy https://github.com/uber/jaeger[Jaeger] - an OpenTracing compatible tracing system
+
+```
+kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-kubernetes/master/all-in-one/jaeger-all-in-one-template.yml
+
+# Once pods are green, then get the Jaeger dashboard URL from the following command and open in a browser
+minikube service jaeger-all-in-one --url
+```
 
 * For this article, we also https://github.com/kubernetes/charts/tree/master/stable/grafana[deployed Grafana]
 to display the metrics, although the Prometheus dashboard could be used.
 
-Once they are all running, then the simple example with the two services can be deployed. At this stage
-the Kubernetes dashboard would look like this:
+
+Once they are all running, then the simple example with the two services can be deployed. For this you will need to
+clone the https://github.com/objectiser/opentracing-prometheus-example[example code repo], and follow
+https://github.com/objectiser/opentracing-prometheus-example/blob/master/simple/README.md[these instructions].
+
+At this stage the Kubernetes dashboard would look like this:
 
 ifndef::env-github[]
 image::/img/blog/2017/2017-06-23-kubernetes-dashboard.png[caption="Figure 1: ", title="Kubernetes dashboard"]
