@@ -17,39 +17,39 @@ In a recent article we showed how a Spring Boot application could easily be
 http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html[instrumented using OpenTracing].
 
 The https://github.com/objectiser/opentracing-prometheus-example[example] we are going to use in
-this article uses the same approach to create two services, _service1_ and _service2_ (sorry, not very
-imaginative names).
+this article uses the same approach to create two services, _ordermgr_ and _accountmgr_.
 
-_Service2_ presents a single REST endpoint (`/hello`) for internal use by _Service1_. The code for this endpoint
+_accountmgr_ presents a single REST endpoint (`/getAccount`) for internal use by _ordermgr_. The code for this endpoint
 is:
 
-.Service 2's Hello Controller:
+.Account Managers's Controller:
 ----
-    @Autowired
-    private io.opentracing.Tracer tracer;
-
-    @RequestMapping("/hello")
-    public String hello() throws InterruptedException {
+    @RequestMapping("/account")
+    public String getAccount() throws InterruptedException {
         Thread.sleep(1 + (long)(Math.random()*500));
         if (Math.random() > 0.8) {
-            tracer.activeSpan().setTag("error", true);
+            throw new RuntimeException("Failed to find account");
         }
-        return "Hello from Spring Boot!";
+        return "Account details";
     }
 ----
 
 The first line simply introduces a random delay, to make the collected metrics more interesting. The next three
-lines randomly cause the span (associated with the REST endpoint invocation) being tagged as an error.
+lines randomly cause an exception which will result in the span (associated with the REST endpoint invocation)
+being tagged as an error with associated log events identifying the error details.
 
-_Service1_ presents three REST endpoints for use by an end user. These are:
+_ordermgr_ presents three REST endpoints for use by an end user. These are:
 
 .Service 1's Txn Controller:
 ----
+    @Autowired
+    private io.opentracing.Tracer tracer;
+
     @RequestMapping("/buy")
     public String buy() throws InterruptedException {
         Thread.sleep(1 + (long)(Math.random()*500));
         tracer.activeSpan().setBaggageItem("transaction", "buy");
-        ResponseEntity<String> response = restTemplate.getForEntity(service2Url + "/hello", String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/account", String.class);
         return "BUY + " + response.getBody();
     }
 
@@ -57,14 +57,14 @@ _Service1_ presents three REST endpoints for use by an end user. These are:
     public String sell() throws InterruptedException {
         Thread.sleep(1 + (long)(Math.random()*500));
         tracer.activeSpan().setBaggageItem("transaction", "sell");
-        ResponseEntity<String> response = restTemplate.getForEntity(service2Url + "/hello", String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/account", String.class);
         return "SELL + " + response.getBody();
     }
 
     @RequestMapping("/fail")
     public String fail() throws InterruptedException {
         Thread.sleep(1 + (long)(Math.random()*500));
-        ResponseEntity<String> response = restTemplate.getForEntity(service2Url + "/missing", String.class);
+        ResponseEntity<String> response = restTemplate.getForEntity(accountMgrUrl + "/missing", String.class);
         return "FAIL + " + response.getBody();
     }
 ----
@@ -77,8 +77,8 @@ https://github.com/opentracing/specification/blob/master/specification.md#set-a-
 allows information to be carried _in band_ with the trace context between invoked services. We will show
 you how a baggage item can be used to isolate the metrics relevant only for a particular business transaction.
 
-Finally, the first two methods call the `/hello` endpoint on _service2_, while the third method invokes
-a non-existent endpoint on _service2_, which will lead to an error being reported in the trace and metric
+Finally, the first two methods call the `/account` endpoint on _accountmgr_, while the third method invokes
+a non-existent endpoint on _accountmgr_, which will lead to an error being reported in the trace and metric
 data.
 
 
@@ -178,7 +178,7 @@ image::../../../../../assets/img/blog/2017/2017-06-23-kubernetes-dashboard.png[c
 endif::[]
 
 The example code includes a script that loops, randomly invoking the three REST endpoints provided by
-_service1_. Once some example requests have been created, you can view the tracing dashboard:
+_ordermgr_. Once some example requests have been created, you can view the tracing dashboard:
 
 ifndef::env-github[]
 image::/img/blog/2017/2017-06-23-traces.png[caption="Figure 2: ", title="Jaeger tracing dashboard"]
@@ -197,8 +197,8 @@ image::../../../../../assets/img/blog/2017/2017-06-23-trace.png[caption="Figure 
 endif::[]
 
 This shows that the trace instance has three spans, the first representing the receipt of the `/buy` request on
-_service1_, the second where _service1_ is invoking _service2_, and finally the _service2_ receiving the
-`/hello` request. In this particular trace instance, the _service2_ invocation has reported an error, indicated
+_ordermgr_, the second where _ordermgr_ is invoking _accountmgr_, and finally the _accountmgr_ receiving the
+`/hello` request. In this particular trace instance, the _accountmgr_ invocation has reported an error, indicated
 by the `error=true` tag.
 
 Now we will look at the Grafana dashboard to see what metrics have been reported from the OpenTracing
@@ -236,13 +236,13 @@ label, however this would be configured when setting up the tracer.
 We can also filter the data, to focus on specific areas of interest:
 
 ifndef::env-github[]
-image::/img/blog/2017/2017-06-23-grafana-txn-service.png[caption="Figure 5: ", title="Customized Grafana graph focusing on metrics for transaction 'sell' and service 'service2'"]
+image::/img/blog/2017/2017-06-23-grafana-txn-service.png[caption="Figure 5: ", title="Customized Grafana graph focusing on metrics for transaction 'sell' and service 'accountmgr'"]
 endif::[]
 ifdef::env-github[]
-image::../../../../../assets/img/blog/2017/2017-06-23-grafana-txn-service.png[caption="Figure 5: ", title="Customized Grafana graph focusing on metrics for transaction 'sell' and service 'service2'"]
+image::../../../../../assets/img/blog/2017/2017-06-23-grafana-txn-service.png[caption="Figure 5: ", title="Customized Grafana graph focusing on metrics for transaction 'sell' and service 'accountmgr'"]
 endif::[]
 
-In this image we have filtered the metrics based on the `transaction='sell'` and `service='service2'`. This is
+In this image we have filtered the metrics based on the `transaction='sell'` and `service='accountmgr'`. This is
 where using the metric label based on the baggage item `transaction` can be useful, to understand the
 usage of a particular shared service by a business transaction. With further work it would be possible
 to show the distribution of requests for a service across the various business transactions.
