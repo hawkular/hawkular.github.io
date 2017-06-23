@@ -7,8 +7,9 @@ Gary Brown
 :jbake-tags: blog, apm, tracing, jaeger, opentracing, kubernetes, prometheus
 
 This article will show how http://opentracing.io/[OpenTracing] instrumentation can be used to
-collect Application Metrics, in addition (but independent) from reported tracing data, from services
-deployed within https://kubernetes.io/[Kubernetes].
+collect Application Metrics, in addition to (but independent from) reported tracing data, from services
+deployed within https://kubernetes.io/[Kubernetes]. These Application Metrics can then be displayed in
+your monitoring dashboard and used to trigger alerts.
 
 == The example application
 
@@ -73,8 +74,8 @@ All three methods introduce a random delay.
 The `buy` and `sell` methods additional set a baggage item `transaction` with the name of the business
 transaction being performed (i.e. buy or sell). For those not familiar with OpenTracing, the
 https://github.com/opentracing/specification/blob/master/specification.md#set-a-baggage-item[baggage concept]
-allows information to be carried _in band_ with the trace context between invoked services. Shortly we will show
-how this can be used to isolate the metrics relevant only for a particular business transaction.
+allows information to be carried _in band_ with the trace context between invoked services. We will show
+you how a baggage item can be used to isolate the metrics relevant only for a particular business transaction.
 
 Finally, the first two methods call the `/hello` endpoint on _service2_, while the third method invokes
 a non-existent endpoint on _service2_, which will lead to an error being reported in the trace and metric
@@ -141,19 +142,19 @@ public class TracerConfiguration implements javax.servlet.ServletContextListener
 
 The first method uses the
 https://github.com/opentracing-contrib/java-tracerresolver[TracerResolver] to provide a vendor
-neutral approach for accessing a `Tracer`. This tracer is then decorated with the metrics capability
+neutral approach for accessing a `Tracer`. This tracer is then enhanced with the metrics capability
 using a `PrometheusMetricsReporter`. This metrics reporter is further configured to add a special
 label related to the baggage key `transaction` (discussed later).
 
 By default, the Servlet OpenTracing integration will trace all REST endpoints. Therefore in the
 second method above we add an attribute that will inform the instrumentation to ignore the `/metrics`
-endpoint. Otherwise will we have tracing data reported each time Prometheus reads the metrics for the
+endpoint. Otherwise we will have tracing data reported each time Prometheus reads the metrics for the
 service.
 
 
 == Deploying on Kubernetes
 
-The steps to setup an environment on Kubernetes is discussed in the
+The steps to set up an environment on Kubernetes is discussed in the
 https://github.com/objectiser/opentracing-prometheus-example[example codebase]. A summary of the steps is:
 
 * Start https://kubernetes.io/docs/getting-started-guides/minikube[minikube]
@@ -176,7 +177,7 @@ ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-06-23-kubernetes-dashboard.png[caption="Figure 1: ", title="Kubernetes dashboard"]
 endif::[]
 
-The example code includes a script that loops randomly invoking the three REST endpoints provided by
+The example code includes a script that loops, randomly invoking the three REST endpoints provided by
 _service1_. Once some example requests have been created, you can view the tracing dashboard:
 
 ifndef::env-github[]
@@ -210,8 +211,10 @@ ifdef::env-github[]
 image::../../../../../assets/img/blog/2017/2017-06-23-grafana-dashboard.png[caption="Figure 4: ", title="Grafana dashboard"]
 endif::[]
 
-This dashboard includes three graphs, the first showing the span count, the second showing the average duration
-of the spans, and third showing the ratio between successful and erronous spans.
+This dashboard includes three graphs, the first showing the number of spans created (i.e. span count) by
+our `sell()` method, and we can use it to track how many times this business operation has been executed.
+The second showing the average duration of the spans, and third showing the ratio between successful and
+erronous spans.
 
 The metrics reported by Prometheus are based on a range of labels - a metric exists for each unique combination
 of those labels.
@@ -250,8 +253,8 @@ to show the distribution of requests for a service across the various business t
 This article has shown how a service can be instrumented once (using OpenTracing) and generate both
 tracing and application metrics.
 
-When deployed to a Kubernetes environment, the metrics also benefit from additional labels automatically
-add to the metrics describing the service, pod, namespace, etc, that can make it easy to isolate
+When deployed to a Kubernetes environment, the metrics also benefit from an additional set of labels automatically
+added by the infrastructure, describing the service, pod, namespace, etc. This makes it easy to isolate
 specific metrics of interest, or view high level aggregated metrics to gain an overview of your
 applications performance.
 
