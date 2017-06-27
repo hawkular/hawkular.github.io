@@ -6,9 +6,431 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 14 Jun 2017 10:38:35 +0000</pubDate>
-    <lastBuildDate>Wed, 14 Jun 2017 10:38:35 +0000</lastBuildDate>
+    <pubDate>Tue, 27 Jun 2017 08:52:39 +0000</pubDate>
+    <lastBuildDate>Tue, 27 Jun 2017 08:52:39 +0000</lastBuildDate>
 
+    <item>
+      <title>Using OpenTracing to collect Application Metrics in Kubernetes</title>
+      <link>http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html</link>
+      <author>noreply@hawkular.org (Gary Brown)</author>
+      <pubDate>Mon, 26 Jun 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/06/26/opentracing-appmetrics.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This article will show how &lt;a href=&quot;http://opentracing.io/&quot;&gt;OpenTracing&lt;/a&gt; instrumentation can be used to
+collect Application Metrics, in addition to (but independent from) reported tracing data, from services
+deployed within &lt;a href=&quot;https://kubernetes.io/&quot;&gt;Kubernetes&lt;/a&gt;. These Application Metrics can then be displayed in
+your monitoring dashboard and used to trigger alerts.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-grafana-error-ratio.png&quot; alt=&quot;2017 06 26 grafana error ratio&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_example_application&quot;&gt;The example application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a recent article we showed how a Spring Boot application could easily be
+&lt;a href=&quot;http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html&quot;&gt;instrumented using OpenTracing&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot;&gt;example&lt;/a&gt; we are going to use in
+this article uses the same approach to create two services, &lt;em&gt;ordermgr&lt;/em&gt; and &lt;em&gt;accountmgr&lt;/em&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;accountmgr&lt;/em&gt; presents a single REST endpoint (&lt;code&gt;/getAccount&lt;/code&gt;) for internal use by &lt;em&gt;ordermgr&lt;/em&gt;. The code for this endpoint
+is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Account Managers&amp;#8217;s Controller:&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;    @RequestMapping(&quot;/account&quot;)
+    public String getAccount() throws InterruptedException {
+        Thread.sleep(1 + (long)(Math.random()*500)); &lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;(1)&lt;/b&gt;
+        if (Math.random() &amp;gt; 0.8) { &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+            throw new RuntimeException(&quot;Failed to find account&quot;);
+        }
+        return &quot;Account details&quot;;
+    }&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;1&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;This line simply introduces a random delay, to make the collected metrics more interesting.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;2&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;These three lines randomly cause an exception which will result in the span (associated with the REST
+endpoint invocation) being tagged as an error with associated log events identifying the error details.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;em&gt;ordermgr&lt;/em&gt; presents three REST endpoints for use by an end user. These are:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Order Manager&amp;#8217;s Controller:&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;    @Autowired
+    private io.opentracing.Tracer tracer; &lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;(1)&lt;/b&gt;
+
+    @RequestMapping(&quot;/buy&quot;)
+    public String buy() throws InterruptedException {
+        Thread.sleep(1 + (long)(Math.random()*500)); &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+        tracer.activeSpan().setBaggageItem(&quot;transaction&quot;, &quot;buy&quot;); &lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;(3)&lt;/b&gt;
+        ResponseEntity&amp;lt;String&amp;gt; response = restTemplate.getForEntity(accountMgrUrl + &quot;/account&quot;, String.class);
+        return &quot;BUY + &quot; + response.getBody();
+    }
+
+    @RequestMapping(&quot;/sell&quot;)
+    public String sell() throws InterruptedException {
+        Thread.sleep(1 + (long)(Math.random()*500)); &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+        tracer.activeSpan().setBaggageItem(&quot;transaction&quot;, &quot;sell&quot;); &lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;(3)&lt;/b&gt;
+        ResponseEntity&amp;lt;String&amp;gt; response = restTemplate.getForEntity(accountMgrUrl + &quot;/account&quot;, String.class);
+        return &quot;SELL + &quot; + response.getBody();
+    }
+
+    @RequestMapping(&quot;/fail&quot;)
+    public String fail() throws InterruptedException {
+        Thread.sleep(1 + (long)(Math.random()*500)); &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+        ResponseEntity&amp;lt;String&amp;gt; response = restTemplate.getForEntity(accountMgrUrl + &quot;/missing&quot;, String.class); &lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;(4)&lt;/b&gt;
+        return &quot;FAIL + &quot; + response.getBody();
+    }&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;1&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;The service injects the OpenTracing &lt;code&gt;Tracer&lt;/code&gt; to enable access to the active span.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;2&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;All three methods introduce a random delay.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;3&quot;&gt;&lt;/i&gt;&lt;b&gt;3&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;The &lt;code&gt;buy&lt;/code&gt; and &lt;code&gt;sell&lt;/code&gt; methods additionally set a baggage item &lt;code&gt;transaction&lt;/code&gt; with the name of the business
+transaction being performed (i.e. buy or sell). For those not familiar with OpenTracing, the
+&lt;a href=&quot;https://github.com/opentracing/specification/blob/master/specification.md#set-a-baggage-item&quot;&gt;baggage concept&lt;/a&gt;
+allows information to be carried &lt;em&gt;in band&lt;/em&gt; with the trace context between invoked services. We will show
+you how a baggage item can be used to isolate the metrics relevant only for a particular business transaction.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;4&quot;&gt;&lt;/i&gt;&lt;b&gt;4&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;Invoking a non-existent endpoint on &lt;em&gt;accountmgr&lt;/em&gt; will lead to an error being reported in the trace and
+metric
+data.&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_adding_metrics_reporting_to_the_opentracing_instrumentation&quot;&gt;Adding Metrics Reporting to the OpenTracing instrumentation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The OpenTracing API defines the concept of a &lt;em&gt;Span&lt;/em&gt; which represents a unit of work performed by a service,
+e.g. to receive a service invocation, perform some internal task (e.g. accessing a database) or
+invoking an external service. They provide an ideal basis upon which to report metrics
+(count and duration) regarding these points within a service.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Therefore a new &lt;a href=&quot;https://github.com/opentracing-contrib/java-metrics&quot;&gt;OpenTracing contrib project&lt;/a&gt; has
+been established (initially just for Java) to intercept
+the finished spans, and create the relevant metrics. These metrics are then submitted to a &lt;em&gt;MetricsReporter&lt;/em&gt;
+for recording - the initial implementation of this interface being for &lt;a href=&quot;https://prometheus.io/&quot;&gt;Prometheus&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first step is to expose an endpoint for collecting the Prometheus metrics. Each service has the following
+configuration:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@Configuration
+@ConditionalOnClass(CollectorRegistry.class)
+public class PrometheusConfiguration {
+
+     @Bean
+     @ConditionalOnMissingBean
+     CollectorRegistry metricRegistry() {
+         return CollectorRegistry.defaultRegistry;
+     }
+
+     @Bean
+     ServletRegistrationBean registerPrometheusExporterServlet(CollectorRegistry metricRegistry) {
+           return new ServletRegistrationBean(new MetricsServlet(metricRegistry), &quot;/metrics&quot;);
+     }
+}&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This will allow the Prometheus metrics to be obtained from the service&amp;#8217;s &lt;code&gt;/metrics&lt;/code&gt; REST endpoint.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Each service then requires a configuration to obtain the &lt;code&gt;io.opentracing.Tracer&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@Configuration
+public class TracerConfiguration implements javax.servlet.ServletContextListener {
+
+	@Bean
+	public io.opentracing.Tracer tracer() {
+		return io.opentracing.contrib.metrics.Metrics.decorate(
+			io.opentracing.contrib.tracerresolver.TracerResolver.resolveTracer(),
+			PrometheusMetricsReporter.newMetricsReporter()
+				.withBaggageLabel(&quot;transaction&quot;,&quot;n/a&quot;)
+				.build());
+	}
+
+	@Override
+	public void contextInitialized(javax.servlet.ServletContextEvent sce) {
+		sce.getServletContext().setAttribute(io.opentracing.contrib.web.servlet.filter.TracingFilter.SKIP_PATTERN, Pattern.compile(&quot;/metrics&quot;));
+	}
+
+	...&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first method uses the
+&lt;a href=&quot;https://github.com/opentracing-contrib/java-tracerresolver&quot;&gt;TracerResolver&lt;/a&gt; to provide a vendor
+neutral approach for accessing a &lt;code&gt;Tracer&lt;/code&gt;. This tracer is then enhanced with the metrics capability
+using a &lt;code&gt;PrometheusMetricsReporter&lt;/code&gt;. This metrics reporter is further configured to add a special
+label related to the baggage key &lt;code&gt;transaction&lt;/code&gt; (discussed later).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By default, the Servlet OpenTracing integration will trace all REST endpoints. Therefore in the
+second method above we add an attribute that will inform the instrumentation to ignore the &lt;code&gt;/metrics&lt;/code&gt;
+endpoint. Otherwise we will have tracing data reported each time Prometheus reads the metrics for the
+service.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_deploying_on_kubernetes&quot;&gt;Deploying on Kubernetes&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The steps to set up an environment on Kubernetes is discussed in the
+&lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot;&gt;example codebase&lt;/a&gt;. A summary of the steps is:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Start &lt;a href=&quot;https://kubernetes.io/docs/getting-started-guides/minikube&quot;&gt;minikube&lt;/a&gt;&lt;/p&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;minikube start
+minikube dashboard&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Deploy Prometheus - using the &lt;a href=&quot;https://github.com/coreos/prometheus-operator&quot;&gt;Prometheus Operator&lt;/a&gt; project to
+capture metrics from the services&lt;/p&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;kubectl create -f https://raw.githubusercontent.com/coreos/prometheus-operator/master/bundle.yaml
+
+# Wait until pods are green, then add configuration to locate service monitors based on label &quot;team: frontend&quot;:
+kubectl create -f https://raw.githubusercontent.com/objectiser/opentracing-prometheus-example/master/prometheus-kubernetes.yml
+
+# Wait until these pods are green, then get the URL from the following command and open in browser:
+minikube service prometheus --url&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Deploy &lt;a href=&quot;https://github.com/uber/jaeger&quot;&gt;Jaeger&lt;/a&gt; - an OpenTracing compatible tracing system&lt;/p&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;kubectl create -f https://raw.githubusercontent.com/jaegertracing/jaeger-kubernetes/master/all-in-one/jaeger-all-in-one-template.yml
+
+# Once pods are green, then get the Jaeger dashboard URL from the following command and open in a browser
+minikube service jaeger-all-in-one --url&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;For this article, we also &lt;a href=&quot;https://github.com/kubernetes/charts/tree/master/stable/grafana&quot;&gt;deployed Grafana&lt;/a&gt;
+to display the metrics, although the Prometheus dashboard could be used. Once Grafana is installed:&lt;/p&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Obtain the Prometheus server URL using &lt;code&gt;minikube service prometheus --url&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Configure a new Datasource named &lt;em&gt;Prometheus&lt;/em&gt; of type &lt;code&gt;Prometheus&lt;/code&gt; and specify the URL obtained from the previous command&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Download the example dashboard using the following command and import it into Grafana&lt;/p&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;wget https://raw.githubusercontent.com/objectiser/opentracing-prometheus-example/master/simple/GrafanaDashboard.json&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once they are all running, then the simple example with the two services can be deployed. For this you will need to
+clone the &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot;&gt;example code repo&lt;/a&gt;, and follow
+&lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example/blob/master/simple/README.md&quot;&gt;these instructions&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this stage the Kubernetes dashboard would look like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-kubernetes-dashboard.png&quot; alt=&quot;2017 06 26 kubernetes dashboard&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Kubernetes dashboard&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The example code includes a script that loops, randomly invoking the three REST endpoints provided by
+&lt;em&gt;ordermgr&lt;/em&gt;. Once some example requests have been created, you can view the tracing dashboard:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-traces.png&quot; alt=&quot;2017 06 26 traces&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2: Jaeger tracing dashboard&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Then you can select a specific trace instance and see further details:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-trace.png&quot; alt=&quot;2017 06 26 trace&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 3: Jaeger trace instance view&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This shows that the trace instance has three spans, the first representing the receipt of the &lt;code&gt;/buy&lt;/code&gt; request on
+&lt;em&gt;ordermgr&lt;/em&gt;, the second where &lt;em&gt;ordermgr&lt;/em&gt; is invoking &lt;em&gt;accountmgr&lt;/em&gt;, and finally the &lt;em&gt;accountmgr&lt;/em&gt; receiving the
+&lt;code&gt;/hello&lt;/code&gt; request. In this particular trace instance, the &lt;em&gt;accountmgr&lt;/em&gt; invocation has reported an error, indicated
+by the &lt;code&gt;error=true&lt;/code&gt; tag.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we will look at the Grafana dashboard to see what metrics have been reported from the OpenTracing
+instrumentation within the two services:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-grafana-dashboard.png&quot; alt=&quot;2017 06 26 grafana dashboard&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 4: Grafana dashboard&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This dashboard includes three graphs, the first showing the number of spans created (i.e. span count) by
+our &lt;code&gt;sell()&lt;/code&gt; method, and we can use it to track how many times this business operation has been executed.
+The second showing the average duration of the spans, and third showing the ratio between successful and
+erronous spans.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The metrics reported by Prometheus are based on a range of labels - a metric exists for each unique combination
+of those labels.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The standard labels included with the OpenTracing java-metrics project are: &lt;code&gt;operation&lt;/code&gt;, &lt;code&gt;span.kind&lt;/code&gt; and &lt;code&gt;error&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With this particular example, we also included the &lt;code&gt;transaction&lt;/code&gt; label.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However when the services are deployed to Kubernetes, the following additional labels are included for free: &lt;code&gt;pod&lt;/code&gt;,
+&lt;code&gt;instance&lt;/code&gt;, &lt;code&gt;service&lt;/code&gt;, &lt;code&gt;job&lt;/code&gt; and &lt;code&gt;namespace&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In our example Prometheus queries, we have ignored most of the Kubernetes added labels (except &lt;code&gt;service&lt;/code&gt;) so that
+the metrics are aggregated across the specific pods, namespaces, etc. However, having these labels available means
+it is possible to segment the metrics in whatever way is required to analyse the data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When using the &lt;code&gt;java-metrics&lt;/code&gt; project outside of Kubernetes, it is still possible to include the &lt;code&gt;service&lt;/code&gt;
+label, however you would configure this when setting up the tracer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We can also filter the data, to focus on specific areas of interest:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-06-26-grafana-txn-service.png&quot; alt=&quot;2017 06 26 grafana txn service&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 5: Customized Grafana graph focusing on metrics for transaction &apos;sell&apos; and service &apos;accountmgr&apos;&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this image we have filtered the metrics based on the &lt;code&gt;transaction=&apos;sell&apos;&lt;/code&gt; and &lt;code&gt;service=&apos;accountmgr&apos;&lt;/code&gt;. This is
+where using the metric label based on the baggage item &lt;code&gt;transaction&lt;/code&gt; can be useful, to understand the
+usage of a particular shared service by a business transaction. With further work it would be possible
+to show the distribution of requests for a service across the various business transactions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_video&quot;&gt;Video&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;videoblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;iframe width=&quot;853&quot; height=&quot;480&quot; src=&quot;http://www.hawkular.org/https://www.youtube.com/embed/UAxuo3CWmRE?rel=0&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This article has shown how a service can be instrumented once (using OpenTracing) and generate both
+tracing and application metrics.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When deployed to a Kubernetes environment, the metrics also benefit from an additional set of labels automatically
+added by the infrastructure, describing the service, pod, namespace, etc. This makes it easy to isolate
+specific metrics of interest, or view high level aggregated metrics to gain an overview of your
+applications performance.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing: &lt;a href=&quot;http://opentracing.io&quot; class=&quot;bare&quot;&gt;http://opentracing.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Github repository with demo: &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot; class=&quot;bare&quot;&gt;https://github.com/objectiser/opentracing-prometheus-example&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing java metrics: &lt;a href=&quot;https://github.com/opentracing-contrib/java-metrics&quot; class=&quot;bare&quot;&gt;https://github.com/opentracing-contrib/java-metrics&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Kubernetes: &lt;a href=&quot;https://kubernetes.io&quot; class=&quot;bare&quot;&gt;https://kubernetes.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jaeger: &lt;a href=&quot;https://github.com/uber/jaeger&quot; class=&quot;bare&quot;&gt;https://github.com/uber/jaeger&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Prometheus: &lt;a href=&quot;https://prometheus.io&quot; class=&quot;bare&quot;&gt;https://prometheus.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>OpenTracing Spring Boot Instrumentation</title>
       <link>http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html</link>
