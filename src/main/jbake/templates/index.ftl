@@ -5,17 +5,17 @@
     <section class="main-banner">
         <div class="container">
           <h1 class="fade-in-up one">
-            Open Source Monitoring Components
+            Open Source Monitoring
           </h1>
           <div class="buttons fade-in two">
-            <a class="btn btn-primary btn-lg" href="/overview/">Overview</a>
-            <a class="btn btn-default btn-lg" href="/hawkular-services/docs/quickstart-guide/">Get Started!</a>
+            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">Hawkular Metrics</a>
+            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Hawkular Alerting</a>
           </div>
           <!--p class="version fade-in three"><i class="fa fa-list-ul"></i><span class="latestVersion"/>
           </p-->
         </div>
     </section>
-    <section class="main-features">
+    <section class="main-features hidden">
         <div class="container">
             <h2>Hawkular Features</h2>
             <div class="row">
