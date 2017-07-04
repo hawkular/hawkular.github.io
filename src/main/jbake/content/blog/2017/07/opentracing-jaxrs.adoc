@@ -6,9 +6,11 @@ Pavol Loffay
 :jbake-status: published
 :jbake-tags: blog, apm, tracing, jaeger, opentracing, jax-rs
 
-In the previous http://opentracing.io[demo] we demonstrated how to instrument Spring Boot app using OpenTracing
-a vendor-neutral standard for distributed tracing. In this article we are going to instrument JAX-RS and show
-how to trace business layer and add custom data to the trace.
+In the previous http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html[demo]
+we have demonstrated how to instrument Spring Boot app
+using http://opentracing.io[OpenTracing] a vendor-neutral standard for distributed tracing.
+In this article we are going to instrument JAX-RS and show how to trace business layer and add
+custom data to the trace.
 
 == Demo application
 Creating JAX-RS app from scratch might be a time consuming task, therefore in this case we are going to use
@@ -24,11 +26,11 @@ endif::[]
 The generated application contains one REST endpoint which returns hello world string.
 This endpoint is accessible on `http://localhost:8080/hello`.
 It is sufficient for our demo and in the next step we are going to add instrumentation and simple business logic.
-Do not worry at the bottom of this article are provided all necessary links including source code.
+Do not worry at the bottom of this article are all the necessary links including source code.
 
 == Instrumentation
 To add JAX-RS OpenTracing instrumentation is very simple, just include the following dependency on
-the class path and tracing feature will be automatically registered.
+the classpath and tracing feature will be automatically registered.
 
 ----
 <dependency>
@@ -41,6 +43,7 @@ OpenTracing is just an API, therefore it is required to register a specific trac
 we are going to use https://github.com/uber/jaeger[Jaeger tracing system]. Tracer should be created
 and initialized only once per process, hence `ServletContextListener` is the ideal place for this task:
 
+[source,java]
 ----
 @WebListener
 public class TracingContextListener implements ServletContextListener {
@@ -79,6 +82,7 @@ it's necessary to add custom data to the trace to see what is happening in servi
 
 Following code snippet shows how service layer can create and add data to the trace:
 
+[source,java]
 ----
 public class BackendService {
 
@@ -105,7 +109,7 @@ Note that it's not necessary to manually pass a span instance around. Method `an
 current active span from the tracer. If we inject this class into REST endpoint and call `action` method
 generated trace will have two spans. One representing server request and second business logic.
 In other words span representing server processing is automatically considered as the parent for span created in business layer.
-If we created span `anotherAction` then its parent would be span created in `action` method.
+If we created span in `anotherAction` then its parent would be span created in `action` method.
 
 ifndef::env-github[]
 image::/img/blog/2017/swarm-jaeger.png[caption="Figure 1: ", title="Jaeger showing reported spans."]
