@@ -1,0 +1,132 @@
+= Tracing JAX-RS with OpenTracing
+Pavol Loffay
+2017-7-10
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, apm, tracing, jaeger, opentracing, jax-rs
+
+In the previous http://opentracing.io[demo] we demonstrated how to instrument Spring Boot app using OpenTracing
+a vendor-neutral standard for distributed tracing. In this article we are going to instrument JAX-RS and show
+how to trace business layer and add custom data to the trace.
+
+== Demo application
+Creating JAX-RS app from scratch might be a time consuming task, therefore in this case we are going to use
+Wildfly Swarm and use http://wildfly-swarm.io/generator/[app generator]! Choose JAX-RS and CDI dependencies and hit generate button.
+
+ifndef::env-github[]
+image::/img/blog/2017/wf-swarm-generator.png[caption="Figure 1: ", title="Wildfly Swarm generator."]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/wf-swarm-generator.png[caption="Figure 1: ", title="Wildfly Swarm generator."]
+endif::[]
+
+The generated application contains one REST endpoint which returns hello world string.
+This endpoint is accessible on `http://localhost:8080/hello`.
+It is sufficient for our demo and in the next step we are going to add instrumentation and simple business logic.
+Do not worry at the bottom of this article are provided all necessary links including source code.
+
+== Instrumentation
+To add JAX-RS OpenTracing instrumentation is very simple, just include the following dependency on
+the class path and tracing feature will be automatically registered.
+
+----
+<dependency>
+    <groupId>io.opentracing.contrib</groupId>
+    <artifactId>opentracing-jaxrs2</artifactId>
+</dependency>
+----
+
+OpenTracing is just an API, therefore it is required to register a specific tracer instance. In this demo
+we are going to use https://github.com/uber/jaeger[Jaeger tracing system]. Tracer should be created
+and initialized only once per process, hence `ServletContextListener` is the ideal place for this task:
+
+----
+@WebListener
+public class TracingContextListener implements ServletContextListener {
+
+  @Inject
+  private io.opentracing.Tracer tracer;
+
+  @Override
+  public void contextInitialized(ServletContextEvent sce) {
+    GlobalTracer.register(jaegerServer());
+  }
+
+  @Override
+  public void contextDestroyed(ServletContextEvent sce) {}
+
+  @Produces
+  @Singleton
+  public static io.opentracing.Tracer jaegerTracer() {
+    return new Configuration("wildfly-swarm", new Configuration.SamplerConfiguration(
+        ProbabilisticSampler.TYPE, 1),
+        new Configuration.ReporterConfiguration())
+        .getTracer();
+  }
+}
+----
+
+As you noticed we are using CDI to share a tracer instance in our app. If we forgot to register
+specific tracer instance then tracing feature would use `NoopTracer`. Now we can verify tracing
+by starting Jaeger server `docker run --rm -it --network=host jaegertracing/all-in-one` and
+hitting hello endpoint. Trace with one span should be present in the UI
+accessible on `http://localhost:16686`.
+
+== Instrumenting business logic
+JAX-RS instrumentation provides out of the box a nice visibility into your app, however, often
+it's necessary to add custom data to the trace to see what is happening in service or database layer.
+
+Following code snippet shows how service layer can create and add data to the trace:
+
+----
+public class BackendService {
+
+  @Inject
+  private io.opentracing.Tracer tracer;
+
+  public String action() throws InterruptedException {
+    int random = new Random().nextInt(200);
+
+    try (ActiveSpan span = tracer.buildSpan("action").startActive()) {
+      anotherAction();
+      Thread.sleep(random);
+    }
+
+    return String.valueOf(random);
+  }
+
+  private void anotherAction() {
+    tracer.activeSpan().setTag("anotherAction", "data");
+  }
+----
+
+Note that it's not necessary to manually pass a span instance around. Method `anotherAction` access
+current active span from the tracer. If we inject this class into REST endpoint and call `action` method
+generated trace will have two spans. One representing server request and second business logic.
+In other words span representing server processing is automatically considered as the parent for span created in business layer.
+If we created span `anotherAction` then its parent would be span created in `action` method.
+
+ifndef::env-github[]
+image::/img/blog/2017/swarm-jaeger.png[caption="Figure 1: ", title="Jaeger showing reported spans."]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/swarm-jaeger.png[caption="Figure 1: ", title="Jaeger showing reported spans."]
+endif::[]
+
+== Video
+video::gVwLenPH8SY[youtube, width=853, height=480]
+
+== Conclusion
+We have demonstrated that instrumenting JAX-RS app is just a matter of adding a dependency
+and registering a tracer instance. If we would like to use a different OpenTracing implementation,
+Zipkin for instance, it would just require changing tracer producer code. No changes to the application or
+business logic! In the next demo we will wire this app with Spring Boot created
+in previous demo and deploy them on Kubernetes.
+
+== Links
+* OpenTracing: http://opentracing.io
+* Github repository with demo: https://github.com/pavolloffay/opentracing-java-examples
+* OpenTracing Spring Boot instrumentation: https://github.com/opentracing-contrib/java-jaxrs
+* Jaeger: https://github.com/uber/jaeger
+
