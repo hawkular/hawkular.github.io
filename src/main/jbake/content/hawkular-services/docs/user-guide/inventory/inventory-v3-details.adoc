@@ -99,8 +99,28 @@ and in Ruby (link:https://github.com/hawkular/hawkular-client-ruby/blob/master/l
 
 Following serialization algorithm in the reverse order, we get:
 
-- Do some query on `@post hawkular/metrics/strings/raw/query` with `fromEarliest=true`, `order=DESC` and the real query parameters are in `tags`, as seen above. The response is an array of metrics, each containing an array of datapoints (see curl examples above).
-- For each metric:
+- Do some query on `@post hawkular/metrics/strings/raw/query` with `fromEarliest=true`, `order=DESC` and the real query parameters are in `tags`, as seen above.
+The response is an array of metrics, each containing an array of datapoints.
+
+Example of a query that would return two resources; the first is chunked, the second isn't:
+```json
+[{
+  "id":"<first id>",
+  "data":[
+    {"timestamp":123456789,"value":"<compressed_data_chunk_1>","tags":{"chunks":"<number of chunks>","size":"total_size_of_chunks_in_bytes"}},
+    {"timestamp":123456788,"value":"<compressed_data_chunk_2>"},
+    {"timestamp":123456787,"value":"<compressed_data_chunk_3>"},
+    // etc.
+  ]
+},{
+  "id":"<second id>",
+  "data":[
+    {"timestamp":123456789,"value":"<compressed_data_without_chunk>"}
+  ]
+}]
+```
+
+- For each returned item `response[i].data`:
 	* Take the first datapoint, get its tag `chunks` if any; if there isn't we can consider there's 1 chunk.
 	* Note that it is important to rely on that datapoint tag and not read every datapoints, because if the resource has been updated you would get more datapoints than necessary.
 	* If the language allows, we can pre-allocate a byte array: the tag `size` gives the total byte size.
