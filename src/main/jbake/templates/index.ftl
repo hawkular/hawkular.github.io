@@ -8,8 +8,8 @@
             Open Source Monitoring
           </h1>
           <div class="buttons fade-in two">
-            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">Hawkular Metrics</a>
-            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Hawkular Alerting</a>
+            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">Metrics</a>
+            <a class="btn btn-primary btn-lg" href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Alerting</a>
           </div>
           <!--p class="version fade-in three"><i class="fa fa-list-ul"></i><span class="latestVersion"/>
           </p-->
