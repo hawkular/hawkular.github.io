@@ -6,9 +6,205 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 28 Jun 2017 11:37:12 +0000</pubDate>
-    <lastBuildDate>Wed, 28 Jun 2017 11:37:12 +0000</lastBuildDate>
+    <pubDate>Fri, 7 Jul 2017 08:37:28 +0000</pubDate>
+    <lastBuildDate>Fri, 7 Jul 2017 08:37:28 +0000</lastBuildDate>
 
+    <item>
+      <title>OpenTracing JAX-RS Instrumentation</title>
+      <link>http://www.hawkular.org/blog/2017/07/opentracing-jaxrs.html</link>
+      <author>noreply@hawkular.org (Pavol Loffay)</author>
+      <pubDate>Mon, 10 Jul 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/07/opentracing-jaxrs.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the previous &lt;a href=&quot;http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html&quot;&gt;demo&lt;/a&gt;
+we have demonstrated how to instrument a Spring Boot app
+using &lt;a href=&quot;http://opentracing.io&quot;&gt;OpenTracing&lt;/a&gt;, a vendor-neutral standard for distributed tracing.
+In this article we are going to instrument a Java API for RESTful Web Services (JAX-RS), and show
+you how to trace the business layer and add custom data to the trace.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_demo_application&quot;&gt;Demo application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Creating a JAX-RS app from scratch can be a time consuming task, therefore in this case we are going to use
+Wildfly Swarm&amp;#8217;s &lt;a href=&quot;http://wildfly-swarm.io/generator/&quot;&gt;app generator&lt;/a&gt;.
+Select JAX-RS and CDI dependencies and hit generate button.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/wf-swarm-generator.png&quot; alt=&quot;wf swarm generator&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Wildfly Swarm generator.&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The generated application contains one REST endpoint which returns hello world string.
+This endpoint is accessible on &lt;code&gt;&lt;a href=&quot;http://localhost:8080/hello&quot; class=&quot;bare&quot;&gt;http://localhost:8080/hello&lt;/a&gt;&lt;/code&gt;.
+In the next step we are going to add instrumentation and simple business logic.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_instrumentation&quot;&gt;Instrumentation&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Adding OpenTracing instrumentation to JAX-RS is very simple, just include the following dependency in
+the classpath and the tracing feature will be automatically registered.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;&amp;lt;dependency&amp;gt;
+    &amp;lt;groupId&amp;gt;io.opentracing.contrib&amp;lt;/groupId&amp;gt;
+    &amp;lt;artifactId&amp;gt;opentracing-jaxrs2&amp;lt;/artifactId&amp;gt;
+&amp;lt;/dependency&amp;gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;OpenTracing is just an API, therefore it is required to register a specific tracer instance. In this demo
+we are going to use &lt;a href=&quot;https://github.com/uber/jaeger&quot;&gt;Jaeger tracing system&lt;/a&gt;. The tracer should be created
+and initialized only once per process, hence &lt;code&gt;ServletContextListener&lt;/code&gt; is the ideal place for this task:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;@WebListener
+public class TracingContextListener implements ServletContextListener {
+
+  @Inject
+  private io.opentracing.Tracer tracer;
+
+  @Override
+  public void contextInitialized(ServletContextEvent sce) {
+    GlobalTracer.register(tracer);
+  }
+
+  @Override
+  public void contextDestroyed(ServletContextEvent sce) {}
+
+  @Produces
+  @Singleton
+  public static io.opentracing.Tracer jaegerTracer() {
+    return new Configuration(&quot;wildfly-swarm&quot;, new Configuration.SamplerConfiguration(
+        ProbabilisticSampler.TYPE, 1),
+        new Configuration.ReporterConfiguration())
+        .getTracer();
+  }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Tracer initialization code requires to specify app name, which is in this case &lt;code&gt;wildfly-swarm&lt;/code&gt; and
+sampler configuration.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that we are suing Java&amp;#8217;s Context and Dependency Injection (CDI) to share a tracer instance in our app.
+If we forget to register a specific tracer instance, then the tracing feature would use &lt;code&gt;NoopTracer&lt;/code&gt;.
+Now we can verify tracing by starting Jaeger server using the following command:
+&lt;code&gt;docker run --rm -it --network=host jaegertracing/all-in-one&lt;/code&gt; and accessing the endpoint at
+&lt;code&gt;&lt;a href=&quot;http://localhost:8080/hello&quot; class=&quot;bare&quot;&gt;http://localhost:8080/hello&lt;/a&gt;&lt;/code&gt;. Our trace with one span should be present in the UI at
+&lt;code&gt;&lt;a href=&quot;http://localhost:16686&quot; class=&quot;bare&quot;&gt;http://localhost:16686&lt;/a&gt;&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_instrumenting_business_logic&quot;&gt;Instrumenting business logic&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;JAX-RS instrumentation provides nice visibility into your app, however, it is often
+necessary to add custom data to the trace to see what is happening in the service or database layer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following code snippet shows how the service layer can create and add data to the trace:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;public class BackendService {
+
+  @Inject
+  private io.opentracing.Tracer tracer;
+
+  public String action() throws InterruptedException {
+    int random = new Random().nextInt(200);
+
+    try (ActiveSpan span = tracer.buildSpan(&quot;action&quot;).startActive()) {
+      anotherAction();
+      Thread.sleep(random);
+    }
+
+    return String.valueOf(random);
+  }
+
+  private void anotherAction() {
+    tracer.activeSpan().setTag(&quot;anotherAction&quot;, &quot;data&quot;);
+  }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that it&amp;#8217;s not necessary to manually pass a span instance around. The method &lt;code&gt;anotherAction&lt;/code&gt; accesses
+the current active span from the tracer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With the additional instrumentation shown above, an invocation of the REST endpoint would result in
+a trace consisting of two spans, one representing the inbound server request, and the other the business logic.
+The span representing server processing is automatically considered as the parent for span created in business layer.
+If we created span in &lt;code&gt;anotherAction&lt;/code&gt; then its parent would be span created in &lt;code&gt;action&lt;/code&gt; method.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/swarm-jaeger.png&quot; alt=&quot;swarm jaeger&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Jaeger showing reported spans.&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_video&quot;&gt;Video&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;videoblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;iframe width=&quot;853&quot; height=&quot;480&quot; src=&quot;http://www.hawkular.org/https://www.youtube.com/embed/gVwLenPH8SY?rel=0&quot; frameborder=&quot;0&quot; allowfullscreen&gt;&lt;/iframe&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We have demonstrated that instrumenting a JAX-RS app is just a matter of adding a dependency
+and registering a tracer instance. If we would like to use a different OpenTracing implementation,
+Zipkin for instance, it would just require changing tracer producer code. No changes to the application or
+business logic! In the next demo we will wire this app with Spring Boot created
+in previous demo and deploy them on Kubernetes.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing: &lt;a href=&quot;http://opentracing.io&quot; class=&quot;bare&quot;&gt;http://opentracing.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Github repository with demo: &lt;a href=&quot;https://github.com/pavolloffay/opentracing-java-examples&quot; class=&quot;bare&quot;&gt;https://github.com/pavolloffay/opentracing-java-examples&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing JAX-RS instrumentation: &lt;a href=&quot;https://github.com/opentracing-contrib/java-jaxrs&quot; class=&quot;bare&quot;&gt;https://github.com/opentracing-contrib/java-jaxrs&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jaeger: &lt;a href=&quot;https://github.com/uber/jaeger&quot; class=&quot;bare&quot;&gt;https://github.com/uber/jaeger&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Using OpenTracing to collect Application Metrics in Kubernetes</title>
       <link>http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html</link>
