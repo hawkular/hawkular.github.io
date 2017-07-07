@@ -14,7 +14,6 @@
             <!-- Collect the nav links, forms, and other content for toggling -->
             <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
               <ul class="nav navbar-nav">
-                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog.html">Blog</a></li>
                 <li class="dropdown">
                   <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                     Hawkular Metrics<span class="caret"></span>
@@ -63,41 +62,44 @@
                     </li>
                   </ul>
                 </li>
-                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/">Hawkular Clients</a></li>
-                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
-                  Community
-                  <span class="caret"></span>
-                </a>
-                <ul class="dropdown-menu" role="menu">
-                  <li>
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/getting-involved/">Getting Involved</a>
-                  </li>
-                  <li class="menu-item ">
-                    <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/">Developer Guide</a>
-                  </li>
-                  <li class="menu-item dropdown dropdown-submenu">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
-                      <ul class="dropdown-menu">
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/labs/datamining/">Datamining</a>
-                        </li>
-                        <li class="menu-item ">
-                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
-                        </li>
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/android-client/">Android client</a>
-                        </li>
-                        <li class="menu-item ">
-                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
-                        </li>
-                      </ul>
-                  </li>
-                  <li>
-                    <a href="https://github.com/hawkular">GitHub Repositories</a>
-                  <li>
-                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
-                  </li>
-                </ul></li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/">Integrations</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Community
+                    <span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/getting-involved/">Getting Involved</a>
+                    </li>
+                    <li class="menu-item ">
+                      <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/">Developer Guide</a>
+                    </li>
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                        <ul class="dropdown-menu">
+                          <li class="menu-item ">
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/labs/datamining/">Datamining</a>
+                          </li>
+                          <li class="menu-item ">
+                            <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                          </li>
+                          <li class="menu-item ">
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/android-client/">Android client</a>
+                          </li>
+                          <li class="menu-item ">
+                            <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                          </li>
+                        </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular">GitHub Repositories</a>
+                    <li>
+                      <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>blog.html">Blog</a></li>
               </ul>
             </div>
           </div>
