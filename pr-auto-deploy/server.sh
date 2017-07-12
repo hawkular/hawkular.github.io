@@ -19,7 +19,11 @@
 set -x
 
 export BASE_PORT="10000"
-export LOCAL_IP="209.132.178.114"
+# old ip (hosted by public OS1)
+#export LOCAL_IP="209.132.178.114"
+
+#new IP (hosted by www.homeatcloud.com)
+export LOCAL_IP="194.213.36.24"
 export DAYS_AVAILABLE="4"
 
 deployPr() {
@@ -30,7 +34,7 @@ deployPr() {
   }
   _base="/tmp/pr$prNo"
   kill -9 `cat $_base/pid`; rm -Rf $_base &> /dev/null ; mkdir -p $_base && cd $_ &&\
-  git clone --single-branch -b pages https://github.com/hawkular/hawkular.github.io &&\
+  git clone --single-branch -b pages --depth 1 https://github.com/hawkular/hawkular.github.io &&\
   cd $_base/hawkular.github.io &&\
   git fetch origin refs/pull/$prNo/head:pr$prNo &&\
   git checkout pr$prNo
@@ -41,7 +45,7 @@ deployPr() {
   PID=$!
   echo $PID > $_base/pid
   echo "kill -9 $PID" | at now + $[DAYS_AVAILABLE*24] hours
-  curl -i -XPOST -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/hawkular/hawkular.github.io/issues/$prNo/comments -d '{"body":"PR was auto-deployed here: http://'$LOCAL_IP':'$_actual_port' and it will be available for '$DAYS_AVAILABLE' days."}' 1>&2
+  curl -i -XPOST -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/hawkular/hawkular.github.io/issues/$prNo/comments -d '{"body":"PR was auto-deployed here: http://'$LOCAL_IP':'$_actual_port' and it will be available for '$DAYS_AVAILABLE' days :balloon:"}' 1>&2
 }
 
 handleReq() {
@@ -56,6 +60,7 @@ handleReq() {
       #echo -e "<br>it'll be shortly available on port "`expr $prNo + $BASE_PORT`
       #echo -e "<br>the instance will be auto-killed after 3 days"
       deployPr $prNo
+      exit
     }
     #echo -e "</html>"
   #else
@@ -68,4 +73,4 @@ typeset -fx handleReq
 typeset -fx deployPr
 
 echo "listening for requests on port $BASE_PORT.."
-nc -w4m -lp $BASE_PORT -c handleReq
+nc -w4m -lkp $BASE_PORT -c handleReq
