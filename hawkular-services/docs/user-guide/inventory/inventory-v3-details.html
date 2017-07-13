@@ -409,10 +409,36 @@ and in Ruby (<a href="https://github.com/hawkular/hawkular-client-ruby/blob/mast
 <div class="ulist">
 <ul>
 <li>
-<p>Do some query on <code>@post hawkular/metrics/strings/raw/query</code> with <code>fromEarliest=true</code>, <code>order=DESC</code> and the real query parameters are in <code>tags</code>, as seen above. The response is an array of metrics, each containing an array of datapoints (see curl examples above).</p>
+<p>Do some query on <code>@post hawkular/metrics/strings/raw/query</code> with <code>fromEarliest=true</code>, <code>order=DESC</code> and the real query parameters are in <code>tags</code>, as seen above.
+The response is an array of metrics, each containing an array of datapoints.</p>
 </li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Example of a query that would return two resources; the first is chunked, the second isn&#8217;t:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">[{
+  "id":"&lt;first id&gt;",
+  "data":[
+    {"timestamp":123456789,"value":"&lt;compressed_data_chunk_1&gt;","tags":{"chunks":"&lt;number of chunks&gt;","size":"total_size_of_chunks_in_bytes"}},
+    {"timestamp":123456788,"value":"&lt;compressed_data_chunk_2&gt;"},
+    {"timestamp":123456787,"value":"&lt;compressed_data_chunk_3&gt;"},
+    // etc.
+  ]
+},{
+  "id":"&lt;second id&gt;",
+  "data":[
+    {"timestamp":123456789,"value":"&lt;compressed_data_without_chunk&gt;"}
+  ]
+}]</code></pre>
+</div>
+</div>
+<div class="ulist">
+<ul>
 <li>
-<p>For each metric:</p>
+<p>For each returned item <code>response[i].data</code>:</p>
 <div class="ulist">
 <ul>
 <li>
