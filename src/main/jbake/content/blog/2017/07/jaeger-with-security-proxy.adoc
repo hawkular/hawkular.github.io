@@ -1,0 +1,251 @@
+= Protecting Jaeger UI with a sidecar security proxy
+Juraci Paixão Kröhling
+2017-07-18
+:icons: font
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, apm, tracing, jaeger, opentracing
+
+In a production deployment of Jaeger, it may be advantageous to restrict access to Jaeger's Query
+service, which includes the UI. For instance, you might have internal security requirements to allow
+only certain groups to access trace data, or you might have deployed Jaeger into a public cloud.
+In a true microservices way, one possible approach is to add a sidecar to the Jaeger Query service,
+acting as a security proxy. Incoming requests hit our sidecar instead of reaching Jaeger's Query service
+directly and the sidecar would be responsible for enforcing the authentication and authorization constraints.
+
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-18-teaser.png[Jaeger login screen]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/2017-07-18-teaser.png[Jaeger login screen]
+endif::[]
+
+Incoming HTTP requests arrive at the route ①, which uses the internal service ② to resolve and communicate
+with the security proxy ③. Once the request is validated and all security constraints are satisfied, the
+request reaches Jaeger ④.
+
+For demonstration purposes we'll make use of link:http://keycloak.org[Keycloak] as our security solution, but
+the idea can be adapted to work with any security proxy. This demo should also work without changes with
+link:https://access.redhat.com/products/red-hat-single-sign-on[Red Hat SSO]. For this exercise, we'll need:
+
+* A Keycloak (or Red Hat SSO) server instance running. We'll call its location `${REDHAT_SSO_URL}`
+* An OpenShift cluster, where we'll run Jaeger backend components. It might be as easy as `oc cluster up`
+* A local clone of the link:https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml[Jaeger OpenShift Production template]
+
+Note that we are not trying to secure the communication between the components, like from the Agent to the Collector.
+For this scenario, there are other techniques that can be used, such as mutual authentication via certificates, employing
+link:https://istio.io/[istio] or other similar tools.
+
+=== Preparing Keycloak
+
+For this demo, we'll run Keycloak via Docker directly on the host machine. This is to stress that Keycloak
+does *not* need to be running on the same OpenShift cluster as our Jaeger backend. 
+
+The following command should start an appropriate Keycloak server locally. If you already have your
+own Keycloak or Red Hat SSO server, skip this step.
+
+```bash
+docker run --rm --name keycloak-server -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password -p 8080:8080 jboss/keycloak
+```
+
+Once the Keycloak server is up and running, let's create a realm for Jaeger:
+
+1. Login into Keycloak (http://<YOUR_IP>:8080/auth/admin/master/console) with `admin` as username and `password` as password
+1. In the top left corner, mouse over the `Select realm` box and click `Add realm`. Name it `jaeger` and click `Create`
+1. On `Clients`, click `Create` and set `proxy-jaeger` as the name and save it
+1. Set the `Access Type` to `confidential` and `*` as `Valid Redirect URIs` and save it. You might want to fine tune this in a
+production environment, otherwise you might be open to an attack known as
+link:https://www.owasp.org/index.php/Unvalidated_Redirects_and_Forwards_Cheat_Sheet["Unvalidated Redirects and Forwards"].
+1. Open the `Installation` tab and select `Keycloak OIDC JSON` and copy the JSON that is shown. It should look like this,
+but the `auth-server-url` and `secret` will have different values.
+
+```json
+{
+  "realm": "jaeger",
+  "auth-server-url": "http://192.168.2.111:8080/auth",
+  "ssl-required": "external",
+  "resource": "proxy-jaeger",
+  "credentials": {
+    "secret": "7f201319-1dfd-43cc-9838-057dac439046"
+  }
+}
+```
+
+And finally, let's create a role and a user, so that we can log into Jaeger's Query service:
+
+1. Under the `Configure` left-side menu, open the `Roles` page and click `Add role`
+1. As role name, set `user` and click `Save`
+1. Under the `Manage` left-side menu, open the `Users` page and click `Add user`
+1. Fill out the form as you wish and set `Email verified` to `ON` and click on `Save`
+1. Open the `Credentials` tab for this user and set a password (temporary or not).
+1. Open the `Role mappings` tab for this user, select the role `user` from the `Available Roles` list and click `Add selected`
+
+=== Preparing OpenShift
+
+For this demo, we assume you have an OpenShift cluster running already. If you don't, then you might want to check out tools
+like link:https://github.com/minishift/minishift[`minishift`]. If you are running a recent version of Fedora, CentOS or
+Red Hat Enterprise Linux you might want to install the package `origin-clients` and run `oc cluster up --version=latest`.
+This should get you a basic OpenShift cluster running locally.
+
+To make it easier for our demonstration, we'll add `cluster-admin` rights to our `developer` user and we'll create 
+the Jaeger namespace:
+
+```bash
+oc login -u system:admin
+oc new-project jaeger
+oc adm policy add-cluster-role-to-user cluster-admin developer -n jaeger
+oc login -u developer
+```
+
+=== Preparing the Jaeger OpenShift template
+
+We'll use the link:https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml[Jaeger OpenShift Production template]
+as the starting point: either clone the entire repository, or just get a local version of the template.
+
+The first step is to add the sidecar container to the `query-deployment` object. Under the `containers` list, after we
+specify the `jaeger-query`, let's add the sidecar:
+
+```yml
+        - image: jboss/keycloak-proxy
+          name: ${JAEGER_SERVICE_NAME}-query-security-proxy
+          volumeMounts:
+          - mountPath: /opt/jboss/conf
+            name: security-proxy-configuration-volume
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/"
+              port: 8080
+```
+
+Note that container specifies a `volumeMount` named `security-proxy-configuration-volume`: we'll use it to store the
+proxy's configuration file. You should add the volume under the `spec/template/spec` node for `query-deployment`, sibling to
+the `dnsPolicy` property (it's probably right under the previous code snippet):
+
+```yml
+        volumes:
+          - configMap:
+              name: ${JAEGER_SERVICE_NAME}-configuration
+              items:
+                - key: proxy
+                  path: proxy.json
+            name: security-proxy-configuration-volume
+```
+
+Now, we need to specify the `ConfigMap`, with the proxy's configuration entry. To do that, we add a new top-level item to
+the template. As a suggestion, we recommend keeping it close to where it's consumed. For instance, right before the `query-deployment`:
+
+```yml
+- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-configuration
+    labels:
+      app: jaeger
+      jaeger-infra: security-proxy-configuration
+  data:
+    proxy: |
+      {
+          "target-url": "http://localhost:16686",
+          "bind-address": "0.0.0.0",
+          "http-port": "8080",
+          "applications": [
+              {
+                  "base-path": "/",
+                  "adapter-config": {
+                    "realm": "jaeger",
+                    "auth-server-url": "${REDHAT_SSO_URL}",
+                    "ssl-required": "external",
+                    "resource": "proxy-jaeger",
+                    "credentials": {
+                      "secret": "THE-SECRET-FROM-INSTALLATION-FILE"
+                    }
+                  }
+            ,
+            "constraints": [
+                      {
+                          "pattern": "/*",
+                          "roles-allowed": [
+                              "user"
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }
+```
+
+Note that we are only allowing users with the role `user` to log into our Jaeger UI. In a real world scenario, you might
+want to adjust this to fit your setup. For instance, your user data might come from LDAP, and you only want to allow users 
+from specific LDAP groups to access the Jaeger UI.
+
+The `secret` within the `credentials` should match the secret we got from Keycloak at the beginning of this exercise. Our
+most curious readers will note that we mentioned the template parameter `REDHAT_SSO_URL` under the property `auth-server-url`.
+Either change that to your Keycloak server, or let's specify a template parameter, allowing us to set this at deployment time.
+Under the `parameters` section of the template, add the following property:
+
+```yml
+- description: The URL to the Red Hat SSO / Keycloak server
+  displayName: Red Hat SSO URL
+  name: REDHAT_SSO_URL
+  required: true
+  value: http://THE-URL-FROM-THE-INSTALLATION-FILE:8080/auth
+```
+
+WARNING: This value should be a location that is reacheable by both your browser and by the sidecar, like your host's LAN IP (192.x, 10.x).
+Localhost/127.x is not going to work.
+
+As a final step, we need to change the service to direct requests to the port `8080` (proxy) instead of `16686`. This is done
+by changing the property `targetPort` on the service named `query-service`, setting it to `8080`:
+
+```yml
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-query
+    labels:
+      app: jaeger
+      jaeger-infra: query-service
+  spec:
+    ports:
+    - name: jaeger-query
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      jaeger-infra: query-pod
+    type: LoadBalancer
+```
+As a reference, here's the link:https://github.com/jaegertracing/jaeger-openshift/blob/KeycloakSecuringUI/production/jaeger-production-template.yml[complete template file]
+that can be used for this blog post.
+
+=== Deploying
+
+Now that we have everything ready, let's deploy Jaeger into our OpenShift cluster. Run the following command from the same
+directory you stored the `YAML` file from the previous steps, referenced here by the name `jaeger-production-template.yml`:
+
+```bash
+oc process -f jaeger-production-template.yml | oc create -n jaeger -f -
+```
+
+During the first couple of minutes, it's OK if the pods `jaeger-query` and `jaeger-collector` fail, as Cassandra will still
+be booting. Eventually, the service should be up and running, as shown in the following image.
+
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-18-pod.png[Pod with sidecar on OpenShift]
+endif::[]
+ifdef::env-github[]
+image::../../../../../assets/img/blog/2017/2017-07-18-pod.png[Pod with sidecar on OpenShift]
+endif::[]
+
+Once it is ready to serve requests, click on URL for the route (https://jaeger-query-jaeger.127.0.0.1.nip.io). You should be
+presented with a login screen, served by the Keycloak server. Login with the credentials you set on the previous steps, and you
+should reach the regular Jaeger UI.
+
+=== Conclusion
+
+In this exercise, we've seen how to add a security proxy to our Jaeger Query pod as a sidecar. All incoming requests go through
+this sidecar and all features available in Keycloak can be used transparently, such as 2-Factor authentication, service accounts,
+single sign-on, brute force attack protection, LDAP support and much more.
