@@ -1,0 +1,177 @@
+= Grafana: new query interface
+Joel Takvorian
+2017-07-20
+:jbake-type: post
+:jbake-status: published
+:jbake-tags: blog, metrics, grafana
+:figure-caption!:
+
+There has been several improvements lately in our Hawkular Grafana datasource, that is worth writing some words about.
+
+First, the way to query metrics by tags has changed since plugin link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.8[v1.0.8].
+It now takes advantage of the Hawkular Metrics' tags query language,
+that was introduced server-side in link:http://www.hawkular.org/blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html[Metrics 0.24.0]
+and enhanced in link:http://www.hawkular.org/blog/2017/03/07/hawkular-metrics-0.25.0.Final-released.html[0.25.0].
+To sum it up, Metrics integrates a parser that allows queries such as:
+`tag1 = 'awesome!' AND tag2 NOT IN ['foo', 'bar']`.
+
+Secondly, the datasource in now able to fetch bucketized metrics stats, instead of raw metrics. Hawkular has always been able to provide them server-side,
+but having it used in the Grafana plugin is new, introduced in link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.9[v1.0.9].
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-empty-query.png[New query interface]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-empty-query.png[New query interface]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-empty-query.png[New query interface]
+
+[.text-center]
+_The new query interface_
+
+=== Tags query language
+
+The first change is that you don't have to choose between _query by tag_ and _query by metric id_ anymore.
+You can mix them, _ie._ start querying by tag and that will refine the available list of metric names, acting as a filter.
+Once you've set up your tags query, you can either leave it as is and that would eventually show several metrics in chart,
+or select a single metric to display. This filtering is really nice when there's tons of metrics available, like in the case of
+hundreds of OpenShift pods being monitored with the same tenant.
+
+The simple _key/value_ pairs interface is now replaced with a more elaborated query builder, following the pattern:
+_'tag-key'_ _'operator'_ _'tag-value(s)'_ [_'AND/OR'_ etc.]
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-tag_key.png[Selecting tag key]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_key.png[Selecting tag key]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_key.png[Selecting tag key]
+
+[.text-center]
+_Selecting the tag key_
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-tag_operator.png[Selecting tag operator]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_operator.png[Selecting tag operator]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_operator.png[Selecting tag operator]
+
+[.text-center]
+_Selecting the tag operator_
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-tag_value.png[Selecting tag value]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_value.png[Selecting tag value]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag_value.png[Selecting tag value]
+
+[.text-center]
+_Selecting the tag value_
+
+All these selections are facilitated with dynamic suggestions, but you can still use Grafana template variables within tag values, the text field allows free typing.
+Once you've set up a tag query expression, the relevant metrics immediately show up on the chart and the list of available metrics in the dropdown list in updated.
+
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-tag-filtering.png[Filtered metrics]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag-filtering.png[Filtered metrics]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-tag-filtering.png[Filtered metrics]
+
+[.text-center]
+_Filtered metrics_
+
+This query builder should allow you to build almost any tag query that the Hawkular server understands.
+There's however some corner cases. For now, this builder doesn't allow to prioritize expressions with parenthesis.
+For instance, you cannot build `c1 = 'foo' OR (b1 != 'B' AND a1 = 'abcd')`. Fortunately, you can turn off the query builder and directly
+type in query expression:
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-editor-mode.png[Toggle editor mode]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-editor-mode.png[Toggle editor mode]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-editor-mode.png[Toggle editor mode]
+
+[.text-center]
+_Toggle editor mode_
+
+It will be sent as is to the Hawkular Metrics server.
+This will also be useful to fill the gap if the language evolves server-side and this plugin isn't updated immediately.
+
+=== Stats query
+
+The other important feature is the ability to run _stats_ queries against Hawkular Metrics, instead of _raw_ queries. There's several reasons to do that:
+
+- it reduces the network load, and client-side processing load, especially when raw data would contain tons of datapoints
+- it enables some aggregation methods
+- it also allows higher-level analysis with stats such as percentiles
+
+To enable it, just untick the _raw_ checkbox.
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-stats-mode.png[Toggle stats mode]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-mode.png[Toggle stats mode]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-mode.png[Toggle stats mode]
+
+[.text-center]
+_Toggle stats mode_
+
+Here you can set up _Multiple series aggregation_ to _None_, _Sum_ or _Average_, and _Stat type_ as a list of statistics among
+_avg_, _min_, _max_, _median_, _sum_ and different percentiles. You can display several of them within the same query.
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-stats-none.png[Stats without aggregation]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-none.png[Stats without aggregation]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-none.png[Stats without aggregation]
+
+[.text-center]
+_Stats without aggregation_
+
+
+[.text-center]
+ifndef::env-github[]
+image::/img/blog/2017/2017-07-20-grafana-stats-avg.png[Stats avg]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-avg.png[Stats avg]
+endif::[]
+image::../../../../assets/img/blog/2017/2017-07-20-grafana-stats-avg.png[Stats avg]
+
+[.text-center]
+_Same query with series aggregation average_
+
+If the query returns multiple series, use _Multiple series aggregation_ to define if and how to aggregate them.
+_None_ will show them individually on the chart. But consider for instance the case of an OpenShift pod with many replicas, and you're tracking their memory usage.
+It may be more relevant here to aggregate all of them, both _sum_ and _average_ are meaningful here.
+
+The _Stat type_ option refers to an aggregation at a different level: not between multiple metrics, but within a single metric,
+all raw datapoints are aggregated within time buckets.
+
+'''
+
+These two improvements aim a common goal, that is facilitating querying over large amount of data. This is becoming crucial especially
+in the context of microservices and applications running on container platforms, as the number of metrics explodes.
+Proper metrics tagging is the corner stone to make sense of this data.
