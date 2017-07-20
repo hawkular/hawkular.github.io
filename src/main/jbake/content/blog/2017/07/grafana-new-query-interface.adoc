@@ -6,17 +6,20 @@ Joel Takvorian
 :jbake-tags: blog, metrics, grafana
 :figure-caption!:
 
-There has been several improvements lately in our Hawkular Grafana datasource, that is worth writing some words about.
+There has been improvements lately in our Hawkular Grafana datasource, that are worth mentioning.
 
-First, the way to query metrics by tags has changed since plugin link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.8[v1.0.8].
+- The way to query metrics by tags has changed since plugin link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.8[v1.0.8].
 It now takes advantage of the Hawkular Metrics' tags query language,
 that was introduced server-side in link:http://www.hawkular.org/blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html[Metrics 0.24.0]
 and enhanced in link:http://www.hawkular.org/blog/2017/03/07/hawkular-metrics-0.25.0.Final-released.html[0.25.0].
 To sum it up, Metrics integrates a parser that allows queries such as:
 `tag1 = 'awesome!' AND tag2 NOT IN ['foo', 'bar']`.
 
-Secondly, the datasource in now able to fetch bucketized metrics stats, instead of raw metrics. Hawkular has always been able to provide them server-side,
-but having it used in the Grafana plugin is new, introduced in link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.9[v1.0.9].
+- The datasource in now able to fetch bucketized metrics stats, instead of raw metrics.
+It consists in aggregating datapoints in slices of time (buckets) and providing, for each slice, some statistics like _min_, _max_, _average_ and more.
+The exact content of a bucket is described in link:http://www.hawkular.org/docs/rest/rest-metrics.html#NumericBucketPoint[Metrics REST API].
+Hawkular has always been able to provide them server-side,
+but being able to use them in the Grafana plugin is new, introduced in link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.9[v1.0.9].
 
 [.text-center]
 ifndef::env-github[]
@@ -39,6 +42,8 @@ hundreds of OpenShift pods being monitored with the same tenant.
 
 The simple _key/value_ pairs interface is now replaced with a more elaborated query builder, following the pattern:
 _'tag-key'_ _'operator'_ _'tag-value(s)'_ [_'AND/OR'_ etc.]
+
+The following images show a walk-through:
 
 [.text-center]
 ifndef::env-github[]
@@ -109,7 +114,8 @@ This will also be useful to fill the gap if the language evolves server-side and
 
 === Stats query
 
-The other important feature is the ability to run _stats_ queries against Hawkular Metrics, instead of _raw_ queries. There's several reasons to do that:
+The other important feature is the ability to run link:http://www.hawkular.org/docs/rest/rest-metrics.html#NumericBucketPoint[_stats_] queries against Hawkular Metrics, instead of link:http://www.hawkular.org/docs/rest/rest-metrics.html#DataPoint[_raw_] queries.
+There's several reasons to do that:
 
 - it reduces the network load, and client-side processing load, especially when raw data would contain tons of datapoints
 - it enables some aggregation methods
@@ -161,7 +167,7 @@ It may be more relevant here to aggregate all of them, both _sum_ and _average_ 
 The _Stat type_ option refers to an aggregation at a different level: not between multiple metrics, but within a single metric,
 all raw datapoints are aggregated within time buckets.
 
-'''
+=== Conclusion
 
 These two improvements aim a common goal, that is facilitating querying over large amount of data. This is becoming crucial especially
 in the context of microservices and applications running on container platforms, as the number of metrics explodes.
