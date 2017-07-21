@@ -6,7 +6,7 @@ Joel Takvorian
 :jbake-tags: blog, metrics, grafana
 :figure-caption!:
 
-There has been improvements lately in our Hawkular Grafana datasource, that are worth mentioning.
+There have been improvements lately in the Hawkular Grafana datasource that are worth mentioning.
 
 - The way to query metrics by tags has changed since plugin link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.8[v1.0.8].
 It now takes advantage of the Hawkular Metrics' tags query language,
@@ -18,7 +18,7 @@ To sum it up, Metrics integrates a parser that allows queries such as:
 - The datasource in now able to fetch bucketized metrics stats, instead of raw metrics.
 It consists in aggregating datapoints in slices of time (buckets) and providing, for each slice, some statistics like _min_, _max_, _average_ and more.
 The exact content of a bucket is described in link:http://www.hawkular.org/docs/rest/rest-metrics.html#NumericBucketPoint[Metrics REST API].
-Hawkular has always been able to provide them server-side,
+Hawkular has always been able to provide metric stats server-side,
 but being able to use them in the Grafana plugin is new, introduced in link:https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.9[v1.0.9].
 
 [.text-center]
@@ -34,10 +34,10 @@ _The new query interface_
 
 === Tags query language
 
-The first change is that you don't have to choose between _query by tag_ and _query by metric id_ anymore.
-You can mix them, _ie._ start querying by tag and that will refine the available list of metric names, acting as a filter.
-Once you've set up your tags query, you can either leave it as is and that would eventually show several metrics in chart,
-or select a single metric to display. This filtering is really nice when there's tons of metrics available, like in the case of
+The first change is that you don't have to choose between _query by tag_ and _query by metric id_ anymore, you can do both at the same time.
+Querying by tag will refine the available list of metric names (much like a filter) and can result in multiple metrics from a single query.
+By selecting a _metric name_, you restrict the query to only display that one.
+This filtering is really nice when there's tons of metrics available, like in the case of
 hundreds of OpenShift pods being monitored with the same tenant.
 
 The simple _key/value_ pairs interface is now replaced with a more elaborated query builder, following the pattern:
@@ -78,7 +78,7 @@ endif::[]
 [.text-center]
 _Selecting the tag value_
 
-All these selections are facilitated with dynamic suggestions, but you can still use Grafana template variables within tag values, the text field allows free typing.
+The text fields include dynamic suggestions, you can use Grafana template variables within tag values, or enter free text.
 Once you've set up a tag query expression, the relevant metrics immediately show up on the chart and the list of available metrics in the dropdown list in updated.
 
 
@@ -93,10 +93,10 @@ endif::[]
 [.text-center]
 _Filtered metrics_
 
-This query builder should allow you to build almost any tag query that the Hawkular server understands.
-There's however some corner cases. For now, this builder doesn't allow to prioritize expressions with parenthesis.
-For instance, you cannot build `c1 = 'foo' OR (b1 != 'B' AND a1 = 'abcd')`. Fortunately, you can turn off the query builder and directly
-type in query expression:
+This query builder lets you build almost any tag query that the Hawkular server understands.
+There are however some corner cases. For now this builder doesn't allow you to prioritize expressions with parentheses.
+For instance, you cannot build `c1 = 'foo' OR (b1 != 'B' AND a1 = 'abcd')`.
+As a workaround you can turn off the query builder and directly type in your query expression.
 
 [.text-center]
 ifndef::env-github[]
@@ -115,13 +115,13 @@ This will also be useful to fill the gap if the language evolves server-side and
 === Stats query
 
 The other important feature is the ability to run link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_downsampling[stats] queries against Hawkular Metrics, instead of link:http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_raw_data[raw] queries.
-There's several reasons to do that:
+There are several reasons to do this:
 
 - it reduces the network load, and client-side processing load, especially when raw data would contain tons of datapoints
 - it enables some aggregation methods
 - it also allows higher-level analysis with stats such as percentiles
 
-To enable it, just untick the _raw_ checkbox.
+To enable it, just clear the _raw_ checkbox.
 
 [.text-center]
 ifndef::env-github[]
@@ -134,8 +134,9 @@ endif::[]
 [.text-center]
 _Toggle stats mode_
 
-Here you can set up _Multiple series aggregation_ to _None_, _Sum_ or _Average_, and _Stat type_ as a list of statistics among
-_avg_, _min_, _max_, _median_, _sum_ and different percentiles. You can display several of them within the same query.
+When you clear the _raw_ checkbox, you can configure _Multiple series aggregation_ to _None_, _Sum_ or _Average_
+and can configure _Stat type_ as _avg_, _min_, _max_, _median_, _sum_ and different percentiles.
+You can display several different _Stat types_ within the same query.
 
 [.text-center]
 ifndef::env-github[]
@@ -169,6 +170,6 @@ all raw datapoints are aggregated within time buckets.
 
 === Conclusion
 
-These two improvements aim a common goal, that is facilitating querying over large amount of data. This is becoming crucial especially
+These two improvements aim a common goal, that is facilitating querying over large amounts of data. This is becoming crucial especially
 in the context of microservices and applications running on container platforms, as the number of metrics explodes.
 Proper metrics tagging is the corner stone to make sense of this data.
