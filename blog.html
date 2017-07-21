@@ -194,6 +194,339 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/07/jaeger-with-security-proxy.html"><h1>Protecting Jaeger UI with a sidecar security proxy</h1></a>
+            <p>18 July 2017, by Juraci Paixão Kröhling</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a production deployment of Jaeger, it may be advantageous to restrict access to Jaeger&#8217;s Query
+service, which includes the UI. For instance, you might have internal security requirements to allow
+only certain groups to access trace data, or you might have deployed Jaeger into a public cloud.
+In a true microservices way, one possible approach is to add a sidecar to the Jaeger Query service,
+acting as a security proxy. Incoming requests hit our sidecar instead of reaching Jaeger&#8217;s Query service
+directly and the sidecar would be responsible for enforcing the authentication and authorization constraints.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-07-18-teaser.png" alt="Jaeger login screen">
+</div>
+</div>
+<div class="paragraph">
+<p>Incoming HTTP requests arrive at the route ①, which uses the internal service ② to resolve and communicate
+with the security proxy ③. Once the request is validated and all security constraints are satisfied, the
+request reaches Jaeger ④.</p>
+</div>
+<div class="paragraph">
+<p>For demonstration purposes we&#8217;ll make use of <a href="http://keycloak.org">Keycloak</a> as our security solution, but
+the idea can be adapted to work with any security proxy. This demo should also work without changes with
+<a href="https://access.redhat.com/products/red-hat-single-sign-on">Red Hat SSO</a>. For this exercise, we&#8217;ll need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A Keycloak (or Red Hat SSO) server instance running. We&#8217;ll call its location <code>${REDHAT_SSO_URL}</code></p>
+</li>
+<li>
+<p>An OpenShift cluster, where we&#8217;ll run Jaeger backend components. It might be as easy as <code>oc cluster up</code></p>
+</li>
+<li>
+<p>A local clone of the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that we are not trying to secure the communication between the components, like from the Agent to the Collector.
+For this scenario, there are other techniques that can be used, such as mutual authentication via certificates, employing
+<a href="https://istio.io/">istio</a> or other similar tools.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_keycloak">Preparing Keycloak</h3>
+<div class="paragraph">
+<p>For this demo, we&#8217;ll run Keycloak via Docker directly on the host machine. This is to stress that Keycloak
+does <strong>not</strong> need to be running on the same OpenShift cluster as our Jaeger backend.</p>
+</div>
+<div class="paragraph">
+<p>The following command should start an appropriate Keycloak server locally. If you already have your
+own Keycloak or Red Hat SSO server, skip this step.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run --rm --name keycloak-server -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password -p 8080:8080 jboss/keycloak</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the Keycloak server is up and running, let&#8217;s create a realm for Jaeger:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Login into Keycloak (<a href="http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console" class="bare">http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console</a>) with <code>admin</code> as username and <code>password</code> as password</p>
+</li>
+<li>
+<p>In the top left corner, mouse over the <code>Select realm</code> box and click <code>Add realm</code>. Name it <code>jaeger</code> and click <code>Create</code></p>
+</li>
+<li>
+<p>On <code>Clients</code>, click <code>Create</code> and set <code>proxy-jaeger</code> as the name and save it</p>
+</li>
+<li>
+<p>Set the <code>Access Type</code> to <code>confidential</code> and <code>*</code> as <code>Valid Redirect URIs</code> and save it. You might want to fine tune this in a
+production environment, otherwise you might be open to an attack known as
+<a href="https://www.owasp.org/index.php/Unvalidated_Redirects_and_Forwards_Cheat_Sheet">"Unvalidated Redirects and Forwards"</a>.</p>
+</li>
+<li>
+<p>Open the <code>Installation</code> tab and select <code>Keycloak OIDC JSON</code> and copy the JSON that is shown. It should look like this,
+but the <code>auth-server-url</code> and <code>secret</code> will have different values.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "realm": "jaeger",
+  "auth-server-url": "http://192.168.2.111:8080/auth",
+  "ssl-required": "external",
+  "resource": "proxy-jaeger",
+  "credentials": {
+    "secret": "7f201319-1dfd-43cc-9838-057dac439046"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, let&#8217;s create a role and a user, so that we can log into Jaeger&#8217;s Query service:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Under the <code>Configure</code> left-side menu, open the <code>Roles</code> page and click <code>Add role</code></p>
+</li>
+<li>
+<p>As role name, set <code>user</code> and click <code>Save</code></p>
+</li>
+<li>
+<p>Under the <code>Manage</code> left-side menu, open the <code>Users</code> page and click <code>Add user</code></p>
+</li>
+<li>
+<p>Fill out the form as you wish and set <code>Email verified</code> to <code>ON</code> and click on <code>Save</code></p>
+</li>
+<li>
+<p>Open the <code>Credentials</code> tab for this user and set a password (temporary or not).</p>
+</li>
+<li>
+<p>Open the <code>Role mappings</code> tab for this user, select the role <code>user</code> from the <code>Available Roles</code> list and click <code>Add selected</code></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_openshift">Preparing OpenShift</h3>
+<div class="paragraph">
+<p>For this demo, we assume you have an OpenShift cluster running already. If you don&#8217;t, then you might want to check out tools
+like <a href="https://github.com/minishift/minishift"><code>minishift</code></a>. If you are running a recent version of Fedora, CentOS or
+Red Hat Enterprise Linux you might want to install the package <code>origin-clients</code> and run <code>oc cluster up --version=latest</code>.
+This should get you a basic OpenShift cluster running locally.</p>
+</div>
+<div class="paragraph">
+<p>To make it easier for our demonstration, we&#8217;ll add <code>cluster-admin</code> rights to our <code>developer</code> user and we&#8217;ll create
+the Jaeger namespace:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc login -u system:admin
+oc new-project jaeger
+oc adm policy add-cluster-role-to-user cluster-admin developer -n jaeger
+oc login -u developer</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_the_jaeger_openshift_template">Preparing the Jaeger OpenShift template</h3>
+<div class="paragraph">
+<p>We&#8217;ll use the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a>
+as the starting point: either clone the entire repository, or just get a local version of the template.</p>
+</div>
+<div class="paragraph">
+<p>The first step is to add the sidecar container to the <code>query-deployment</code> object. Under the <code>containers</code> list, after we
+specify the <code>jaeger-query</code>, let&#8217;s add the sidecar:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        - image: jboss/keycloak-proxy
+          name: ${JAEGER_SERVICE_NAME}-query-security-proxy
+          volumeMounts:
+          - mountPath: /opt/jboss/conf
+            name: security-proxy-configuration-volume
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/"
+              port: 8080</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that container specifies a <code>volumeMount</code> named <code>security-proxy-configuration-volume</code>: we&#8217;ll use it to store the
+proxy&#8217;s configuration file. You should add the volume under the <code>spec/template/spec</code> node for <code>query-deployment</code>, sibling to
+the <code>dnsPolicy</code> property (it&#8217;s probably right under the previous code snippet):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        volumes:
+          - configMap:
+              name: ${JAEGER_SERVICE_NAME}-configuration
+              items:
+                - key: proxy
+                  path: proxy.json
+            name: security-proxy-configuration-volume</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, we need to specify the <code>ConfigMap</code>, with the proxy&#8217;s configuration entry. To do that, we add a new top-level item to
+the template. As a suggestion, we recommend keeping it close to where it&#8217;s consumed. For instance, right before the <code>query-deployment</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-configuration
+    labels:
+      app: jaeger
+      jaeger-infra: security-proxy-configuration
+  data:
+    proxy: |
+      {
+          "target-url": "http://localhost:16686",
+          "bind-address": "0.0.0.0",
+          "http-port": "8080",
+          "applications": [
+              {
+                  "base-path": "/",
+                  "adapter-config": {
+                    "realm": "jaeger",
+                    "auth-server-url": "${REDHAT_SSO_URL}",
+                    "ssl-required": "external",
+                    "resource": "proxy-jaeger",
+                    "credentials": {
+                      "secret": "THE-SECRET-FROM-INSTALLATION-FILE"
+                    }
+                  }
+            ,
+            "constraints": [
+                      {
+                          "pattern": "/*",
+                          "roles-allowed": [
+                              "user"
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that we are only allowing users with the role <code>user</code> to log into our Jaeger UI. In a real world scenario, you might
+want to adjust this to fit your setup. For instance, your user data might come from LDAP, and you only want to allow users
+from specific LDAP groups to access the Jaeger UI.</p>
+</div>
+<div class="paragraph">
+<p>The <code>secret</code> within the <code>credentials</code> should match the secret we got from Keycloak at the beginning of this exercise. Our
+most curious readers will note that we mentioned the template parameter <code>REDHAT_SSO_URL</code> under the property <code>auth-server-url</code>.
+Either change that to your Keycloak server, or let&#8217;s specify a template parameter, allowing us to set this at deployment time.
+Under the <code>parameters</code> section of the template, add the following property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- description: The URL to the Red Hat SSO / Keycloak server
+  displayName: Red Hat SSO URL
+  name: REDHAT_SSO_URL
+  required: true
+  value: http://THE-URL-FROM-THE-INSTALLATION-FILE:8080/auth</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This value should be a location that is reacheable by both your browser and by the sidecar, like your host&#8217;s LAN IP (192.x, 10.x).
+Localhost/127.x is not going to work.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As a final step, we need to change the service to direct requests to the port <code>8080</code> (proxy) instead of <code>16686</code>. This is done
+by changing the property <code>targetPort</code> on the service named <code>query-service</code>, setting it to <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-query
+    labels:
+      app: jaeger
+      jaeger-infra: query-service
+  spec:
+    ports:
+    - name: jaeger-query
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      jaeger-infra: query-pod
+    type: LoadBalancer</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As a reference, here&#8217;s the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/KeycloakSecuringUI/production/jaeger-production-template.yml">complete template file</a>
+that can be used for this blog post.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploying">Deploying</h3>
+<div class="paragraph">
+<p>Now that we have everything ready, let&#8217;s deploy Jaeger into our OpenShift cluster. Run the following command from the same
+directory you stored the <code>YAML</code> file from the previous steps, referenced here by the name <code>jaeger-production-template.yml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc process -f jaeger-production-template.yml | oc create -n jaeger -f -</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>During the first couple of minutes, it&#8217;s OK if the pods <code>jaeger-query</code> and <code>jaeger-collector</code> fail, as Cassandra will still
+be booting. Eventually, the service should be up and running, as shown in the following image.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-07-18-pod.png" alt="Pod with sidecar on OpenShift">
+</div>
+</div>
+<div class="paragraph">
+<p>Once it is ready to serve requests, click on URL for the route (<a href="https://jaeger-query-jaeger.127.0.0.1.nip.io" class="bare">https://jaeger-query-jaeger.127.0.0.1.nip.io</a>). You should be
+presented with a login screen, served by the Keycloak server. Login with the credentials you set on the previous steps, and you
+should reach the regular Jaeger UI.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_conclusion">Conclusion</h3>
+<div class="paragraph">
+<p>In this exercise, we&#8217;ve seen how to add a security proxy to our Jaeger Query pod as a sidecar. All incoming requests go through
+this sidecar and all features available in Keycloak can be used transparently, such as 2-Factor authentication, service accounts,
+single sign-on, brute force attack protection, LDAP support and much more.</p>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/07/opentracing-jaxrs.html"><h1>OpenTracing JAX-RS Instrumentation</h1></a>
             <p>10 July 2017, by Pavol Loffay</p>
             <p><div id="preamble">
@@ -1066,339 +1399,13 @@ last demo all applications will be deployed on Kubernetes and traced using Jaege
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/05/31/hawkular-grafana-ootb.html"><h1>Hawkular and Grafana Out of the Box</h1></a>
-            <p>31 May 2017, by Joel Takvorian</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p><a href="https://github.com/jotak/hawkular-grafana-outofthebox">Hawkular and Grafana Out of the Box</a> is a new way to quickly setup Hawkular and Grafana together with very little work.</p>
-</div>
-<div class="paragraph">
-<p>Assuming you already have docker installed and recent enough (you need at least Compose 1.6.0 and Docker Engine 1.10.0),
-you&#8217;re just 2 lines of YAML edition and a <code>docker-compose up</code> away from having Hawkular + Grafana running and pre-configured.</p>
-</div>
-<div class="admonitionblock note">
-<table>
-<tr>
-<td class="icon">
-<div class="title">Note</div>
-</td>
-<td class="content">
-It is NOT intended for production/long-term usage unless you do some extra work to make it secured.
-</td>
-</tr>
-</table>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_how_does_it_work">How does it work?</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s have a look to the docker-compose file:</p>
-</div>
-<div class="listingblock">
-<div class="title">docker-compose.yml</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">version: '2' <b class="conum">(1)</b>
-services:
-  hawkular:
-    image: "hawkular/hawkular-services:latest" <b class="conum">(2)</b>
-    ports:
-      - "8080:8080"
-      - "8443:8443"
-      - "9990:9990"
-    # volumes: <b class="conum">(3)</b>
-    #   - /tmp/opt/hawkular/server:/opt/data:Z
-    environment:
-      - CASSANDRA_NODES=hawkular-cassandra
-      - ADMIN_TOKEN
-      - HAWKULAR_AGENT_ENABLE=false <b class="conum">(4)</b>
-  hawkular-cassandra: <b class="conum">(5)</b>
-    image: cassandra:3.0.9
-    environment:
-      - CASSANDRA_START_RPC=true
-  grafana: <b class="conum">(6)</b>
-    image: "hawkular/hawkular-grafana-datasource:latest"
-    ports:
-      - "3000:3000"
-  bootstrap: <b class="conum">(7)</b>
-    image: "jotak/hawkular-grafana-bootstrap:latest"
-    environment:
-      - TENANT=put_your_tenant_here
-      - DASHBOARDS=put_dashboard_file_names_here</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Docker-compose format v2 brings some networking improvements that proved to be useful here, that&#8217;s why you&#8217;ll need docker 1.10.0+ and docker-compose 1.6.0+.</p>
-</li>
-<li>
-<p>Using the official Hawkular Services image. Accessible on <a href="http://localhost:8080/hawkular/metrics" class="bare">http://localhost:8080/hawkular/metrics</a> or <a href="http://localhost:8080/hawkular/alerts" class="bare">http://localhost:8080/hawkular/alerts</a>, with credentials <em>jdoe</em>/<em>password</em>.</p>
-</li>
-<li>
-<p>The volume is commented-out, so data is not persisted if you run <code>docker-compose down</code>. To persist data, uncomment these lines and eventually set something different than <code>/tmp/opt/hawkular/server</code> as the host directory. Make sure this directory exists on your host.</p>
-</li>
-<li>
-<p>The Hawkular agent is disabled by default, which means Hawkular is not self-monitored. You can enable it if you want, and use the <code>hawkular-self</code> dashboard.</p>
-</li>
-<li>
-<p>The Cassandra node. Note that it&#8217;s not exposed outside of the compose&#8217;s subnetwork.</p>
-</li>
-<li>
-<p>The Grafana server with pre-installed Hawkular plugin, accessible on <a href="http://localhost:3000" class="bare">http://localhost:3000</a>, with credentials <em>admin</em>/<em>admin</em></p>
-</li>
-<li>
-<p>This image contains a bootstrap script that configures a Grafana datasource with the <code>TENANT</code> defined as environment variable, which is also injected in dashboard templates defined here (<code>DASHBOARDS</code>). Those dashboards are sent to Grafana through its REST API. Current available dashboard templates are listed below.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>If you want to have more than one tenant configured, you can add other sections to this compose file (<em>bootstrap2</em>, <em>bootstrap3</em>, etc. the name doesn&#8217;t matter),
-with the same docker image and different environment variables. You are limited, however, in the number of tenants per dashboard (a single dashboard cannot use several tenants).
-You need to duplicate dashboards, or create them manually.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_available_dashboard_templates">Available dashboard templates</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Only a few are available right now, but the list should grow and pull requests are welcome!</p>
-</div>
-<div class="paragraph">
-<p>Some dashboards may be very specific, dedicated to the demos presented here, while others aim to be generic and reusable. The next step will be to inject custom dashboards through volume in docker-compose without having the rebuild the bootstrap image. Anyway, the current list is:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><strong>vertx-hwk</strong>: for Vert.X applications that use the <a href="http://vertx.io/docs/vertx-hawkular-metrics/java/">vertx-hawkular-metrics</a> module.</p>
-</li>
-<li>
-<p><strong>vertx-dw</strong>: for Vert.X applications that use the <a href="http://vertx.io/docs/vertx-dropwizard-metrics/java/">vertx-dropwizard-metrics</a> module along with the <a href="https://github.com/hawkular/hawkular-metrics/tree/master/clients/dropwizard">Hawkular reporter</a>.</p>
-</li>
-<li>
-<p><strong>hawkular-self</strong>: for Hawkular self monitoring using its WildFly agent (but could work with other WF apps)</p>
-</li>
-<li>
-<p><strong>cpudemo</strong>: for the CPU demo (explained below)</p>
-</li>
-<li>
-<p><strong>falco</strong>: for the game/demo "<a href="https://github.com/jotak/falco-demo">Falco the Hawk</a>"</p>
-</li>
-</ul>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_cpu_demo">CPU Demo</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Want a demo? Take the docker-compose file located in <code>cpudemo/</code> (<a href="https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/cpudemo/docker-compose.yml">yes, this one</a>) and store it locally. From its location run:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker-compose up</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The first run may take some time since the docker engine has to download several images.
-Also, the Hawkular first start is longer because it has to setup schema in Cassandra.</p>
-</div>
-<div class="paragraph">
-<p>Then open Grafana (<a href="http://localhost:3000" class="bare">http://localhost:3000</a>), log in (<em>admin</em>/<em>admin</em>), click on "Home" and you will see that a dashboard is already listed:</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-startup.png" alt="Grafana startup">
-</div>
-</div>
-<div class="paragraph">
-<p>Open it:</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-cpudemo.png" alt="Grafana CPU demo">
-</div>
-</div>
-<div class="paragraph">
-<p>You can see it&#8217;s updated regularly with your host&#8217;s CPU usage (to be more accurate, it&#8217;s the <a href="https://en.wikipedia.org/wiki/Load_(computing)">system load average</a> over the past minute).</p>
-</div>
-<div class="sect2">
-<h3 id="_how_does_it_work_2">How does it work?</h3>
-<div class="paragraph">
-<p>It&#8217;s actually very simple. A <a href="https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/cpudemo/push-cpu.sh">shell script</a> runs <code>top</code> and extracts the system load average.
-That value is pushed to Hawkular every 10 seconds under the tenant <code>$TENANT</code> and gauge <code>load-avg</code>.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">while :
-do
-  loadavg=`awk '{ print $1 }' /proc/loadavg`
-  ux_timestamp=`date +%s`
-  timestamp=$(($ux_timestamp * 1000))
-  curl -u jdoe:password -X POST http://hawkular:8080/hawkular/metrics/gauges/load-avg/raw \
-    -d "[{\"timestamp\": $timestamp, \"value\": $loadavg}]" \
-    -H "Content-Type: application/json" -H "Hawkular-Tenant: $TENANT"
-  sleep 10
-done</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>This script is then included in a docker image (<code>jotak/hawkular-grafana-cpudemo</code>) with a simple Dockerfile:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-docker" data-lang="docker">FROM centos:7
-ADD ./push-cpu.sh /tmp/push-cpu.sh
-RUN chmod +x /tmp/push-cpu.sh
-ENTRYPOINT ["/tmp/push-cpu.sh"]</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>The docker image is on dockerhub so you don&#8217;t have to worry about building it.</p>
-</div>
-<div class="paragraph">
-<p>And finally, all the glue is done in the docker-compose file:</p>
-</div>
-<div class="listingblock">
-<div class="title">docker-compose.yml</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">hawkular:
-  # (same as before)
-hawkular-cassandra:
-  # (same as before)
-grafana:
-  # (same as before)
-bootstrap:
-  image: "jotak/hawkular-grafana-bootstrap:latest"
-  environment:
-    - TENANT=cpudemo
-    - DASHBOARDS=cpudemo
-cpudemo:
-  image: "jotak/hawkular-grafana-cpudemo:latest"
-  environment:
-    - TENANT=cpudemo</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>As you can see, we just configured the tenant and dashboards in <code>bootstrap</code>,
-and added a section for our new image <code>jotak/hawkular-grafana-cpudemo</code> with the same tenant configured.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_hawkular_self_monitoring">Hawkular self monitoring</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Building Hawkular self monitoring is even simpler as there&#8217;s no outside application involved.
-Take <a href="https://github.com/jotak/hawkular-grafana-outofthebox/blob/master/hawkular/docker-compose.yml">this docker-compose file</a> and put it up
-(make sure you&#8217;ve stopped the other one before, to avoid port conflicts).
-After several minutes of monitoring (be patient, some metrics take longer than others to gather), Grafana would display something like this:</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-hawkular.png" alt="Grafana Hawkular selfmon">
-</div>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-hawkular2.png" alt="Grafana Hawkular selfmon">
-</div>
-</div>
-<div class="paragraph">
-<p>This dashboard can be reused for other WildFly application that uses the Hawkular WildFly agent, since the metrics come from there.</p>
-</div>
-<div class="sect2">
-<h3 id="_how_does_it_work_3">How does it work?</h3>
-<div class="paragraph">
-<p>Just some tweaks in the docker-compose file were needed:</p>
-</div>
-<div class="listingblock">
-<div class="title">docker-compose.yml</div>
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yaml" data-lang="yaml">hawkular:
-  image: "hawkular/hawkular-services:latest"
-  ports:
-    - "8080:8080"
-    - "8443:8443"
-    - "9990:9990"
-  environment:
-    - CASSANDRA_NODES=hawkular-cassandra
-    - ADMIN_TOKEN
-    - HAWKULAR_AGENT_ENABLE=true <b class="conum">(1)</b>
-hawkular-cassandra:
-  # (same as before)
-grafana:
-  # (same as before)
-bootstrap:
-  image: "jotak/hawkular-grafana-bootstrap:latest"
-  environment: <b class="conum">(2)</b>
-    - TENANT=hawkular
-    - DASHBOARDS=hawkular-self</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Hawkular environment variable <code>HAWKULAR_AGENT_ENABLE</code> was set to true to enable collecting agent&#8217;s metrics</p>
-</li>
-<li>
-<p>In <code>bootstrap</code>, <em>TENANT</em> is set to <em>hawkular</em> (this is the tenant used internally to collect agent&#8217;s metrics) and the dashboard template is <em>hawkular-self</em>.</p>
-</li>
-</ol>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_falco_the_hawk">Falco the Hawk</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>"<a href="https://github.com/jotak/falco-demo">Falco the Hawk</a>" is a demo game developed for the occasion. It runs with Vert.X with metrics enabled, and also provide its own game metrics to Hawkular.
-You can download its <code>docker-compose.yml</code> and put it up:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">wget -O docker-compose.yml https://raw.githubusercontent.com/jotak/falco-demo/master/docker-compose.yml
-
-docker-compose up</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>You can open <a href="http://localhost:8081" class="bare">http://localhost:8081</a> to play the game (beware, 8bits-style music inside!), and see the metrics at the same time on <a href="http://localhost:3000" class="bare">http://localhost:3000</a>.</p>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-falco.png" alt="Grafana Falco the Hawk">
-</div>
-</div>
-<div class="imageblock text-center">
-<div class="content">
-<img src="/img/blog/2017/2017-05-30-hgootb-grafana-vertx.png" alt="Grafana Vert.X">
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_next">Next</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>That&#8217;s all for now. Please don&#8217;t hesitate to give feedback, ask for feature requests, maybe new dashboard templates, ask for help or submit pull requests. One link for that: <a href="https://github.com/jotak/hawkular-grafana-outofthebox" class="bare">https://github.com/jotak/hawkular-grafana-outofthebox</a></p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>31 May 2017 - <a href="blog/2017/05/31/hawkular-grafana-ootb.html">Hawkular and Grafana Out of the Box</a></li>
           <li>25 May 2017 - <a href="blog/2017/05/25/jaeger-contributions.html">Kubernetes and OpenShift Templates for Jaeger</a></li>
           <li>03 May 2017 - <a href="blog/2017/05/03/hawkular-services-0.37-released.html">Hawkular Services 0.37.Final</a></li>
           <li>27 April 2017 - <a href="blog/2017/04/27/hawkular-alerting-tutorial-l6.html">Hawkular Alerting Tutorial: Lesson 06 - Events!</a></li>

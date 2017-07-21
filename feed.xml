@@ -6,9 +6,346 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Thu, 13 Jul 2017 10:16:56 +0000</pubDate>
-    <lastBuildDate>Thu, 13 Jul 2017 10:16:56 +0000</lastBuildDate>
+    <pubDate>Fri, 21 Jul 2017 13:03:32 +0000</pubDate>
+    <lastBuildDate>Fri, 21 Jul 2017 13:03:32 +0000</lastBuildDate>
 
+    <item>
+      <title>Protecting Jaeger UI with a sidecar security proxy</title>
+      <link>http://www.hawkular.org/blog/2017/07/jaeger-with-security-proxy.html</link>
+      <author>noreply@hawkular.org (Juraci Paixão Kröhling)</author>
+      <pubDate>Tue, 18 Jul 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/07/jaeger-with-security-proxy.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a production deployment of Jaeger, it may be advantageous to restrict access to Jaeger&amp;#8217;s Query
+service, which includes the UI. For instance, you might have internal security requirements to allow
+only certain groups to access trace data, or you might have deployed Jaeger into a public cloud.
+In a true microservices way, one possible approach is to add a sidecar to the Jaeger Query service,
+acting as a security proxy. Incoming requests hit our sidecar instead of reaching Jaeger&amp;#8217;s Query service
+directly and the sidecar would be responsible for enforcing the authentication and authorization constraints.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-18-teaser.png&quot; alt=&quot;Jaeger login screen&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Incoming HTTP requests arrive at the route ①, which uses the internal service ② to resolve and communicate
+with the security proxy ③. Once the request is validated and all security constraints are satisfied, the
+request reaches Jaeger ④.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For demonstration purposes we&amp;#8217;ll make use of &lt;a href=&quot;http://keycloak.org&quot;&gt;Keycloak&lt;/a&gt; as our security solution, but
+the idea can be adapted to work with any security proxy. This demo should also work without changes with
+&lt;a href=&quot;https://access.redhat.com/products/red-hat-single-sign-on&quot;&gt;Red Hat SSO&lt;/a&gt;. For this exercise, we&amp;#8217;ll need:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;A Keycloak (or Red Hat SSO) server instance running. We&amp;#8217;ll call its location &lt;code&gt;${REDHAT_SSO_URL}&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;An OpenShift cluster, where we&amp;#8217;ll run Jaeger backend components. It might be as easy as &lt;code&gt;oc cluster up&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;A local clone of the &lt;a href=&quot;https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml&quot;&gt;Jaeger OpenShift Production template&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that we are not trying to secure the communication between the components, like from the Agent to the Collector.
+For this scenario, there are other techniques that can be used, such as mutual authentication via certificates, employing
+&lt;a href=&quot;https://istio.io/&quot;&gt;istio&lt;/a&gt; or other similar tools.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_preparing_keycloak&quot;&gt;Preparing Keycloak&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For this demo, we&amp;#8217;ll run Keycloak via Docker directly on the host machine. This is to stress that Keycloak
+does &lt;strong&gt;not&lt;/strong&gt; need to be running on the same OpenShift cluster as our Jaeger backend.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following command should start an appropriate Keycloak server locally. If you already have your
+own Keycloak or Red Hat SSO server, skip this step.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;docker run --rm --name keycloak-server -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password -p 8080:8080 jboss/keycloak&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once the Keycloak server is up and running, let&amp;#8217;s create a realm for Jaeger:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Login into Keycloak (&lt;a href=&quot;http://&amp;lt;YOUR_IP&amp;gt;:8080/auth/admin/master/console&quot; class=&quot;bare&quot;&gt;http://&amp;lt;YOUR_IP&amp;gt;:8080/auth/admin/master/console&lt;/a&gt;) with &lt;code&gt;admin&lt;/code&gt; as username and &lt;code&gt;password&lt;/code&gt; as password&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;In the top left corner, mouse over the &lt;code&gt;Select realm&lt;/code&gt; box and click &lt;code&gt;Add realm&lt;/code&gt;. Name it &lt;code&gt;jaeger&lt;/code&gt; and click &lt;code&gt;Create&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;On &lt;code&gt;Clients&lt;/code&gt;, click &lt;code&gt;Create&lt;/code&gt; and set &lt;code&gt;proxy-jaeger&lt;/code&gt; as the name and save it&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Set the &lt;code&gt;Access Type&lt;/code&gt; to &lt;code&gt;confidential&lt;/code&gt; and &lt;code&gt;*&lt;/code&gt; as &lt;code&gt;Valid Redirect URIs&lt;/code&gt; and save it. You might want to fine tune this in a
+production environment, otherwise you might be open to an attack known as
+&lt;a href=&quot;https://www.owasp.org/index.php/Unvalidated_Redirects_and_Forwards_Cheat_Sheet&quot;&gt;&quot;Unvalidated Redirects and Forwards&quot;&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Open the &lt;code&gt;Installation&lt;/code&gt; tab and select &lt;code&gt;Keycloak OIDC JSON&lt;/code&gt; and copy the JSON that is shown. It should look like this,
+but the &lt;code&gt;auth-server-url&lt;/code&gt; and &lt;code&gt;secret&lt;/code&gt; will have different values.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;{
+  &quot;realm&quot;: &quot;jaeger&quot;,
+  &quot;auth-server-url&quot;: &quot;http://192.168.2.111:8080/auth&quot;,
+  &quot;ssl-required&quot;: &quot;external&quot;,
+  &quot;resource&quot;: &quot;proxy-jaeger&quot;,
+  &quot;credentials&quot;: {
+    &quot;secret&quot;: &quot;7f201319-1dfd-43cc-9838-057dac439046&quot;
+  }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And finally, let&amp;#8217;s create a role and a user, so that we can log into Jaeger&amp;#8217;s Query service:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;Under the &lt;code&gt;Configure&lt;/code&gt; left-side menu, open the &lt;code&gt;Roles&lt;/code&gt; page and click &lt;code&gt;Add role&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;As role name, set &lt;code&gt;user&lt;/code&gt; and click &lt;code&gt;Save&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Under the &lt;code&gt;Manage&lt;/code&gt; left-side menu, open the &lt;code&gt;Users&lt;/code&gt; page and click &lt;code&gt;Add user&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Fill out the form as you wish and set &lt;code&gt;Email verified&lt;/code&gt; to &lt;code&gt;ON&lt;/code&gt; and click on &lt;code&gt;Save&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Open the &lt;code&gt;Credentials&lt;/code&gt; tab for this user and set a password (temporary or not).&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Open the &lt;code&gt;Role mappings&lt;/code&gt; tab for this user, select the role &lt;code&gt;user&lt;/code&gt; from the &lt;code&gt;Available Roles&lt;/code&gt; list and click &lt;code&gt;Add selected&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_preparing_openshift&quot;&gt;Preparing OpenShift&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For this demo, we assume you have an OpenShift cluster running already. If you don&amp;#8217;t, then you might want to check out tools
+like &lt;a href=&quot;https://github.com/minishift/minishift&quot;&gt;&lt;code&gt;minishift&lt;/code&gt;&lt;/a&gt;. If you are running a recent version of Fedora, CentOS or
+Red Hat Enterprise Linux you might want to install the package &lt;code&gt;origin-clients&lt;/code&gt; and run &lt;code&gt;oc cluster up --version=latest&lt;/code&gt;.
+This should get you a basic OpenShift cluster running locally.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To make it easier for our demonstration, we&amp;#8217;ll add &lt;code&gt;cluster-admin&lt;/code&gt; rights to our &lt;code&gt;developer&lt;/code&gt; user and we&amp;#8217;ll create
+the Jaeger namespace:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc login -u system:admin
+oc new-project jaeger
+oc adm policy add-cluster-role-to-user cluster-admin developer -n jaeger
+oc login -u developer&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_preparing_the_jaeger_openshift_template&quot;&gt;Preparing the Jaeger OpenShift template&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We&amp;#8217;ll use the &lt;a href=&quot;https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml&quot;&gt;Jaeger OpenShift Production template&lt;/a&gt;
+as the starting point: either clone the entire repository, or just get a local version of the template.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first step is to add the sidecar container to the &lt;code&gt;query-deployment&lt;/code&gt; object. Under the &lt;code&gt;containers&lt;/code&gt; list, after we
+specify the &lt;code&gt;jaeger-query&lt;/code&gt;, let&amp;#8217;s add the sidecar:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;        - image: jboss/keycloak-proxy
+          name: ${JAEGER_SERVICE_NAME}-query-security-proxy
+          volumeMounts:
+          - mountPath: /opt/jboss/conf
+            name: security-proxy-configuration-volume
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: &quot;/&quot;
+              port: 8080&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that container specifies a &lt;code&gt;volumeMount&lt;/code&gt; named &lt;code&gt;security-proxy-configuration-volume&lt;/code&gt;: we&amp;#8217;ll use it to store the
+proxy&amp;#8217;s configuration file. You should add the volume under the &lt;code&gt;spec/template/spec&lt;/code&gt; node for &lt;code&gt;query-deployment&lt;/code&gt;, sibling to
+the &lt;code&gt;dnsPolicy&lt;/code&gt; property (it&amp;#8217;s probably right under the previous code snippet):&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;        volumes:
+          - configMap:
+              name: ${JAEGER_SERVICE_NAME}-configuration
+              items:
+                - key: proxy
+                  path: proxy.json
+            name: security-proxy-configuration-volume&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, we need to specify the &lt;code&gt;ConfigMap&lt;/code&gt;, with the proxy&amp;#8217;s configuration entry. To do that, we add a new top-level item to
+the template. As a suggestion, we recommend keeping it close to where it&amp;#8217;s consumed. For instance, right before the &lt;code&gt;query-deployment&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-configuration
+    labels:
+      app: jaeger
+      jaeger-infra: security-proxy-configuration
+  data:
+    proxy: |
+      {
+          &quot;target-url&quot;: &quot;http://localhost:16686&quot;,
+          &quot;bind-address&quot;: &quot;0.0.0.0&quot;,
+          &quot;http-port&quot;: &quot;8080&quot;,
+          &quot;applications&quot;: [
+              {
+                  &quot;base-path&quot;: &quot;/&quot;,
+                  &quot;adapter-config&quot;: {
+                    &quot;realm&quot;: &quot;jaeger&quot;,
+                    &quot;auth-server-url&quot;: &quot;${REDHAT_SSO_URL}&quot;,
+                    &quot;ssl-required&quot;: &quot;external&quot;,
+                    &quot;resource&quot;: &quot;proxy-jaeger&quot;,
+                    &quot;credentials&quot;: {
+                      &quot;secret&quot;: &quot;THE-SECRET-FROM-INSTALLATION-FILE&quot;
+                    }
+                  }
+            ,
+            &quot;constraints&quot;: [
+                      {
+                          &quot;pattern&quot;: &quot;/*&quot;,
+                          &quot;roles-allowed&quot;: [
+                              &quot;user&quot;
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that we are only allowing users with the role &lt;code&gt;user&lt;/code&gt; to log into our Jaeger UI. In a real world scenario, you might
+want to adjust this to fit your setup. For instance, your user data might come from LDAP, and you only want to allow users
+from specific LDAP groups to access the Jaeger UI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;code&gt;secret&lt;/code&gt; within the &lt;code&gt;credentials&lt;/code&gt; should match the secret we got from Keycloak at the beginning of this exercise. Our
+most curious readers will note that we mentioned the template parameter &lt;code&gt;REDHAT_SSO_URL&lt;/code&gt; under the property &lt;code&gt;auth-server-url&lt;/code&gt;.
+Either change that to your Keycloak server, or let&amp;#8217;s specify a template parameter, allowing us to set this at deployment time.
+Under the &lt;code&gt;parameters&lt;/code&gt; section of the template, add the following property:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;- description: The URL to the Red Hat SSO / Keycloak server
+  displayName: Red Hat SSO URL
+  name: REDHAT_SSO_URL
+  required: true
+  value: http://THE-URL-FROM-THE-INSTALLATION-FILE:8080/auth&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock warning&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;i class=&quot;fa icon-warning&quot; title=&quot;Warning&quot;&gt;&lt;/i&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+This value should be a location that is reacheable by both your browser and by the sidecar, like your host&amp;#8217;s LAN IP (192.x, 10.x).
+Localhost/127.x is not going to work.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a final step, we need to change the service to direct requests to the port &lt;code&gt;8080&lt;/code&gt; (proxy) instead of &lt;code&gt;16686&lt;/code&gt;. This is done
+by changing the property &lt;code&gt;targetPort&lt;/code&gt; on the service named &lt;code&gt;query-service&lt;/code&gt;, setting it to &lt;code&gt;8080&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-yml&quot; data-lang=&quot;yml&quot;&gt;- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-query
+    labels:
+      app: jaeger
+      jaeger-infra: query-service
+  spec:
+    ports:
+    - name: jaeger-query
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      jaeger-infra: query-pod
+    type: LoadBalancer&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a reference, here&amp;#8217;s the &lt;a href=&quot;https://github.com/jaegertracing/jaeger-openshift/blob/KeycloakSecuringUI/production/jaeger-production-template.yml&quot;&gt;complete template file&lt;/a&gt;
+that can be used for this blog post.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_deploying&quot;&gt;Deploying&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that we have everything ready, let&amp;#8217;s deploy Jaeger into our OpenShift cluster. Run the following command from the same
+directory you stored the &lt;code&gt;YAML&lt;/code&gt; file from the previous steps, referenced here by the name &lt;code&gt;jaeger-production-template.yml&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;oc process -f jaeger-production-template.yml | oc create -n jaeger -f -&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;During the first couple of minutes, it&amp;#8217;s OK if the pods &lt;code&gt;jaeger-query&lt;/code&gt; and &lt;code&gt;jaeger-collector&lt;/code&gt; fail, as Cassandra will still
+be booting. Eventually, the service should be up and running, as shown in the following image.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-18-pod.png&quot; alt=&quot;Pod with sidecar on OpenShift&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once it is ready to serve requests, click on URL for the route (&lt;a href=&quot;https://jaeger-query-jaeger.127.0.0.1.nip.io&quot; class=&quot;bare&quot;&gt;https://jaeger-query-jaeger.127.0.0.1.nip.io&lt;/a&gt;). You should be
+presented with a login screen, served by the Keycloak server. Login with the credentials you set on the previous steps, and you
+should reach the regular Jaeger UI.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this exercise, we&amp;#8217;ve seen how to add a security proxy to our Jaeger Query pod as a sidecar. All incoming requests go through
+this sidecar and all features available in Keycloak can be used transparently, such as 2-Factor authentication, service accounts,
+single sign-on, brute force attack protection, LDAP support and much more.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>OpenTracing JAX-RS Instrumentation</title>
       <link>http://www.hawkular.org/blog/2017/07/opentracing-jaxrs.html</link>

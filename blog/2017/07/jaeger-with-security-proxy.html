@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Protecting Jaeger UI with a sidecar security proxy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../overview/">Overview</a></li>
+                <li><a href="../../../blog.html">Blog</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Services<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-submenu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                          <ul class="dropdown-menu">
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-alerts.html">Alerting</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-inventory.html">Inventory</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-metrics.html">Metrics</a>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular APM<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <li><a href="../../../hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
+                      <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="../../../community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-metrics/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="../../../hawkular-clients/">Hawkular Clients</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../community/labs/datamining/">Datamining</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-clients/android-client/">Android client</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                        </li>
+                      </ul>
+                  </li>
+                  <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Protecting Jaeger UI with a sidecar security proxy</h1>
+            <p>A blog post by Juraci Paixão Kröhling</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/apm.html">apm</a> 
+          |
+      <a href="/tags/jaeger.html">jaeger</a> 
+          |
+      <a href="/tags/opentracing.html">opentracing</a> 
+          |
+      <a href="/tags/tracing.html">tracing</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a production deployment of Jaeger, it may be advantageous to restrict access to Jaeger&#8217;s Query
+service, which includes the UI. For instance, you might have internal security requirements to allow
+only certain groups to access trace data, or you might have deployed Jaeger into a public cloud.
+In a true microservices way, one possible approach is to add a sidecar to the Jaeger Query service,
+acting as a security proxy. Incoming requests hit our sidecar instead of reaching Jaeger&#8217;s Query service
+directly and the sidecar would be responsible for enforcing the authentication and authorization constraints.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-07-18-teaser.png" alt="Jaeger login screen">
+</div>
+</div>
+<div class="paragraph">
+<p>Incoming HTTP requests arrive at the route ①, which uses the internal service ② to resolve and communicate
+with the security proxy ③. Once the request is validated and all security constraints are satisfied, the
+request reaches Jaeger ④.</p>
+</div>
+<div class="paragraph">
+<p>For demonstration purposes we&#8217;ll make use of <a href="http://keycloak.org">Keycloak</a> as our security solution, but
+the idea can be adapted to work with any security proxy. This demo should also work without changes with
+<a href="https://access.redhat.com/products/red-hat-single-sign-on">Red Hat SSO</a>. For this exercise, we&#8217;ll need:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A Keycloak (or Red Hat SSO) server instance running. We&#8217;ll call its location <code>${REDHAT_SSO_URL}</code></p>
+</li>
+<li>
+<p>An OpenShift cluster, where we&#8217;ll run Jaeger backend components. It might be as easy as <code>oc cluster up</code></p>
+</li>
+<li>
+<p>A local clone of the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Note that we are not trying to secure the communication between the components, like from the Agent to the Collector.
+For this scenario, there are other techniques that can be used, such as mutual authentication via certificates, employing
+<a href="https://istio.io/">istio</a> or other similar tools.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_keycloak">Preparing Keycloak</h3>
+<div class="paragraph">
+<p>For this demo, we&#8217;ll run Keycloak via Docker directly on the host machine. This is to stress that Keycloak
+does <strong>not</strong> need to be running on the same OpenShift cluster as our Jaeger backend.</p>
+</div>
+<div class="paragraph">
+<p>The following command should start an appropriate Keycloak server locally. If you already have your
+own Keycloak or Red Hat SSO server, skip this step.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run --rm --name keycloak-server -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password -p 8080:8080 jboss/keycloak</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the Keycloak server is up and running, let&#8217;s create a realm for Jaeger:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Login into Keycloak (<a href="http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console" class="bare">http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console</a>) with <code>admin</code> as username and <code>password</code> as password</p>
+</li>
+<li>
+<p>In the top left corner, mouse over the <code>Select realm</code> box and click <code>Add realm</code>. Name it <code>jaeger</code> and click <code>Create</code></p>
+</li>
+<li>
+<p>On <code>Clients</code>, click <code>Create</code> and set <code>proxy-jaeger</code> as the name and save it</p>
+</li>
+<li>
+<p>Set the <code>Access Type</code> to <code>confidential</code> and <code>*</code> as <code>Valid Redirect URIs</code> and save it. You might want to fine tune this in a
+production environment, otherwise you might be open to an attack known as
+<a href="https://www.owasp.org/index.php/Unvalidated_Redirects_and_Forwards_Cheat_Sheet">"Unvalidated Redirects and Forwards"</a>.</p>
+</li>
+<li>
+<p>Open the <code>Installation</code> tab and select <code>Keycloak OIDC JSON</code> and copy the JSON that is shown. It should look like this,
+but the <code>auth-server-url</code> and <code>secret</code> will have different values.</p>
+</li>
+</ol>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
+  "realm": "jaeger",
+  "auth-server-url": "http://192.168.2.111:8080/auth",
+  "ssl-required": "external",
+  "resource": "proxy-jaeger",
+  "credentials": {
+    "secret": "7f201319-1dfd-43cc-9838-057dac439046"
+  }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, let&#8217;s create a role and a user, so that we can log into Jaeger&#8217;s Query service:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>Under the <code>Configure</code> left-side menu, open the <code>Roles</code> page and click <code>Add role</code></p>
+</li>
+<li>
+<p>As role name, set <code>user</code> and click <code>Save</code></p>
+</li>
+<li>
+<p>Under the <code>Manage</code> left-side menu, open the <code>Users</code> page and click <code>Add user</code></p>
+</li>
+<li>
+<p>Fill out the form as you wish and set <code>Email verified</code> to <code>ON</code> and click on <code>Save</code></p>
+</li>
+<li>
+<p>Open the <code>Credentials</code> tab for this user and set a password (temporary or not).</p>
+</li>
+<li>
+<p>Open the <code>Role mappings</code> tab for this user, select the role <code>user</code> from the <code>Available Roles</code> list and click <code>Add selected</code></p>
+</li>
+</ol>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_openshift">Preparing OpenShift</h3>
+<div class="paragraph">
+<p>For this demo, we assume you have an OpenShift cluster running already. If you don&#8217;t, then you might want to check out tools
+like <a href="https://github.com/minishift/minishift"><code>minishift</code></a>. If you are running a recent version of Fedora, CentOS or
+Red Hat Enterprise Linux you might want to install the package <code>origin-clients</code> and run <code>oc cluster up --version=latest</code>.
+This should get you a basic OpenShift cluster running locally.</p>
+</div>
+<div class="paragraph">
+<p>To make it easier for our demonstration, we&#8217;ll add <code>cluster-admin</code> rights to our <code>developer</code> user and we&#8217;ll create
+the Jaeger namespace:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc login -u system:admin
+oc new-project jaeger
+oc adm policy add-cluster-role-to-user cluster-admin developer -n jaeger
+oc login -u developer</code></pre>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_preparing_the_jaeger_openshift_template">Preparing the Jaeger OpenShift template</h3>
+<div class="paragraph">
+<p>We&#8217;ll use the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a>
+as the starting point: either clone the entire repository, or just get a local version of the template.</p>
+</div>
+<div class="paragraph">
+<p>The first step is to add the sidecar container to the <code>query-deployment</code> object. Under the <code>containers</code> list, after we
+specify the <code>jaeger-query</code>, let&#8217;s add the sidecar:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        - image: jboss/keycloak-proxy
+          name: ${JAEGER_SERVICE_NAME}-query-security-proxy
+          volumeMounts:
+          - mountPath: /opt/jboss/conf
+            name: security-proxy-configuration-volume
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: "/"
+              port: 8080</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that container specifies a <code>volumeMount</code> named <code>security-proxy-configuration-volume</code>: we&#8217;ll use it to store the
+proxy&#8217;s configuration file. You should add the volume under the <code>spec/template/spec</code> node for <code>query-deployment</code>, sibling to
+the <code>dnsPolicy</code> property (it&#8217;s probably right under the previous code snippet):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        volumes:
+          - configMap:
+              name: ${JAEGER_SERVICE_NAME}-configuration
+              items:
+                - key: proxy
+                  path: proxy.json
+            name: security-proxy-configuration-volume</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, we need to specify the <code>ConfigMap</code>, with the proxy&#8217;s configuration entry. To do that, we add a new top-level item to
+the template. As a suggestion, we recommend keeping it close to where it&#8217;s consumed. For instance, right before the <code>query-deployment</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
+  kind: ConfigMap
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-configuration
+    labels:
+      app: jaeger
+      jaeger-infra: security-proxy-configuration
+  data:
+    proxy: |
+      {
+          "target-url": "http://localhost:16686",
+          "bind-address": "0.0.0.0",
+          "http-port": "8080",
+          "applications": [
+              {
+                  "base-path": "/",
+                  "adapter-config": {
+                    "realm": "jaeger",
+                    "auth-server-url": "${REDHAT_SSO_URL}",
+                    "ssl-required": "external",
+                    "resource": "proxy-jaeger",
+                    "credentials": {
+                      "secret": "THE-SECRET-FROM-INSTALLATION-FILE"
+                    }
+                  }
+            ,
+            "constraints": [
+                      {
+                          "pattern": "/*",
+                          "roles-allowed": [
+                              "user"
+                          ]
+                      }
+                  ]
+              }
+          ]
+      }</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note that we are only allowing users with the role <code>user</code> to log into our Jaeger UI. In a real world scenario, you might
+want to adjust this to fit your setup. For instance, your user data might come from LDAP, and you only want to allow users
+from specific LDAP groups to access the Jaeger UI.</p>
+</div>
+<div class="paragraph">
+<p>The <code>secret</code> within the <code>credentials</code> should match the secret we got from Keycloak at the beginning of this exercise. Our
+most curious readers will note that we mentioned the template parameter <code>REDHAT_SSO_URL</code> under the property <code>auth-server-url</code>.
+Either change that to your Keycloak server, or let&#8217;s specify a template parameter, allowing us to set this at deployment time.
+Under the <code>parameters</code> section of the template, add the following property:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- description: The URL to the Red Hat SSO / Keycloak server
+  displayName: Red Hat SSO URL
+  name: REDHAT_SSO_URL
+  required: true
+  value: http://THE-URL-FROM-THE-INSTALLATION-FILE:8080/auth</code></pre>
+</div>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+This value should be a location that is reacheable by both your browser and by the sidecar, like your host&#8217;s LAN IP (192.x, 10.x).
+Localhost/127.x is not going to work.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>As a final step, we need to change the service to direct requests to the port <code>8080</code> (proxy) instead of <code>16686</code>. This is done
+by changing the property <code>targetPort</code> on the service named <code>query-service</code>, setting it to <code>8080</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${JAEGER_SERVICE_NAME}-query
+    labels:
+      app: jaeger
+      jaeger-infra: query-service
+  spec:
+    ports:
+    - name: jaeger-query
+      port: 80
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      jaeger-infra: query-pod
+    type: LoadBalancer</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As a reference, here&#8217;s the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/KeycloakSecuringUI/production/jaeger-production-template.yml">complete template file</a>
+that can be used for this blog post.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_deploying">Deploying</h3>
+<div class="paragraph">
+<p>Now that we have everything ready, let&#8217;s deploy Jaeger into our OpenShift cluster. Run the following command from the same
+directory you stored the <code>YAML</code> file from the previous steps, referenced here by the name <code>jaeger-production-template.yml</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc process -f jaeger-production-template.yml | oc create -n jaeger -f -</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>During the first couple of minutes, it&#8217;s OK if the pods <code>jaeger-query</code> and <code>jaeger-collector</code> fail, as Cassandra will still
+be booting. Eventually, the service should be up and running, as shown in the following image.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-07-18-pod.png" alt="Pod with sidecar on OpenShift">
+</div>
+</div>
+<div class="paragraph">
+<p>Once it is ready to serve requests, click on URL for the route (<a href="https://jaeger-query-jaeger.127.0.0.1.nip.io" class="bare">https://jaeger-query-jaeger.127.0.0.1.nip.io</a>). You should be
+presented with a login screen, served by the Keycloak server. Login with the credentials you set on the previous steps, and you
+should reach the regular Jaeger UI.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_conclusion">Conclusion</h3>
+<div class="paragraph">
+<p>In this exercise, we&#8217;ve seen how to add a security proxy to our Jaeger Query pod as a sidecar. All incoming requests go through
+this sidecar and all features available in Keycloak can be used transparently, such as 2-Factor authentication, service accounts,
+single sign-on, brute force attack protection, LDAP support and much more.</p>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by Juraci Paixão Kröhling on  18 July 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
