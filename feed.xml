@@ -6,9 +6,192 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 21 Jul 2017 13:03:32 +0000</pubDate>
-    <lastBuildDate>Fri, 21 Jul 2017 13:03:32 +0000</lastBuildDate>
+    <pubDate>Mon, 24 Jul 2017 09:00:03 +0000</pubDate>
+    <lastBuildDate>Mon, 24 Jul 2017 09:00:03 +0000</lastBuildDate>
 
+    <item>
+      <title>Grafana: new query interface</title>
+      <link>http://www.hawkular.org/blog/2017/07/grafana-new-query-interface.html</link>
+      <author>noreply@hawkular.org (Joel Takvorian)</author>
+      <pubDate>Mon, 24 Jul 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/07/grafana-new-query-interface.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There have been improvements lately in the Hawkular Grafana datasource that are worth mentioning.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The way to query metrics by tags has changed since plugin &lt;a href=&quot;https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.8&quot;&gt;v1.0.8&lt;/a&gt;.
+It now takes advantage of the Hawkular Metrics&apos; tags query language,
+that was introduced server-side in &lt;a href=&quot;http://www.hawkular.org/blog/2017/02/08/hawkular-metrics-0.24.0.Final-released.html&quot;&gt;Metrics 0.24.0&lt;/a&gt;
+and enhanced in &lt;a href=&quot;http://www.hawkular.org/blog/2017/03/07/hawkular-metrics-0.25.0.Final-released.html&quot;&gt;0.25.0&lt;/a&gt;.
+To sum it up, Metrics integrates a parser that allows queries such as:
+&lt;code&gt;tag1 = &apos;awesome!&apos; AND tag2 NOT IN [&apos;foo&apos;, &apos;bar&apos;]&lt;/code&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The datasource in now able to fetch bucketized metrics stats, instead of raw metrics.
+It consists in aggregating datapoints in slices of time (buckets) and providing, for each slice, some statistics like &lt;em&gt;min&lt;/em&gt;, &lt;em&gt;max&lt;/em&gt;, &lt;em&gt;average&lt;/em&gt; and more.
+The exact content of a bucket is described in &lt;a href=&quot;http://www.hawkular.org/docs/rest/rest-metrics.html#NumericBucketPoint&quot;&gt;Metrics REST API&lt;/a&gt;.
+Hawkular has always been able to provide metric stats server-side,
+but being able to use them in the Grafana plugin is new, introduced in &lt;a href=&quot;https://github.com/hawkular/hawkular-grafana-datasource/releases/tag/v1.0.9&quot;&gt;v1.0.9&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-empty-query.png&quot; alt=&quot;New query interface&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;The new query interface&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_tags_query_language&quot;&gt;Tags query language&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first change is that you don&amp;#8217;t have to choose between &lt;em&gt;query by tag&lt;/em&gt; and &lt;em&gt;query by metric id&lt;/em&gt; anymore, you can do both at the same time.
+Querying by tag will refine the available list of metric names (much like a filter) and can result in multiple metrics from a single query.
+By selecting a &lt;em&gt;metric name&lt;/em&gt;, you restrict the query to only display that one.
+This filtering is really nice when there&amp;#8217;s tons of metrics available, like in the case of
+hundreds of OpenShift pods being monitored with the same tenant.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The simple &lt;em&gt;key/value&lt;/em&gt; pairs interface is now replaced with a more elaborated query builder, following the pattern:
+&lt;em&gt;&apos;tag-key&apos;&lt;/em&gt; &lt;em&gt;&apos;operator&apos;&lt;/em&gt; &lt;em&gt;&apos;tag-value(s)&apos;&lt;/em&gt; [&lt;em&gt;&apos;AND/OR&apos;&lt;/em&gt; etc.]&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The following images show a walk-through:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-tag_key.png&quot; alt=&quot;Selecting tag key&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Selecting the tag key&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-tag_operator.png&quot; alt=&quot;Selecting tag operator&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Selecting the tag operator&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-tag_value.png&quot; alt=&quot;Selecting tag value&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Selecting the tag value&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The text fields include dynamic suggestions, you can use Grafana template variables within tag values, or enter free text.
+Once you&amp;#8217;ve set up a tag query expression, the relevant metrics immediately show up on the chart and the list of available metrics in the dropdown list in updated.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-tag-filtering.png&quot; alt=&quot;Filtered metrics&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Filtered metrics&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This query builder lets you build almost any tag query that the Hawkular server understands.
+There are however some corner cases. For now this builder doesn&amp;#8217;t allow you to prioritize expressions with parentheses.
+For instance, you cannot build &lt;code&gt;c1 = &apos;foo&apos; OR (b1 != &apos;B&apos; AND a1 = &apos;abcd&apos;)&lt;/code&gt;.
+As a workaround you can turn off the query builder and directly type in your query expression.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-editor-mode.png&quot; alt=&quot;Toggle editor mode&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Toggle editor mode&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It will be sent as is to the Hawkular Metrics server.
+This will also be useful to fill the gap if the language evolves server-side and this plugin isn&amp;#8217;t updated immediately.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_stats_query&quot;&gt;Stats query&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The other important feature is the ability to run &lt;a href=&quot;http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_downsampling&quot;&gt;stats&lt;/a&gt; queries against Hawkular Metrics, instead of &lt;a href=&quot;http://www.hawkular.org/hawkular-metrics/docs/user-guide/#_raw_data&quot;&gt;raw&lt;/a&gt; queries.
+There are several reasons to do this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;it reduces the network load, and client-side processing load, especially when raw data would contain tons of datapoints&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;it enables some aggregation methods&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;it also allows higher-level analysis with stats such as percentiles&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To enable it, just clear the &lt;em&gt;raw&lt;/em&gt; checkbox.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-stats-mode.png&quot; alt=&quot;Toggle stats mode&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Toggle stats mode&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When you clear the &lt;em&gt;raw&lt;/em&gt; checkbox, you can configure &lt;em&gt;Multiple series aggregation&lt;/em&gt; to &lt;em&gt;None&lt;/em&gt;, &lt;em&gt;Sum&lt;/em&gt; or &lt;em&gt;Average&lt;/em&gt;
+and can configure &lt;em&gt;Stat type&lt;/em&gt; as &lt;em&gt;avg&lt;/em&gt;, &lt;em&gt;min&lt;/em&gt;, &lt;em&gt;max&lt;/em&gt;, &lt;em&gt;median&lt;/em&gt;, &lt;em&gt;sum&lt;/em&gt; and different percentiles.
+You can display several different &lt;em&gt;Stat types&lt;/em&gt; within the same query.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-stats-none.png&quot; alt=&quot;Stats without aggregation&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Stats without aggregation: each two metrics show avg, min and max&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock text-center&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-20-grafana-stats-avg.png&quot; alt=&quot;Stats avg&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph text-center&quot;&gt;
+&lt;p&gt;&lt;em&gt;Same query with series aggregation: the two metrics are averaged into one, which shows avg, min and max&lt;/em&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If the query returns multiple series, use &lt;em&gt;Multiple series aggregation&lt;/em&gt; to define if and how to aggregate them.
+&lt;em&gt;None&lt;/em&gt; will show them individually on the chart. But consider for instance the case of an OpenShift pod with many replicas, and you&amp;#8217;re tracking their memory usage.
+It may be more relevant here to aggregate all of them, both &lt;em&gt;sum&lt;/em&gt; and &lt;em&gt;average&lt;/em&gt; are meaningful here.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The &lt;em&gt;Stat type&lt;/em&gt; option refers to an aggregation at a different level: not between multiple metrics, but within a single metric,
+all raw datapoints are aggregated within time buckets.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These two improvements aim a common goal, that is facilitating querying over large amounts of data. This is becoming crucial especially
+in the context of microservices and applications running on container platforms, as the number of metrics explodes.
+Proper metrics tagging is the corner stone to make sense of this data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Protecting Jaeger UI with a sidecar security proxy</title>
       <link>http://www.hawkular.org/blog/2017/07/jaeger-with-security-proxy.html</link>
