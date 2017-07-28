@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - OpenTracing EJB instrumentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../overview/">Overview</a></li>
+                <li><a href="../../../blog.html">Blog</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Services<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-submenu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                          <ul class="dropdown-menu">
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-alerts.html">Alerting</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-inventory.html">Inventory</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-metrics.html">Metrics</a>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular APM<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <li><a href="../../../hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
+                      <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="../../../community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-metrics/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="../../../hawkular-clients/">Hawkular Clients</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../community/labs/datamining/">Datamining</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-clients/android-client/">Android client</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                        </li>
+                      </ul>
+                  </li>
+                  <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>OpenTracing EJB instrumentation</h1>
+            <p>A blog post by Juraci Paixão Kröhling</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/apm.html">apm</a> 
+          |
+      <a href="/tags/ejb.html">ejb</a> 
+          |
+      <a href="/tags/jaeger.html">jaeger</a> 
+          |
+      <a href="/tags/opentracing.html">opentracing</a> 
+          |
+      <a href="/tags/tracing.html">tracing</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>OpenTracing features more and more framework integrations, allowing for transparent instrumentation
+of applications with minimal effort. This blog post will show how to use the EJB instrumentation
+to automatically trace EJB invocations.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-07-28-teaser.png" alt="Jaeger with EJB traces">
+</div>
+</div>
+<div class="paragraph">
+<p>For this demo, we&#8217;ll generate a project using the Wildfly Swarm project generator, which allows us to
+have a seed project with the appropriate OpenTracing support in place. The concrete OpenTracing solution
+we will use is provided by the <a href="https://uber.github.io/jaeger/">Jaeger project</a>, which is also
+provided as a Wildfly Swarm Fraction.</p>
+</div>
+<div class="paragraph">
+<p>With that, we&#8217;ll create a simple JAX-RS endpoint with an EJB facet, invoking a set of EJB services in
+different ways to demonstrate all the features of this integration.</p>
+</div>
+<div class="paragraph">
+<p>Our application has one endpoint called <code>/order</code>, responsible for receiving requests to place orders
+in our system. When we call this endpoint, we also call some other EJB services, like</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p><code>AccountService</code> to send a notification that an order has been placed</p>
+</li>
+<li>
+<p><code>OrderService</code> to effectively place the order</p>
+</li>
+<li>
+<p><code>InventoryService</code> to change our inventory</p>
+</li>
+<li>
+<p><code>InventoryNotificationService</code>, to notify other backend systems.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As we are only interested in the tracing parts, we&#8217;ll not implement the business code itself, only the
+scaffolding.</p>
+</div>
+<div class="paragraph">
+<p>Our demo project is heavily based on the
+<a href="https://github.com/opentracing-contrib/java-ejb/tree/release-0.0.2/opentracing-ejb-example"><code>opentracing-ejb-example</code></a>
+from the repository <a href="https://github.com/opentracing-contrib/java-ejb"><code>opentracing-contrib/java-ejb</code></a>.
+We have also prepared <a href="/data/blog/2017/2017-07-28-demo-example-complete.tar.gz">an archive</a> with the
+final outcome of this demo, which you can use as reference.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_seed_project">The seed project</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To generate the seed project, open the <a href="http://wildfly-swarm.io/generator/">Wildfly Swarm generator</a>
+and create a project with the "Group ID" <code>io.opentracing.contrib.ejb</code> and "Artifact ID"
+<code>demo-example</code>. Add the dependencies <code>EJB</code>, <code>CDI</code>, <code>JAX-RS</code>, <code>OpenTracing</code>, and <code>Jaeger</code>.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+Make sure to select all listed dependencies and confirm that they are shown in the "Selected dependencies"
+section, otherwise, you might not have all the required fractions for this demo.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>Click on <code>Generate Project</code> and you&#8217;ll get a ZIP file with the seed project. Uncompress it and add the following
+dependency to the <code>pom.xml</code>, within the <code>dependencies</code> node and after the <code>WildFly Swarm Fractions</code> dependencies:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
+      &lt;groupId&gt;io.opentracing.contrib&lt;/groupId&gt;
+      &lt;artifactId&gt;opentracing-ejb&lt;/artifactId&gt;
+      &lt;version&gt;0.0.2&lt;/version&gt;
+    &lt;/dependency&gt;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It&#8217;s now a good time to perform a sanity build, to make sure everything is in place. The first build might take a few minutes:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ mvn wildfly-swarm:run
+...
+...
+2017-07-26 12:02:19,154 INFO  [org.wildfly.swarm] (main) WFSWARM99999: WildFly Swarm is Ready</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If it looks good, stop the server with <code>Ctrl+C</code> and let&#8217;s start coding our application!</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_application">The application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Let&#8217;s start by defining a JAX-RS endpoint that also acts as a stateless EJB. This is a common trick
+to get JAX-RS endpoints to be managed as EJBs, so that they can be invoked via JMX or get
+monitoring features. Or, in our case, to get traced via EJB interceptors.</p>
+</div>
+<div class="paragraph">
+<p>This endpoint is where we get our HTTP requests from and where our transaction starts, from
+the tracing perspective. Once we receive an HTTP request, we call the
+<code>AccountService#sendNotification</code> method and then the <code>OrderService#processOrderPlacement</code>.</p>
+</div>
+<div class="paragraph">
+<p>Note that we annotate the class with <code>@Interceptors(OpenTracingInterceptor.class)</code>, which means
+that all methods on this class are to be traced.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/Endpoint.java</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import java.util.logging.Logger;
+
+/**
+ * This is a regular JAX-RS endpoint with EJB capabilities. We use the EJB capability to specify an interceptor,
+ * so that every method on this class is wrapped on its own span. If the OpenTracing JAX-RS integration is being used,
+ * it would be a good idea to not have the interceptor at this level, to avoid having too much "noise".
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Path("/order")
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class Endpoint {
+    private static final Logger log = Logger.getLogger(Endpoint.class.getName());
+
+    @Inject
+    AccountService accountService;
+
+    @Inject
+    OrderService orderService;
+
+    @POST
+    @Path("/")
+    public String placeOrder() {
+        log.info("Request received to place an order");
+        accountService.sendNotification();
+        orderService.processOrderPlacement();
+        return "Order placed";
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our <code>AccountService</code> is a simple stateless EJB, responsible for sending a notification about the new order
+to the owner of the account. Here, we could call another service, or send an email, SMS or any other form
+of message.</p>
+</div>
+<div class="paragraph">
+<p>As this is a regular EJB, we are able to automatically join the span context from the JAX-RS endpoint, making
+this call a child span of the main transaction. This is all transparent to you as developer.</p>
+</div>
+<div class="paragraph">
+<p>Note again that we annotate the bean with <code>@Interceptors(OpenTracingInterceptor.class)</code>. As our interceptor
+is just like any other EJB interceptor, you could use a <code>ejb-jar.xml</code> to automatically use this inteceptor on
+all available beans. Whether or not to trace all beans is a per-deployment decision, so, no <code>ejb-jar.xml</code> is
+provided by the integration.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/AccountService.java</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+/**
+ * This is a simple synchronous EJB, without any knowledge about span context or other OpenTracing semantics. All it
+ * does is specify an interceptor and it's shown as the child of a parent span.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class AccountService {
+    private static final Logger log = Logger.getLogger(AccountService.class.getName());
+
+    public void sendNotification() {
+        log.info("Notifying the account owner about a new order");
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our <code>OrderService</code> is responsible for actually placing the order: it&#8217;s where the business knowledge
+resides. We&#8217;ll later look into details at the <code>InventoryService</code>, but for now, we need to know that
+this service requires a <code>SpanContext</code> to be explicitly passed. We can get this context from the <code>EJBContext</code>,
+stored under a context data entry that can be retrieved with the constant
+<code>io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT</code>.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/OrderService.java</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.SpanContext;
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+import static io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT;
+
+/**
+ * This is a regular synchronous stateless EJB. It demonstrates how to get the span context for the span it's wrapped
+ * on. This can be used to pass down the call chain, create child spans or add baggage items.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class OrderService {
+    private static final Logger log = Logger.getLogger(OrderService.class.getName());
+
+    @Resource
+    EJBContext ctx;
+
+    @Inject
+    InventoryService inventoryService;
+
+    public void processOrderPlacement() {
+        log.info("Placing order");
+        Object ctxParentSpan = ctx.getContextData().get(SPAN_CONTEXT);
+        if (ctxParentSpan instanceof SpanContext) {
+            inventoryService.changeInventory((SpanContext) ctxParentSpan);
+            return;
+        }
+
+        inventoryService.changeInventory(null);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Our <code>InventoryService</code> is responsible for interfacing with backend systems dealing with inventory control.
+We don&#8217;t want to block the parent transaction while interacting with those systems, so, we make this an
+asynchronous EJB. When dealing with asynchronous objects, it&#8217;s a good idea to be explicit about the span
+context, as there are potential concurrency issues when sharing a context between a synchronous and an
+asynchronous bean.</p>
+</div>
+<div class="paragraph">
+<p>The OpenTracing EJB integration is able to intercept the method call and detect if there is a span context
+among the parameters, which is the case of the <code>changeInventory(SpanContext)</code> method. In this situation,
+the following happens behind the scenes:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>The caller makes a method call, passing the <code>SpanContext</code></p>
+</li>
+<li>
+<p>The interceptor is activated, creating a new child span using the <code>SpanContext</code> as the parent</p>
+</li>
+<li>
+<p>The interceptor replaces the original <code>SpanContext</code> with this new child span on the method call</p>
+</li>
+<li>
+<p>The intercepted method is finally invoked, wrapped by the new child span.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Note that the <code>SpanContext</code> passed by the <code>OrderService</code> is not the same as the one received by <code>InventoryService</code>.
+While this might cause some confusion, we believe this is the right semantic for this use case, as it allows
+for a complete tracing picture, without any explicit tracing code, apart from passing the context around.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryService.java</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.SpanContext;
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+/**
+ * This is an asynchronous stateless EJB with spans created automatically by the interceptor. Note that the span context
+ * that this method sees is &lt;b&gt;not&lt;/b&gt; the same as the span context sent by the caller: the interceptor wraps this
+ * method call on its own span, and replaces the span context by the context of this new span. This is done so that this
+ * span context can be passed along to the next service "as is".
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Asynchronous
+@Stateless
+@Interceptors({OpenTracingInterceptor.class})
+public class InventoryService {
+    private static final Logger log = Logger.getLogger(InventoryService.class.getName());
+
+    @Inject
+    InventoryNotificationService inventoryNotificationService;
+
+    public void changeInventory(SpanContext context) {
+        log.info("Changing the inventory");
+        inventoryNotificationService.sendNotification(context);
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And finally, our last service, <code>InventoryNotificationService</code>: in this case, we notify another set of backend systems
+that a new order has been placed. Again, this is an asynchronous EJB and works like the one above, but additionally,
+we wanted to manually create a "business span", called <code>sendNotification</code>. This method could send several notifications,
+wrapping each one into a span of its own. As we manually started it, we manually finish it as well.</p>
+</div>
+<div class="paragraph">
+<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryNotificationService.java</code></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
+import io.opentracing.util.GlobalTracer;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.Stateless;
+import java.util.logging.Logger;
+
+/**
+ * This is the final call in the chain. This is an asynchronous stateless EJB, which obtains the span context
+ * via a method parameter. This bean is not intercepted in any way by us, so, the span context received is exactly
+ * the same as what was sent by the caller.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Asynchronous
+public class InventoryNotificationService {
+    private static final Logger log = Logger.getLogger(InventoryNotificationService.class.getName());
+
+    public void sendNotification(SpanContext context) {
+        Span span = GlobalTracer.get().buildSpan("sendNotification").asChildOf(context).startManual();
+        log.info("Sending an inventory change notification");
+        span.finish();
+    }
+
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Now, let&#8217;s do a final sanity check and see if everything is in the right place:
+<code>mvn wildfly-swarm:run</code> . As before, the final message should be <code>WildFly Swarm is Ready</code>. Hit <code>Ctrl+C</code> and let&#8217;s
+setup our tracing backend.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_tracing_backend">The tracing backend</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Instrumenting our code is one part of the story. The other part is to plug in an actual OpenTracing implementation that
+is capable of capturing the spans and submitting them to a backend service. For our demo, we&#8217;ll use Jaeger. If you don&#8217;t
+have a Jaeger server running yet, one can be started via Docker as follows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run \
+    --rm \
+    -p5775:5775/udp \
+    -p6831:6831/udp \
+    -p6832:6832/udp \
+    -p5778:5778 \
+    -p16686:16686 \
+    -p14268:14268 \
+    --name jaeger \
+    jaegertracing/all-in-one:latest</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_tying_everything_together">Tying everything together</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that we have our code ready and a tracing backend, let&#8217;s start Wildfly Swarm passing a service name, which is the only
+property required by the Jaeger client. By default, Jaeger&#8217;s Java tracer will attempt to send traces via UDP to a
+Jaeger Agent located on the local machine. If you are using a different architecture, refer to the
+<a href="https://github.com/uber/jaeger-client-java/tree/master/jaeger-core">Jaeger&#8217;s documentation</a>
+on how to use environment variables to configure the client, or refer to the
+<a href="https://github.com/wildfly-swarm/wildfly-swarm-examples/tree/master/jaeger/jaeger-servlet">Jaeger&#8217;s fraction for Wildfly Swarm</a>.</p>
+</div>
+<div class="paragraph">
+<p>For our demo, we&#8217;ll use a property that is recognized by the Jaeger&#8217;s Wildfly Swarm Fraction. The other two properties are telling
+Jaeger that every request should be sampled.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">mvn wildfly-swarm:run -Dswarm.jaeger.service-name=order-processing -Dswarm.jaeger.sampler-type=const -Dswarm.jaeger.sampler-parameter=1</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Watch the logs for an entry containing <code>com.uber.jaeger.Configuration</code>: if everything is correctly set, it should show the
+complete configuration of the Jaeger client, like this:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>2017-07-26 12:03:09,139 INFO  [com.uber.jaeger.Configuration] (ServerService Thread Pool -- 6) Initialized tracer=Tracer(version=Java-0.20.0, serviceName=order-processing, reporter=RemoteReporter(queueProcessor=RemoteReporter.QueueProcessor(open=true), sender=UdpSender(udpTransport=ThriftUdpTransport(socket=java.net.DatagramSocket@7270de22, receiveBuf=null, receiveOffSet=-1, receiveLength=0)), maxQueueSize=100, closeEnqueueTimeout=1000), sampler=ConstSampler(decision=true, tags={sampler.type=const, sampler.param=true}), ipv4=-1062731153, tags={hostname=carambola, jaeger.version=Java-0.20.0, ip=192.168.2.111}, zipkinSharedRpcSpan=false)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once the message <code>WildFly Swarm is Ready</code> is seen, we can start making requests to our endpoint:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ curl -X POST localhost:8080/order
+Order placed</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>And this can be seen on the server&#8217;s log:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>2017-07-26 12:03:19,302 INFO  [io.opentracing.contrib.ejb.demoexample.Endpoint] (default task-2) Request received to place an order
+2017-07-26 12:03:19,304 INFO  [io.opentracing.contrib.ejb.demoexample.AccountService] (default task-2) Notifying the account owner about a new order
+2017-07-26 12:03:19,307 INFO  [io.opentracing.contrib.ejb.demoexample.OrderService] (default task-2) Placing order
+2017-07-26 12:03:19,314 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryService] (EJB default - 1) Changing the inventory
+2017-07-26 12:03:19,322 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryNotificationService] (EJB default - 2) Sending an inventory change notification</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>At this point, the complete trace with its 6 spans can be seen on Jaeger&#8217;s UI, located at <a href="http://localhost:16686/search" class="bare">http://localhost:16686/search</a> , if you are using
+the Docker command we listed before.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>EJBs are a very important part of Java EE and we expect the OpenTracing EJB framework integration to complement the other Java EE related
+integrations, like the Servlet and JAX-RS. In this blog post, we&#8217;ve shown how tracing EJBs can be accomplished by transparently tracing
+synchronous stateless EJBs, intercepting span contexts in asynchronous EJBs and by exposing the span context via EJB contexts, as well
+as manually starting spans to include specific business logic into the trace.</p>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by Juraci Paixão Kröhling on  28 July 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

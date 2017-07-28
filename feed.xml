@@ -6,9 +6,501 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 24 Jul 2017 14:57:17 +0000</pubDate>
-    <lastBuildDate>Mon, 24 Jul 2017 14:57:17 +0000</lastBuildDate>
+    <pubDate>Fri, 28 Jul 2017 07:47:19 +0000</pubDate>
+    <lastBuildDate>Fri, 28 Jul 2017 07:47:19 +0000</lastBuildDate>
 
+    <item>
+      <title>OpenTracing EJB instrumentation</title>
+      <link>http://www.hawkular.org/blog/2017/07/opentracing-ejb.html</link>
+      <author>noreply@hawkular.org (Juraci Paixão Kröhling)</author>
+      <pubDate>Fri, 28 Jul 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/07/opentracing-ejb.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;OpenTracing features more and more framework integrations, allowing for transparent instrumentation
+of applications with minimal effort. This blog post will show how to use the EJB instrumentation
+to automatically trace EJB invocations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-07-28-teaser.png&quot; alt=&quot;Jaeger with EJB traces&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For this demo, we&amp;#8217;ll generate a project using the Wildfly Swarm project generator, which allows us to
+have a seed project with the appropriate OpenTracing support in place. The concrete OpenTracing solution
+we will use is provided by the &lt;a href=&quot;https://uber.github.io/jaeger/&quot;&gt;Jaeger project&lt;/a&gt;, which is also
+provided as a Wildfly Swarm Fraction.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With that, we&amp;#8217;ll create a simple JAX-RS endpoint with an EJB facet, invoking a set of EJB services in
+different ways to demonstrate all the features of this integration.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our application has one endpoint called &lt;code&gt;/order&lt;/code&gt;, responsible for receiving requests to place orders
+in our system. When we call this endpoint, we also call some other EJB services, like&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;AccountService&lt;/code&gt; to send a notification that an order has been placed&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;OrderService&lt;/code&gt; to effectively place the order&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;InventoryService&lt;/code&gt; to change our inventory&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;&lt;code&gt;InventoryNotificationService&lt;/code&gt;, to notify other backend systems.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As we are only interested in the tracing parts, we&amp;#8217;ll not implement the business code itself, only the
+scaffolding.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our demo project is heavily based on the
+&lt;a href=&quot;https://github.com/opentracing-contrib/java-ejb/tree/release-0.0.2/opentracing-ejb-example&quot;&gt;&lt;code&gt;opentracing-ejb-example&lt;/code&gt;&lt;/a&gt;
+from the repository &lt;a href=&quot;https://github.com/opentracing-contrib/java-ejb&quot;&gt;&lt;code&gt;opentracing-contrib/java-ejb&lt;/code&gt;&lt;/a&gt;.
+We have also prepared &lt;a href=&quot;/data/blog/2017/2017-07-28-demo-example-complete.tar.gz&quot;&gt;an archive&lt;/a&gt; with the
+final outcome of this demo, which you can use as reference.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_seed_project&quot;&gt;The seed project&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To generate the seed project, open the &lt;a href=&quot;http://wildfly-swarm.io/generator/&quot;&gt;Wildfly Swarm generator&lt;/a&gt;
+and create a project with the &quot;Group ID&quot; &lt;code&gt;io.opentracing.contrib.ejb&lt;/code&gt; and &quot;Artifact ID&quot;
+&lt;code&gt;demo-example&lt;/code&gt;. Add the dependencies &lt;code&gt;EJB&lt;/code&gt;, &lt;code&gt;CDI&lt;/code&gt;, &lt;code&gt;JAX-RS&lt;/code&gt;, &lt;code&gt;OpenTracing&lt;/code&gt;, and &lt;code&gt;Jaeger&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock warning&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;i class=&quot;fa icon-warning&quot; title=&quot;Warning&quot;&gt;&lt;/i&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Make sure to select all listed dependencies and confirm that they are shown in the &quot;Selected dependencies&quot;
+section, otherwise, you might not have all the required fractions for this demo.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Click on &lt;code&gt;Generate Project&lt;/code&gt; and you&amp;#8217;ll get a ZIP file with the seed project. Uncompress it and add the following
+dependency to the &lt;code&gt;pom.xml&lt;/code&gt;, within the &lt;code&gt;dependencies&lt;/code&gt; node and after the &lt;code&gt;WildFly Swarm Fractions&lt;/code&gt; dependencies:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-xml&quot; data-lang=&quot;xml&quot;&gt;    &amp;lt;dependency&amp;gt;
+      &amp;lt;groupId&amp;gt;io.opentracing.contrib&amp;lt;/groupId&amp;gt;
+      &amp;lt;artifactId&amp;gt;opentracing-ejb&amp;lt;/artifactId&amp;gt;
+      &amp;lt;version&amp;gt;0.0.2&amp;lt;/version&amp;gt;
+    &amp;lt;/dependency&amp;gt;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It&amp;#8217;s now a good time to perform a sanity build, to make sure everything is in place. The first build might take a few minutes:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ mvn wildfly-swarm:run
+...
+...
+2017-07-26 12:02:19,154 INFO  [org.wildfly.swarm] (main) WFSWARM99999: WildFly Swarm is Ready&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If it looks good, stop the server with &lt;code&gt;Ctrl+C&lt;/code&gt; and let&amp;#8217;s start coding our application!&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_application&quot;&gt;The application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Let&amp;#8217;s start by defining a JAX-RS endpoint that also acts as a stateless EJB. This is a common trick
+to get JAX-RS endpoints to be managed as EJBs, so that they can be invoked via JMX or get
+monitoring features. Or, in our case, to get traced via EJB interceptors.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This endpoint is where we get our HTTP requests from and where our transaction starts, from
+the tracing perspective. Once we receive an HTTP request, we call the
+&lt;code&gt;AccountService#sendNotification&lt;/code&gt; method and then the &lt;code&gt;OrderService#processOrderPlacement&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that we annotate the class with &lt;code&gt;@Interceptors(OpenTracingInterceptor.class)&lt;/code&gt;, which means
+that all methods on this class are to be traced.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/io/opentracing/contrib/ejb/demoexample/Endpoint.java&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import java.util.logging.Logger;
+
+/**
+ * This is a regular JAX-RS endpoint with EJB capabilities. We use the EJB capability to specify an interceptor,
+ * so that every method on this class is wrapped on its own span. If the OpenTracing JAX-RS integration is being used,
+ * it would be a good idea to not have the interceptor at this level, to avoid having too much &quot;noise&quot;.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Path(&quot;/order&quot;)
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class Endpoint {
+    private static final Logger log = Logger.getLogger(Endpoint.class.getName());
+
+    @Inject
+    AccountService accountService;
+
+    @Inject
+    OrderService orderService;
+
+    @POST
+    @Path(&quot;/&quot;)
+    public String placeOrder() {
+        log.info(&quot;Request received to place an order&quot;);
+        accountService.sendNotification();
+        orderService.processOrderPlacement();
+        return &quot;Order placed&quot;;
+    }
+
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our &lt;code&gt;AccountService&lt;/code&gt; is a simple stateless EJB, responsible for sending a notification about the new order
+to the owner of the account. Here, we could call another service, or send an email, SMS or any other form
+of message.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As this is a regular EJB, we are able to automatically join the span context from the JAX-RS endpoint, making
+this call a child span of the main transaction. This is all transparent to you as developer.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note again that we annotate the bean with &lt;code&gt;@Interceptors(OpenTracingInterceptor.class)&lt;/code&gt;. As our interceptor
+is just like any other EJB interceptor, you could use a &lt;code&gt;ejb-jar.xml&lt;/code&gt; to automatically use this inteceptor on
+all available beans. Whether or not to trace all beans is a per-deployment decision, so, no &lt;code&gt;ejb-jar.xml&lt;/code&gt; is
+provided by the integration.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/io/opentracing/contrib/ejb/demoexample/AccountService.java&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Stateless;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+/**
+ * This is a simple synchronous EJB, without any knowledge about span context or other OpenTracing semantics. All it
+ * does is specify an interceptor and it&apos;s shown as the child of a parent span.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class AccountService {
+    private static final Logger log = Logger.getLogger(AccountService.class.getName());
+
+    public void sendNotification() {
+        log.info(&quot;Notifying the account owner about a new order&quot;);
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our &lt;code&gt;OrderService&lt;/code&gt; is responsible for actually placing the order: it&amp;#8217;s where the business knowledge
+resides. We&amp;#8217;ll later look into details at the &lt;code&gt;InventoryService&lt;/code&gt;, but for now, we need to know that
+this service requires a &lt;code&gt;SpanContext&lt;/code&gt; to be explicitly passed. We can get this context from the &lt;code&gt;EJBContext&lt;/code&gt;,
+stored under a context data entry that can be retrieved with the constant
+&lt;code&gt;io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/io/opentracing/contrib/ejb/demoexample/OrderService.java&lt;/code&gt;:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.SpanContext;
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+import static io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT;
+
+/**
+ * This is a regular synchronous stateless EJB. It demonstrates how to get the span context for the span it&apos;s wrapped
+ * on. This can be used to pass down the call chain, create child spans or add baggage items.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Interceptors(OpenTracingInterceptor.class)
+public class OrderService {
+    private static final Logger log = Logger.getLogger(OrderService.class.getName());
+
+    @Resource
+    EJBContext ctx;
+
+    @Inject
+    InventoryService inventoryService;
+
+    public void processOrderPlacement() {
+        log.info(&quot;Placing order&quot;);
+        Object ctxParentSpan = ctx.getContextData().get(SPAN_CONTEXT);
+        if (ctxParentSpan instanceof SpanContext) {
+            inventoryService.changeInventory((SpanContext) ctxParentSpan);
+            return;
+        }
+
+        inventoryService.changeInventory(null);
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Our &lt;code&gt;InventoryService&lt;/code&gt; is responsible for interfacing with backend systems dealing with inventory control.
+We don&amp;#8217;t want to block the parent transaction while interacting with those systems, so, we make this an
+asynchronous EJB. When dealing with asynchronous objects, it&amp;#8217;s a good idea to be explicit about the span
+context, as there are potential concurrency issues when sharing a context between a synchronous and an
+asynchronous bean.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The OpenTracing EJB integration is able to intercept the method call and detect if there is a span context
+among the parameters, which is the case of the &lt;code&gt;changeInventory(SpanContext)&lt;/code&gt; method. In this situation,
+the following happens behind the scenes:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;The caller makes a method call, passing the &lt;code&gt;SpanContext&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The interceptor is activated, creating a new child span using the &lt;code&gt;SpanContext&lt;/code&gt; as the parent&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The interceptor replaces the original &lt;code&gt;SpanContext&lt;/code&gt; with this new child span on the method call&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The intercepted method is finally invoked, wrapped by the new child span.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that the &lt;code&gt;SpanContext&lt;/code&gt; passed by the &lt;code&gt;OrderService&lt;/code&gt; is not the same as the one received by &lt;code&gt;InventoryService&lt;/code&gt;.
+While this might cause some confusion, we believe this is the right semantic for this use case, as it allows
+for a complete tracing picture, without any explicit tracing code, apart from passing the context around.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryService.java&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.SpanContext;
+import io.opentracing.contrib.ejb.OpenTracingInterceptor;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.Stateless;
+import javax.inject.Inject;
+import javax.interceptor.Interceptors;
+import java.util.logging.Logger;
+
+/**
+ * This is an asynchronous stateless EJB with spans created automatically by the interceptor. Note that the span context
+ * that this method sees is &amp;lt;b&amp;gt;not&amp;lt;/b&amp;gt; the same as the span context sent by the caller: the interceptor wraps this
+ * method call on its own span, and replaces the span context by the context of this new span. This is done so that this
+ * span context can be passed along to the next service &quot;as is&quot;.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Asynchronous
+@Stateless
+@Interceptors({OpenTracingInterceptor.class})
+public class InventoryService {
+    private static final Logger log = Logger.getLogger(InventoryService.class.getName());
+
+    @Inject
+    InventoryNotificationService inventoryNotificationService;
+
+    public void changeInventory(SpanContext context) {
+        log.info(&quot;Changing the inventory&quot;);
+        inventoryNotificationService.sendNotification(context);
+    }
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And finally, our last service, &lt;code&gt;InventoryNotificationService&lt;/code&gt;: in this case, we notify another set of backend systems
+that a new order has been placed. Again, this is an asynchronous EJB and works like the one above, but additionally,
+we wanted to manually create a &quot;business span&quot;, called &lt;code&gt;sendNotification&lt;/code&gt;. This method could send several notifications,
+wrapping each one into a span of its own. As we manually started it, we manually finish it as well.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;&lt;code&gt;src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryNotificationService.java&lt;/code&gt;&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-java&quot; data-lang=&quot;java&quot;&gt;package io.opentracing.contrib.ejb.demoexample;
+
+import io.opentracing.Span;
+import io.opentracing.SpanContext;
+import io.opentracing.util.GlobalTracer;
+
+import javax.ejb.Asynchronous;
+import javax.ejb.Stateless;
+import java.util.logging.Logger;
+
+/**
+ * This is the final call in the chain. This is an asynchronous stateless EJB, which obtains the span context
+ * via a method parameter. This bean is not intercepted in any way by us, so, the span context received is exactly
+ * the same as what was sent by the caller.
+ *
+ * @author Juraci Paixão Kröhling
+ */
+@Stateless
+@Asynchronous
+public class InventoryNotificationService {
+    private static final Logger log = Logger.getLogger(InventoryNotificationService.class.getName());
+
+    public void sendNotification(SpanContext context) {
+        Span span = GlobalTracer.get().buildSpan(&quot;sendNotification&quot;).asChildOf(context).startManual();
+        log.info(&quot;Sending an inventory change notification&quot;);
+        span.finish();
+    }
+
+}&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now, let&amp;#8217;s do a final sanity check and see if everything is in the right place:
+&lt;code&gt;mvn wildfly-swarm:run&lt;/code&gt; . As before, the final message should be &lt;code&gt;WildFly Swarm is Ready&lt;/code&gt;. Hit &lt;code&gt;Ctrl+C&lt;/code&gt; and let&amp;#8217;s
+setup our tracing backend.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_tracing_backend&quot;&gt;The tracing backend&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Instrumenting our code is one part of the story. The other part is to plug in an actual OpenTracing implementation that
+is capable of capturing the spans and submitting them to a backend service. For our demo, we&amp;#8217;ll use Jaeger. If you don&amp;#8217;t
+have a Jaeger server running yet, one can be started via Docker as follows:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;docker run \
+    --rm \
+    -p5775:5775/udp \
+    -p6831:6831/udp \
+    -p6832:6832/udp \
+    -p5778:5778 \
+    -p16686:16686 \
+    -p14268:14268 \
+    --name jaeger \
+    jaegertracing/all-in-one:latest&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_tying_everything_together&quot;&gt;Tying everything together&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that we have our code ready and a tracing backend, let&amp;#8217;s start Wildfly Swarm passing a service name, which is the only
+property required by the Jaeger client. By default, Jaeger&amp;#8217;s Java tracer will attempt to send traces via UDP to a
+Jaeger Agent located on the local machine. If you are using a different architecture, refer to the
+&lt;a href=&quot;https://github.com/uber/jaeger-client-java/tree/master/jaeger-core&quot;&gt;Jaeger&amp;#8217;s documentation&lt;/a&gt;
+on how to use environment variables to configure the client, or refer to the
+&lt;a href=&quot;https://github.com/wildfly-swarm/wildfly-swarm-examples/tree/master/jaeger/jaeger-servlet&quot;&gt;Jaeger&amp;#8217;s fraction for Wildfly Swarm&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For our demo, we&amp;#8217;ll use a property that is recognized by the Jaeger&amp;#8217;s Wildfly Swarm Fraction. The other two properties are telling
+Jaeger that every request should be sampled.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;mvn wildfly-swarm:run -Dswarm.jaeger.service-name=order-processing -Dswarm.jaeger.sampler-type=const -Dswarm.jaeger.sampler-parameter=1&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Watch the logs for an entry containing &lt;code&gt;com.uber.jaeger.Configuration&lt;/code&gt;: if everything is correctly set, it should show the
+complete configuration of the Jaeger client, like this:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;2017-07-26 12:03:09,139 INFO  [com.uber.jaeger.Configuration] (ServerService Thread Pool -- 6) Initialized tracer=Tracer(version=Java-0.20.0, serviceName=order-processing, reporter=RemoteReporter(queueProcessor=RemoteReporter.QueueProcessor(open=true), sender=UdpSender(udpTransport=ThriftUdpTransport(socket=java.net.DatagramSocket@7270de22, receiveBuf=null, receiveOffSet=-1, receiveLength=0)), maxQueueSize=100, closeEnqueueTimeout=1000), sampler=ConstSampler(decision=true, tags={sampler.type=const, sampler.param=true}), ipv4=-1062731153, tags={hostname=carambola, jaeger.version=Java-0.20.0, ip=192.168.2.111}, zipkinSharedRpcSpan=false)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once the message &lt;code&gt;WildFly Swarm is Ready&lt;/code&gt; is seen, we can start making requests to our endpoint:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;$ curl -X POST localhost:8080/order
+Order placed&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;And this can be seen on the server&amp;#8217;s log:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;2017-07-26 12:03:19,302 INFO  [io.opentracing.contrib.ejb.demoexample.Endpoint] (default task-2) Request received to place an order
+2017-07-26 12:03:19,304 INFO  [io.opentracing.contrib.ejb.demoexample.AccountService] (default task-2) Notifying the account owner about a new order
+2017-07-26 12:03:19,307 INFO  [io.opentracing.contrib.ejb.demoexample.OrderService] (default task-2) Placing order
+2017-07-26 12:03:19,314 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryService] (EJB default - 1) Changing the inventory
+2017-07-26 12:03:19,322 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryNotificationService] (EJB default - 2) Sending an inventory change notification&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At this point, the complete trace with its 6 spans can be seen on Jaeger&amp;#8217;s UI, located at &lt;a href=&quot;http://localhost:16686/search&quot; class=&quot;bare&quot;&gt;http://localhost:16686/search&lt;/a&gt; , if you are using
+the Docker command we listed before.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;EJBs are a very important part of Java EE and we expect the OpenTracing EJB framework integration to complement the other Java EE related
+integrations, like the Servlet and JAX-RS. In this blog post, we&amp;#8217;ve shown how tracing EJBs can be accomplished by transparently tracing
+synchronous stateless EJBs, intercepting span contexts in asynchronous EJBs and by exposing the span context via EJB contexts, as well
+as manually starting spans to include specific business logic into the trace.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Grafana: new query interface</title>
       <link>http://www.hawkular.org/blog/2017/07/grafana-new-query-interface.html</link>
