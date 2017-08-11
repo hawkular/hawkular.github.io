@@ -6,9 +6,208 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 28 Jul 2017 10:49:59 +0000</pubDate>
-    <lastBuildDate>Fri, 28 Jul 2017 10:49:59 +0000</lastBuildDate>
+    <pubDate>Fri, 11 Aug 2017 20:11:27 +0000</pubDate>
+    <lastBuildDate>Fri, 11 Aug 2017 20:11:27 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular Alerts with Prometheus, ElasticSearch, Kafka</title>
+      <link>http://www.hawkular.org/blog/2017/08/alerts-multiple-sources.html</link>
+      <author>noreply@hawkular.org (John Mazzitelli)</author>
+      <pubDate>Fri, 11 Aug 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/08/alerts-multiple-sources.html</guid>
+      	<description>
+	&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_federated_alerts&quot;&gt;Federated Alerts&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts aims to be a federated alerting system. That is to say, it can fire alerts and send notifications that are triggered by data coming from a number of third-party external systems.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Thus, Hawkular Alerts is more than just an alerting system for use with Hawkular Metrics. In fact, Hawkular Alerts can be used independently of Hawkular Metrics. This means you do not even have to be using Hawkular Metrics to take advantage of the functionality provided by Hawkular Alerts.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This is a key differentiator between Hawkular Alerts and other alerting systems. Most alerting systems only alert on data coming from their respective storage systems (e.g. the Prometheus Alert Engine alerts only on Prometheus data). Hawkular Alerts, on the other hand, can trigger alerts based on data from various systems.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_alerts_vs_events&quot;&gt;Alerts vs. Events&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before we begin, a quick clarification is in order. When it is said that Hawkular Alerts fires an &quot;alert&quot; it means some data came into Hawkular Alerts that matched some conditions which triggered the creation of an alert in Hawkular Alerts backend storage (which can then trigger additional actions such as sending emails or calling a webhook). An &quot;alert&quot; typically refers to a problem that has been detected, and someone should take action to fix it. An alert has a lifecycle attached to it - alerts are &lt;em&gt;opened&lt;/em&gt;, then &lt;em&gt;acknowledged&lt;/em&gt; by some user who will hopefully fix the problem, then &lt;em&gt;resolved&lt;/em&gt; when the problem can be considered closed.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However, there can be conditions that occur that do not represent problems but nevertheless are events you want recorded. There is no lifecycle associated with events and no additional actions are triggered by events, but &quot;events&quot; are fired by Hawkular Alerts in the same general manner as &quot;alerts&quot; are.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this document, when it is said that Hawkular Alerts can fire &quot;alerts&quot; based on data coming from external third-party systems such as Prometheus, ElasticSearch, and Kakfa, this also means events can be fired as well as alerts. What this means is you can record any event (not just a &quot;problem&quot;, aka &quot;alert&quot;) that can be gleaned from this data coming from external third-party systems.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;See &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html#_alerting_philosophy&quot;&gt;alerting philosophy&lt;/a&gt; for more.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_demo&quot;&gt;Demo&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There is a &lt;a href=&quot;https://youtu.be/mM1mwJneKO4&quot;&gt;recorded demo found here&lt;/a&gt; that will illustrate what this document is describing. After you read this document, you should watch the demo to gain further clarity on what is being explained. The demo is the &lt;code&gt;multiple-sources&lt;/code&gt; example which you can run yourself found &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples/multiple-sources&quot;&gt;here&lt;/a&gt; (note: at the time of writing, this example is only found in the &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/next/examples/multiple-sources&quot;&gt;next branch&lt;/a&gt;, to be merged in master soon).&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_prometheus&quot;&gt;Prometheus&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts can take the results of Prometheus metric queries and use the queried data for triggers that can fire alerts.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This Hawkular Alerts trigger will fire an alert (and send an email) when a Prometheus metric indicates our store&amp;#8217;s inventory of widgets is consistently low (as defined by the Prometheus query you see in the &quot;expression&quot; field of the condition):&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&quot;trigger&quot;:{
+   &quot;id&quot;: &quot;low-stock-prometheus-trigger&quot;,
+   &quot;name&quot;: &quot;Low Stock&quot;,
+   &quot;description&quot;: &quot;The number of widgets in stock is consistently low.&quot;,
+   &quot;severity&quot;: &quot;MEDIUM&quot;,
+   &quot;enabled&quot;: true,
+   &quot;tags&quot;: {
+      &quot;prometheus&quot;: &quot;Prometheus&quot;
+   },
+   &quot;actions&quot;:[
+      {
+      &quot;actionPlugin&quot;: &quot;email&quot;,
+      &quot;actionId&quot;: &quot;email-notify-owner&quot;
+      }
+   ]
+},
+&quot;conditions&quot;:[
+   {
+      &quot;type&quot;: &quot;EXTERNAL&quot;,
+      &quot;alerterId&quot;: &quot;prometheus&quot;,
+      &quot;dataId&quot;: &quot;prometheus-dataid&quot;,
+      &quot;expression&quot;: &quot;rate(products_in_inventory{product=\&quot;widget\&quot;}[30s])&amp;lt;2&quot;
+   }
+]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_integration_with_prometheus_alert_engine&quot;&gt;Integration with Prometheus Alert Engine&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As a side note, though not demostrated in the example, Hawkular Alerts also has an integration with Prometheus&apos; own Alert Engine. This means the alerts generated by Prometheus itself can be forward to Hawkular Alerts which can, in turn, be used for additional processing, perhaps for use with data that is unavailable to Prometheus that can tell Hawkular Alerts to fire other alerts. For example, Hawkular Alerts can take Prometheus alerts as input and feed it back into other conditions that trigger on the Prometheus alert along with ElasticSearch logs.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_elasticsearch&quot;&gt;ElasticSearch&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts can examine logs stored in ElasticSearch and trigger alerts based on patterns that match within the ElasticSearch log messages.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This Hawkular Alerts trigger will fire an alert (and send an email) when ElasticSearch logs indicate sales are being lost due to inventory being out of stock of items (as defined by the condition which looks for a log category of &quot;FATAL&quot; which happens to mean a lost sale in the case of the store&amp;#8217;s logs). Notice dampening is enabled on this trigger - this alert will only fire when the logs indicate lost sales every 3 times.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&quot;trigger&quot;:{
+   &quot;id&quot;: &quot;lost-sale-elasticsearch-trigger&quot;,
+   &quot;name&quot;: &quot;Lost Sale&quot;,
+   &quot;description&quot;: &quot;A sale was lost due to inventory out of stock.&quot;,
+   &quot;severity&quot;: &quot;CRITICAL&quot;,
+   &quot;enabled&quot;: true,
+   &quot;tags&quot;: {
+      &quot;Elasticsearch&quot;: &quot;Localhost instance&quot;
+   },
+   &quot;context&quot;: {
+      &quot;timestamp&quot;: &quot;@timestamp&quot;,
+      &quot;filter&quot;: &quot;{\&quot;match\&quot;:{\&quot;category\&quot;:\&quot;inventory\&quot;}}&quot;,
+      &quot;interval&quot;: &quot;10s&quot;,
+      &quot;index&quot;: &quot;store&quot;,
+      &quot;mapping&quot;: &quot;level:category,@timestamp:ctime,message:text,category:dataId,index:tags&quot;
+   },
+   &quot;actions&quot;:[
+      {
+      &quot;actionPlugin&quot;: &quot;email&quot;,
+      &quot;actionId&quot;: &quot;email-notify-owner&quot;
+      }
+   ]
+},
+&quot;dampenings&quot;: [
+   {
+      &quot;triggerMode&quot;: &quot;FIRING&quot;,
+      &quot;type&quot;:&quot;STRICT&quot;,
+      &quot;evalTrueSetting&quot;: 3
+   }
+],
+&quot;conditions&quot;:[
+   {
+      &quot;type&quot;: &quot;EVENT&quot;,
+      &quot;dataId&quot;: &quot;inventory&quot;,
+      &quot;expression&quot;: &quot;category == &apos;FATAL&apos;&quot;
+   }
+]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_kafka&quot;&gt;Kafka&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerts can examine data retrieved from Kafka message streams and trigger alerts based that Kafka data.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This Hawkular Alerts trigger will fire an alert when data over a Kakfa topic indicates a large purchase was made to fill the store&amp;#8217;s inventory (as defined by the condition which evaluates to true when any number over 17 is received on the Kafka topic):&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;&quot;trigger&quot;:{
+   &quot;id&quot;: &quot;large-inventory-purchase-kafka-trigger&quot;,
+   &quot;name&quot;: &quot;Large Inventory Purchase&quot;,
+   &quot;description&quot;: &quot;A large purchase was made to restock inventory.&quot;,
+   &quot;severity&quot;: &quot;LOW&quot;,
+   &quot;enabled&quot;: true,
+   &quot;tags&quot;: {
+      &quot;Kafka&quot;: &quot;Localhost instance&quot;
+   },
+   &quot;context&quot;: {
+      &quot;topic&quot;: &quot;store&quot;,
+      &quot;kafka.bootstrap.servers&quot;: &quot;localhost:9092&quot;,
+      &quot;kafka.group.id&quot;: &quot;hawkular-alerting&quot;
+   },
+   &quot;actions&quot;:[ ]
+},
+&quot;conditions&quot;:[
+   {
+      &quot;type&quot;: &quot;THRESHOLD&quot;,
+      &quot;dataId&quot;: &quot;store&quot;,
+      &quot;operator&quot;: &quot;GT&quot;,
+      &quot;threshold&quot;: 17
+   }
+]&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_but_wait_there_s_more&quot;&gt;But, Wait! There&amp;#8217;s More!&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The above only mentions the different ways Hawkular Metrics retrieves data for use in determining what alerts to fire. What is not covered here is the fact that Hawkular Alerts can stream data in the other direction as well - Hawkular Alerts can send alert and event data &lt;em&gt;to&lt;/em&gt; things like an ElasticSearch server or a Kafka broker. There are additional examples (mentioned below) that can demonstrate this capability.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The point is Hawkular Alerts should be seen as a shared, common alerting engine that can be shared for use by multiple third-party systems and can be used as both a consumer and producer - as a consumer of the data from external third-party systems (which is used to fire alerts and events) and as a producer to send notifications of alerts and events to external third-party systems.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_more_examples&quot;&gt;More Examples&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Take a look at the Hawkular Alerts &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/master/examples&quot;&gt;examples&lt;/a&gt; for more examples on using external systems as data to be used for triggering alerts. (note: at the time of writing, some examples are currently in the &lt;a href=&quot;https://github.com/hawkular/hawkular-alerts/tree/next/examples&quot;&gt;next branch&lt;/a&gt; such as the Kafka ones).&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>OpenTracing EJB instrumentation</title>
       <link>http://www.hawkular.org/blog/2017/07/opentracing-ejb.html</link>

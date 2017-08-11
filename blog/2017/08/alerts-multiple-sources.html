@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Hawkular Alerts with Prometheus, ElasticSearch, Kafka</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../overview/">Overview</a></li>
+                <li><a href="../../../blog.html">Blog</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Services<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-submenu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                          <ul class="dropdown-menu">
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-alerts.html">Alerting</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-inventory.html">Inventory</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-metrics.html">Metrics</a>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular APM<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <li><a href="../../../hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
+                      <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="../../../community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-metrics/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="../../../hawkular-clients/">Hawkular Clients</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../community/labs/datamining/">Datamining</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-clients/android-client/">Android client</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                        </li>
+                      </ul>
+                  </li>
+                  <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Hawkular Alerts with Prometheus, ElasticSearch, Kafka</h1>
+            <p>A blog post by John Mazzitelli</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/alerts.html">alerts</a> 
+          |
+      <a href="/tags/elasticsearch.html">elasticsearch</a> 
+          |
+      <a href="/tags/kafka.html">kafka</a> 
+          |
+      <a href="/tags/prometheus.html">prometheus</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div class="sect1">
+<h2 id="_federated_alerts">Federated Alerts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerts aims to be a federated alerting system. That is to say, it can fire alerts and send notifications that are triggered by data coming from a number of third-party external systems.</p>
+</div>
+<div class="paragraph">
+<p>Thus, Hawkular Alerts is more than just an alerting system for use with Hawkular Metrics. In fact, Hawkular Alerts can be used independently of Hawkular Metrics. This means you do not even have to be using Hawkular Metrics to take advantage of the functionality provided by Hawkular Alerts.</p>
+</div>
+<div class="paragraph">
+<p>This is a key differentiator between Hawkular Alerts and other alerting systems. Most alerting systems only alert on data coming from their respective storage systems (e.g. the Prometheus Alert Engine alerts only on Prometheus data). Hawkular Alerts, on the other hand, can trigger alerts based on data from various systems.</p>
+</div>
+<div class="sect2">
+<h3 id="_alerts_vs_events">Alerts vs. Events</h3>
+<div class="paragraph">
+<p>Before we begin, a quick clarification is in order. When it is said that Hawkular Alerts fires an "alert" it means some data came into Hawkular Alerts that matched some conditions which triggered the creation of an alert in Hawkular Alerts backend storage (which can then trigger additional actions such as sending emails or calling a webhook). An "alert" typically refers to a problem that has been detected, and someone should take action to fix it. An alert has a lifecycle attached to it - alerts are <em>opened</em>, then <em>acknowledged</em> by some user who will hopefully fix the problem, then <em>resolved</em> when the problem can be considered closed.</p>
+</div>
+<div class="paragraph">
+<p>However, there can be conditions that occur that do not represent problems but nevertheless are events you want recorded. There is no lifecycle associated with events and no additional actions are triggered by events, but "events" are fired by Hawkular Alerts in the same general manner as "alerts" are.</p>
+</div>
+<div class="paragraph">
+<p>In this document, when it is said that Hawkular Alerts can fire "alerts" based on data coming from external third-party systems such as Prometheus, ElasticSearch, and Kakfa, this also means events can be fired as well as alerts. What this means is you can record any event (not just a "problem", aka "alert") that can be gleaned from this data coming from external third-party systems.</p>
+</div>
+<div class="paragraph">
+<p>See <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_alerting_philosophy">alerting philosophy</a> for more.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_demo">Demo</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>There is a <a href="https://youtu.be/mM1mwJneKO4">recorded demo found here</a> that will illustrate what this document is describing. After you read this document, you should watch the demo to gain further clarity on what is being explained. The demo is the <code>multiple-sources</code> example which you can run yourself found <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples/multiple-sources">here</a> (note: at the time of writing, this example is only found in the <a href="https://github.com/hawkular/hawkular-alerts/tree/next/examples/multiple-sources">next branch</a>, to be merged in master soon).</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_prometheus">Prometheus</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerts can take the results of Prometheus metric queries and use the queried data for triggers that can fire alerts.</p>
+</div>
+<div class="paragraph">
+<p>This Hawkular Alerts trigger will fire an alert (and send an email) when a Prometheus metric indicates our store&#8217;s inventory of widgets is consistently low (as defined by the Prometheus query you see in the "expression" field of the condition):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
+   "id": "low-stock-prometheus-trigger",
+   "name": "Low Stock",
+   "description": "The number of widgets in stock is consistently low.",
+   "severity": "MEDIUM",
+   "enabled": true,
+   "tags": {
+      "prometheus": "Prometheus"
+   },
+   "actions":[
+      {
+      "actionPlugin": "email",
+      "actionId": "email-notify-owner"
+      }
+   ]
+},
+"conditions":[
+   {
+      "type": "EXTERNAL",
+      "alerterId": "prometheus",
+      "dataId": "prometheus-dataid",
+      "expression": "rate(products_in_inventory{product=\"widget\"}[30s])&lt;2"
+   }
+]</code></pre>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_integration_with_prometheus_alert_engine">Integration with Prometheus Alert Engine</h3>
+<div class="paragraph">
+<p>As a side note, though not demostrated in the example, Hawkular Alerts also has an integration with Prometheus' own Alert Engine. This means the alerts generated by Prometheus itself can be forward to Hawkular Alerts which can, in turn, be used for additional processing, perhaps for use with data that is unavailable to Prometheus that can tell Hawkular Alerts to fire other alerts. For example, Hawkular Alerts can take Prometheus alerts as input and feed it back into other conditions that trigger on the Prometheus alert along with ElasticSearch logs.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_elasticsearch">ElasticSearch</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerts can examine logs stored in ElasticSearch and trigger alerts based on patterns that match within the ElasticSearch log messages.</p>
+</div>
+<div class="paragraph">
+<p>This Hawkular Alerts trigger will fire an alert (and send an email) when ElasticSearch logs indicate sales are being lost due to inventory being out of stock of items (as defined by the condition which looks for a log category of "FATAL" which happens to mean a lost sale in the case of the store&#8217;s logs). Notice dampening is enabled on this trigger - this alert will only fire when the logs indicate lost sales every 3 times.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
+   "id": "lost-sale-elasticsearch-trigger",
+   "name": "Lost Sale",
+   "description": "A sale was lost due to inventory out of stock.",
+   "severity": "CRITICAL",
+   "enabled": true,
+   "tags": {
+      "Elasticsearch": "Localhost instance"
+   },
+   "context": {
+      "timestamp": "@timestamp",
+      "filter": "{\"match\":{\"category\":\"inventory\"}}",
+      "interval": "10s",
+      "index": "store",
+      "mapping": "level:category,@timestamp:ctime,message:text,category:dataId,index:tags"
+   },
+   "actions":[
+      {
+      "actionPlugin": "email",
+      "actionId": "email-notify-owner"
+      }
+   ]
+},
+"dampenings": [
+   {
+      "triggerMode": "FIRING",
+      "type":"STRICT",
+      "evalTrueSetting": 3
+   }
+],
+"conditions":[
+   {
+      "type": "EVENT",
+      "dataId": "inventory",
+      "expression": "category == 'FATAL'"
+   }
+]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_kafka">Kafka</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerts can examine data retrieved from Kafka message streams and trigger alerts based that Kafka data.</p>
+</div>
+<div class="paragraph">
+<p>This Hawkular Alerts trigger will fire an alert when data over a Kakfa topic indicates a large purchase was made to fill the store&#8217;s inventory (as defined by the condition which evaluates to true when any number over 17 is received on the Kafka topic):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
+   "id": "large-inventory-purchase-kafka-trigger",
+   "name": "Large Inventory Purchase",
+   "description": "A large purchase was made to restock inventory.",
+   "severity": "LOW",
+   "enabled": true,
+   "tags": {
+      "Kafka": "Localhost instance"
+   },
+   "context": {
+      "topic": "store",
+      "kafka.bootstrap.servers": "localhost:9092",
+      "kafka.group.id": "hawkular-alerting"
+   },
+   "actions":[ ]
+},
+"conditions":[
+   {
+      "type": "THRESHOLD",
+      "dataId": "store",
+      "operator": "GT",
+      "threshold": 17
+   }
+]</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_but_wait_there_s_more">But, Wait! There&#8217;s More!</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The above only mentions the different ways Hawkular Metrics retrieves data for use in determining what alerts to fire. What is not covered here is the fact that Hawkular Alerts can stream data in the other direction as well - Hawkular Alerts can send alert and event data <em>to</em> things like an ElasticSearch server or a Kafka broker. There are additional examples (mentioned below) that can demonstrate this capability.</p>
+</div>
+<div class="paragraph">
+<p>The point is Hawkular Alerts should be seen as a shared, common alerting engine that can be shared for use by multiple third-party systems and can be used as both a consumer and producer - as a consumer of the data from external third-party systems (which is used to fire alerts and events) and as a producer to send notifications of alerts and events to external third-party systems.</p>
+</div>
+<div class="sect2">
+<h3 id="_more_examples">More Examples</h3>
+<div class="paragraph">
+<p>Take a look at the Hawkular Alerts <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">examples</a> for more examples on using external systems as data to be used for triggering alerts. (note: at the time of writing, some examples are currently in the <a href="https://github.com/hawkular/hawkular-alerts/tree/next/examples">next branch</a> such as the Kafka ones).</p>
+</div>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by John Mazzitelli on  11 August 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
