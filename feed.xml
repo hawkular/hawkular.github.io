@@ -6,9 +6,189 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Fri, 11 Aug 2017 20:11:27 +0000</pubDate>
-    <lastBuildDate>Fri, 11 Aug 2017 20:11:27 +0000</lastBuildDate>
+    <pubDate>Mon, 14 Aug 2017 20:49:04 +0000</pubDate>
+    <lastBuildDate>Mon, 14 Aug 2017 20:49:04 +0000</lastBuildDate>
 
+    <item>
+      <title>Advanced Behaviour Detection with Nelson Rules</title>
+      <link>http://www.hawkular.org/blog/2017/08/alerts-nelson-rules.html</link>
+      <author>noreply@hawkular.org (Lucas Ponce)</author>
+      <pubDate>Tue, 15 Aug 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/08/alerts-nelson-rules.html</guid>
+      	<description>
+	&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_modeling_conditions&quot;&gt;Modeling Conditions&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting offers several types of &lt;a href=&quot;http://www.hawkular.org/community/docs/developer-guide/alerts.html#_conditions&quot;&gt;Conditions&lt;/a&gt; for defining Triggers. Most of the Conditions deal with numeric data but String, Availability and Event data are also supported.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Modeling scenarios for detecting behaviours is highly dependent on the nature of the Domain being represented.  The Domain may only require simple numeric threshold conditions to efficiently detect unexpected situations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In other domains, it can be non-trivial to identify unusual metric variations that may lead to a problem.
+Simple thresholds are not expressive enough to detect metric patterns or trends that can identify potential problems.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_nelson_rules&quot;&gt;Nelson Rules&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Alerting supports Conditions based on &lt;a href=&quot;https://en.wikipedia.org/wiki/Nelson_rules&quot;&gt;Nelson Rules&lt;/a&gt; to enable advanced detection on Numeric metrics.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These rules are based on the mean and the standard deviation of the samples and offer additional techniques for modeling complex scenarios.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;For example,&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code class=&quot;language-json&quot; data-lang=&quot;json&quot;&gt;...
+&quot;trigger&quot;:{
+   &quot;id&quot;: &quot;nelson-rule-trigger&quot;,
+   &quot;name&quot;: &quot;Nelson Rule Trigger&quot;,
+   &quot;description&quot;: &quot;An example Trigger that uses Nelson Rules Conditions.&quot;,
+   &quot;enabled&quot;: true,
+   &quot;actions&quot;:[]
+},
+&quot;conditions&quot;:[
+   {
+      &quot;type&quot;: &quot;NELSON&quot;, &lt;b class=&quot;conum&quot;&gt;(1)&lt;/b&gt;
+      &quot;dataId&quot;: &quot;metric-data-id&quot;,
+      &quot;activeRules&quot;: [&quot;Rule1&quot;,&quot;Rule2&quot;], &lt;b class=&quot;conum&quot;&gt;(2)&lt;/b&gt;
+      &quot;sampleSize&quot;: 75 &lt;b class=&quot;conum&quot;&gt;(3)&lt;/b&gt;
+   }
+]
+...&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Mark this Condition as a NelsonRule&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Define the Nelson Rules to activate (Rule1, Rule2, &amp;#8230;&amp;#8203;, Rule8) for metric-data-id (all rules are activated by default)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Define the sampleSize (by default this value is set to 50)&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Each rule represents a specific pattern as described below:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_1&quot;&gt;Rule 1&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr1.png&quot; alt=&quot;Nelson Rule 1&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;One sample is grossly out of control.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_2&quot;&gt;Rule 2&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr2.png&quot; alt=&quot;Nelson Rule 2&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Some prolonged error has been detected.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_3&quot;&gt;Rule 3&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr3.png&quot; alt=&quot;Nelson Rule 3&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An unusual trend has been detected.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_4&quot;&gt;Rule 4&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr4.png&quot; alt=&quot;Nelson Rule 4&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The oscillation of a metric is beyond an expected amount of noise.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Note that the rule is concerned with directionality only. The position of the mean and the size of the standard deviation have no bearing.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_5&quot;&gt;Rule 5&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr5.png&quot; alt=&quot;Nelson Rule 5&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There is a medium tendency for samples to be mediumly out of control.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The side of the mean for the third point is unspecified.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_6&quot;&gt;Rule 6&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr6.png&quot; alt=&quot;Nelson Rule 6&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;There is a strong tendency for samples to be out of control.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_7&quot;&gt;Rule 7&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr6.png&quot; alt=&quot;Nelson Rule 7&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A greater variation would be expected.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_rule_7_2&quot;&gt;Rule 7&lt;/h3&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/nr6.png&quot; alt=&quot;Nelson Rule 7&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Jumping from above to below whilst missing the first standard deviation band is rarely random.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Applying Nelson Rules in our scenario can help to detect potential &quot;out of control&quot; situations.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;But as discussed, modeling scenarios are highly dependent of the nature of the Domain; applying Nelson Rules is a useful tool to help identify a problem.  Although, the alerts are predictive and a Domain&amp;#8217;s Analyst may need to evaluate the quality of the model.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Alerts with Prometheus, ElasticSearch, Kafka</title>
       <link>http://www.hawkular.org/blog/2017/08/alerts-multiple-sources.html</link>

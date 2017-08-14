@@ -194,6 +194,182 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/08/alerts-nelson-rules.html"><h1>Advanced Behaviour Detection with Nelson Rules</h1></a>
+            <p>15 August 2017, by Lucas Ponce</p>
+            <p><div class="sect1">
+<h2 id="_modeling_conditions">Modeling Conditions</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerting offers several types of <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_conditions">Conditions</a> for defining Triggers. Most of the Conditions deal with numeric data but String, Availability and Event data are also supported.</p>
+</div>
+<div class="paragraph">
+<p>Modeling scenarios for detecting behaviours is highly dependent on the nature of the Domain being represented.  The Domain may only require simple numeric threshold conditions to efficiently detect unexpected situations.</p>
+</div>
+<div class="paragraph">
+<p>In other domains, it can be non-trivial to identify unusual metric variations that may lead to a problem.
+Simple thresholds are not expressive enough to detect metric patterns or trends that can identify potential problems.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_nelson_rules">Nelson Rules</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Alerting supports Conditions based on <a href="https://en.wikipedia.org/wiki/Nelson_rules">Nelson Rules</a> to enable advanced detection on Numeric metrics.</p>
+</div>
+<div class="paragraph">
+<p>These rules are based on the mean and the standard deviation of the samples and offer additional techniques for modeling complex scenarios.</p>
+</div>
+<div class="paragraph">
+<p>For example,</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code class="language-json" data-lang="json">...
+"trigger":{
+   "id": "nelson-rule-trigger",
+   "name": "Nelson Rule Trigger",
+   "description": "An example Trigger that uses Nelson Rules Conditions.",
+   "enabled": true,
+   "actions":[]
+},
+"conditions":[
+   {
+      "type": "NELSON", <b class="conum">(1)</b>
+      "dataId": "metric-data-id",
+      "activeRules": ["Rule1","Rule2"], <b class="conum">(2)</b>
+      "sampleSize": 75 <b class="conum">(3)</b>
+   }
+]
+...</code></pre>
+</div>
+</div>
+<div class="colist arabic">
+<ol>
+<li>
+<p>Mark this Condition as a NelsonRule</p>
+</li>
+<li>
+<p>Define the Nelson Rules to activate (Rule1, Rule2, &#8230;&#8203;, Rule8) for metric-data-id (all rules are activated by default)</p>
+</li>
+<li>
+<p>Define the sampleSize (by default this value is set to 50)</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>Each rule represents a specific pattern as described below:</p>
+</div>
+<div class="sect2">
+<h3 id="_rule_1">Rule 1</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr1.png" alt="Nelson Rule 1">
+</div>
+</div>
+<div class="paragraph">
+<p>One sample is grossly out of control.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_2">Rule 2</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr2.png" alt="Nelson Rule 2">
+</div>
+</div>
+<div class="paragraph">
+<p>Some prolonged error has been detected.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_3">Rule 3</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr3.png" alt="Nelson Rule 3">
+</div>
+</div>
+<div class="paragraph">
+<p>An unusual trend has been detected.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_4">Rule 4</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr4.png" alt="Nelson Rule 4">
+</div>
+</div>
+<div class="paragraph">
+<p>The oscillation of a metric is beyond an expected amount of noise.</p>
+</div>
+<div class="paragraph">
+<p>Note that the rule is concerned with directionality only. The position of the mean and the size of the standard deviation have no bearing.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_5">Rule 5</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr5.png" alt="Nelson Rule 5">
+</div>
+</div>
+<div class="paragraph">
+<p>There is a medium tendency for samples to be mediumly out of control.</p>
+</div>
+<div class="paragraph">
+<p>The side of the mean for the third point is unspecified.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_6">Rule 6</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr6.png" alt="Nelson Rule 6">
+</div>
+</div>
+<div class="paragraph">
+<p>There is a strong tendency for samples to be out of control.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_7">Rule 7</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr6.png" alt="Nelson Rule 7">
+</div>
+</div>
+<div class="paragraph">
+<p>A greater variation would be expected.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_rule_7_2">Rule 7</h3>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/nr6.png" alt="Nelson Rule 7">
+</div>
+</div>
+<div class="paragraph">
+<p>Jumping from above to below whilst missing the first standard deviation band is rarely random.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Applying Nelson Rules in our scenario can help to detect potential "out of control" situations.</p>
+</div>
+<div class="paragraph">
+<p>But as discussed, modeling scenarios are highly dependent of the nature of the Domain; applying Nelson Rules is a useful tool to help identify a problem.  Although, the alerts are predictive and a Domain&#8217;s Analyst may need to evaluate the quality of the model.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/08/alerts-multiple-sources.html"><h1>Hawkular Alerts with Prometheus, ElasticSearch, Kafka</h1></a>
             <p>11 August 2017, by John Mazzitelli</p>
             <p><div class="sect1">
@@ -1410,204 +1586,13 @@ single sign-on, brute force attack protection, LDAP support and much more.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/07/opentracing-jaxrs.html"><h1>OpenTracing JAX-RS Instrumentation</h1></a>
-            <p>10 July 2017, by Pavol Loffay</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>In the previous <a href="http://www.hawkular.org/blog/2017/06/9/opentracing-spring-boot.html">demo</a>
-we have demonstrated how to instrument a Spring Boot app
-using <a href="http://opentracing.io">OpenTracing</a>, a vendor-neutral standard for distributed tracing.
-In this article we are going to instrument a Java API for RESTful Web Services (JAX-RS), and show
-you how to trace the business layer and add custom data to the trace.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_demo_application">Demo application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Creating a JAX-RS app from scratch can be a time consuming task, therefore in this case we are going to use
-Wildfly Swarm&#8217;s <a href="http://wildfly-swarm.io/generator/">app generator</a>.
-Select JAX-RS and CDI dependencies and hit generate button.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/wf-swarm-generator.png" alt="wf swarm generator">
-</div>
-<div class="title">Figure 1: Wildfly Swarm generator.</div>
-</div>
-<div class="paragraph">
-<p>The generated application contains one REST endpoint which returns hello world string.
-This endpoint is accessible on <code><a href="http://localhost:8080/hello" class="bare">http://localhost:8080/hello</a></code>.
-In the next step we are going to add instrumentation and simple business logic.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_instrumentation">Instrumentation</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Adding OpenTracing instrumentation to JAX-RS is very simple, just include the following dependency in
-the classpath and the tracing feature will be automatically registered.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre>&lt;dependency&gt;
-    &lt;groupId&gt;io.opentracing.contrib&lt;/groupId&gt;
-    &lt;artifactId&gt;opentracing-jaxrs2&lt;/artifactId&gt;
-&lt;/dependency&gt;</pre>
-</div>
-</div>
-<div class="paragraph">
-<p>OpenTracing is just an API, therefore it is required to register a specific tracer instance. In this demo
-we are going to use <a href="https://github.com/uber/jaeger">Jaeger tracing system</a>. The tracer should be created
-and initialized only once per process, hence <code>ServletContextListener</code> is the ideal place for this task:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">@WebListener
-public class TracingContextListener implements ServletContextListener {
-
-  @Inject
-  private io.opentracing.Tracer tracer;
-
-  @Override
-  public void contextInitialized(ServletContextEvent sce) {
-    GlobalTracer.register(tracer);
-  }
-
-  @Override
-  public void contextDestroyed(ServletContextEvent sce) {}
-
-  @Produces
-  @Singleton
-  public static io.opentracing.Tracer jaegerTracer() {
-    return new Configuration("wildfly-swarm", new Configuration.SamplerConfiguration(
-        ProbabilisticSampler.TYPE, 1),
-        new Configuration.ReporterConfiguration())
-        .getTracer();
-  }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Tracer initialization code requires to specify app name, which is in this case <code>wildfly-swarm</code> and
-sampler configuration.</p>
-</div>
-<div class="paragraph">
-<p>Note that we are suing Java&#8217;s Context and Dependency Injection (CDI) to share a tracer instance in our app.
-If we forget to register a specific tracer instance, then the tracing feature would use <code>NoopTracer</code>.
-Now we can verify tracing by starting Jaeger server using the following command:
-<code>docker run --rm -it --network=host jaegertracing/all-in-one</code> and accessing the endpoint at
-<code><a href="http://localhost:8080/hello" class="bare">http://localhost:8080/hello</a></code>. Our trace with one span should be present in the UI at
-<code><a href="http://localhost:16686" class="bare">http://localhost:16686</a></code>.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_instrumenting_business_logic">Instrumenting business logic</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>JAX-RS instrumentation provides nice visibility into your app, however, it is often
-necessary to add custom data to the trace to see what is happening in the service or database layer.</p>
-</div>
-<div class="paragraph">
-<p>The following code snippet shows how the service layer can create and add data to the trace:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">public class BackendService {
-
-  @Inject
-  private io.opentracing.Tracer tracer;
-
-  public String action() throws InterruptedException {
-    int random = new Random().nextInt(200);
-
-    try (ActiveSpan span = tracer.buildSpan("action").startActive()) {
-      anotherAction();
-      Thread.sleep(random);
-    }
-
-    return String.valueOf(random);
-  }
-
-  private void anotherAction() {
-    tracer.activeSpan().setTag("anotherAction", "data");
-  }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Note that it&#8217;s not necessary to manually pass a span instance around. The method <code>anotherAction</code> accesses
-the current active span from the tracer.</p>
-</div>
-<div class="paragraph">
-<p>With the additional instrumentation shown above, an invocation of the REST endpoint would result in
-a trace consisting of two spans, one representing the inbound server request, and the other the business logic.
-The span representing server processing is automatically considered as the parent for span created in business layer.
-If we created span in <code>anotherAction</code> then its parent would be span created in <code>action</code> method.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/swarm-jaeger.png" alt="swarm jaeger">
-</div>
-<div class="title">Figure 1: Jaeger showing reported spans.</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_video">Video</h2>
-<div class="sectionbody">
-<div class="videoblock">
-<div class="content">
-<iframe width="853" height="480" src="https://www.youtube.com/embed/gVwLenPH8SY?rel=0" frameborder="0" allowfullscreen></iframe>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>We have demonstrated that instrumenting a JAX-RS app is just a matter of adding a dependency
-and registering a tracer instance. If we would like to use a different OpenTracing implementation,
-Zipkin for instance, it would just require changing tracer producer code. No changes to the application or
-business logic! In the next demo we will wire this app with Spring Boot created
-in previous demo and deploy them on Kubernetes.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_links">Links</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>OpenTracing: <a href="http://opentracing.io" class="bare">http://opentracing.io</a></p>
-</li>
-<li>
-<p>Github repository with demo: <a href="https://github.com/pavolloffay/opentracing-java-examples" class="bare">https://github.com/pavolloffay/opentracing-java-examples</a></p>
-</li>
-<li>
-<p>OpenTracing JAX-RS instrumentation: <a href="https://github.com/opentracing-contrib/java-jaxrs" class="bare">https://github.com/opentracing-contrib/java-jaxrs</a></p>
-</li>
-<li>
-<p>Jaeger: <a href="https://github.com/uber/jaeger" class="bare">https://github.com/uber/jaeger</a></p>
-</li>
-</ul>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>10 July 2017 - <a href="blog/2017/07/opentracing-jaxrs.html">OpenTracing JAX-RS Instrumentation</a></li>
           <li>26 June 2017 - <a href="blog/2017/06/26/opentracing-appmetrics.html">Using OpenTracing to collect Application Metrics in Kubernetes</a></li>
           <li>13 June 2017 - <a href="blog/2017/06/9/opentracing-spring-boot.html">OpenTracing Spring Boot Instrumentation</a></li>
           <li>06 June 2017 - <a href="blog/2017/06/06/hawkular-metrics-0.27.0.Final-released.html">Hawkular Metrics 0.27.0 - Release</a></li>
