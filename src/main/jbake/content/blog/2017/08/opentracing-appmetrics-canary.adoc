@@ -12,7 +12,7 @@ collect Application Metrics, in addition to (but independent from) reported trac
 deployed within a cloud environment (e.g. https://kubernetes.io/[Kubernetes] or https://openshift.io/[OpenShift]).
 
 In this article we will show how this information can be used to aid a
-https://martinfowler.com/bliki/CanaryRelease.html[Canary Deployment strategy] within OpenShift.
+https://martinfowler.com/bliki/CanaryRelease.html[Canary deployment strategy] within OpenShift.
 
 ifndef::env-github[]
 image::/img/blog/2017/2017-08-18-canary-service-compare.png[]
@@ -26,9 +26,9 @@ endif::[]
 We will be using the same https://github.com/objectiser/opentracing-prometheus-example[example] as used in the previous
 article.
 
-However since writing that article, the configuration of the tracer and prometheus metrics support has been
+However since writing that article, the configuration of the tracer and Prometheus metrics support has been
 simplified. There is now no explicit configuration of either, with only some auto configuration of `MetricLabel` beans
-to identify some custom labels to be added to the prometheus metrics, e.g.
+to identify some custom labels to be added to the Prometheus metrics, e.g.
 
 .Metrics configuration used in both services:
 ----
@@ -82,7 +82,7 @@ ifdef::env-github[]
 image::../../../../assets/img/blog/2017/2017-08-18-canary-scale-up.png[caption="Figure 1: ", title="Scaling up canary deployment"]
 endif::[]
 
-Now we can monitor the prometheus dashboard, using the following query, to see the error ratio per service and version:
+Now we can monitor the Prometheus dashboard, using the following query, to see the error ratio per service and version:
 
 ```
 sum(increase(span_count{error="true",span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind) / sum(increase(span_count{span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind)
@@ -119,7 +119,7 @@ Once this has been done for both the `ordermgr` and `accountmgr` services, then 
 can be scaled down or removed completely.
 
 An alternative to performing the rolling update would simply be to name the canary version something else (i.e. specific
-to the version being tested), and when it comes time to switch over, simply scale down the prevous deployment version. This
+to the version being tested), and when it comes time to switch over, simply scale down the previous deployment version. This
 would be more straightforward, but wouldn't show off the cool rolling update approach in the OpenShift UI :)
 
 ifndef::env-github[]
@@ -136,7 +136,7 @@ by separate teams and subject to their own deployment lifecycles.
 == Conclusion
 
 This article has shown how application metrics, captured by instrumenting services using the OpenTracing API, can
-be used to support a simple Canary deployment strategy.
+be used to support a simple https://martinfowler.com/bliki/CanaryRelease.html[Canary deployment strategy].
 
 These metrics can similarly be used with other deployment strategies,
 such as https://en.wikipedia.org/wiki/A/B_testing[A/B testing], which can be achieved
