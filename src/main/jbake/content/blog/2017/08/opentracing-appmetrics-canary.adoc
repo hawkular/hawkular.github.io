@@ -8,17 +8,18 @@ Gary Brown
 
 In a http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html[previous article]
 we showed how http://opentracing.io/[OpenTracing] instrumentation can be used to
-collect Application Metrics, in addition to (but independent from) reported tracing data, from services
+collect application metrics, in addition to (but independent from) reported tracing data, from services
 deployed within a cloud environment (e.g. https://kubernetes.io/[Kubernetes] or https://openshift.io/[OpenShift]).
 
 In this article we will show how this information can be used to aid a
 https://martinfowler.com/bliki/CanaryRelease.html[Canary deployment strategy] within OpenShift.
 
+[[error-ratio-service-version,Figure 1]]
 ifndef::env-github[]
-image::/img/blog/2017/2017-08-18-canary-service-compare.png[]
+image::/img/blog/2017/2017-08-18-canary-service-compare.png[caption="Figure 1: ", title="Error ratio per service and version"]
 endif::[]
 ifdef::env-github[]
-image::../../../../assets/img/blog/2017/2017-08-18-canary-service-compare.png[]
+image::../../../../assets/img/blog/2017/2017-08-18-canary-service-compare.png[caption="Figure 1: ", title="Error ratio per service and version"]
 endif::[]
 
 == The updated example application
@@ -70,16 +71,16 @@ As our services `accountmgr` and `ordermgr` determine the backing deployment bas
 in a round-robin manner.
 
 This deployment script has been pre-configured with the `0.0.2` version, and to only start a single instance of the
-new version of the services. This may be desirable if wanting to monitor the behaviour of the new service versions over
-a reasonable time period, but as we want to see results faster we will scale them up to see more activity. This is
-achieved by expanding the deployment area for each service in the OpenShift console, and selecting the up arrow to
-scale up each service:
+new version of the services. This may be desirable if you want to monitor the behaviour of the new service versions over
+a reasonable time period, but as we want to see results faster we will scale them up to see more activity. You can do this
+by expanding the deployment area for each service in the OpenShift web console and selecting the up arrow to scale
+up each service:
 
 ifndef::env-github[]
-image::/img/blog/2017/2017-08-18-canary-scale-up.png[caption="Figure 1: ", title="Scaling up canary deployment"]
+image::/img/blog/2017/2017-08-18-canary-scale-up.png[caption="Figure 2: ", title="Scaling up canary deployment"]
 endif::[]
 ifdef::env-github[]
-image::../../../../assets/img/blog/2017/2017-08-18-canary-scale-up.png[caption="Figure 1: ", title="Scaling up canary deployment"]
+image::../../../../assets/img/blog/2017/2017-08-18-canary-scale-up.png[caption="Figure 2: ", title="Scaling up canary deployment"]
 endif::[]
 
 Now we can monitor the Prometheus dashboard, using the following query, to see the error ratio per service and version:
@@ -88,45 +89,44 @@ Now we can monitor the Prometheus dashboard, using the following query, to see t
 sum(increase(span_count{error="true",span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind) / sum(increase(span_count{span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind)
 ```
 
-This result of this query can be seen in the image at the top of the article. This chart shows that version `0.0.2` of the
-`accountmgr` service has not generated any errors, while the `0.0.2` of the `ordermgr` appears to be less error prone that
-version `0.0.1`.
+The result of this query can be seen in <<error-ratio-service-version>> at the top of the article.
+This chart shows that version `0.0.2` of the `accountmgr` service has not generated any errors, while the `0.0.2`
+of the `ordermgr` appears to be less error prone than version `0.0.1`.
 
-Based on these results we may conclude that these versions are better, or atleast no worse, than the previous version - and
-so we should update the main service deployments to use the new version. In the OpenShift UI this can be achieved by
-selecting the three vertical dots on the right hand side of the deployment region, and select the "Edit Yaml" menu item. This
-will display an editor window where the version can be changed from `0.0.1` to `0.0.2`.
-
-
-ifndef::env-github[]
-image::/img/blog/2017/2017-08-18-canary-service-update.png[caption="Figure 2: ", title="Update the service version"]
-endif::[]
-ifdef::env-github[]
-image::../../../../assets/img/blog/2017/2017-08-18-canary-service-update.png[caption="Figure 2: ", title="Update the service version"]
-endif::[]
-
-Once this is saved, the OpenShift UI will show that the service is going through a "rolling update", to incrementally change
-each service instance over to the new version.
+Based on these metrics, we could decide that the new versions of these services are better than the previous, and
+therefore update the main service deployments to use the new versions.
+In the OpenShift web console you can do this by clicking the three vertical dots in the upper right hand side of the
+deployment region and selecting _Edit YAML_ from the menu.
+This will display an editor window where you can change the version from `0.0.1` to `0.0.2` in the YAML file.
 
 ifndef::env-github[]
-image::/img/blog/2017/2017-08-18-canary-rolling-update.png[caption="Figure 3: ", title="Rolling update"]
+image::/img/blog/2017/2017-08-18-canary-service-update.png[caption="Figure 3: ", title="Update the service version"]
 endif::[]
 ifdef::env-github[]
-image::../../../../assets/img/blog/2017/2017-08-18-canary-rolling-update.png[caption="Figure 3: ", title="Rolling update"]
+image::../../../../assets/img/blog/2017/2017-08-18-canary-service-update.png[caption="Figure 3: ", title="Update the service version"]
 endif::[]
 
-Once this has been done for both the `ordermgr` and `accountmgr` services, then the canary version of each deployment
-can be scaled down or removed completely.
+After you save the YAML configuration file, in the web console you can see the service going through a "rolling update" as OpenShift incrementally changes each service instance over to the new version.
+
+ifndef::env-github[]
+image::/img/blog/2017/2017-08-18-canary-rolling-update.png[caption="Figure 4: ", title="Rolling update"]
+endif::[]
+ifdef::env-github[]
+image::../../../../assets/img/blog/2017/2017-08-18-canary-rolling-update.png[caption="Figure 4: ", title="Rolling update"]
+endif::[]
+
+After the rolling update has completed for both the `ordermgr` and `accountmgr` services, then you can scale down or
+completely remove the canary version of each deployment.
 
 An alternative to performing the rolling update would simply be to name the canary version something else (i.e. specific
 to the version being tested), and when it comes time to switch over, simply scale down the previous deployment version. This
-would be more straightforward, but wouldn't show off the cool rolling update approach in the OpenShift UI :)
+would be more straightforward, but wouldn't show off the cool rolling update approach in the OpenShift web console :-)
 
 ifndef::env-github[]
-image::/img/blog/2017/2017-08-18-canary-scale-down.png[caption="Figure 4: ", title="Scaling down canary deployment"]
+image::/img/blog/2017/2017-08-18-canary-scale-down.png[caption="Figure 5: ", title="Scaling down canary deployment"]
 endif::[]
 ifdef::env-github[]
-image::../../../../assets/img/blog/2017/2017-08-18-canary-scale-down.png[caption="Figure 4: ", title="Scaling down canary deployment"]
+image::../../../../assets/img/blog/2017/2017-08-18-canary-scale-down.png[caption="Figure 5: ", title="Scaling down canary deployment"]
 endif::[]
 
 NOTE: Although we have updated both services at the same time, this is not necessary. Generally microservices would be managed
@@ -136,7 +136,7 @@ by separate teams and subject to their own deployment lifecycles.
 == Conclusion
 
 This article has shown how application metrics, captured by instrumenting services using the OpenTracing API, can
-be used to support a simple https://martinfowler.com/bliki/CanaryRelease.html[Canary deployment strategy].
+be used to support a simple Canary deployment strategy.
 
 These metrics can similarly be used with other deployment strategies,
 such as https://en.wikipedia.org/wiki/A/B_testing[A/B testing], which can be achieved
