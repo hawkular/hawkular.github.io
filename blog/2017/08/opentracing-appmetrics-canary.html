@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Canary Deployment in OpenShift using OpenTracing based Application Metrics</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+    <div id="wrap">
+      <div class="dropup">
+        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+        <script>
+            window.addEventListener('load', function() {
+                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+        </script>
+      </div>
+	
+    	<!-- Fixed navbar -->
+        <nav class="navbar navbar-fixed-top" role="navigation">
+          <div class="container">
+            <!-- Brand and toggle get grouped for better mobile display -->
+            <div class="navbar-header">
+              <button class="navbar-toggle collapsed" data-target="#bs-example-navbar-collapse-1" data-toggle="collapse" type="button">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="../../../">Home</a>
+            </div>
+            <!-- Collect the nav links, forms, and other content for toggling -->
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="../../../overview/">Overview</a></li>
+                <li><a href="../../../blog.html">Blog</a></li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Services<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li class="menu-item dropdown dropdown-submenu">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/quickstart-guide/">Quickstart</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/installation-guide/">Installation Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-services/docs/user-guide/">User Guide</a>
+                        </li>
+                        <li class="menu-item dropdown dropdown-submenu">
+                          <a href="#" class="dropdown-toggle" data-toggle="dropdown">REST API</a>
+                          <ul class="dropdown-menu">
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-alerts.html">Alerting</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-inventory.html">Inventory</a>
+                            </li>
+                            <li class="menu-item ">
+                              <a href="../../../docs/rest/rest-metrics.html">Metrics</a>
+                            </li>
+                          </ul>
+                        </li>
+                      </ul>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-services/releases">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular APM<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                    <li>
+                      <li><a href="../../../hawkular-apm/">Overview</a></li>
+                    </li>
+                    <li>
+                      <a href="https://hawkular.gitbooks.io/hawkular-apm-user-guide/content/">Documentation</a>
+                    </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-apm/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Metrics<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                            <a href="../../../community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-metrics.html">Metrics REST API</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-metrics/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
+                <li><a href="../../../hawkular-clients/">Hawkular Clients</a></li>
+                <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                  Community
+                  <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu" role="menu">
+                  <li>
+                    <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+                  </li>
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                          <a href="../../../community/labs/datamining/">Datamining</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="../../../hawkular-clients/android-client/">Android client</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                        </li>
+                      </ul>
+                  </li>
+                  <li>
+                    <a href="https://github.com/hawkular">GitHub Repositories</a>
+                  <li>
+                    <a href="https://travis-ci.org/hawkular">CI Builds</a>
+                  </li>
+                </ul></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Canary Deployment in OpenShift using OpenTracing based Application Metrics</h1>
+            <p>A blog post by Gary Brown</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/apm.html">apm</a> 
+          |
+      <a href="/tags/canary.html">canary</a> 
+          |
+      <a href="/tags/jaeger.html">jaeger</a> 
+          |
+      <a href="/tags/kubernetes.html">kubernetes</a> 
+          |
+      <a href="/tags/openshift.html">openshift</a> 
+          |
+      <a href="/tags/opentracing.html">opentracing</a> 
+          |
+      <a href="/tags/prometheus.html">prometheus</a> 
+          |
+      <a href="/tags/tracing.html">tracing</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a <a href="http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html">previous article</a>
+we showed how <a href="http://opentracing.io/">OpenTracing</a> instrumentation can be used to
+collect application metrics, in addition to (but independent from) reported tracing data, from services
+deployed within a cloud environment (e.g. <a href="https://kubernetes.io/">Kubernetes</a> or <a href="https://openshift.io/">OpenShift</a>).</p>
+</div>
+<div class="paragraph">
+<p>In this article we will show how this information can be used to aid a
+<a href="https://martinfowler.com/bliki/CanaryRelease.html">Canary deployment strategy</a> within OpenShift.</p>
+</div>
+<div id="error-ratio-service-version" class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-service-compare.png" alt="2017 08 18 canary service compare">
+</div>
+<div class="title">Figure 1: Error ratio per service and version</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_updated_example_application">The updated example application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using the same <a href="https://github.com/objectiser/opentracing-prometheus-example">example</a> as used in the previous
+article.</p>
+</div>
+<div class="paragraph">
+<p>However since writing that article, the configuration of the tracer and Prometheus metrics support has been
+simplified. There is now no explicit configuration of either, with only some auto configuration of <code>MetricLabel</code> beans
+to identify some custom labels to be added to the Prometheus metrics, e.g.</p>
+</div>
+<div class="listingblock">
+<div class="title">Metrics configuration used in both services:</div>
+<div class="content">
+<pre>@Configuration
+public class MetricsConfiguration {
+
+    @Bean
+    public MetricLabel transactionLabel() {
+        return new BaggageMetricLabel("transaction", "n/a"); <i class="conum" data-value="1"></i><b>(1)</b>
+    }
+
+    @Bean
+    public MetricLabel versionLabel() {
+        return new ConstMetricLabel("version", System.getenv("VERSION")); <i class="conum" data-value="2"></i><b>(2)</b>
+    }
+
+}</pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This metric label identifies the business transaction associated with the metrics, which can be used to isolate the
+specific number of requests, duration and errors that occurred when the service was used within the particular business
+transaction</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This metric label identifies the service version, which is especially useful in the Canary deployment use case being
+discussed in this article</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The first step is to following the instructions in the <a href="https://github.com/objectiser/opentracing-prometheus-example">example</a>
+for deploying and using the services within OpenShift.</p>
+</div>
+<div class="paragraph">
+<p>Once the <code>./genorders.sh</code> script has been running for a while, to generate plenty of metrics for version <code>0.0.1</code> of the
+services, then deploy the new version of the services. This is achieved by:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>updating the versions in the <code>pom.xml</code> files, within the <code>simple/accountmgr</code> and <code>simple/ordermgr</code> folders
+from <code>0.0.1</code> to <code>0.0.2</code></p>
+</li>
+<li>
+<p>re-run the <code>mvn clean install docker:build</code> command from the <code>simple</code> folder</p>
+</li>
+<li>
+<p>deploy the canary versions of the services using the command <code>oc create -f services-canary-kubernetes.yml</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As our services <code>accountmgr</code> and <code>ordermgr</code> determine the backing deployment based on the respective labels
+<code>app: accountmgr</code> and <code>app: ordermgr</code>, simply having a second deployment with these labels will make them serve requests
+in a round-robin manner.</p>
+</div>
+<div class="paragraph">
+<p>This deployment script has been pre-configured with the <code>0.0.2</code> version, and to only start a single instance of the
+new version of the services. This may be desirable if you want to monitor the behaviour of the new service versions over
+a reasonable time period, but as we want to see results faster we will scale them up to see more activity. You can do this
+by expanding the deployment area for each service in the OpenShift web console and selecting the up arrow to scale
+up each service:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-scale-up.png" alt="2017 08 18 canary scale up">
+</div>
+<div class="title">Figure 2: Scaling up canary deployment</div>
+</div>
+<div class="paragraph">
+<p>Now we can monitor the Prometheus dashboard, using the following query, to see the error ratio per service and version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>sum(increase(span_count{error="true",span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind) / sum(increase(span_count{span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of this query can be seen in <a href="#error-ratio-service-version">Figure 1</a> at the top of the article.
+This chart shows that version <code>0.0.2</code> of the <code>accountmgr</code> service has not generated any errors, while the <code>0.0.2</code>
+of the <code>ordermgr</code> appears to be less error prone than version <code>0.0.1</code>.</p>
+</div>
+<div class="paragraph">
+<p>Based on these metrics, we could decide that the new versions of these services are better than the previous, and
+therefore update the main service deployments to use the new versions.
+In the OpenShift web console you can do this by clicking the three vertical dots in the upper right hand side of the
+deployment region and selecting <em>Edit YAML</em> from the menu.
+This will display an editor window where you can change the version from <code>0.0.1</code> to <code>0.0.2</code> in the YAML file.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-service-update.png" alt="2017 08 18 canary service update">
+</div>
+<div class="title">Figure 3: Update the service version</div>
+</div>
+<div class="paragraph">
+<p>After you save the YAML configuration file, in the web console you can see the service going through a "rolling update" as OpenShift incrementally changes each service instance over to the new version.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-rolling-update.png" alt="2017 08 18 canary rolling update">
+</div>
+<div class="title">Figure 4: Rolling update</div>
+</div>
+<div class="paragraph">
+<p>After the rolling update has completed for both the <code>ordermgr</code> and <code>accountmgr</code> services, then you can scale down or
+completely remove the canary version of each deployment.</p>
+</div>
+<div class="paragraph">
+<p>An alternative to performing the rolling update would simply be to name the canary version something else (i.e. specific
+to the version being tested), and when it comes time to switch over, simply scale down the previous deployment version. This
+would be more straightforward, but wouldn&#8217;t show off the cool rolling update approach in the OpenShift web console :-)</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-scale-down.png" alt="2017 08 18 canary scale down">
+</div>
+<div class="title">Figure 5: Scaling down canary deployment</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Although we have updated both services at the same time, this is not necessary. Generally microservices would be managed
+by separate teams and subject to their own deployment lifecycles.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This article has shown how application metrics, captured by instrumenting services using the OpenTracing API, can
+be used to support a simple Canary deployment strategy.</p>
+</div>
+<div class="paragraph">
+<p>These metrics can similarly be used with other deployment strategies,
+such as <a href="https://en.wikipedia.org/wiki/A/B_testing">A/B testing</a>, which can be achieved
+using a <a href="https://docs.openshift.com/container-platform/3.6/dev_guide/routes.html#routes-load-balancing-for-AB-testing">weighted load balancing capability</a> within OpenShift.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_links">Links</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>OpenTracing: <a href="http://opentracing.io" class="bare">http://opentracing.io</a></p>
+</li>
+<li>
+<p>Github repository with demo: <a href="https://github.com/objectiser/opentracing-prometheus-example" class="bare">https://github.com/objectiser/opentracing-prometheus-example</a></p>
+</li>
+<li>
+<p>OpenTracing java metrics: <a href="https://github.com/opentracing-contrib/java-metrics" class="bare">https://github.com/opentracing-contrib/java-metrics</a></p>
+</li>
+<li>
+<p>Kubernetes: <a href="https://kubernetes.io" class="bare">https://kubernetes.io</a></p>
+</li>
+<li>
+<p>OpenShift: <a href="https://openshift.io" class="bare">https://openshift.io</a></p>
+</li>
+<li>
+<p>Jaeger: <a href="https://github.com/uber/jaeger" class="bare">https://github.com/uber/jaeger</a></p>
+</li>
+<li>
+<p>Prometheus: <a href="https://prometheus.io" class="bare">https://prometheus.io</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by Gary Brown on  18 August 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

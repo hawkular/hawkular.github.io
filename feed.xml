@@ -6,9 +6,233 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Mon, 14 Aug 2017 21:55:41 +0000</pubDate>
-    <lastBuildDate>Mon, 14 Aug 2017 21:55:41 +0000</lastBuildDate>
+    <pubDate>Mon, 21 Aug 2017 07:53:25 +0000</pubDate>
+    <lastBuildDate>Mon, 21 Aug 2017 07:53:25 +0000</lastBuildDate>
 
+    <item>
+      <title>Canary Deployment in OpenShift using OpenTracing based Application Metrics</title>
+      <link>http://www.hawkular.org/blog/2017/08/opentracing-appmetrics-canary.html</link>
+      <author>noreply@hawkular.org (Gary Brown)</author>
+      <pubDate>Fri, 18 Aug 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/08/opentracing-appmetrics-canary.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In a &lt;a href=&quot;http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html&quot;&gt;previous article&lt;/a&gt;
+we showed how &lt;a href=&quot;http://opentracing.io/&quot;&gt;OpenTracing&lt;/a&gt; instrumentation can be used to
+collect application metrics, in addition to (but independent from) reported tracing data, from services
+deployed within a cloud environment (e.g. &lt;a href=&quot;https://kubernetes.io/&quot;&gt;Kubernetes&lt;/a&gt; or &lt;a href=&quot;https://openshift.io/&quot;&gt;OpenShift&lt;/a&gt;).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In this article we will show how this information can be used to aid a
+&lt;a href=&quot;https://martinfowler.com/bliki/CanaryRelease.html&quot;&gt;Canary deployment strategy&lt;/a&gt; within OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;error-ratio-service-version&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-08-18-canary-service-compare.png&quot; alt=&quot;2017 08 18 canary service compare&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Error ratio per service and version&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_the_updated_example_application&quot;&gt;The updated example application&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We will be using the same &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot;&gt;example&lt;/a&gt; as used in the previous
+article.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;However since writing that article, the configuration of the tracer and Prometheus metrics support has been
+simplified. There is now no explicit configuration of either, with only some auto configuration of &lt;code&gt;MetricLabel&lt;/code&gt; beans
+to identify some custom labels to be added to the Prometheus metrics, e.g.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Metrics configuration used in both services:&lt;/div&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre&gt;@Configuration
+public class MetricsConfiguration {
+
+    @Bean
+    public MetricLabel transactionLabel() {
+        return new BaggageMetricLabel(&quot;transaction&quot;, &quot;n/a&quot;); &lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;(1)&lt;/b&gt;
+    }
+
+    @Bean
+    public MetricLabel versionLabel() {
+        return new ConstMetricLabel(&quot;version&quot;, System.getenv(&quot;VERSION&quot;)); &lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;(2)&lt;/b&gt;
+    }
+
+}&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;colist arabic&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;1&quot;&gt;&lt;/i&gt;&lt;b&gt;1&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;This metric label identifies the business transaction associated with the metrics, which can be used to isolate the
+specific number of requests, duration and errors that occurred when the service was used within the particular business
+transaction&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td&gt;&lt;i class=&quot;conum&quot; data-value=&quot;2&quot;&gt;&lt;/i&gt;&lt;b&gt;2&lt;/b&gt;&lt;/td&gt;
+&lt;td&gt;This metric label identifies the service version, which is especially useful in the Canary deployment use case being
+discussed in this article&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The first step is to following the instructions in the &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot;&gt;example&lt;/a&gt;
+for deploying and using the services within OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once the &lt;code&gt;./genorders.sh&lt;/code&gt; script has been running for a while, to generate plenty of metrics for version &lt;code&gt;0.0.1&lt;/code&gt; of the
+services, then deploy the new version of the services. This is achieved by:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;updating the versions in the &lt;code&gt;pom.xml&lt;/code&gt; files, within the &lt;code&gt;simple/accountmgr&lt;/code&gt; and &lt;code&gt;simple/ordermgr&lt;/code&gt; folders
+from &lt;code&gt;0.0.1&lt;/code&gt; to &lt;code&gt;0.0.2&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;re-run the &lt;code&gt;mvn clean install docker:build&lt;/code&gt; command from the &lt;code&gt;simple&lt;/code&gt; folder&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;deploy the canary versions of the services using the command &lt;code&gt;oc create -f services-canary-kubernetes.yml&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;As our services &lt;code&gt;accountmgr&lt;/code&gt; and &lt;code&gt;ordermgr&lt;/code&gt; determine the backing deployment based on the respective labels
+&lt;code&gt;app: accountmgr&lt;/code&gt; and &lt;code&gt;app: ordermgr&lt;/code&gt;, simply having a second deployment with these labels will make them serve requests
+in a round-robin manner.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This deployment script has been pre-configured with the &lt;code&gt;0.0.2&lt;/code&gt; version, and to only start a single instance of the
+new version of the services. This may be desirable if you want to monitor the behaviour of the new service versions over
+a reasonable time period, but as we want to see results faster we will scale them up to see more activity. You can do this
+by expanding the deployment area for each service in the OpenShift web console and selecting the up arrow to scale
+up each service:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-08-18-canary-scale-up.png&quot; alt=&quot;2017 08 18 canary scale up&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2: Scaling up canary deployment&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now we can monitor the Prometheus dashboard, using the following query, to see the error ratio per service and version:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;sum(increase(span_count{error=&quot;true&quot;,span_kind=&quot;server&quot;}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind) / sum(increase(span_count{span_kind=&quot;server&quot;}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind)&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The result of this query can be seen in &lt;a href=&quot;#error-ratio-service-version&quot;&gt;Figure 1&lt;/a&gt; at the top of the article.
+This chart shows that version &lt;code&gt;0.0.2&lt;/code&gt; of the &lt;code&gt;accountmgr&lt;/code&gt; service has not generated any errors, while the &lt;code&gt;0.0.2&lt;/code&gt;
+of the &lt;code&gt;ordermgr&lt;/code&gt; appears to be less error prone than version &lt;code&gt;0.0.1&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Based on these metrics, we could decide that the new versions of these services are better than the previous, and
+therefore update the main service deployments to use the new versions.
+In the OpenShift web console you can do this by clicking the three vertical dots in the upper right hand side of the
+deployment region and selecting &lt;em&gt;Edit YAML&lt;/em&gt; from the menu.
+This will display an editor window where you can change the version from &lt;code&gt;0.0.1&lt;/code&gt; to &lt;code&gt;0.0.2&lt;/code&gt; in the YAML file.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-08-18-canary-service-update.png&quot; alt=&quot;2017 08 18 canary service update&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 3: Update the service version&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After you save the YAML configuration file, in the web console you can see the service going through a &quot;rolling update&quot; as OpenShift incrementally changes each service instance over to the new version.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-08-18-canary-rolling-update.png&quot; alt=&quot;2017 08 18 canary rolling update&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 4: Rolling update&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;After the rolling update has completed for both the &lt;code&gt;ordermgr&lt;/code&gt; and &lt;code&gt;accountmgr&lt;/code&gt; services, then you can scale down or
+completely remove the canary version of each deployment.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;An alternative to performing the rolling update would simply be to name the canary version something else (i.e. specific
+to the version being tested), and when it comes time to switch over, simply scale down the previous deployment version. This
+would be more straightforward, but wouldn&amp;#8217;t show off the cool rolling update approach in the OpenShift web console :-)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-08-18-canary-scale-down.png&quot; alt=&quot;2017 08 18 canary scale down&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 5: Scaling down canary deployment&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;i class=&quot;fa icon-note&quot; title=&quot;Note&quot;&gt;&lt;/i&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Although we have updated both services at the same time, this is not necessary. Generally microservices would be managed
+by separate teams and subject to their own deployment lifecycles.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This article has shown how application metrics, captured by instrumenting services using the OpenTracing API, can
+be used to support a simple Canary deployment strategy.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;These metrics can similarly be used with other deployment strategies,
+such as &lt;a href=&quot;https://en.wikipedia.org/wiki/A/B_testing&quot;&gt;A/B testing&lt;/a&gt;, which can be achieved
+using a &lt;a href=&quot;https://docs.openshift.com/container-platform/3.6/dev_guide/routes.html#routes-load-balancing-for-AB-testing&quot;&gt;weighted load balancing capability&lt;/a&gt; within OpenShift.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_links&quot;&gt;Links&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing: &lt;a href=&quot;http://opentracing.io&quot; class=&quot;bare&quot;&gt;http://opentracing.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Github repository with demo: &lt;a href=&quot;https://github.com/objectiser/opentracing-prometheus-example&quot; class=&quot;bare&quot;&gt;https://github.com/objectiser/opentracing-prometheus-example&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;OpenTracing java metrics: &lt;a href=&quot;https://github.com/opentracing-contrib/java-metrics&quot; class=&quot;bare&quot;&gt;https://github.com/opentracing-contrib/java-metrics&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Kubernetes: &lt;a href=&quot;https://kubernetes.io&quot; class=&quot;bare&quot;&gt;https://kubernetes.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;OpenShift: &lt;a href=&quot;https://openshift.io&quot; class=&quot;bare&quot;&gt;https://openshift.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Jaeger: &lt;a href=&quot;https://github.com/uber/jaeger&quot; class=&quot;bare&quot;&gt;https://github.com/uber/jaeger&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Prometheus: &lt;a href=&quot;https://prometheus.io&quot; class=&quot;bare&quot;&gt;https://prometheus.io&lt;/a&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Advanced Behaviour Detection with Nelson Rules</title>
       <link>http://www.hawkular.org/blog/2017/08/alerts-nelson-rules.html</link>

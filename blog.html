@@ -194,6 +194,226 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/08/opentracing-appmetrics-canary.html"><h1>Canary Deployment in OpenShift using OpenTracing based Application Metrics</h1></a>
+            <p>18 August 2017, by Gary Brown</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>In a <a href="http://www.hawkular.org/blog/2017/06/26/opentracing-appmetrics.html">previous article</a>
+we showed how <a href="http://opentracing.io/">OpenTracing</a> instrumentation can be used to
+collect application metrics, in addition to (but independent from) reported tracing data, from services
+deployed within a cloud environment (e.g. <a href="https://kubernetes.io/">Kubernetes</a> or <a href="https://openshift.io/">OpenShift</a>).</p>
+</div>
+<div class="paragraph">
+<p>In this article we will show how this information can be used to aid a
+<a href="https://martinfowler.com/bliki/CanaryRelease.html">Canary deployment strategy</a> within OpenShift.</p>
+</div>
+<div id="error-ratio-service-version" class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-service-compare.png" alt="2017 08 18 canary service compare">
+</div>
+<div class="title">Figure 1: Error ratio per service and version</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_the_updated_example_application">The updated example application</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>We will be using the same <a href="https://github.com/objectiser/opentracing-prometheus-example">example</a> as used in the previous
+article.</p>
+</div>
+<div class="paragraph">
+<p>However since writing that article, the configuration of the tracer and Prometheus metrics support has been
+simplified. There is now no explicit configuration of either, with only some auto configuration of <code>MetricLabel</code> beans
+to identify some custom labels to be added to the Prometheus metrics, e.g.</p>
+</div>
+<div class="listingblock">
+<div class="title">Metrics configuration used in both services:</div>
+<div class="content">
+<pre>@Configuration
+public class MetricsConfiguration {
+
+    @Bean
+    public MetricLabel transactionLabel() {
+        return new BaggageMetricLabel("transaction", "n/a"); <i class="conum" data-value="1"></i><b>(1)</b>
+    }
+
+    @Bean
+    public MetricLabel versionLabel() {
+        return new ConstMetricLabel("version", System.getenv("VERSION")); <i class="conum" data-value="2"></i><b>(2)</b>
+    }
+
+}</pre>
+</div>
+</div>
+<div class="colist arabic">
+<table>
+<tr>
+<td><i class="conum" data-value="1"></i><b>1</b></td>
+<td>This metric label identifies the business transaction associated with the metrics, which can be used to isolate the
+specific number of requests, duration and errors that occurred when the service was used within the particular business
+transaction</td>
+</tr>
+<tr>
+<td><i class="conum" data-value="2"></i><b>2</b></td>
+<td>This metric label identifies the service version, which is especially useful in the Canary deployment use case being
+discussed in this article</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>The first step is to following the instructions in the <a href="https://github.com/objectiser/opentracing-prometheus-example">example</a>
+for deploying and using the services within OpenShift.</p>
+</div>
+<div class="paragraph">
+<p>Once the <code>./genorders.sh</code> script has been running for a while, to generate plenty of metrics for version <code>0.0.1</code> of the
+services, then deploy the new version of the services. This is achieved by:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>updating the versions in the <code>pom.xml</code> files, within the <code>simple/accountmgr</code> and <code>simple/ordermgr</code> folders
+from <code>0.0.1</code> to <code>0.0.2</code></p>
+</li>
+<li>
+<p>re-run the <code>mvn clean install docker:build</code> command from the <code>simple</code> folder</p>
+</li>
+<li>
+<p>deploy the canary versions of the services using the command <code>oc create -f services-canary-kubernetes.yml</code></p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>As our services <code>accountmgr</code> and <code>ordermgr</code> determine the backing deployment based on the respective labels
+<code>app: accountmgr</code> and <code>app: ordermgr</code>, simply having a second deployment with these labels will make them serve requests
+in a round-robin manner.</p>
+</div>
+<div class="paragraph">
+<p>This deployment script has been pre-configured with the <code>0.0.2</code> version, and to only start a single instance of the
+new version of the services. This may be desirable if you want to monitor the behaviour of the new service versions over
+a reasonable time period, but as we want to see results faster we will scale them up to see more activity. You can do this
+by expanding the deployment area for each service in the OpenShift web console and selecting the up arrow to scale
+up each service:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-scale-up.png" alt="2017 08 18 canary scale up">
+</div>
+<div class="title">Figure 2: Scaling up canary deployment</div>
+</div>
+<div class="paragraph">
+<p>Now we can monitor the Prometheus dashboard, using the following query, to see the error ratio per service and version:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>sum(increase(span_count{error="true",span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind) / sum(increase(span_count{span_kind="server"}[1m])) without (pod,instance,job,namespace,endpoint,transaction,error,operation,span_kind)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The result of this query can be seen in <a href="#error-ratio-service-version">Figure 1</a> at the top of the article.
+This chart shows that version <code>0.0.2</code> of the <code>accountmgr</code> service has not generated any errors, while the <code>0.0.2</code>
+of the <code>ordermgr</code> appears to be less error prone than version <code>0.0.1</code>.</p>
+</div>
+<div class="paragraph">
+<p>Based on these metrics, we could decide that the new versions of these services are better than the previous, and
+therefore update the main service deployments to use the new versions.
+In the OpenShift web console you can do this by clicking the three vertical dots in the upper right hand side of the
+deployment region and selecting <em>Edit YAML</em> from the menu.
+This will display an editor window where you can change the version from <code>0.0.1</code> to <code>0.0.2</code> in the YAML file.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-service-update.png" alt="2017 08 18 canary service update">
+</div>
+<div class="title">Figure 3: Update the service version</div>
+</div>
+<div class="paragraph">
+<p>After you save the YAML configuration file, in the web console you can see the service going through a "rolling update" as OpenShift incrementally changes each service instance over to the new version.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-rolling-update.png" alt="2017 08 18 canary rolling update">
+</div>
+<div class="title">Figure 4: Rolling update</div>
+</div>
+<div class="paragraph">
+<p>After the rolling update has completed for both the <code>ordermgr</code> and <code>accountmgr</code> services, then you can scale down or
+completely remove the canary version of each deployment.</p>
+</div>
+<div class="paragraph">
+<p>An alternative to performing the rolling update would simply be to name the canary version something else (i.e. specific
+to the version being tested), and when it comes time to switch over, simply scale down the previous deployment version. This
+would be more straightforward, but wouldn&#8217;t show off the cool rolling update approach in the OpenShift web console :-)</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-08-18-canary-scale-down.png" alt="2017 08 18 canary scale down">
+</div>
+<div class="title">Figure 5: Scaling down canary deployment</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+Although we have updated both services at the same time, this is not necessary. Generally microservices would be managed
+by separate teams and subject to their own deployment lifecycles.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>This article has shown how application metrics, captured by instrumenting services using the OpenTracing API, can
+be used to support a simple Canary deployment strategy.</p>
+</div>
+<div class="paragraph">
+<p>These metrics can similarly be used with other deployment strategies,
+such as <a href="https://en.wikipedia.org/wiki/A/B_testing">A/B testing</a>, which can be achieved
+using a <a href="https://docs.openshift.com/container-platform/3.6/dev_guide/routes.html#routes-load-balancing-for-AB-testing">weighted load balancing capability</a> within OpenShift.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_links">Links</h2>
+<div class="sectionbody">
+<div class="ulist">
+<ul>
+<li>
+<p>OpenTracing: <a href="http://opentracing.io" class="bare">http://opentracing.io</a></p>
+</li>
+<li>
+<p>Github repository with demo: <a href="https://github.com/objectiser/opentracing-prometheus-example" class="bare">https://github.com/objectiser/opentracing-prometheus-example</a></p>
+</li>
+<li>
+<p>OpenTracing java metrics: <a href="https://github.com/opentracing-contrib/java-metrics" class="bare">https://github.com/opentracing-contrib/java-metrics</a></p>
+</li>
+<li>
+<p>Kubernetes: <a href="https://kubernetes.io" class="bare">https://kubernetes.io</a></p>
+</li>
+<li>
+<p>OpenShift: <a href="https://openshift.io" class="bare">https://openshift.io</a></p>
+</li>
+<li>
+<p>Jaeger: <a href="https://github.com/uber/jaeger" class="bare">https://github.com/uber/jaeger</a></p>
+</li>
+<li>
+<p>Prometheus: <a href="https://prometheus.io" class="bare">https://prometheus.io</a></p>
+</li>
+</ul>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/08/alerts-nelson-rules.html"><h1>Advanced Behaviour Detection with Nelson Rules</h1></a>
             <p>15 August 2017, by Lucas Ponce</p>
             <p><div class="sect1">
@@ -1253,345 +1473,13 @@ Proper metrics tagging is the corner stone to make sense of this data.</p>
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/07/jaeger-with-security-proxy.html"><h1>Protecting Jaeger UI with a sidecar security proxy</h1></a>
-            <p>18 July 2017, by Juraci Paixão Kröhling</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>In a production deployment of Jaeger, it may be advantageous to restrict access to Jaeger&#8217;s Query
-service, which includes the UI. For instance, you might have internal security requirements to allow
-only certain groups to access trace data, or you might have deployed Jaeger into a public cloud.
-In a true microservices way, one possible approach is to add a sidecar to the Jaeger Query service,
-acting as a security proxy. Incoming requests hit our sidecar instead of reaching Jaeger&#8217;s Query service
-directly and the sidecar would be responsible for enforcing the authentication and authorization constraints.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-07-18-teaser.png" alt="Jaeger login screen">
-</div>
-</div>
-<div class="paragraph">
-<p>Incoming HTTP requests arrive at the route ①, which uses the internal service ② to resolve and communicate
-with the security proxy ③. Once the request is validated and all security constraints are satisfied, the
-request reaches Jaeger ④.</p>
-</div>
-<div class="paragraph">
-<p>For demonstration purposes we&#8217;ll make use of <a href="http://keycloak.org">Keycloak</a> as our security solution, but
-the idea can be adapted to work with any security proxy. This demo should also work without changes with
-<a href="https://access.redhat.com/products/red-hat-single-sign-on">Red Hat SSO</a>. For this exercise, we&#8217;ll need:</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p>A Keycloak (or Red Hat SSO) server instance running. We&#8217;ll call its location <code>${REDHAT_SSO_URL}</code></p>
-</li>
-<li>
-<p>An OpenShift cluster, where we&#8217;ll run Jaeger backend components. It might be as easy as <code>oc cluster up</code></p>
-</li>
-<li>
-<p>A local clone of the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a></p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>Note that we are not trying to secure the communication between the components, like from the Agent to the Collector.
-For this scenario, there are other techniques that can be used, such as mutual authentication via certificates, employing
-<a href="https://istio.io/">istio</a> or other similar tools.</p>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_preparing_keycloak">Preparing Keycloak</h3>
-<div class="paragraph">
-<p>For this demo, we&#8217;ll run Keycloak via Docker directly on the host machine. This is to stress that Keycloak
-does <strong>not</strong> need to be running on the same OpenShift cluster as our Jaeger backend.</p>
-</div>
-<div class="paragraph">
-<p>The following command should start an appropriate Keycloak server locally. If you already have your
-own Keycloak or Red Hat SSO server, skip this step.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run --rm --name keycloak-server -e KEYCLOAK_USER=admin -e KEYCLOAK_PASSWORD=password -p 8080:8080 jboss/keycloak</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once the Keycloak server is up and running, let&#8217;s create a realm for Jaeger:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Login into Keycloak (<a href="http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console" class="bare">http://&lt;YOUR_IP&gt;:8080/auth/admin/master/console</a>) with <code>admin</code> as username and <code>password</code> as password</p>
-</li>
-<li>
-<p>In the top left corner, mouse over the <code>Select realm</code> box and click <code>Add realm</code>. Name it <code>jaeger</code> and click <code>Create</code></p>
-</li>
-<li>
-<p>On <code>Clients</code>, click <code>Create</code> and set <code>proxy-jaeger</code> as the name and save it</p>
-</li>
-<li>
-<p>Set the <code>Access Type</code> to <code>confidential</code> and <code>*</code> as <code>Valid Redirect URIs</code> and save it. You might want to fine tune this in a
-production environment, otherwise you might be open to an attack known as
-<a href="https://www.owasp.org/index.php/Unvalidated_Redirects_and_Forwards_Cheat_Sheet">"Unvalidated Redirects and Forwards"</a>.</p>
-</li>
-<li>
-<p>Open the <code>Installation</code> tab and select <code>Keycloak OIDC JSON</code> and copy the JSON that is shown. It should look like this,
-but the <code>auth-server-url</code> and <code>secret</code> will have different values.</p>
-</li>
-</ol>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">{
-  "realm": "jaeger",
-  "auth-server-url": "http://192.168.2.111:8080/auth",
-  "ssl-required": "external",
-  "resource": "proxy-jaeger",
-  "credentials": {
-    "secret": "7f201319-1dfd-43cc-9838-057dac439046"
-  }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And finally, let&#8217;s create a role and a user, so that we can log into Jaeger&#8217;s Query service:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>Under the <code>Configure</code> left-side menu, open the <code>Roles</code> page and click <code>Add role</code></p>
-</li>
-<li>
-<p>As role name, set <code>user</code> and click <code>Save</code></p>
-</li>
-<li>
-<p>Under the <code>Manage</code> left-side menu, open the <code>Users</code> page and click <code>Add user</code></p>
-</li>
-<li>
-<p>Fill out the form as you wish and set <code>Email verified</code> to <code>ON</code> and click on <code>Save</code></p>
-</li>
-<li>
-<p>Open the <code>Credentials</code> tab for this user and set a password (temporary or not).</p>
-</li>
-<li>
-<p>Open the <code>Role mappings</code> tab for this user, select the role <code>user</code> from the <code>Available Roles</code> list and click <code>Add selected</code></p>
-</li>
-</ol>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_preparing_openshift">Preparing OpenShift</h3>
-<div class="paragraph">
-<p>For this demo, we assume you have an OpenShift cluster running already. If you don&#8217;t, then you might want to check out tools
-like <a href="https://github.com/minishift/minishift"><code>minishift</code></a>. If you are running a recent version of Fedora, CentOS or
-Red Hat Enterprise Linux you might want to install the package <code>origin-clients</code> and run <code>oc cluster up --version=latest</code>.
-This should get you a basic OpenShift cluster running locally.</p>
-</div>
-<div class="paragraph">
-<p>To make it easier for our demonstration, we&#8217;ll add <code>cluster-admin</code> rights to our <code>developer</code> user and we&#8217;ll create
-the Jaeger namespace:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc login -u system:admin
-oc new-project jaeger
-oc adm policy add-cluster-role-to-user cluster-admin developer -n jaeger
-oc login -u developer</code></pre>
-</div>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_preparing_the_jaeger_openshift_template">Preparing the Jaeger OpenShift template</h3>
-<div class="paragraph">
-<p>We&#8217;ll use the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/master/production/jaeger-production-template.yml">Jaeger OpenShift Production template</a>
-as the starting point: either clone the entire repository, or just get a local version of the template.</p>
-</div>
-<div class="paragraph">
-<p>The first step is to add the sidecar container to the <code>query-deployment</code> object. Under the <code>containers</code> list, after we
-specify the <code>jaeger-query</code>, let&#8217;s add the sidecar:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        - image: jboss/keycloak-proxy
-          name: ${JAEGER_SERVICE_NAME}-query-security-proxy
-          volumeMounts:
-          - mountPath: /opt/jboss/conf
-            name: security-proxy-configuration-volume
-          ports:
-          - containerPort: 8080
-            protocol: TCP
-          readinessProbe:
-            httpGet:
-              path: "/"
-              port: 8080</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Note that container specifies a <code>volumeMount</code> named <code>security-proxy-configuration-volume</code>: we&#8217;ll use it to store the
-proxy&#8217;s configuration file. You should add the volume under the <code>spec/template/spec</code> node for <code>query-deployment</code>, sibling to
-the <code>dnsPolicy</code> property (it&#8217;s probably right under the previous code snippet):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">        volumes:
-          - configMap:
-              name: ${JAEGER_SERVICE_NAME}-configuration
-              items:
-                - key: proxy
-                  path: proxy.json
-            name: security-proxy-configuration-volume</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now, we need to specify the <code>ConfigMap</code>, with the proxy&#8217;s configuration entry. To do that, we add a new top-level item to
-the template. As a suggestion, we recommend keeping it close to where it&#8217;s consumed. For instance, right before the <code>query-deployment</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
-  kind: ConfigMap
-  metadata:
-    name: ${JAEGER_SERVICE_NAME}-configuration
-    labels:
-      app: jaeger
-      jaeger-infra: security-proxy-configuration
-  data:
-    proxy: |
-      {
-          "target-url": "http://localhost:16686",
-          "bind-address": "0.0.0.0",
-          "http-port": "8080",
-          "applications": [
-              {
-                  "base-path": "/",
-                  "adapter-config": {
-                    "realm": "jaeger",
-                    "auth-server-url": "${REDHAT_SSO_URL}",
-                    "ssl-required": "external",
-                    "resource": "proxy-jaeger",
-                    "credentials": {
-                      "secret": "THE-SECRET-FROM-INSTALLATION-FILE"
-                    }
-                  }
-            ,
-            "constraints": [
-                      {
-                          "pattern": "/*",
-                          "roles-allowed": [
-                              "user"
-                          ]
-                      }
-                  ]
-              }
-          ]
-      }</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Note that we are only allowing users with the role <code>user</code> to log into our Jaeger UI. In a real world scenario, you might
-want to adjust this to fit your setup. For instance, your user data might come from LDAP, and you only want to allow users
-from specific LDAP groups to access the Jaeger UI.</p>
-</div>
-<div class="paragraph">
-<p>The <code>secret</code> within the <code>credentials</code> should match the secret we got from Keycloak at the beginning of this exercise. Our
-most curious readers will note that we mentioned the template parameter <code>REDHAT_SSO_URL</code> under the property <code>auth-server-url</code>.
-Either change that to your Keycloak server, or let&#8217;s specify a template parameter, allowing us to set this at deployment time.
-Under the <code>parameters</code> section of the template, add the following property:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- description: The URL to the Red Hat SSO / Keycloak server
-  displayName: Red Hat SSO URL
-  name: REDHAT_SSO_URL
-  required: true
-  value: http://THE-URL-FROM-THE-INSTALLATION-FILE:8080/auth</code></pre>
-</div>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-This value should be a location that is reacheable by both your browser and by the sidecar, like your host&#8217;s LAN IP (192.x, 10.x).
-Localhost/127.x is not going to work.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>As a final step, we need to change the service to direct requests to the port <code>8080</code> (proxy) instead of <code>16686</code>. This is done
-by changing the property <code>targetPort</code> on the service named <code>query-service</code>, setting it to <code>8080</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-yml" data-lang="yml">- apiVersion: v1
-  kind: Service
-  metadata:
-    name: ${JAEGER_SERVICE_NAME}-query
-    labels:
-      app: jaeger
-      jaeger-infra: query-service
-  spec:
-    ports:
-    - name: jaeger-query
-      port: 80
-      protocol: TCP
-      targetPort: 8080
-    selector:
-      jaeger-infra: query-pod
-    type: LoadBalancer</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>As a reference, here&#8217;s the <a href="https://github.com/jaegertracing/jaeger-openshift/blob/KeycloakSecuringUI/production/jaeger-production-template.yml">complete template file</a>
-that can be used for this blog post.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_deploying">Deploying</h3>
-<div class="paragraph">
-<p>Now that we have everything ready, let&#8217;s deploy Jaeger into our OpenShift cluster. Run the following command from the same
-directory you stored the <code>YAML</code> file from the previous steps, referenced here by the name <code>jaeger-production-template.yml</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">oc process -f jaeger-production-template.yml | oc create -n jaeger -f -</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>During the first couple of minutes, it&#8217;s OK if the pods <code>jaeger-query</code> and <code>jaeger-collector</code> fail, as Cassandra will still
-be booting. Eventually, the service should be up and running, as shown in the following image.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-07-18-pod.png" alt="Pod with sidecar on OpenShift">
-</div>
-</div>
-<div class="paragraph">
-<p>Once it is ready to serve requests, click on URL for the route (<a href="https://jaeger-query-jaeger.127.0.0.1.nip.io" class="bare">https://jaeger-query-jaeger.127.0.0.1.nip.io</a>). You should be
-presented with a login screen, served by the Keycloak server. Login with the credentials you set on the previous steps, and you
-should reach the regular Jaeger UI.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_conclusion">Conclusion</h3>
-<div class="paragraph">
-<p>In this exercise, we&#8217;ve seen how to add a security proxy to our Jaeger Query pod as a sidecar. All incoming requests go through
-this sidecar and all features available in Keycloak can be used transparently, such as 2-Factor authentication, service accounts,
-single sign-on, brute force attack protection, LDAP support and much more.</p>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>18 July 2017 - <a href="blog/2017/07/jaeger-with-security-proxy.html">Protecting Jaeger UI with a sidecar security proxy</a></li>
           <li>10 July 2017 - <a href="blog/2017/07/opentracing-jaxrs.html">OpenTracing JAX-RS Instrumentation</a></li>
           <li>26 June 2017 - <a href="blog/2017/06/26/opentracing-appmetrics.html">Using OpenTracing to collect Application Metrics in Kubernetes</a></li>
           <li>13 June 2017 - <a href="blog/2017/06/9/opentracing-spring-boot.html">OpenTracing Spring Boot Instrumentation</a></li>
