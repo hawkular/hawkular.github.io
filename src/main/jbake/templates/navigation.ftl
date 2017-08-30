@@ -82,13 +82,13 @@
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-metrics/docs/user-guide/">Metrics User Guide</a>
                         </li>
                         <li class="menu-item ">
-                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts-v1.html">Alerting User Guide</a>
                         </li>
                         <li class="menu-item ">
                           <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-metrics.html">Metrics REST API</a>
                         </li>
                         <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts.html">Alerting REST API</a>
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts-v1.html">Alerting REST API</a>
                         </li>
                       </ul>
                   </li>
@@ -105,11 +105,27 @@
                   <li class="menu-item dropdown dropdown-submenu">
                     <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
                       <ul class="dropdown-menu">
-                        <li class="menu-item ">
-                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        <li class="menu-item dropdown dropdown-submenu">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Alerting User Guide</a>
+                            <ul class="dropdown-menu">
+                              <li class="menu-item ">
+                                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts-v1.html">Version 1</a>
+                              </li>
+                              <li class="menu-item ">
+                                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts-v2.html">Version 2</a>
+                              </li>
+                            </ul>
                         </li>
-                        <li class="menu-item ">
-                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts.html">Alerting REST API</a>
+                        <li class="menu-item dropdown dropdown-submenu">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Alerting REST API</a>
+                            <ul class="dropdown-menu">
+                              <li class="menu-item ">
+                                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts-v1.html">Version 1</a>
+                              </li>
+                              <li class="menu-item ">
+                                <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts-v2.html">Version 2</a>
+                              </li>
+                            </ul>
                         </li>
                       </ul>
                   </li>
