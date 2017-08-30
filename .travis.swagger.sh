@@ -85,7 +85,8 @@ downloadAndProcess() {
   FILES=`curl -Ls -H "Authorization: token $DEPLOY_TOKEN" https://api.github.com/repos/$REPO/contents/?ref=$BRANCH | grep "download_url.*adoc" | cut -d '"' -f4`
 
   # travis has sometimes issue with the call above, so make sure it's not empty
-  [[ "x" == "x$FILES" ]] && FILES="https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts.adoc \
+  [[ "x" == "x$FILES" ]] && FILES="https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts-v1.adoc \
+https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-alerts-v2.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-btm.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-datamining.adoc \
 https://raw.githubusercontent.com/hawkular/hawkular.github.io/swagger/rest-inventory.adoc \
