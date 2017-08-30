@@ -97,6 +97,27 @@
                     </li>
                   </ul>
                 </li>
+                <li class="dropdown">
+                  <a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+                    Hawkular Alerting<span class="caret"></span>
+                  </a>
+                  <ul class="dropdown-menu" role="menu">
+                  <li class="menu-item dropdown dropdown-submenu">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown">Documentation</a>
+                      <ul class="dropdown-menu">
+                        <li class="menu-item ">
+                            <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>community/docs/developer-guide/alerts.html">Alerting User Guide</a>
+                        </li>
+                        <li class="menu-item ">
+                          <a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>docs/rest/rest-alerts.html">Alerting REST API</a>
+                        </li>
+                      </ul>
+                  </li>
+                    <li>
+                      <a href="https://github.com/hawkular/hawkular-alerts/releases/">Download</a>
+                    </li>
+                  </ul>
+                </li>
                 <li><a href="<#if (content.rootpath)??>${content.rootpath}<#else></#if>hawkular-clients/">Hawkular Clients</a></li>
                 <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
                   Community
