@@ -410,6 +410,176 @@ public class Action {
 }
 ----
 
+=== Email Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *email*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *mail* |
+"mail" property is used as main prefix for javax.mail.Session properties. +
+ +
+All "mail.<protocol>.<value>" properties are passed to mail Session. +
+Properties can be defined per action based. +
+If not properties defined at action level, it takes default plugin properties. +
+ +
+For these special "mail" properties, if not properties defined at action plugin, it will search at
+System.getProperties() level.
+| -
+| *from* |
+"from" property defines the sender of the plugin email. +
+ +
+Additional "from" properties can be defined to discriminate by alert state: +
+- "from.open": sender when alert is in open state +
+- "from.acknowledged": sender when alert is in acknowledge state +
+- "from.resolved": sender when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *from-name* |
+"from-name" property defines the name of the sender of the plugin email. +
+ +
+Additional "from-name" properties can be defined to discriminate by alert state: +
+- "from-name.open": name of the sender when alert is in open state +
+- "from-name.acknowledged": name of the sender when alert is in acknowledge state +
+- "from-name.resolved": name of the sender when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *to* |
+"to" property defines the recipient of the plugin email. +
+ +
+Additional "to" properties can be defined to discriminate by alert state: +
+- "to.open": recipient when alert is in open state +
+- "to.acknowledged": recipient when alert is in acknowledge state +
+- "to.resolved": recipient when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *cc* |
+"cc" property defines the extra recipients of the plugin email. +
+ +
+Additional "cc" properties can be defined to discriminate by alert state: +
+- "cc.open": extra recipients when alert is in open state +
+- "cc.acknowledged": extra recipients when alert is in acknowledge state +
+- "cc.resolved": extra recipients when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *template.hawkular.url* |
+"template.hawkular.url" property defines the URL that will be used in the template email to point to hawkular
+server. If not "template.hawkular.url" defined, then the plugin looks into system env HAWKULAR_BASE_URL.
+| -
+| *template.locale* |
+Email plugin supports localization templates. +
+ +
+"template.locale" is the property used to define which template to use for specific locale. +
+ +
+i.e. A plugin may have defined several templates to support multiple locales [es,en,fr], but we can define a
+specific locale per action [es].
+| -
+| *template.plain* |
+"template.plain" property defines the template used for plain text email. +
+ +
+Additional "template.plain" properties can be defined to support localization: +
+- "template.plain.LOCALE": where LOCALE is a variable that can point to specific localization. +
+ +
+Templates are plain text based on http://freemarker.org/ engine. +
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template. +
+The list of variables available for templates are wrapped into link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68[PluginMessageDescription] class.
+| -
+| *template.html* |
+"template.html" property defines the template used for html email. +
+ +
+Additional "template.html" properties can be defined to support localization: +
+- "template.html.LOCALE": where LOCALE is a variable that can point to specific localization. +
+ +
+Email plugin uses templates based on http://freemarker.org/ engine. +
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template. +
+The list of variables available for templates are wrapped into link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68[PluginMessageDescription] class.
+| -
+|=======================
+
+More details for Email plugin and templates under links link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailPlugin.java[EmailPlugin] class and link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailTemplate.java[EmailTemplate] class.
+
+=== WebHook Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *webhook*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *url* |
+"url" property defines the url of the webhook to invoke.
+| -
+| *method* |
+"method" property defines the HTTP method used with the webhook url to invoke. +
+ +
+The Plugin will always send the JSON Event processed.
+| -
+| *timeout* |
+"timeout" property defines the connection timeout (ms) for the webhook url to invoke.
+| -
+|=======================
+
+More details for WebHook Plugin under link link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-webhook/src/main/java/org/hawkular/alerts/actions/webhook/WebHookPlugin.java[WebHookPlugin] class.
+
+=== File Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *file*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *path* |
+Path to store file notifications
+| System.getProperty("java.io.tmpdir")
+|=======================
+
+More details for File Plugin under link link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-file/src/main/java/org/hawkular/alerts/actions/file/FilePlugin.java[FilePlugin] class.
+
+=== Elasticsearch Action Plugin
+
+See <<Elasticsearch Action Plugin>>
+
+=== Apache Kafka Action Plugin
+
+See <<Apache Kafka Action Plugin>>
+
+=== Experimental Action Plugins
+
+In Hawkular Alerting 1.x some plugins were developed as integration examples with third party systems. +
+ +
+These plugins are *not* yet migrated into Hawkular Alerting 2.x but its logic is quite straightforward to use it as base for personalized integrations.
+
+==== Aerogear
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-aerogear/hawkular-alerts-actions-aerogear-plugin/src/main/java/org/hawkular/alerts/actions/aerogear/AerogearPlugin.java[AerogearPlugin Version 1.x] class.
+
+==== Pagerduty
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-pagerduty/hawkular-alerts-actions-pagerduty-plugin/src/main/java/org/hawkular/alerts/actions/pagerduty/PagerDutyPlugin.java[PagerDutyPlugin Version 1.x] class.
+
+==== Twilio
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-sms/hawkular-alerts-actions-sms-plugin/src/main/java/org/hawkular/alerts/actions/sms/SmsPlugin.java[SmsPlugin Version 1.x] class.
+
 == Engine Extensions
 
 Engine extensions are listeners that can operate on Data or Events received before the engine process them.
