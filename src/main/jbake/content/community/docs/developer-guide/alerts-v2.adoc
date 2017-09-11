@@ -410,6 +410,176 @@ public class Action {
 }
 ----
 
+=== Email Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *email*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *mail* |
+"mail" property is used as main prefix for javax.mail.Session properties. +
+ +
+All "mail.<protocol>.<value>" properties are passed to mail Session. +
+Properties can be defined per action based. +
+If not properties defined at action level, it takes default plugin properties. +
+ +
+For these special "mail" properties, if not properties defined at action plugin, it will search at
+System.getProperties() level.
+| -
+| *from* |
+"from" property defines the sender of the plugin email. +
+ +
+Additional "from" properties can be defined to discriminate by alert state: +
+- "from.open": sender when alert is in open state +
+- "from.acknowledged": sender when alert is in acknowledge state +
+- "from.resolved": sender when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *from-name* |
+"from-name" property defines the name of the sender of the plugin email. +
+ +
+Additional "from-name" properties can be defined to discriminate by alert state: +
+- "from-name.open": name of the sender when alert is in open state +
+- "from-name.acknowledged": name of the sender when alert is in acknowledge state +
+- "from-name.resolved": name of the sender when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *to* |
+"to" property defines the recipient of the plugin email. +
+ +
+Additional "to" properties can be defined to discriminate by alert state: +
+- "to.open": recipient when alert is in open state +
+- "to.acknowledged": recipient when alert is in acknowledge state +
+- "to.resolved": recipient when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *cc* |
+"cc" property defines the extra recipients of the plugin email. +
+ +
+Additional "cc" properties can be defined to discriminate by alert state: +
+- "cc.open": extra recipients when alert is in open state +
+- "cc.acknowledged": extra recipients when alert is in acknowledge state +
+- "cc.resolved": extra recipients when alert is in acknowledge state +
+ +
+Discriminated properties have priority.
+| -
+| *template.hawkular.url* |
+"template.hawkular.url" property defines the URL that will be used in the template email to point to hawkular
+server. If not "template.hawkular.url" defined, then the plugin looks into system env HAWKULAR_BASE_URL.
+| -
+| *template.locale* |
+Email plugin supports localization templates. +
+ +
+"template.locale" is the property used to define which template to use for specific locale. +
+ +
+i.e. A plugin may have defined several templates to support multiple locales [es,en,fr], but we can define a
+specific locale per action [es].
+| -
+| *template.plain* |
+"template.plain" property defines the template used for plain text email. +
+ +
+Additional "template.plain" properties can be defined to support localization: +
+- "template.plain.LOCALE": where LOCALE is a variable that can point to specific localization. +
+ +
+Templates are plain text based on http://freemarker.org/ engine. +
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template. +
+The list of variables available for templates are wrapped into link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68[PluginMessageDescription] class.
+| -
+| *template.html* |
+"template.html" property defines the template used for html email. +
+ +
+Additional "template.html" properties can be defined to support localization: +
+- "template.html.LOCALE": where LOCALE is a variable that can point to specific localization. +
+ +
+Email plugin uses templates based on http://freemarker.org/ engine. +
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template. +
+The list of variables available for templates are wrapped into link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68[PluginMessageDescription] class.
+| -
+|=======================
+
+More details for Email plugin and templates under links link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailPlugin.java[EmailPlugin] class and link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailTemplate.java[EmailTemplate] class.
+
+=== WebHook Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *webhook*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *url* |
+"url" property defines the url of the webhook to invoke.
+| -
+| *method* |
+"method" property defines the HTTP method used with the webhook url to invoke. +
+ +
+The Plugin will always send the JSON Event processed.
+| -
+| *timeout* |
+"timeout" property defines the connection timeout (ms) for the webhook url to invoke.
+| -
+|=======================
+
+More details for WebHook Plugin under link link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-webhook/src/main/java/org/hawkular/alerts/actions/webhook/WebHookPlugin.java[WebHookPlugin] class.
+
+=== File Action Plugin
+
+[cols="^2,10"]
+|=====
+| Plugin Name | *file*
+|=====
+
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *path* |
+Path to store file notifications
+| System.getProperty("java.io.tmpdir")
+|=======================
+
+More details for File Plugin under link link:https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-file/src/main/java/org/hawkular/alerts/actions/file/FilePlugin.java[FilePlugin] class.
+
+=== Elasticsearch Action Plugin
+
+See <<Elasticsearch Action Plugin>>
+
+=== Apache Kafka Action Plugin
+
+See <<Apache Kafka Action Plugin>>
+
+=== Experimental Action Plugins
+
+In Hawkular Alerting 1.x some plugins were developed as integration examples with third party systems. +
+ +
+These plugins are *not* yet migrated into Hawkular Alerting 2.x but its logic is quite straightforward to use it as base for personalized integrations.
+
+==== Aerogear
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-aerogear/hawkular-alerts-actions-aerogear-plugin/src/main/java/org/hawkular/alerts/actions/aerogear/AerogearPlugin.java[AerogearPlugin Version 1.x] class.
+
+==== Pagerduty
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-pagerduty/hawkular-alerts-actions-pagerduty-plugin/src/main/java/org/hawkular/alerts/actions/pagerduty/PagerDutyPlugin.java[PagerDutyPlugin Version 1.x] class.
+
+==== Twilio
+
+See link:https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-sms/hawkular-alerts-actions-sms-plugin/src/main/java/org/hawkular/alerts/actions/sms/SmsPlugin.java[SmsPlugin Version 1.x] class.
+
 == Engine Extensions
 
 Engine extensions are listeners that can operate on Data or Events received before the engine process them.
@@ -624,7 +794,7 @@ Mapping expression syntax (BNF): +
  +
 <mapping_expression> ::= <mapping> \| <mapping> "," <mapping_expression> +
  +
-<mapping> ::= <elasticsearch_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field>
+<mapping> ::= <elasticsearch_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field> +
  +
 <elasticsearch_field> ::= "index" \| "id" \| <SOURCE_FIELD> +
  +
@@ -871,6 +1041,254 @@ Url can be a list of valid link:https://hc.apache.org/httpcomponents-core-ga/htt
 | ELASTICSEARCH_PROXY_REMOTE_USER
 | Used for X-Proxy-Remote-User HTTP header.
 |=======================
+
+== Prometheus Integration
+
+=== Prometheus Alerter
+
+The Prometheus Alerter will listen for triggers tagged with "prometheus" tag. The alerter manages Prometheus evaluations and interacts with the Alerts system. +
+ +
+The Prometheus Alerter uses the following conventions for trigger tags and context:
+
+[cols="^2,10"]
+|=======================
+| *Required* |
+_trigger.tags["prometheus"] // the value is ignored_ +
+ +
+| *Optional* |
+_trigger.context["prometheus.frequency"] = "<seconds between queries to Prometheus, default = 120>"_ +
+ +
+Note that the same frequency will apply to all Prometheus external conditions on the trigger
+| *Optional* |
+_trigger.context["prometheus.url"] = "<url, default = global setting>"_
+| *Required* |
+An ExternalCondition must be defined to be processed by the Prometheus External Alerter:
+ +
+externalcondition.alerterId = "prometheus" +
+externalcondition.expression = <BooleanExpression> | <ALERTSExpression> +
+|=======================
+
+=== Prometheus Alerter Endpoints
+
+|===
+| GET | /hawkular/alerter/status | link:#++GET_P8S_STATUS++[Status endpoint for Prometheus Alerter Integrations]
+| POST | /hawkular/alerter/notifications | link:#++POST_P8S_NOTIFICATIONS++[Consume Prometheus Alertmanager WebHook Notifications]
+|===
+
+==============================================
+
+[[GET_P8S_STATUS]]
+*Endpoint GET `/awkular/alerter/status`*
+
+Ping status of the Prometheus Alerter +
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Prometheus Alerter is up and running|Success
+
+|=======================
+
+==============================================
+
+
+==============================================
+
+[[POST_P8S_NOTIFICATIONS]]
+*Endpoint POST `/awkular/alerter/notifications`*
+
+Receive a Prometheus Alertmanager WebHook Notification and store it as a Hawkular Event. Expects a format like: +
+
+```
+{
+  "receiver":"...",
+  "status":"...",
+  "alerts":[̣
+    {
+      "status":"...",
+      "labels":{},
+      "annotations":{},
+      "startsAt":"...",
+      "endsAt":"...",
+      "generatorURL":"..."
+    },
+    {...},
+    {...}
+  ],
+  "groupLabels":{},
+  "commonAnnotations":{},
+  "externalUrl":"...",
+  "version":"...",
+  "groupKey":"..."
+}
+```
+
+A Prometheus Notification is mapped into a Hawkular Event with the following convention: +
+ +
+
+[cols="15,15", options="header"]
+|=======================
+|Prometheus Notification|Hawkular Event
+
+|notification.groupLabels.tenant|event.tenantId
+|notification.groupLabels.dataId|event.dataId
+|"prometheus"|event.category
+|notification.commonAnnotations.description [or] +
+notification.commonAnnotations.summary [or] +
+notification.groupLabels.alertName
+|event.text
+|notification.groupLabels.alertName|event.context.alertName
+|notification|event.context.json
+
+|=======================
+
+
+ notification.groupLabels.dataId -> event.dataId
+
+
+*Body*
+
+[cols="15,35,^15", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Prometheus Notification|Object
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully processed|Success
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+== Apache Kafka Integration
+
+=== Apache Kakfa Alerter
+
+The Kafka Alerter will listen for triggers tagged with "Kafka" tag. The Alerter will create a consumer to a Kafka Topic
+with the config provided into the Trigger context. The Alerter will convert Kafka records into Hawkular Data or Events
+and send them into the Alerting engine.
+
+The Kafka Alerter uses the following conventions for trigger tags and context:
+
+[cols="^2,10"]
+|=======================
+| *Required* |
+_trigger.tags["Kafka"] = "<value reserved for future uses>"_ +
+ +
+ The "Kafka" tag is required for the alerter to detect this trigger will listen to a Kafka topic. +
+ Value is not necessary, it can be used as a description, it is reserved for future use. +
+  +
+ i.e. +
+ trigger.tags["Kafka"] = ""                          // Empty value is valid +
+ trigger.tags["Kafka"] = "OpenShift Kafka System"    // It can be used as description
+| *Required* |
+_trigger.context["kafka.*"] = "<kafka native properties>"_ +
+ +
+ Kafka Consumer properties are prefixed with "kafka." in the Trigger context. +
+ kafka.key.deserializer and kafka.value.deserializer point to StringDeserializer as default if not present. +
+  +
+i.e. +
+trigger.context["kafka.bootstrap.servers"] = "localhost:9092" +
+trigger.context["kafka.group.id"] = "kafka-trigger-group" +
+ +
+See the link:https://kafka.apache.org/0100/javadoc/index.html?org/apache/kafka/clients/consumer/KafkaConsumer.html[KafkaConsumer reference] for more info +
+| *Required* |
+_trigger.context["topic"] = "<kafka topic to listen>"_ +
+ +
+ It defines the Kafka Topic on which the trigger will listen. The current version allows only a single topic for Trigger. +
+| *Optional* |
+_trigger.context["poll_timeout"] = "<kafka consumer poll timeout>"_ +
+ +
+It defines the poll timeout in ms for the Kafka Consumer. By default it takes 1 second.
+| *Optional* |
+_trigger.context["mapping"] = "<mapping_expression>"_ +
+ +
+By default, Kafka records are directly mapped into a Data object, with the following mapping +
+ +
+Kafka record timestamp -> Data timestamp +
+Kafka record value     -> Data value +
+Kafka Topic            -> Data id (dataId referenced on conditions) +
+ +
+Optionally, a Kafka record can be mapped into an Event. To enable this, a "mapping" expression must be present in
+Trigger context. +
+ +
+ Kafka Alerter expects a json record value. +
+ +
+A mapping expressions defines how to convert an Kafka json record into a Hawkular Event: +
+ +
+<mapping_expression> ::= <mapping> \| <mapping> "," <mapping_expression> +
+ +
+<mapping> ::= <kafka_record_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field> +
+ +
+<hawkular_event_field> ::= "id" \| "ctime" \| "dataSource" \| "dataId" \| "category" \| "text" \| "context" \| "tags" +
+ +
+| *Optional* |
+_trigger.context["timestamp_pattern"] = "<date and time pattern>"_ +
+ +
+By default, an Event ctime field is mapped directly from a kafka record timestamp value. This can be optionally
+overwritten to use a json field of the Kafka record value. +
+ +
+This property defines a time pattern to parse ctime field. It must follow supported formats of +
+link:https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[java.time.format.DateTimeFormatter].
+|=======================
+
+=== Apache Kafka Action Plugin
+
+This plugin processes Actions writing Event/Alerts into an Apache Kafka system. +
+ +
+The Apache Kafka plugin supports the following properties: +
+ +
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *kafka* |
+Used as main prefix for Apache Kafka properties. +
+All *kafka*.<property> properties are passed to KafkaConsumer removing the *kafka* prefix. +
+ +
+Properties can be defined per action. +
+If not properties defined at action level, it takes default plugin properties. +
+ +
+For these special *kafka* properties, if not properties defined at action plugin, it will search at system properties level.
+| -
+| *topic* |
+Used to indicate the topic where the Events/Alerts will be written.
+| -
+| *transform* |
+Define an optional transformation expression based on JOLT Shiftr format to convert an Event/Alert into a custom JSON format. +
+ +
+i.e. +
+{"tenantId":"tenant","ctime":"timestamp","dataId":"dataId","context":"context"} +
+ +
+link:https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Shiftr.java[JOLT Shiftr JavaDoc] +
+link:http://jolt-demo.appspot.com/[JOLT Online tool]
+| -
+| *timestamp_pattern* |
+Alerts and Events use timestamps format for _ctime,stime,evalTimestamp,dataTimestamp_ fields. +
+If present, this property defines the output pattern of these fields when using a declared *transform*. +
+It must follow supported formats of link:https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
+| -
+|=======================
+
 
 == REST API
 
