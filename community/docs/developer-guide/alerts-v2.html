@@ -284,6 +284,12 @@
 <li><a href="#_create_a_new_plugin">Create a new plugin</a></li>
 <li><a href="#_actionpluginlistener_interface">ActionPluginListener interface</a></li>
 <li><a href="#_actionmessage_interface">ActionMessage interface</a></li>
+<li><a href="#_email_action_plugin">Email Action Plugin</a></li>
+<li><a href="#_webhook_action_plugin">WebHook Action Plugin</a></li>
+<li><a href="#_file_action_plugin">File Action Plugin</a></li>
+<li><a href="#_elasticsearch_action_plugin">Elasticsearch Action Plugin</a></li>
+<li><a href="#_apache_kafka_action_plugin">Apache Kafka Action Plugin</a></li>
+<li><a href="#_experimental_action_plugins">Experimental Action Plugins</a></li>
 </ul>
 </li>
 <li><a href="#_engine_extensions">Engine Extensions</a>
@@ -300,8 +306,20 @@
 <li><a href="#_elasticsearch_integration">Elasticsearch Integration</a>
 <ul class="sectlevel2">
 <li><a href="#_elasticsearch_alerter">Elasticsearch Alerter</a></li>
-<li><a href="#_elasticsearch_action_plugin">Elasticsearch Action Plugin</a></li>
+<li><a href="#_elasticsearch_action_plugin_2">Elasticsearch Action Plugin</a></li>
 <li><a href="#_elasticsearch_security">Elasticsearch Security</a></li>
+</ul>
+</li>
+<li><a href="#_prometheus_integration">Prometheus Integration</a>
+<ul class="sectlevel2">
+<li><a href="#_prometheus_alerter">Prometheus Alerter</a></li>
+<li><a href="#_prometheus_alerter_endpoints">Prometheus Alerter Endpoints</a></li>
+</ul>
+</li>
+<li><a href="#_apache_kafka_integration">Apache Kafka Integration</a>
+<ul class="sectlevel2">
+<li><a href="#_apache_kakfa_alerter">Apache Kakfa Alerter</a></li>
+<li><a href="#_apache_kafka_action_plugin_2">Apache Kafka Action Plugin</a></li>
 </ul>
 </li>
 <li><a href="#_rest_api">REST API</a></li>
@@ -995,6 +1013,268 @@ public class Action {
 </div>
 </div>
 </div>
+<div class="sect2">
+<h3 id="_email_action_plugin">Email Action Plugin</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Plugin Name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>email</strong></p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 66.6666%;">
+<col style="width: 16.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>mail</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"mail" property is used as main prefix for javax.mail.Session properties.<br>
+<br>
+All "mail.&lt;protocol&gt;.&lt;value&gt;" properties are passed to mail Session.<br>
+Properties can be defined per action based.<br>
+If not properties defined at action level, it takes default plugin properties.<br>
+<br>
+For these special "mail" properties, if not properties defined at action plugin, it will search at
+System.getProperties() level.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>from</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"from" property defines the sender of the plugin email.<br>
+<br>
+Additional "from" properties can be defined to discriminate by alert state:<br>
+- "from.open": sender when alert is in open state<br>
+- "from.acknowledged": sender when alert is in acknowledge state<br>
+- "from.resolved": sender when alert is in acknowledge state<br>
+<br>
+Discriminated properties have priority.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>from-name</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"from-name" property defines the name of the sender of the plugin email.<br>
+<br>
+Additional "from-name" properties can be defined to discriminate by alert state:<br>
+- "from-name.open": name of the sender when alert is in open state<br>
+- "from-name.acknowledged": name of the sender when alert is in acknowledge state<br>
+- "from-name.resolved": name of the sender when alert is in acknowledge state<br>
+<br>
+Discriminated properties have priority.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>to</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"to" property defines the recipient of the plugin email.<br>
+<br>
+Additional "to" properties can be defined to discriminate by alert state:<br>
+- "to.open": recipient when alert is in open state<br>
+- "to.acknowledged": recipient when alert is in acknowledge state<br>
+- "to.resolved": recipient when alert is in acknowledge state<br>
+<br>
+Discriminated properties have priority.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>cc</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"cc" property defines the extra recipients of the plugin email.<br>
+<br>
+Additional "cc" properties can be defined to discriminate by alert state:<br>
+- "cc.open": extra recipients when alert is in open state<br>
+- "cc.acknowledged": extra recipients when alert is in acknowledge state<br>
+- "cc.resolved": extra recipients when alert is in acknowledge state<br>
+<br>
+Discriminated properties have priority.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>template.hawkular.url</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"template.hawkular.url" property defines the URL that will be used in the template email to point to hawkular
+server. If not "template.hawkular.url" defined, then the plugin looks into system env HAWKULAR_BASE_URL.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>template.locale</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Email plugin supports localization templates.<br>
+<br>
+"template.locale" is the property used to define which template to use for specific locale.<br>
+<br>
+i.e. A plugin may have defined several templates to support multiple locales [es,en,fr], but we can define a
+specific locale per action [es].</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>template.plain</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"template.plain" property defines the template used for plain text email.<br>
+<br>
+Additional "template.plain" properties can be defined to support localization:<br>
+- "template.plain.LOCALE": where LOCALE is a variable that can point to specific localization.<br>
+<br>
+Templates are plain text based on <a href="http://freemarker.org/" class="bare">http://freemarker.org/</a> engine.<br>
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template.<br>
+The list of variables available for templates are wrapped into <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68">PluginMessageDescription</a> class.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>template.html</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"template.html" property defines the template used for html email.<br>
+<br>
+Additional "template.html" properties can be defined to support localization:<br>
+- "template.html.LOCALE": where LOCALE is a variable that can point to specific localization.<br>
+<br>
+Email plugin uses templates based on <a href="http://freemarker.org/" class="bare">http://freemarker.org/</a> engine.<br>
+Email plugin processes the alert payload and adds a set of pre-defined variables to be used into the template.<br>
+The list of variables available for templates are wrapped into <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/PluginMessageDescription.java#L68">PluginMessageDescription</a> class.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>More details for Email plugin and templates under links <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailPlugin.java">EmailPlugin</a> class and <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-email/src/main/java/org/hawkular/alerts/actions/email/EmailTemplate.java">EmailTemplate</a> class.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_webhook_action_plugin">WebHook Action Plugin</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Plugin Name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>webhook</strong></p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 66.6666%;">
+<col style="width: 16.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>url</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"url" property defines the url of the webhook to invoke.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>method</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"method" property defines the HTTP method used with the webhook url to invoke.<br>
+<br>
+The Plugin will always send the JSON Event processed.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>timeout</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"timeout" property defines the connection timeout (ms) for the webhook url to invoke.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>More details for WebHook Plugin under link <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-webhook/src/main/java/org/hawkular/alerts/actions/webhook/WebHookPlugin.java">WebHookPlugin</a> class.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_file_action_plugin">File Action Plugin</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Plugin Name</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><strong>file</strong></p></td>
+</tr>
+</tbody>
+</table>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 66.6666%;">
+<col style="width: 16.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>path</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Path to store file notifications</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">System.getProperty("java.io.tmpdir")</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p>More details for File Plugin under link <a href="https://github.com/hawkular/hawkular-alerts/blob/master/actions/actions-plugins/actions-file/src/main/java/org/hawkular/alerts/actions/file/FilePlugin.java">FilePlugin</a> class.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_elasticsearch_action_plugin">Elasticsearch Action Plugin</h3>
+<div class="paragraph">
+<p>See <a href="#_elasticsearch_action_plugin">Elasticsearch Action Plugin</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_apache_kafka_action_plugin">Apache Kafka Action Plugin</h3>
+<div class="paragraph">
+<p>See <a href="#_apache_kafka_action_plugin">Apache Kafka Action Plugin</a></p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_experimental_action_plugins">Experimental Action Plugins</h3>
+<div class="paragraph">
+<p>In Hawkular Alerting 1.x some plugins were developed as integration examples with third party systems.<br>
+<br>
+These plugins are <strong>not</strong> yet migrated into Hawkular Alerting 2.x but its logic is quite straightforward to use it as base for personalized integrations.</p>
+</div>
+<div class="sect3">
+<h4 id="_aerogear">Aerogear</h4>
+<div class="paragraph">
+<p>See <a href="https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-aerogear/hawkular-alerts-actions-aerogear-plugin/src/main/java/org/hawkular/alerts/actions/aerogear/AerogearPlugin.java">AerogearPlugin Version 1.x</a> class.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_pagerduty">Pagerduty</h4>
+<div class="paragraph">
+<p>See <a href="https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-pagerduty/hawkular-alerts-actions-pagerduty-plugin/src/main/java/org/hawkular/alerts/actions/pagerduty/PagerDutyPlugin.java">PagerDutyPlugin Version 1.x</a> class.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_twilio">Twilio</h4>
+<div class="paragraph">
+<p>See <a href="https://github.com/hawkular/hawkular-alerts/blob/1.8.x/hawkular-alerts-actions/hawkular-alerts-actions-plugins/hawkular-alerts-actions-sms/hawkular-alerts-actions-sms-plugin/src/main/java/org/hawkular/alerts/actions/sms/SmsPlugin.java">SmsPlugin Version 1.x</a> class.</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div class="sect1">
@@ -1272,7 +1552,7 @@ Mapping expression syntax (BNF):<br>
 <br>
 &lt;mapping_expression&gt; ::= &lt;mapping&gt; | &lt;mapping&gt; "," &lt;mapping_expression&gt;<br>
 <br>
-&lt;mapping&gt; ::= &lt;elasticsearch_field&gt; [ "|" "'" &lt;DEFAULT_VALUE&gt; "'" ] ":" &lt;hawkular_event_field&gt;
+&lt;mapping&gt; ::= &lt;elasticsearch_field&gt; [ "|" "'" &lt;DEFAULT_VALUE&gt; "'" ] ":" &lt;hawkular_event_field&gt;<br>
 <br>
 &lt;elasticsearch_field&gt; ::= "index" | "id" | &lt;SOURCE_FIELD&gt;<br>
 <br>
@@ -1392,7 +1672,7 @@ trigger.context["url"] = "http://host1:9200,http://host2:9200,http://host3:9200"
 </div>
 </div>
 <div class="sect2">
-<h3 id="_elasticsearch_action_plugin">Elasticsearch Action Plugin</h3>
+<h3 id="_elasticsearch_action_plugin_2">Elasticsearch Action Plugin</h3>
 <div class="paragraph">
 <p>This plugin processes Actions writing Event/Alerts into an Elasticsearch system.<br>
 <br>
@@ -1584,6 +1864,401 @@ Url can be a list of valid <a href="https://hc.apache.org/httpcomponents-core-ga
 <td class="tableblock halign-center valign-top"><p class="tableblock">hawkular-alerts.elasticsearch-proxy-remote-user</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">ELASTICSEARCH_PROXY_REMOTE_USER</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Used for X-Proxy-Remote-User HTTP header.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_prometheus_integration">Prometheus Integration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_prometheus_alerter">Prometheus Alerter</h3>
+<div class="paragraph">
+<p>The Prometheus Alerter will listen for triggers tagged with "prometheus" tag. The alerter manages Prometheus evaluations and interacts with the Alerts system.<br>
+<br>
+The Prometheus Alerter uses the following conventions for trigger tags and context:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Required</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.tags["prometheus"] // the value is ignored</em><br>
+<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Optional</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["prometheus.frequency"] = "&lt;seconds between queries to Prometheus, default = 120&gt;"</em><br>
+<br>
+Note that the same frequency will apply to all Prometheus external conditions on the trigger</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Optional</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["prometheus.url"] = "&lt;url, default = global setting&gt;"</em></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Required</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">An ExternalCondition must be defined to be processed by the Prometheus External Alerter:
+<br>
+externalcondition.alerterId = "prometheus"<br>
+externalcondition.expression = &lt;BooleanExpression&gt;</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_prometheus_alerter_endpoints">Prometheus Alerter Endpoints</h3>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 33.3333%;">
+<col style="width: 33.3333%;">
+<col style="width: 33.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">GET</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/hawkular/alerter/status</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#GET_P8S_STATUS">Status endpoint for Prometheus Alerter Integrations</a></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">POST</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">/hawkular/alerter/notifications</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><a href="#POST_P8S_NOTIFICATIONS">Consume Prometheus Alertmanager WebHook Notifications</a></p></td>
+</tr>
+</tbody>
+</table>
+<div class="exampleblock">
+<div class="content">
+<div id="GET_P8S_STATUS" class="paragraph">
+<p><strong>Endpoint GET <code>/awkular/alerter/status</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Ping status of the Prometheus Alerter<br></p>
+</div>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prometheus Alerter is up and running</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Success</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="exampleblock">
+<div class="content">
+<div id="POST_P8S_NOTIFICATIONS" class="paragraph">
+<p><strong>Endpoint POST <code>/awkular/alerter/notifications</code></strong></p>
+</div>
+<div class="paragraph">
+<p>Receive a Prometheus Alertmanager WebHook Notification and store it as a Hawkular Event. Expects a format like:<br></p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>{
+  "receiver":"...",
+  "status":"...",
+  "alerts":[̣
+    {
+      "status":"...",
+      "labels":{},
+      "annotations":{},
+      "startsAt":"...",
+      "endsAt":"...",
+      "generatorURL":"..."
+    },
+    {...},
+    {...}
+  ],
+  "groupLabels":{},
+  "commonAnnotations":{},
+  "externalUrl":"...",
+  "version":"...",
+  "groupKey":"..."
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>A Prometheus Notification is mapped into a Hawkular Event with the following convention:<br>
+<br></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 50%;">
+<col style="width: 50%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Prometheus Notification</th>
+<th class="tableblock halign-left valign-top">Hawkular Event</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notification.groupLabels.tenant</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.tenantId</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notification.groupLabels.dataId</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.dataId</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">"prometheus"</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.category</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notification.commonAnnotations.description [or]<br>
+notification.commonAnnotations.summary [or]<br>
+notification.groupLabels.alertName</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.text</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notification.groupLabels.alertName</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.context.alertName</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">notification</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">event.context.json</p></td>
+</tr>
+</tbody>
+</table>
+<div class="literalblock">
+<div class="content">
+<pre>notification.groupLabels.dataId -&gt; event.dataId</pre>
+</div>
+</div>
+<div class="paragraph">
+<p><strong>Body</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 23.0769%;">
+<col style="width: 53.8461%;">
+<col style="width: 23.077%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-left valign-top">Required</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Data Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Yes</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Prometheus Notification</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Object</p></td>
+</tr>
+</tbody>
+</table>
+<div class="paragraph">
+<p><strong>Response</strong></p>
+</div>
+<div class="paragraph">
+<p><strong>Status codes</strong></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 20%;">
+<col style="width: 55%;">
+<col style="width: 25%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Status Code</th>
+<th class="tableblock halign-left valign-top">Reason</th>
+<th class="tableblock halign-center valign-top">Response Model</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">200</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Successfully processed</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">Success</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock">400</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Bad Request/Invalid Parameters</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><a href="#ApiError">[ApiError]</a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_apache_kafka_integration">Apache Kafka Integration</h2>
+<div class="sectionbody">
+<div class="sect2">
+<h3 id="_apache_kakfa_alerter">Apache Kakfa Alerter</h3>
+<div class="paragraph">
+<p>The Kafka Alerter will listen for triggers tagged with "Kafka" tag. The Alerter will create a consumer to a Kafka Topic
+with the config provided into the Trigger context. The Alerter will convert Kafka records into Hawkular Data or Events
+and send them into the Alerting engine.</p>
+</div>
+<div class="paragraph">
+<p>The Kafka Alerter uses the following conventions for trigger tags and context:</p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 83.3334%;">
+</colgroup>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Required</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.tags["Kafka"] = "&lt;value reserved for future uses&gt;"</em><br>
+<br>
+ The "Kafka" tag is required for the alerter to detect this trigger will listen to a Kafka topic.<br>
+ Value is not necessary, it can be used as a description, it is reserved for future use.<br>
+ <br>
+ i.e.<br>
+ trigger.tags["Kafka"] = ""                          // Empty value is valid<br>
+ trigger.tags["Kafka"] = "OpenShift Kafka System"    // It can be used as description</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Required</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["kafka.*"] = "&lt;kafka native properties&gt;"</em><br>
+<br>
+ Kafka Consumer properties are prefixed with "kafka." in the Trigger context.<br>
+ kafka.key.deserializer and kafka.value.deserializer point to StringDeserializer as default if not present.<br>
+ <br>
+i.e.<br>
+trigger.context["kafka.bootstrap.servers"] = "localhost:9092"<br>
+trigger.context["kafka.group.id"] = "kafka-trigger-group"<br>
+<br>
+See the <a href="https://kafka.apache.org/0100/javadoc/index.html?org/apache/kafka/clients/consumer/KafkaConsumer.html">KafkaConsumer reference</a> for more info<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Required</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["topic"] = "&lt;kafka topic to listen&gt;"</em><br>
+<br>
+ It defines the Kafka Topic on which the trigger will listen. The current version allows only a single topic for Trigger.<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Optional</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["poll_timeout"] = "&lt;kafka consumer poll timeout&gt;"</em><br>
+<br>
+It defines the poll timeout in ms for the Kafka Consumer. By default it takes 1 second.</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Optional</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["mapping"] = "&lt;mapping_expression&gt;"</em><br>
+<br>
+By default, Kafka records are directly mapped into a Data object, with the following mapping<br>
+<br>
+Kafka record timestamp &#8594; Data timestamp<br>
+Kafka record value     &#8594; Data value<br>
+Kafka Topic            &#8594; Data id (dataId referenced on conditions)<br>
+<br>
+Optionally, a Kafka record can be mapped into an Event. To enable this, a "mapping" expression must be present in
+Trigger context.<br>
+<br>
+ Kafka Alerter expects a json record value.<br>
+<br>
+A mapping expressions defines how to convert an Kafka json record into a Hawkular Event:<br>
+<br>
+&lt;mapping_expression&gt; ::= &lt;mapping&gt; | &lt;mapping&gt; "," &lt;mapping_expression&gt;<br>
+<br>
+&lt;mapping&gt; ::= &lt;kafka_record_field&gt; [ "|" "'" &lt;DEFAULT_VALUE&gt; "'" ] ":" &lt;hawkular_event_field&gt;<br>
+<br>
+&lt;hawkular_event_field&gt; ::= "id" | "ctime" | "dataSource" | "dataId" | "category" | "text" | "context" | "tags"<br>
+<br></p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>Optional</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><em>trigger.context["timestamp_pattern"] = "&lt;date and time pattern&gt;"</em><br>
+<br>
+By default, an Event ctime field is mapped directly from a kafka record timestamp value. This can be optionally
+overwritten to use a json field of the Kafka record value.<br>
+<br>
+This property defines a time pattern to parse ctime field. It must follow supported formats of<br>
+<a href="https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html">java.time.format.DateTimeFormatter</a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_apache_kafka_action_plugin_2">Apache Kafka Action Plugin</h3>
+<div class="paragraph">
+<p>This plugin processes Actions writing Event/Alerts into an Apache Kafka system.<br>
+<br>
+The Apache Kafka plugin supports the following properties:<br>
+<br></p>
+</div>
+<table class="tableblock frame-all grid-all spread">
+<colgroup>
+<col style="width: 16.6666%;">
+<col style="width: 66.6666%;">
+<col style="width: 16.6668%;">
+</colgroup>
+<thead>
+<tr>
+<th class="tableblock halign-center valign-top">Property</th>
+<th class="tableblock halign-left valign-top">Description</th>
+<th class="tableblock halign-center valign-top">Default value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>kafka</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used as main prefix for Apache Kafka properties.<br>
+All <strong>kafka</strong>.&lt;property&gt; properties are passed to KafkaConsumer removing the <strong>kafka</strong> prefix.<br>
+<br>
+Properties can be defined per action.<br>
+If not properties defined at action level, it takes default plugin properties.<br>
+<br>
+For these special <strong>kafka</strong> properties, if not properties defined at action plugin, it will search at system properties level.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>topic</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Used to indicate the topic where the Events/Alerts will be written.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>transform</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Define an optional transformation expression based on JOLT Shiftr format to convert an Event/Alert into a custom JSON format.<br>
+<br>
+i.e.<br>
+{"tenantId":"tenant","ctime":"timestamp","dataId":"dataId","context":"context"}<br>
+<br>
+<a href="https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Shiftr.java">JOLT Shiftr JavaDoc</a><br>
+<a href="http://jolt-demo.appspot.com/">JOLT Online tool</a></p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-center valign-top"><p class="tableblock"><strong>timestamp_pattern</strong></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Alerts and Events use timestamps format for <em>ctime,stime,evalTimestamp,dataTimestamp</em> fields.<br>
+If present, this property defines the output pattern of these fields when using a declared <strong>transform</strong>.<br>
+It must follow supported formats of <a href="https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html">java.text.SimpleDateFormat</a>.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
 </table>
