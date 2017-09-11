@@ -624,7 +624,7 @@ Mapping expression syntax (BNF): +
  +
 <mapping_expression> ::= <mapping> \| <mapping> "," <mapping_expression> +
  +
-<mapping> ::= <elasticsearch_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field>
+<mapping> ::= <elasticsearch_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field> +
  +
 <elasticsearch_field> ::= "index" \| "id" \| <SOURCE_FIELD> +
  +
@@ -871,6 +871,253 @@ Url can be a list of valid link:https://hc.apache.org/httpcomponents-core-ga/htt
 | ELASTICSEARCH_PROXY_REMOTE_USER
 | Used for X-Proxy-Remote-User HTTP header.
 |=======================
+
+== Prometheus Integration
+
+=== Prometheus Alerter
+
+The Prometheus Alerter will listen for triggers tagged with "prometheus" tag. the Prometheus evaluations and interacts with the Alerts system. +
+ +
+The Prometheus Alerter uses the following conventions for trigger tags and context:
+
+[cols="^2,10"]
+|=======================
+| *Required* |
+_trigger.tags["prometheus"] // the value is ignored_ +
+ +
+| *Optional* |
+_trigger.context["prometheus.frequency"] = "<seconds between queries to Prometheus, default = 120>"_ +
+ +
+Note that the same frequency will apply to all Prometheus external conditions on the trigger
+| *Optional* |
+_trigger.context["prometheus.url"] = "<url, default = global setting>"_
+| *Required* |
+An ExternalCondition must be defined to be processed by the Prometheus External Alerter:
+ +
+externalcondition.alerterId = "prometheus" +
+externalcondition.expression = <BooleanExpression> | <ALERTSExpression> +
+|=======================
+
+=== Prometheus Alerter Endpoints
+
+|===
+| GET | /hawkular/alerter/status | link:#++GET_P8S_STATUS++[Status endpoint for Prometheus Alerter Integrations]
+| POST | /hawkular/alerter/notifications | link:#++POST_P8S_NOTIFICATIONS++[Listen Prometheus Notifications.]
+|===
+
+==============================================
+
+[[GET_P8S_STATUS]]
+*Endpoint GET `/awkular/alerter/status`*
+
+Ping status of the Prometheus Alerter +
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Prometheus Alerter is up and running|Success
+
+|=======================
+
+==============================================
+
+
+==============================================
+
+[[POST_P8S_NOTIFICATIONS]]
+*Endpoint POST `/awkular/alerter/notifications`*
+
+Receive a Prometheus Notification and store it as a Hawkular Event. Expects a format like: +
+
+```
+{
+  "receiver":"...",
+  "status":"...",
+  "alerts":[̣
+    {
+      "status":"...",
+      "labels":{},
+      "annotations":{},
+      "startsAt":"...",
+      "endsAt":"...",
+      "generatorURL":"..."
+    },
+    {...},
+    {...}
+  ],
+  "groupLabels":{},
+  "commonAnnotations":{},
+  "externalUrl":"...",
+  "version":"...",
+  "groupKey":"..."
+}
+```
+
+A Prometheus Notification is mapped into a Hawkular Event with the following convention: +
+ +
+
+[cols="15,15", options="header"]
+|=======================
+|Prometheus Notification|Hawkular Event
+
+|notification.groupLabels.tenant|event.tenantId
+|notification.groupLabels.dataId|event.dataId
+|"prometheus"|event.category
+|notification.commonAnnotations.description|event.text
+|notification.commonAnnotations.summary|event.text
+|notification.groupLabels.alertName|event.text
+|notification.groupLabels.alertName|event.context.alertName
+|notification|event.context.json
+
+|=======================
+
+
+ notification.groupLabels.dataId -> event.dataId
+
+
+*Body*
+
+[cols="15,35,^15", options="header"]
+|=======================
+|Required|Description|Data Type
+
+|Yes|Prometheus Notification|Object
+
+|=======================
+
+
+
+*Response*
+
+*Status codes*
+[cols="^20,55,^25", options="header"]
+|=======================
+|Status Code|Reason|Response Model
+
+|200|Successfully processed|Success
+|400|Bad Request/Invalid Parameters|<<ApiError>>
+
+|=======================
+
+
+
+==============================================
+
+== Apache Kafka Integration
+
+=== Apache Kakfa Alerter
+
+The Kafka Alerter will listen for triggers tagged with "Kafka" tag. The Alerter will create a consumer to a Kafka Topic
+with the config provider into the Trigger context. The Alerter will convert Kafka records into Hawkular Data or Events
+and send them into the Alerting engine.
+
+The Kafka Alerter uses the following conventions for trigger tags and context:
+
+[cols="^2,10"]
+|=======================
+| *Required* |
+_trigger.tags["Kafka"] = "<value reserved for future uses>"_ +
+ +
+ An "Kafka" tag is required for the alerter to detect this trigger will listen to a Kafka topic. +
+ Value is not necessary, it can be used as a description, it is reserved for future uses. +
+  +
+ i.e. +
+ trigger.tags["Kafka"] = ""                          // Empty value is valid +
+ trigger.tags["Kafka"] = "OpenShift Kafka System"    // It can be used as description
+| *Required* |
+_trigger.context["kafka.*"] = "<kafka native properties>"_ +
+ +
+ Kafka Consumer properties are prefixed with "kafka." in the Trigger context. +
+ kafka.key.deserializer and kafka.value.deserializer point to StringDeserializer as default if not present. +
+  +
+i.e. +
+trigger.context["kafka.bootstrap.servers"] = "localhost:9092" +
+trigger.context["kafka.group.id"] = "kafka-trigger-group" +
+ +
+See the link:https://kafka.apache.org/0100/javadoc/index.html?org/apache/kafka/clients/consumer/KafkaConsumer.html[KafkaConsumer reference] for more info +
+| *Required* |
+_trigger.context["topic"] = "<kafka topic to listen>"_ +
+ +
+ It defines the Kafka Topic a trigger will listen. In the current version only a single topic for Trigger is allowed. +
+| *Optional* |
+_trigger.context["poll_timeout"] = "<kafka consumer poll timeout>"_ +
+ +
+It defines the poll timeout in ms for the Kafka Consumer. By default it takes 1 second.
+| *Optional* |
+_trigger.context["mapping"] = "<mapping_expression>"_ +
+ +
+By default, Kafka records are directly mapped into a Data object, with the following mapping +
+ +
+Kafka record timestamp -> Data timestamp +
+Kafka record value     -> Data value +
+Kafka Topic            -> Data id (dataId referenced on conditions) +
+ +
+Optionally, a Kafka record can be mapped into an Event. To enable this, a "mapping" expression must be present in
+Trigger context. +
+ +
+ Kafka Alerter expects a json record value. +
+ +
+A mapping expressions defines how to convert an Kafka json record into a Hawkular Event: +
+ +
+<mapping_expression> ::= <mapping> \| <mapping> "," <mapping_expression> +
+ +
+<mapping> ::= <kafka_record_field> [ "\|" "'" <DEFAULT_VALUE> "'" ] ":" <hawkular_event_field> +
+ +
+<hawkular_event_field> ::= "id" \| "ctime" \| "dataSource" \| "dataId" \| "category" \| "text" \| "context" \| "tags" +
+ +
+| *Optional* |
+_trigger.context["timestamp_pattern"] = "<date and time pattern>"_ +
+ +
+By default, an Event ctime field is mapped directly from a kafka record timestamp value. This can be optionally
+overwritten to use a json field of the Kafka record value. +
+ +
+This property defines a time pattern to parse ctime field. It must follow supported formats of +
+link:https://docs.oracle.com/javase/8/docs/api/java/time/format/DateTimeFormatter.html[java.time.format.DateTimeFormatter].
+|=======================
+
+=== Apache Kafka Action Plugin
+
+This plugin processes Actions writing Event/Alerts into an Apache Kafka system. +
+ +
+The Apache Kafka plugin supports the following properties: +
+ +
+[cols="^2,8,^2", options="header"]
+|=======================
+| Property |
+Description |
+Default value
+| *kafka* |
+Used as main prefix for Apache Kafka properties. +
+All *kafka*.<property> properties are passed to KafkaConsumer removing the *kafka* prefix. +
+ +
+Properties can be defined per action based. +
+If not properties defined at action level, it takes default plugin properties. +
+ +
+For these special *kafka* properties, if not properties defined at action plugin, it will search at system properties level.
+| -
+| *topic* |
+Used to indicate the topic where the Events/Alerts will be written.
+| -
+| *transform* |
+Define an optional transformation expression based on JOLT Shiftr format to convert an Event/Alert into a custom JSON format. +
+ +
+i.e. +
+{"tenantId":"tenant","ctime":"timestamp","dataId":"dataId","context":"context"} +
+ +
+link:https://github.com/bazaarvoice/jolt/blob/master/jolt-core/src/main/java/com/bazaarvoice/jolt/Shiftr.java[JOLT Shiftr JavaDoc] +
+link:http://jolt-demo.appspot.com/[JOLT Online tool]
+| -
+| *timestamp_pattern* |
+Alerts and Events use timestamps format for _ctime,stime,evalTimestamp,dataTimestamp_ fields. +
+If present, this property defines the output pattern of these fields when using a declared *transform*. +
+It must follow supported formats of link:https://docs.oracle.com/javase/8/docs/api/java/text/SimpleDateFormat.html[java.text.SimpleDateFormat].
+| -
+|=======================
+
 
 == REST API
 
