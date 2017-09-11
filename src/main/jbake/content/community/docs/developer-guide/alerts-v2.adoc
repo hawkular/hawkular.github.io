@@ -1046,7 +1046,7 @@ Url can be a list of valid link:https://hc.apache.org/httpcomponents-core-ga/htt
 
 === Prometheus Alerter
 
-The Prometheus Alerter will listen for triggers tagged with "prometheus" tag. the Prometheus evaluations and interacts with the Alerts system. +
+The Prometheus Alerter will listen for triggers tagged with "prometheus" tag. The alerter manages Prometheus evaluations and interacts with the Alerts system. +
  +
 The Prometheus Alerter uses the following conventions for trigger tags and context:
 
@@ -1072,7 +1072,7 @@ externalcondition.expression = <BooleanExpression> | <ALERTSExpression> +
 
 |===
 | GET | /hawkular/alerter/status | link:#++GET_P8S_STATUS++[Status endpoint for Prometheus Alerter Integrations]
-| POST | /hawkular/alerter/notifications | link:#++POST_P8S_NOTIFICATIONS++[Listen Prometheus Notifications.]
+| POST | /hawkular/alerter/notifications | link:#++POST_P8S_NOTIFICATIONS++[Consume Prometheus Alertmanager WebHook Notifications]
 |===
 
 ==============================================
@@ -1101,7 +1101,7 @@ Ping status of the Prometheus Alerter +
 [[POST_P8S_NOTIFICATIONS]]
 *Endpoint POST `/awkular/alerter/notifications`*
 
-Receive a Prometheus Notification and store it as a Hawkular Event. Expects a format like: +
+Receive a Prometheus Alertmanager WebHook Notification and store it as a Hawkular Event. Expects a format like: +
 
 ```
 {
@@ -1137,9 +1137,10 @@ A Prometheus Notification is mapped into a Hawkular Event with the following con
 |notification.groupLabels.tenant|event.tenantId
 |notification.groupLabels.dataId|event.dataId
 |"prometheus"|event.category
-|notification.commonAnnotations.description|event.text
-|notification.commonAnnotations.summary|event.text
-|notification.groupLabels.alertName|event.text
+|notification.commonAnnotations.description [or] +
+notification.commonAnnotations.summary [or] +
+notification.groupLabels.alertName
+|event.text
 |notification.groupLabels.alertName|event.context.alertName
 |notification|event.context.json
 
@@ -1182,7 +1183,7 @@ A Prometheus Notification is mapped into a Hawkular Event with the following con
 === Apache Kakfa Alerter
 
 The Kafka Alerter will listen for triggers tagged with "Kafka" tag. The Alerter will create a consumer to a Kafka Topic
-with the config provider into the Trigger context. The Alerter will convert Kafka records into Hawkular Data or Events
+with the config provided into the Trigger context. The Alerter will convert Kafka records into Hawkular Data or Events
 and send them into the Alerting engine.
 
 The Kafka Alerter uses the following conventions for trigger tags and context:
@@ -1192,8 +1193,8 @@ The Kafka Alerter uses the following conventions for trigger tags and context:
 | *Required* |
 _trigger.tags["Kafka"] = "<value reserved for future uses>"_ +
  +
- An "Kafka" tag is required for the alerter to detect this trigger will listen to a Kafka topic. +
- Value is not necessary, it can be used as a description, it is reserved for future uses. +
+ The "Kafka" tag is required for the alerter to detect this trigger will listen to a Kafka topic. +
+ Value is not necessary, it can be used as a description, it is reserved for future use. +
   +
  i.e. +
  trigger.tags["Kafka"] = ""                          // Empty value is valid +
@@ -1212,7 +1213,7 @@ See the link:https://kafka.apache.org/0100/javadoc/index.html?org/apache/kafka/c
 | *Required* |
 _trigger.context["topic"] = "<kafka topic to listen>"_ +
  +
- It defines the Kafka Topic a trigger will listen. In the current version only a single topic for Trigger is allowed. +
+ It defines the Kafka Topic on which the trigger will listen. The current version allows only a single topic for Trigger. +
 | *Optional* |
 _trigger.context["poll_timeout"] = "<kafka consumer poll timeout>"_ +
  +
@@ -1264,7 +1265,7 @@ Default value
 Used as main prefix for Apache Kafka properties. +
 All *kafka*.<property> properties are passed to KafkaConsumer removing the *kafka* prefix. +
  +
-Properties can be defined per action based. +
+Properties can be defined per action. +
 If not properties defined at action level, it takes default plugin properties. +
  +
 For these special *kafka* properties, if not properties defined at action plugin, it will search at system properties level.
