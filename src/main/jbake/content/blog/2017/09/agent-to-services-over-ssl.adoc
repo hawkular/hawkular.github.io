@@ -42,7 +42,7 @@ WARNING: Always include san=ip:127.0.0.1 in your certificate, as this will be us
 Hawkular Services requires a cassandra instance, you can start one by doing:
 
 ```
-docker run --name hawkular-cassandra -e CASSANDRA_START_RPC=true -d cassandra:3.0.9
+docker run --name hawkular-cassandra -e CASSANDRA_START_RPC=true -d cassandra:3.0.12
 ```
 
 == Starting Hawkular Services on SSL
@@ -51,7 +51,8 @@ Now that there is a cassandra ready, Hawkular Services can be started,
 it will be linked to the cassandra instance (hawkular-cassandra)
 
 ```
-docker run --name hawkular-services --link=hawkular-cassandra -e CASSANDRA_NODES=hawkular-cassandra -e HAWKULAR_HOSTNAME=hawkular-services -e HAWKULAR_USE_SSL=true -p 8443:8443 -v `pwd`/hawkular-services-private.key:/client-secrets/hawkular-services-private.key -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem hawkular/hawkular-services
+docker pull hawkular/hawkular-services
+docker run --name hawkular-services --link=hawkular-cassandra -e CASSANDRA_NODES=hawkular-cassandra -e HAWKULAR_HOSTNAME=hawkular-services -e HAWKULAR_USE_SSL=true -p 8443:8443 -v `pwd`/hawkular-services-private.key:/client-secrets/hawkular-services-private.key:z -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/hawkular-services
 ```
 
 NOTE: To avoid guessing the host, we explicitly set it to hawkular-services
@@ -67,7 +68,8 @@ it will need to know and trust its certificate.
 If you are self-signing your certificate, you will need to pass Hawkular Service's certificate when starting the agent.
 
 ```
-docker run --name hawkular-agent-01 --link=hawkular-services -e HAWKULAR_SERVER_PROTOCOL=https -e HAWKULAR_SERVER_ADDR=hawkular-services -e HAWKULAR_SERVER_PORT=8443 -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem wildfly-hawkular-javaagent
+docker pull hawkular/wildfly-hawkular-javaagent
+docker run --name hawkular-agent-01 --link=hawkular-services -e HAWKULAR_SERVER_PROTOCOL=https -e HAWKULAR_SERVER_ADDR=hawkular-services -e HAWKULAR_SERVER_PORT=8443 -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/wildfly-hawkular-javaagent
 ```
 
 NOTE: Host must match with the one specified in the certificate, thus setting HAWKULAR_SERVER_ADDR to hawkular-services
@@ -75,12 +77,22 @@ is required. Update as needed if using other value.
 
 == Testing the setup
 
-Any Hawkular client that supports connecting using SSL can be used. ManageIQ and HawkFX will be show below.
+Any Hawkular client that supports connecting using SSL can be used. Curl, ManageIQ and HawkFX will be show below.
 
 NOTE: If using self-signed certificates, the client machine needs to trust Hawkular Services certificate or the client
 should support to specify which certificate to trust.
 See link:http://www.hawkular.org/blog/2016/09/14/consuming-hawkular-api-over-ssl.html[here]
 for more info.
+
+=== Curl
+
+Simplest way to test, we only need to tell curl how to resolve `hawkular-services` and pass the public certificate.
+
+```
+curl -H "Hawkular-Tenant: hawkular" --resolve "hawkular-services:8443:127.0.0.1" --cacert hawkular-services-prd -X GET https://hawkular-services:8443/hawkular/metrics/metrics
+```
+
+It will output metrics stored on Hawkular Services.
 
 === ManageIQ
 
@@ -97,6 +109,10 @@ Once ManageIQ has started, add a Middleware Provider, there is three secured way
 . SSL without validation -- No validation is performed.
 
 We will focus on (2) and (3) as (1) will require to trust the certificates on the machine itself.
+
+Before going onto details, navigate to `https://localhost:8444/`,
+login with default username `admin` and password `smartvm`.
+Click on Middleware -> Configuration -> Add a New Middleware Provider.
 
 ==== SSL trusting custom CA
 
@@ -128,8 +144,15 @@ endif::[]
 
 === HawkFX
 
-One can connect using HawkFx by either installing the certificate on the machine or disabling the verification as
+One can connect using link:http://www.hawkular.org/blog/2016/07/13/hawkfx.html[HawkFx]
+by either installing the certificate on the machine or disabling the verification as
 show in the image.
+You will also need to update your `/etc/hosts` to resolve `hawkular-services`.
+```
+sudo su -c "echo '127.0.0.1 hawkular-services' >> /etc/hosts"
+```
+
+Alternatively, if no verification is used, one could use `localhost` instead of `hawkular-services`.
 
 [[hawkfx-disable-validation,Figure 3]]
 ifndef::env-github[]
