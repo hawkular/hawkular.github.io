@@ -35,12 +35,4 @@
     <#if head_extras??>${head_extras}</#if>
   </head>
   <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
-    <div id="wrap">
-      <div class="dropup">
-        <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
-        <script>
-            window.addEventListener('load', function() {
-                 renderTabzilla("Hawkular", "https://hawkular.github.io", true );
-            }, false);
-        </script>
-      </div>
+
