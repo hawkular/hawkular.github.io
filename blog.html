@@ -107,6 +107,292 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/09/agent-to-services-over-ssl.html"><h1>Connecting Hawkular Agent to Hawkular Services over SSL</h1></a>
+            <p>19 September 2017, by Josejulio Martínez</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>SSL provides identification of the communicating parties, confidentiality and integrity of the information being shared.</p>
+</div>
+<div class="paragraph">
+<p>In production environments, network eavesdropping could be a concern. You can use SSL to provide a secure communication
+channel between servers.</p>
+</div>
+<div class="paragraph">
+<p>Hawkular Services expects Hawkular Agents to connect, push information and listen for commands.
+These commands also include server credentials that could be vulnerable to a man-in-the-middle attack.</p>
+</div>
+<div class="paragraph">
+<p>A previous <a href="http://www.hawkular.org/hawkular-services/docs/installation-guide/secure-comm.html">article</a> shows how
+to configure your Hawkular Services with SSL and have Hawkular Agents connect to it trough SSL.
+This guide will show how is done for Dockerized Hawkular Services Agents.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_preparing_your_certificates">Preparing your certificates</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Before starting we need to prepare the certificates that we are going to use.
+Your public and private key for Hawkular Services need to be on PEM or PKC12 format.
+For this guide we will use PEM.</p>
+</div>
+<div class="paragraph">
+<p>We can create self-signed certificates (in PEM format) using:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>keytool -genkey -keystore hawkular.keystore -alias hawkular -dname "CN=hawkular-services" -keyalg RSA -storepass hawkular -keypass hawkular -validity 36500 -ext san=ip:127.0.0.1,dns:hawkular-services
+keytool -importkeystore -srckeystore hawkular.keystore  -destkeystore hawkular.p12 -deststoretype PKCS12 -srcalias hawkular -deststorepass hawkular -destkeypass hawkular -srcstorepass hawkular
+openssl pkcs12 -in hawkular.p12 -password pass:hawkular -nokeys -out hawkular-services-public.pem
+openssl pkcs12 -in hawkular.p12 -password pass:hawkular -nodes -nocerts -out hawkular-services-private.key</code></pre>
+</div>
+</div>
+<div class="admonitionblock important">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Important</div>
+</td>
+<td class="content">
+When creating the certificates, remember to include the host that Hawkular will use
+(as Common Name(CN) and Subject Alternative Name(SAN)), else the certificate validation will fail.
+Through this guide, host will be set to hawkular-services.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+Always include san=ip:127.0.0.1 in your certificate, as this will be used internally by Hawkular Services.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_starting_cassandra">Starting Cassandra</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular Services requires a cassandra instance, you can start one by doing:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>docker run --name hawkular-cassandra -e CASSANDRA_START_RPC=true -d cassandra:3.0.12</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_starting_hawkular_services_on_ssl">Starting Hawkular Services on SSL</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that there is a cassandra ready, Hawkular Services can be started,
+it will be linked to the cassandra instance (hawkular-cassandra)</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>docker pull hawkular/hawkular-services
+docker run --name hawkular-services --link=hawkular-cassandra -e CASSANDRA_NODES=hawkular-cassandra -e HAWKULAR_HOSTNAME=hawkular-services -e HAWKULAR_USE_SSL=true -p 8443:8443 -v `pwd`/hawkular-services-private.key:/client-secrets/hawkular-services-private.key:z -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/hawkular-services</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+To avoid guessing the host, we explicitly set it to hawkular-services
+using HAWKULAR_HOSTNAME environmental variable.
+</td>
+</tr>
+</table>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Warning</div>
+</td>
+<td class="content">
+If you don&#8217;t specify any certificate, Hawkular services will create one,
+but we won&#8217;t be able to connect agents unless we export the certificate.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_starting_a_hawkular_agent">Starting a Hawkular Agent</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>By now there should be a Hawkular Services listening on default secure port 8443, if any agent wants to connect,
+it will need to know and trust its certificate.
+If you are self-signing your certificate, you will need to pass Hawkular Service&#8217;s certificate when starting the agent.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>docker pull hawkular/wildfly-hawkular-javaagent
+docker run --name hawkular-agent-01 --link=hawkular-services -e HAWKULAR_SERVER_PROTOCOL=https -e HAWKULAR_SERVER_ADDR=hawkular-services -e HAWKULAR_SERVER_PORT=8443 -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/wildfly-hawkular-javaagent</code></pre>
+</div>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Host must match with the one specified in the certificate, thus setting HAWKULAR_SERVER_ADDR to hawkular-services
+is required. Update as needed if using other value.
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_testing_the_setup">Testing the setup</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Any Hawkular client that supports connecting using SSL can be used. Curl, ManageIQ and HawkFX will be show below.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+If using self-signed certificates, the client machine needs to trust Hawkular Services certificate or the client
+should support to specify which certificate to trust.
+See <a href="http://www.hawkular.org/blog/2016/09/14/consuming-hawkular-api-over-ssl.html">here</a>
+for more info.
+</td>
+</tr>
+</table>
+</div>
+<div class="sect2">
+<h3 id="_curl">Curl</h3>
+<div class="paragraph">
+<p>Simplest way to test, we only need to tell curl how to resolve <code>hawkular-services</code> and pass the public certificate.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>curl -H "Hawkular-Tenant: hawkular" --resolve "hawkular-services:8443:127.0.0.1" --cacert hawkular-services-prd -X GET https://hawkular-services:8443/hawkular/metrics/metrics</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>It will output metrics stored on Hawkular Services.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_manageiq">ManageIQ</h3>
+<div class="paragraph">
+<p>It can be quickly tested using the dockerized ManageIQ as follow:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>docker run --link=hawkular-services --privileged -d -p 8444:443 manageiq/manageiq:fine-3</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Once ManageIQ has started, add a Middleware Provider, there is three secured ways to do that:</p>
+</div>
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p>SSL &#8201;&#8212;&#8201;Requires that the client box trusts Hawkular Services certificate.</p>
+</li>
+<li>
+<p>SSL trusting custom CA&#8201;&#8212;&#8201;Requires to provide the certificate to trust.</p>
+</li>
+<li>
+<p>SSL without validation&#8201;&#8212;&#8201;No validation is performed.</p>
+</li>
+</ol>
+</div>
+<div class="paragraph">
+<p>We will focus on (2) and (3) as (1) will require to trust the certificates on the machine itself.</p>
+</div>
+<div class="paragraph">
+<p>Before going onto details, navigate to <code><a href="https://localhost:8444/" class="bare">https://localhost:8444/</a></code>,
+login with default username <code>admin</code> and password <code>smartvm</code>.
+Click on Middleware &#8594; Configuration &#8594; Add a New Middleware Provider.</p>
+</div>
+<div class="sect3">
+<h4 id="_ssl_trusting_custom_ca">SSL trusting custom CA</h4>
+<div class="paragraph">
+<p>We need to select <code>SSL trusting custom CA</code> in <code>Security Protocol</code>
+and copy the certificate from the contents of <code>hawkular-services-public.pem</code>.
+Fill the Hostname with the one used in the certificate and complete the required information.</p>
+</div>
+<div id="mw-ssl-trusting-custom-ca" class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-09-manageiq-custom-ca.png" alt="2017 09 manageiq custom ca">
+</div>
+<div class="title">Figure 1: Middleware Provider SSL trusting custom ca</div>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_ssl_without_validation">SSL without validation</h4>
+<div class="paragraph">
+<p>We need to select <code>SSL without validation</code> in <code>Security Protocol</code>.
+No validation regarding the certificate is made with this option, only fill the required information.</p>
+</div>
+<div id="mw-ssl-without-validation" class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-09-manageiq-custom-ca.png" alt="2017 09 manageiq custom ca">
+</div>
+<div class="title">Figure 2: Middleware Provider SSL without validation</div>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_hawkfx">HawkFX</h3>
+<div class="paragraph">
+<p>One can connect using <a href="http://www.hawkular.org/blog/2016/07/13/hawkfx.html">HawkFx</a>
+by either installing the certificate on the machine or disabling the verification as
+show in the image.
+You will also need to update your <code>/etc/hosts</code> to resolve <code>hawkular-services</code>.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>sudo su -c "echo '127.0.0.1 hawkular-services' &gt;&gt; /etc/hosts"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Alternatively, if no verification is used, one could use <code>localhost</code> instead of <code>hawkular-services</code>.</p>
+</div>
+<div id="hawkfx-disable-validation" class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-09-hawkfx-disable-validation.png" alt="2017 09 hawkfx disable validation">
+</div>
+<div class="title">Figure 3: HawkFX without validation</div>
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Securing communications between a dockerized Hawkular Agent and Hawkular Services is possible with
+self-signed certificates. Connecting clients is also possible with the additional step of providing the certificate.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/09/alerts-opentracing.html"><h1>Hawkular Alerts with OpenTracing</h1></a>
             <p>06 September 2017, by John Mazzitelli</p>
             <p><div id="preamble">
@@ -913,521 +1199,13 @@ Simple thresholds are not expressive enough to detect metric patterns or trends 
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/07/opentracing-ejb.html"><h1>OpenTracing EJB instrumentation</h1></a>
-            <p>28 July 2017, by Juraci Paixão Kröhling</p>
-            <p><div id="preamble">
-<div class="sectionbody">
-<div class="paragraph">
-<p>OpenTracing features more and more framework integrations, allowing for transparent instrumentation
-of applications with minimal effort. This blog post will show how to use the EJB instrumentation
-to automatically trace EJB invocations.</p>
-</div>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/2017-07-28-teaser.png" alt="Jaeger with EJB traces">
-</div>
-</div>
-<div class="paragraph">
-<p>For this demo, we&#8217;ll generate a project using the Wildfly Swarm project generator, which allows us to
-have a seed project with the appropriate OpenTracing support in place. The concrete OpenTracing solution
-we will use is provided by the <a href="https://uber.github.io/jaeger/">Jaeger project</a>, which is also
-provided as a Wildfly Swarm Fraction.</p>
-</div>
-<div class="paragraph">
-<p>With that, we&#8217;ll create a simple JAX-RS endpoint with an EJB facet, invoking a set of EJB services in
-different ways to demonstrate all the features of this integration.</p>
-</div>
-<div class="paragraph">
-<p>Our application has one endpoint called <code>/order</code>, responsible for receiving requests to place orders
-in our system. When we call this endpoint, we also call some other EJB services, like</p>
-</div>
-<div class="ulist">
-<ul>
-<li>
-<p><code>AccountService</code> to send a notification that an order has been placed</p>
-</li>
-<li>
-<p><code>OrderService</code> to effectively place the order</p>
-</li>
-<li>
-<p><code>InventoryService</code> to change our inventory</p>
-</li>
-<li>
-<p><code>InventoryNotificationService</code>, to notify other backend systems.</p>
-</li>
-</ul>
-</div>
-<div class="paragraph">
-<p>As we are only interested in the tracing parts, we&#8217;ll not implement the business code itself, only the
-scaffolding.</p>
-</div>
-<div class="paragraph">
-<p>Our demo project is heavily based on the
-<a href="https://github.com/opentracing-contrib/java-ejb/tree/release-0.0.2/opentracing-ejb-example"><code>opentracing-ejb-example</code></a>
-from the repository <a href="https://github.com/opentracing-contrib/java-ejb"><code>opentracing-contrib/java-ejb</code></a>.
-We have also prepared <a href="/data/blog/2017/2017-07-28-demo-example-complete.tar.gz">an archive</a> with the
-final outcome of this demo, which you can use as reference.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_seed_project">The seed project</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>To generate the seed project, open the <a href="http://wildfly-swarm.io/generator/">Wildfly Swarm generator</a>
-and create a project with the "Group ID" <code>io.opentracing.contrib.ejb</code> and "Artifact ID"
-<code>demo-example</code>. Add the dependencies <code>EJB</code>, <code>CDI</code>, <code>JAX-RS</code>, <code>OpenTracing</code>, and <code>Jaeger</code>.</p>
-</div>
-<div class="admonitionblock warning">
-<table>
-<tr>
-<td class="icon">
-<i class="fa icon-warning" title="Warning"></i>
-</td>
-<td class="content">
-Make sure to select all listed dependencies and confirm that they are shown in the "Selected dependencies"
-section, otherwise, you might not have all the required fractions for this demo.
-</td>
-</tr>
-</table>
-</div>
-<div class="paragraph">
-<p>Click on <code>Generate Project</code> and you&#8217;ll get a ZIP file with the seed project. Uncompress it and add the following
-dependency to the <code>pom.xml</code>, within the <code>dependencies</code> node and after the <code>WildFly Swarm Fractions</code> dependencies:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-xml" data-lang="xml">    &lt;dependency&gt;
-      &lt;groupId&gt;io.opentracing.contrib&lt;/groupId&gt;
-      &lt;artifactId&gt;opentracing-ejb&lt;/artifactId&gt;
-      &lt;version&gt;0.0.2&lt;/version&gt;
-    &lt;/dependency&gt;</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>It&#8217;s now a good time to perform a sanity build, to make sure everything is in place. The first build might take a few minutes:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ mvn wildfly-swarm:run
-...
-...
-2017-07-26 12:02:19,154 INFO  [org.wildfly.swarm] (main) WFSWARM99999: WildFly Swarm is Ready</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>If it looks good, stop the server with <code>Ctrl+C</code> and let&#8217;s start coding our application!</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_application">The application</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Let&#8217;s start by defining a JAX-RS endpoint that also acts as a stateless EJB. This is a common trick
-to get JAX-RS endpoints to be managed as EJBs, so that they can be invoked via JMX or get
-monitoring features. Or, in our case, to get traced via EJB interceptors.</p>
-</div>
-<div class="paragraph">
-<p>This endpoint is where we get our HTTP requests from and where our transaction starts, from
-the tracing perspective. Once we receive an HTTP request, we call the
-<code>AccountService#sendNotification</code> method and then the <code>OrderService#processOrderPlacement</code>.</p>
-</div>
-<div class="paragraph">
-<p>Note that we annotate the class with <code>@Interceptors(OpenTracingInterceptor.class)</code>, which means
-that all methods on this class are to be traced.</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/Endpoint.java</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
-
-import io.opentracing.contrib.ejb.OpenTracingInterceptor;
-
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.interceptor.Interceptors;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import java.util.logging.Logger;
-
-/**
- * This is a regular JAX-RS endpoint with EJB capabilities. We use the EJB capability to specify an interceptor,
- * so that every method on this class is wrapped on its own span. If the OpenTracing JAX-RS integration is being used,
- * it would be a good idea to not have the interceptor at this level, to avoid having too much "noise".
- *
- * @author Juraci Paixão Kröhling
- */
-@Path("/order")
-@Stateless
-@Interceptors(OpenTracingInterceptor.class)
-public class Endpoint {
-    private static final Logger log = Logger.getLogger(Endpoint.class.getName());
-
-    @Inject
-    AccountService accountService;
-
-    @Inject
-    OrderService orderService;
-
-    @POST
-    @Path("/")
-    public String placeOrder() {
-        log.info("Request received to place an order");
-        accountService.sendNotification();
-        orderService.processOrderPlacement();
-        return "Order placed";
-    }
-
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Our <code>AccountService</code> is a simple stateless EJB, responsible for sending a notification about the new order
-to the owner of the account. Here, we could call another service, or send an email, SMS or any other form
-of message.</p>
-</div>
-<div class="paragraph">
-<p>As this is a regular EJB, we are able to automatically join the span context from the JAX-RS endpoint, making
-this call a child span of the main transaction. This is all transparent to you as developer.</p>
-</div>
-<div class="paragraph">
-<p>Note again that we annotate the bean with <code>@Interceptors(OpenTracingInterceptor.class)</code>. As our interceptor
-is just like any other EJB interceptor, you could use a <code>ejb-jar.xml</code> to automatically use this inteceptor on
-all available beans. Whether or not to trace all beans is a per-deployment decision, so, no <code>ejb-jar.xml</code> is
-provided by the integration.</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/AccountService.java</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
-
-import io.opentracing.contrib.ejb.OpenTracingInterceptor;
-
-import javax.ejb.Stateless;
-import javax.interceptor.Interceptors;
-import java.util.logging.Logger;
-
-/**
- * This is a simple synchronous EJB, without any knowledge about span context or other OpenTracing semantics. All it
- * does is specify an interceptor and it's shown as the child of a parent span.
- *
- * @author Juraci Paixão Kröhling
- */
-@Stateless
-@Interceptors(OpenTracingInterceptor.class)
-public class AccountService {
-    private static final Logger log = Logger.getLogger(AccountService.class.getName());
-
-    public void sendNotification() {
-        log.info("Notifying the account owner about a new order");
-    }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Our <code>OrderService</code> is responsible for actually placing the order: it&#8217;s where the business knowledge
-resides. We&#8217;ll later look into details at the <code>InventoryService</code>, but for now, we need to know that
-this service requires a <code>SpanContext</code> to be explicitly passed. We can get this context from the <code>EJBContext</code>,
-stored under a context data entry that can be retrieved with the constant
-<code>io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT</code>.</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/OrderService.java</code>:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
-
-import io.opentracing.SpanContext;
-import io.opentracing.contrib.ejb.OpenTracingInterceptor;
-
-import javax.annotation.Resource;
-import javax.ejb.EJBContext;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.interceptor.Interceptors;
-import java.util.logging.Logger;
-
-import static io.opentracing.contrib.ejb.OpenTracingInterceptor.SPAN_CONTEXT;
-
-/**
- * This is a regular synchronous stateless EJB. It demonstrates how to get the span context for the span it's wrapped
- * on. This can be used to pass down the call chain, create child spans or add baggage items.
- *
- * @author Juraci Paixão Kröhling
- */
-@Stateless
-@Interceptors(OpenTracingInterceptor.class)
-public class OrderService {
-    private static final Logger log = Logger.getLogger(OrderService.class.getName());
-
-    @Resource
-    EJBContext ctx;
-
-    @Inject
-    InventoryService inventoryService;
-
-    public void processOrderPlacement() {
-        log.info("Placing order");
-        Object ctxParentSpan = ctx.getContextData().get(SPAN_CONTEXT);
-        if (ctxParentSpan instanceof SpanContext) {
-            inventoryService.changeInventory((SpanContext) ctxParentSpan);
-            return;
-        }
-
-        inventoryService.changeInventory(null);
-    }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Our <code>InventoryService</code> is responsible for interfacing with backend systems dealing with inventory control.
-We don&#8217;t want to block the parent transaction while interacting with those systems, so, we make this an
-asynchronous EJB. When dealing with asynchronous objects, it&#8217;s a good idea to be explicit about the span
-context, as there are potential concurrency issues when sharing a context between a synchronous and an
-asynchronous bean.</p>
-</div>
-<div class="paragraph">
-<p>The OpenTracing EJB integration is able to intercept the method call and detect if there is a span context
-among the parameters, which is the case of the <code>changeInventory(SpanContext)</code> method. In this situation,
-the following happens behind the scenes:</p>
-</div>
-<div class="olist arabic">
-<ol class="arabic">
-<li>
-<p>The caller makes a method call, passing the <code>SpanContext</code></p>
-</li>
-<li>
-<p>The interceptor is activated, creating a new child span using the <code>SpanContext</code> as the parent</p>
-</li>
-<li>
-<p>The interceptor replaces the original <code>SpanContext</code> with this new child span on the method call</p>
-</li>
-<li>
-<p>The intercepted method is finally invoked, wrapped by the new child span.</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Note that the <code>SpanContext</code> passed by the <code>OrderService</code> is not the same as the one received by <code>InventoryService</code>.
-While this might cause some confusion, we believe this is the right semantic for this use case, as it allows
-for a complete tracing picture, without any explicit tracing code, apart from passing the context around.</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryService.java</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
-
-import io.opentracing.SpanContext;
-import io.opentracing.contrib.ejb.OpenTracingInterceptor;
-
-import javax.ejb.Asynchronous;
-import javax.ejb.Stateless;
-import javax.inject.Inject;
-import javax.interceptor.Interceptors;
-import java.util.logging.Logger;
-
-/**
- * This is an asynchronous stateless EJB with spans created automatically by the interceptor. Note that the span context
- * that this method sees is &lt;b&gt;not&lt;/b&gt; the same as the span context sent by the caller: the interceptor wraps this
- * method call on its own span, and replaces the span context by the context of this new span. This is done so that this
- * span context can be passed along to the next service "as is".
- *
- * @author Juraci Paixão Kröhling
- */
-@Asynchronous
-@Stateless
-@Interceptors({OpenTracingInterceptor.class})
-public class InventoryService {
-    private static final Logger log = Logger.getLogger(InventoryService.class.getName());
-
-    @Inject
-    InventoryNotificationService inventoryNotificationService;
-
-    public void changeInventory(SpanContext context) {
-        log.info("Changing the inventory");
-        inventoryNotificationService.sendNotification(context);
-    }
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And finally, our last service, <code>InventoryNotificationService</code>: in this case, we notify another set of backend systems
-that a new order has been placed. Again, this is an asynchronous EJB and works like the one above, but additionally,
-we wanted to manually create a "business span", called <code>sendNotification</code>. This method could send several notifications,
-wrapping each one into a span of its own. As we manually started it, we manually finish it as well.</p>
-</div>
-<div class="paragraph">
-<p><code>src/main/java/io/opentracing/contrib/ejb/demoexample/InventoryNotificationService.java</code></p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-java" data-lang="java">package io.opentracing.contrib.ejb.demoexample;
-
-import io.opentracing.Span;
-import io.opentracing.SpanContext;
-import io.opentracing.util.GlobalTracer;
-
-import javax.ejb.Asynchronous;
-import javax.ejb.Stateless;
-import java.util.logging.Logger;
-
-/**
- * This is the final call in the chain. This is an asynchronous stateless EJB, which obtains the span context
- * via a method parameter. This bean is not intercepted in any way by us, so, the span context received is exactly
- * the same as what was sent by the caller.
- *
- * @author Juraci Paixão Kröhling
- */
-@Stateless
-@Asynchronous
-public class InventoryNotificationService {
-    private static final Logger log = Logger.getLogger(InventoryNotificationService.class.getName());
-
-    public void sendNotification(SpanContext context) {
-        Span span = GlobalTracer.get().buildSpan("sendNotification").asChildOf(context).startManual();
-        log.info("Sending an inventory change notification");
-        span.finish();
-    }
-
-}</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Now, let&#8217;s do a final sanity check and see if everything is in the right place:
-<code>mvn wildfly-swarm:run</code> . As before, the final message should be <code>WildFly Swarm is Ready</code>. Hit <code>Ctrl+C</code> and let&#8217;s
-setup our tracing backend.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_the_tracing_backend">The tracing backend</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Instrumenting our code is one part of the story. The other part is to plug in an actual OpenTracing implementation that
-is capable of capturing the spans and submitting them to a backend service. For our demo, we&#8217;ll use Jaeger. If you don&#8217;t
-have a Jaeger server running yet, one can be started via Docker as follows:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">docker run \
-    --rm \
-    -p5775:5775/udp \
-    -p6831:6831/udp \
-    -p6832:6832/udp \
-    -p5778:5778 \
-    -p16686:16686 \
-    -p14268:14268 \
-    --name jaeger \
-    jaegertracing/all-in-one:latest</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_tying_everything_together">Tying everything together</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Now that we have our code ready and a tracing backend, let&#8217;s start Wildfly Swarm passing a service name, which is the only
-property required by the Jaeger client. By default, Jaeger&#8217;s Java tracer will attempt to send traces via UDP to a
-Jaeger Agent located on the local machine. If you are using a different architecture, refer to the
-<a href="https://github.com/uber/jaeger-client-java/tree/master/jaeger-core">Jaeger&#8217;s documentation</a>
-on how to use environment variables to configure the client, or refer to the
-<a href="https://github.com/wildfly-swarm/wildfly-swarm-examples/tree/master/jaeger/jaeger-servlet">Jaeger&#8217;s fraction for Wildfly Swarm</a>.</p>
-</div>
-<div class="paragraph">
-<p>For our demo, we&#8217;ll use a property that is recognized by the Jaeger&#8217;s Wildfly Swarm Fraction. The other two properties are telling
-Jaeger that every request should be sampled.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">mvn wildfly-swarm:run -Dswarm.jaeger.service-name=order-processing -Dswarm.jaeger.sampler-type=const -Dswarm.jaeger.sampler-parameter=1</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Watch the logs for an entry containing <code>com.uber.jaeger.Configuration</code>: if everything is correctly set, it should show the
-complete configuration of the Jaeger client, like this:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>2017-07-26 12:03:09,139 INFO  [com.uber.jaeger.Configuration] (ServerService Thread Pool -- 6) Initialized tracer=Tracer(version=Java-0.20.0, serviceName=order-processing, reporter=RemoteReporter(queueProcessor=RemoteReporter.QueueProcessor(open=true), sender=UdpSender(udpTransport=ThriftUdpTransport(socket=java.net.DatagramSocket@7270de22, receiveBuf=null, receiveOffSet=-1, receiveLength=0)), maxQueueSize=100, closeEnqueueTimeout=1000), sampler=ConstSampler(decision=true, tags={sampler.type=const, sampler.param=true}), ipv4=-1062731153, tags={hostname=carambola, jaeger.version=Java-0.20.0, ip=192.168.2.111}, zipkinSharedRpcSpan=false)</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>Once the message <code>WildFly Swarm is Ready</code> is seen, we can start making requests to our endpoint:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-bash" data-lang="bash">$ curl -X POST localhost:8080/order
-Order placed</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>And this can be seen on the server&#8217;s log:</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code>2017-07-26 12:03:19,302 INFO  [io.opentracing.contrib.ejb.demoexample.Endpoint] (default task-2) Request received to place an order
-2017-07-26 12:03:19,304 INFO  [io.opentracing.contrib.ejb.demoexample.AccountService] (default task-2) Notifying the account owner about a new order
-2017-07-26 12:03:19,307 INFO  [io.opentracing.contrib.ejb.demoexample.OrderService] (default task-2) Placing order
-2017-07-26 12:03:19,314 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryService] (EJB default - 1) Changing the inventory
-2017-07-26 12:03:19,322 INFO  [io.opentracing.contrib.ejb.demoexample.InventoryNotificationService] (EJB default - 2) Sending an inventory change notification</code></pre>
-</div>
-</div>
-<div class="paragraph">
-<p>At this point, the complete trace with its 6 spans can be seen on Jaeger&#8217;s UI, located at <a href="http://localhost:16686/search" class="bare">http://localhost:16686/search</a> , if you are using
-the Docker command we listed before.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>EJBs are a very important part of Java EE and we expect the OpenTracing EJB framework integration to complement the other Java EE related
-integrations, like the Servlet and JAX-RS. In this blog post, we&#8217;ve shown how tracing EJBs can be accomplished by transparently tracing
-synchronous stateless EJBs, intercepting span contexts in asynchronous EJBs and by exposing the span context via EJB contexts, as well
-as manually starting spans to include specific business logic into the trace.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_links">Links</h2>
-<div class="sectionbody">
-<div class="ulist">
-<ul>
-<li>
-<p>OpenTracing: <a href="http://opentracing.io" class="bare">http://opentracing.io</a></p>
-</li>
-<li>
-<p>OpenTracing EJB3 instrumentation (with example): <a href="https://github.com/opentracing-contrib/java-ejb" class="bare">https://github.com/opentracing-contrib/java-ejb</a></p>
-</li>
-<li>
-<p>Jaeger: <a href="https://github.com/uber/jaeger" class="bare">https://github.com/uber/jaeger</a></p>
-</li>
-<li>
-<p><a href="/data/blog/2017/2017-07-28-demo-example-complete.tar.gz">ZIP file</a> with the code from this blog post</p>
-</li>
-</ul>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>28 July 2017 - <a href="blog/2017/07/opentracing-ejb.html">OpenTracing EJB instrumentation</a></li>
           <li>24 July 2017 - <a href="blog/2017/07/grafana-new-query-interface.html">Grafana: new query interface</a></li>
           <li>18 July 2017 - <a href="blog/2017/07/jaeger-with-security-proxy.html">Protecting Jaeger UI with a sidecar security proxy</a></li>
           <li>10 July 2017 - <a href="blog/2017/07/opentracing-jaxrs.html">OpenTracing JAX-RS Instrumentation</a></li>

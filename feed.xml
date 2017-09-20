@@ -6,9 +6,299 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 13 Sep 2017 12:36:32 +0000</pubDate>
-    <lastBuildDate>Wed, 13 Sep 2017 12:36:32 +0000</lastBuildDate>
+    <pubDate>Wed, 20 Sep 2017 07:48:07 +0000</pubDate>
+    <lastBuildDate>Wed, 20 Sep 2017 07:48:07 +0000</lastBuildDate>
 
+    <item>
+      <title>Connecting Hawkular Agent to Hawkular Services over SSL</title>
+      <link>http://www.hawkular.org/blog/2017/09/agent-to-services-over-ssl.html</link>
+      <author>noreply@hawkular.org (Josejulio Martínez)</author>
+      <pubDate>Tue, 19 Sep 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/09/agent-to-services-over-ssl.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;SSL provides identification of the communicating parties, confidentiality and integrity of the information being shared.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In production environments, network eavesdropping could be a concern. You can use SSL to provide a secure communication
+channel between servers.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Services expects Hawkular Agents to connect, push information and listen for commands.
+These commands also include server credentials that could be vulnerable to a man-in-the-middle attack.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;A previous &lt;a href=&quot;http://www.hawkular.org/hawkular-services/docs/installation-guide/secure-comm.html&quot;&gt;article&lt;/a&gt; shows how
+to configure your Hawkular Services with SSL and have Hawkular Agents connect to it trough SSL.
+This guide will show how is done for Dockerized Hawkular Services Agents.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_preparing_your_certificates&quot;&gt;Preparing your certificates&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before starting we need to prepare the certificates that we are going to use.
+Your public and private key for Hawkular Services need to be on PEM or PKC12 format.
+For this guide we will use PEM.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We can create self-signed certificates (in PEM format) using:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;keytool -genkey -keystore hawkular.keystore -alias hawkular -dname &quot;CN=hawkular-services&quot; -keyalg RSA -storepass hawkular -keypass hawkular -validity 36500 -ext san=ip:127.0.0.1,dns:hawkular-services
+keytool -importkeystore -srckeystore hawkular.keystore  -destkeystore hawkular.p12 -deststoretype PKCS12 -srcalias hawkular -deststorepass hawkular -destkeypass hawkular -srcstorepass hawkular
+openssl pkcs12 -in hawkular.p12 -password pass:hawkular -nokeys -out hawkular-services-public.pem
+openssl pkcs12 -in hawkular.p12 -password pass:hawkular -nodes -nocerts -out hawkular-services-private.key&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock important&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Important&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+When creating the certificates, remember to include the host that Hawkular will use
+(as Common Name(CN) and Subject Alternative Name(SAN)), else the certificate validation will fail.
+Through this guide, host will be set to hawkular-services.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock warning&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Warning&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Always include san=ip:127.0.0.1 in your certificate, as this will be used internally by Hawkular Services.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_starting_cassandra&quot;&gt;Starting Cassandra&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular Services requires a cassandra instance, you can start one by doing:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;docker run --name hawkular-cassandra -e CASSANDRA_START_RPC=true -d cassandra:3.0.12&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_starting_hawkular_services_on_ssl&quot;&gt;Starting Hawkular Services on SSL&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Now that there is a cassandra ready, Hawkular Services can be started,
+it will be linked to the cassandra instance (hawkular-cassandra)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;docker pull hawkular/hawkular-services
+docker run --name hawkular-services --link=hawkular-cassandra -e CASSANDRA_NODES=hawkular-cassandra -e HAWKULAR_HOSTNAME=hawkular-services -e HAWKULAR_USE_SSL=true -p 8443:8443 -v `pwd`/hawkular-services-private.key:/client-secrets/hawkular-services-private.key:z -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/hawkular-services&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+To avoid guessing the host, we explicitly set it to hawkular-services
+using HAWKULAR_HOSTNAME environmental variable.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock warning&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Warning&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+If you don&amp;#8217;t specify any certificate, Hawkular services will create one,
+but we won&amp;#8217;t be able to connect agents unless we export the certificate.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_starting_a_hawkular_agent&quot;&gt;Starting a Hawkular Agent&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;By now there should be a Hawkular Services listening on default secure port 8443, if any agent wants to connect,
+it will need to know and trust its certificate.
+If you are self-signing your certificate, you will need to pass Hawkular Service&amp;#8217;s certificate when starting the agent.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;docker pull hawkular/wildfly-hawkular-javaagent
+docker run --name hawkular-agent-01 --link=hawkular-services -e HAWKULAR_SERVER_PROTOCOL=https -e HAWKULAR_SERVER_ADDR=hawkular-services -e HAWKULAR_SERVER_PORT=8443 -v `pwd`/hawkular-services-public.pem:/client-secrets/hawkular-services-public.pem:z hawkular/wildfly-hawkular-javaagent&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+Host must match with the one specified in the certificate, thus setting HAWKULAR_SERVER_ADDR to hawkular-services
+is required. Update as needed if using other value.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_testing_the_setup&quot;&gt;Testing the setup&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Any Hawkular client that supports connecting using SSL can be used. Curl, ManageIQ and HawkFX will be show below.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;admonitionblock note&quot;&gt;
+&lt;table&gt;
+&lt;tr&gt;
+&lt;td class=&quot;icon&quot;&gt;
+&lt;div class=&quot;title&quot;&gt;Note&lt;/div&gt;
+&lt;/td&gt;
+&lt;td class=&quot;content&quot;&gt;
+If using self-signed certificates, the client machine needs to trust Hawkular Services certificate or the client
+should support to specify which certificate to trust.
+See &lt;a href=&quot;http://www.hawkular.org/blog/2016/09/14/consuming-hawkular-api-over-ssl.html&quot;&gt;here&lt;/a&gt;
+for more info.
+&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_curl&quot;&gt;Curl&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Simplest way to test, we only need to tell curl how to resolve &lt;code&gt;hawkular-services&lt;/code&gt; and pass the public certificate.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;curl -H &quot;Hawkular-Tenant: hawkular&quot; --resolve &quot;hawkular-services:8443:127.0.0.1&quot; --cacert hawkular-services-prd -X GET https://hawkular-services:8443/hawkular/metrics/metrics&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It will output metrics stored on Hawkular Services.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_manageiq&quot;&gt;ManageIQ&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;It can be quickly tested using the dockerized ManageIQ as follow:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;docker run --link=hawkular-services --privileged -d -p 8444:443 manageiq/manageiq:fine-3&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once ManageIQ has started, add a Middleware Provider, there is three secured ways to do that:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;olist arabic&quot;&gt;
+&lt;ol class=&quot;arabic&quot;&gt;
+&lt;li&gt;
+&lt;p&gt;SSL &amp;#8201;&amp;#8212;&amp;#8201;Requires that the client box trusts Hawkular Services certificate.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;SSL trusting custom CA&amp;#8201;&amp;#8212;&amp;#8201;Requires to provide the certificate to trust.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;SSL without validation&amp;#8201;&amp;#8212;&amp;#8201;No validation is performed.&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We will focus on (2) and (3) as (1) will require to trust the certificates on the machine itself.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Before going onto details, navigate to &lt;code&gt;&lt;a href=&quot;https://localhost:8444/&quot; class=&quot;bare&quot;&gt;https://localhost:8444/&lt;/a&gt;&lt;/code&gt;,
+login with default username &lt;code&gt;admin&lt;/code&gt; and password &lt;code&gt;smartvm&lt;/code&gt;.
+Click on Middleware &amp;#8594; Configuration &amp;#8594; Add a New Middleware Provider.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect3&quot;&gt;
+&lt;h4 id=&quot;_ssl_trusting_custom_ca&quot;&gt;SSL trusting custom CA&lt;/h4&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We need to select &lt;code&gt;SSL trusting custom CA&lt;/code&gt; in &lt;code&gt;Security Protocol&lt;/code&gt;
+and copy the certificate from the contents of &lt;code&gt;hawkular-services-public.pem&lt;/code&gt;.
+Fill the Hostname with the one used in the certificate and complete the required information.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mw-ssl-trusting-custom-ca&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-09-manageiq-custom-ca.png&quot; alt=&quot;2017 09 manageiq custom ca&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 1: Middleware Provider SSL trusting custom ca&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect3&quot;&gt;
+&lt;h4 id=&quot;_ssl_without_validation&quot;&gt;SSL without validation&lt;/h4&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;We need to select &lt;code&gt;SSL without validation&lt;/code&gt; in &lt;code&gt;Security Protocol&lt;/code&gt;.
+No validation regarding the certificate is made with this option, only fill the required information.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;mw-ssl-without-validation&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-09-manageiq-custom-ca.png&quot; alt=&quot;2017 09 manageiq custom ca&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 2: Middleware Provider SSL without validation&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect2&quot;&gt;
+&lt;h3 id=&quot;_hawkfx&quot;&gt;HawkFX&lt;/h3&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;One can connect using &lt;a href=&quot;http://www.hawkular.org/blog/2016/07/13/hawkfx.html&quot;&gt;HawkFx&lt;/a&gt;
+by either installing the certificate on the machine or disabling the verification as
+show in the image.
+You will also need to update your &lt;code&gt;/etc/hosts&lt;/code&gt; to resolve &lt;code&gt;hawkular-services&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;listingblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;pre class=&quot;prettyprint highlight&quot;&gt;&lt;code&gt;sudo su -c &quot;echo &apos;127.0.0.1 hawkular-services&apos; &amp;gt;&amp;gt; /etc/hosts&quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Alternatively, if no verification is used, one could use &lt;code&gt;localhost&lt;/code&gt; instead of &lt;code&gt;hawkular-services&lt;/code&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div id=&quot;hawkfx-disable-validation&quot; class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-09-hawkfx-disable-validation.png&quot; alt=&quot;2017 09 hawkfx disable validation&quot;&gt;
+&lt;/div&gt;
+&lt;div class=&quot;title&quot;&gt;Figure 3: HawkFX without validation&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Securing communications between a dockerized Hawkular Agent and Hawkular Services is possible with
+self-signed certificates. Connecting clients is also possible with the additional step of providing the certificate.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Hawkular Alerts with OpenTracing</title>
       <link>http://www.hawkular.org/blog/2017/09/alerts-opentracing.html</link>
