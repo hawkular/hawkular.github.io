@@ -719,22 +719,22 @@ Delete an existing Alert. +
 === [ /actions ] Actions Handling
 
 |===
-| POST | /actions | link:#++POST__actions++[Create a new ActionDefinition.]
+| PUT | /actions | link:#++PUT__actions++[Update an existing ActionDefinition.]
 | GET | /actions/history | link:#++GET__actions_history++[Get actions from history with optional filtering.]
 | PUT | /actions/history/delete | link:#++PUT__actions_history_delete++[Delete actions from history with optional filtering.]
 | GET | /actions/plugin/{actionPlugin} | link:#++GET__actions_plugin__actionPlugin_++[Find all action ids of an specific action plugin.]
-| DELETE | /actions/{actionPlugin}/{actionId} | link:#++DELETE__actions__actionPlugin___actionId_++[Delete an existing action definition.]
+| GET | /actions/{actionPlugin}/{actionId} | link:#++GET__actions__actionPlugin___actionId_++[Get an existing action definition.]
 |===
 
 
 ==============================================
 
-[[POST__actions]]
-*Endpoint POST `/actions`*
+[[PUT__actions]]
+*Endpoint PUT `/actions`*
 
-Create a new ActionDefinition. +
+Update an existing ActionDefinition. +
  +
-Returns created ActionDefinition
+Returns updated ActionDefinition.
 
 
 
@@ -757,8 +757,9 @@ Returns created ActionDefinition
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Success, ActionDefinition Created.|List of String
-|400|Existing ActionDefinition/Invalid Parameters.|<<ApiError>>
+|200|Success, ActionDefinition Updated.|<<ActionDefinition>>
+|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|404|ActionDefinition not found for update.|<<ApiError>>
 |500|Internal server error.|<<ApiError>>
 
 |=======================
@@ -910,10 +911,10 @@ Find all action ids of an specific action plugin. +
 
 ==============================================
 
-[[DELETE__actions__actionPlugin___actionId_]]
-*Endpoint DELETE `/actions/{actionPlugin}/{actionId}`*
+[[GET__actions__actionPlugin___actionId_]]
+*Endpoint GET `/actions/{actionPlugin}/{actionId}`*
 
-Delete an existing action definition. +
+Get an existing action definition. +
  +
 
 
@@ -939,8 +940,8 @@ Delete an existing action definition. +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|ActionDefinition Deleted.|<<ActionDefinition>>
-|404|No Action found.|<<ApiError>>
+|200|Success, ActionDefinition found.|<<ActionDefinition>>
+|404|No ActionDefinition found.|<<ApiError>>
 |500|Internal server error.|<<ApiError>>
 
 |=======================
@@ -1885,14 +1886,14 @@ Status fields: +
 === [ /triggers ] Triggers Definitions Handling
 
 |===
-| POST | /triggers | link:#++POST__triggers++[Create a new trigger.]
+| GET | /triggers | link:#++GET__triggers++[Get triggers with optional filtering.]
 | PUT | /triggers/enabled | link:#++PUT__triggers_enabled++[Update triggers to be enabled or disabled.]
 | POST | /triggers/groups | link:#++POST__triggers_groups++[Create a new group trigger.]
 | PUT | /triggers/groups/enabled | link:#++PUT__triggers_groups_enabled++[Update group triggers and their member triggers to be enabled or disabled.]
 | POST | /triggers/groups/members | link:#++POST__triggers_groups_members++[Create a new member trigger for a parent trigger.]
 | POST | /triggers/groups/members/{memberId}/orphan | link:#++POST__triggers_groups_members__memberId__orphan++[Make a non-orphan member trigger into an orphan.]
 | POST | /triggers/groups/members/{memberId}/unorphan | link:#++POST__triggers_groups_members__memberId__unorphan++[Make an orphan member trigger into an group trigger.]
-| PUT | /triggers/groups/{groupId} | link:#++PUT__triggers_groups__groupId_++[Update an existing group trigger definition and its member definitions.]
+| DELETE | /triggers/groups/{groupId} | link:#++DELETE__triggers_groups__groupId_++[Delete a group trigger.]
 | PUT | /triggers/groups/{groupId}/conditions | link:#++PUT__triggers_groups__groupId__conditions++[Set the conditions for the group trigger.]
 | PUT | /triggers/groups/{groupId}/conditions/{triggerMode} | link:#++PUT__triggers_groups__groupId__conditions__triggerMode_++[Set the conditions for the group trigger.]
 | POST | /triggers/groups/{groupId}/dampenings | link:#++POST__triggers_groups__groupId__dampenings++[Create a new group dampening.]
@@ -1900,7 +1901,7 @@ Status fields: +
 | GET | /triggers/groups/{groupId}/members | link:#++GET__triggers_groups__groupId__members++[Find all group member trigger definitions.]
 | POST | /triggers/trigger | link:#++POST__triggers_trigger++[Create a new full trigger (trigger, dampenings and conditions).]
 | GET | /triggers/trigger/{triggerId} | link:#++GET__triggers_trigger__triggerId_++[Get an existing full trigger definition (trigger, dampenings and conditions).]
-| PUT | /triggers/{triggerId} | link:#++PUT__triggers__triggerId_++[Update an existing trigger definition.]
+| DELETE | /triggers/{triggerId} | link:#++DELETE__triggers__triggerId_++[Delete an existing standard or group member trigger definition.]
 | PUT | /triggers/{triggerId}/conditions | link:#++PUT__triggers__triggerId__conditions++[Set the conditions for the trigger.]
 | PUT | /triggers/{triggerId}/conditions/{triggerMode} | link:#++PUT__triggers__triggerId__conditions__triggerMode_++[Set the conditions for the trigger.]
 | GET | /triggers/{triggerId}/dampenings | link:#++GET__triggers__triggerId__dampenings++[Get all Dampenings for a Trigger (1 Dampening per mode).]
@@ -1911,22 +1912,25 @@ Status fields: +
 
 ==============================================
 
-[[POST__triggers]]
-*Endpoint POST `/triggers`*
+[[GET__triggers]]
+*Endpoint GET `/triggers`*
 
-Create a new trigger. +
+Get triggers with optional filtering. +
  +
-Returns created trigger.
+If not criteria defined, it fetches all triggers stored in the system.
 
 
 
-*Body*
+*Query parameters*
 
-[cols="^20,55,^25", options="header"]
+[cols="15,^10,35,^15,^15", options="header"]
 |=======================
-|Required|Description|Data Type
+|Parameter|Required|Description|Type|Allowable Values
 
-|Yes|Trigger definition to be created.|<<Trigger>>
+|triggerIds|No|Filter out triggers for unspecified triggerIds.|String|Comma separated list of trigger IDs.
+|tags|No|Filter out triggers for unspecified tags.|String|Comma separated list of tags, each tag of format 'name\|description'. + 
+Specify '*' for description to match all values.
+|thin|No|Return only thin triggers. Currently Ignored.|Boolean|-
 
 |=======================
 
@@ -1939,8 +1943,8 @@ Returns created trigger.
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Success, Trigger Created.|<<Trigger>>
-|400|Bad Request/Invalid Parameters.|<<ApiError>>
+|200|Successfully fetched list of triggers.|List of <<Trigger>>
+|404|Trigger not found|<<ApiError>>
 |500|Internal server error.|<<ApiError>>
 
 |=======================
@@ -2229,10 +2233,10 @@ Make an orphan member trigger into an group trigger. +
 
 ==============================================
 
-[[PUT__triggers_groups__groupId_]]
-*Endpoint PUT `/triggers/groups/{groupId}`*
+[[DELETE__triggers_groups__groupId_]]
+*Endpoint DELETE `/triggers/groups/{groupId}`*
 
-Update an existing group trigger definition and its member definitions. +
+Delete a group trigger. +
  +
 
 
@@ -2244,19 +2248,20 @@ Update an existing group trigger definition and its member definitions. +
 |=======================
 |Parameter|Required|Description|Type|Allowable Values
 
-|groupId|Yes|Group Trigger definition id to be updated.|String|-
+|groupId|Yes|Group Trigger id.|String|-
 
 |=======================
 
 
 
-*Body*
+*Query parameters*
 
-[cols="^20,55,^25", options="header"]
+[cols="15,^10,35,^15,^15", options="header"]
 |=======================
-|Required|Description|Data Type
+|Parameter|Required|Description|Type|Allowable Values
 
-|Yes|Updated group trigger definition.|<<Trigger>>
+|keepNonOrphans|Yes|Convert the non-orphan member triggers to standard triggers.|Boolean|-
+|keepOrphans|Yes|Convert the orphan member triggers to standard triggers.|Boolean|-
 
 |=======================
 
@@ -2269,9 +2274,9 @@ Update an existing group trigger definition and its member definitions. +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Success, Group Trigger updated.|<<Trigger>>
+|200|Success, Group Trigger Removed.|-
 |400|Bad Request/Invalid Parameters.|<<ApiError>>
-|404|Trigger not found.|<<ApiError>>
+|404|Group Trigger not found.|<<ApiError>>
 |500|Internal server error.|<<ApiError>>
 
 |=======================
@@ -2653,12 +2658,12 @@ Get an existing full trigger definition (trigger, dampenings and conditions). +
 
 ==============================================
 
-[[PUT__triggers__triggerId_]]
-*Endpoint PUT `/triggers/{triggerId}`*
+[[DELETE__triggers__triggerId_]]
+*Endpoint DELETE `/triggers/{triggerId}`*
 
-Update an existing trigger definition. +
+Delete an existing standard or group member trigger definition. +
  +
-
+This can not be used to delete a group trigger definition.
 
 
 
@@ -2668,19 +2673,7 @@ Update an existing trigger definition. +
 |=======================
 |Parameter|Required|Description|Type|Allowable Values
 
-|triggerId|Yes|Trigger definition id to be updated.|String|-
-
-|=======================
-
-
-
-*Body*
-
-[cols="^20,55,^25", options="header"]
-|=======================
-|Required|Description|Data Type
-
-|Yes|Updated trigger definition.|<<Trigger>>
+|triggerId|Yes|Trigger definition id to be deleted.|String|-
 
 |=======================
 
@@ -2693,9 +2686,8 @@ Update an existing trigger definition. +
 |=======================
 |Status Code|Reason|Response Model
 
-|200|Success, Trigger updated.|<<Trigger>>
-|400|Bad Request/Invalid Parameters.|<<ApiError>>
-|404|Trigger not found.|<<ApiError>>
+|200|Success, Trigger deleted.|-
+|404|Trigger not found|<<ApiError>>
 |500|Internal server error.|<<ApiError>>
 
 |=======================
@@ -3004,16 +2996,107 @@ A base class for condition definition.
 |=======================
 
 
-[[ApiError]]
-=== ApiError
-Payload for a REST error response.
+[[Trigger]]
+=== Trigger
+A Trigger definition. + 
+ + 
+A Trigger can fire an Alert or an Event. + 
+ + 
+Triggers always start in FIRING mode. + 
+ + 
+If the auto-resolve feature is enabled for the Trigger, then it will switch to AUTORESOLVE mode after firing. + 
+ + 
+When the auto-resolve condition set is satisfied, or if the Trigger is reloaded (manually, via edit, or at startup), the trigger returns to FIRING mode. + 
+ + 
+The mode is also needed when defining a trigger, to indicate the relevant mode for a conditions or dampening definition.
 
 
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|errorMsg|No|The error message.|String|-|
+|tenantId|No|Tenant id owner of this trigger.|String|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|
+|id|No|Trigger identifier. Unique within the tenant.|String|-|Auto-generated UUID if not explicitly defined.
+|name|No|Trigger name. Used for display.|String|-|
+|description|No|Trigger description. Used for display.|String|-|
+|type|No|The type of the trigger.|String|STANDARD, GROUP, DATA_DRIVEN_GROUP, MEMBER, ORPHAN|STANDARD
+|eventType|No|The type of event produced by the trigger.|String|ALERT, EVENT|ALERT
+|eventCategory|No|The category of the event produced by the trigger.|String|-|
+|eventText|No|The text of the event produced by the trigger.|String|-|If not eventText defined. Description will be used. If not description defined, trigger name will be used.
+|severity|No|Severity of a trigger.|String|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
+|context|No|Properties defined by the user for this trigger. Context is propagated on generated Events/Alerts. Context cannot be used as criteria on finder methods.|Map of [String, String]|-|
+|tags|No|Tags defined by the user for this trigger. A tag is a [name, value] pair.Tags can be used as criteria on finder methods. + 
+Tag value cannot be null.|Map of [String, String]|-|
+|actions|No|A list of links to actions.|List of <<TriggerAction>>|-|
+|autoDisable|No|Disable automatically after firing.|boolean|-|false
+|autoEnable|No|Enable automatically if disabled and resolved manually.|boolean|-|false
+|autoResolve|No|Switch to auto-resolve mode after firing.|boolean|-|false
+|autoResolveAlerts|No|Resolve all unresolved alerts when auto-resolve condition-set is satisfied.|boolean|-|false
+|autoResolveMatch|No|The policy used for deciding whether the trigger auto-resolved condition-set is satisfied. ALL conditions must evaluate to true or ANY one condition must evaluate to true.|String|ALL, ANY|ALL
+|dataIdMap|No|Only set for MEMBER triggers, the dataIdMap used when adding the member. It is reused for group condition updates unless a new dataIdMap is provided.|Map of [String, String]|-|
+|memberOf|No|Only set for MEMBER triggers, the group trigger for which this is a member.|String|-|
+|enabled|No|A enabled trigger is loaded into the engine for data evaluation.|boolean|-|false
+|firingMatch|No|The policy used for deciding whether the trigger condition-set is satisfied. ALL conditions must evaluate to true or ANY one condition must evaluate to true.|String|ALL, ANY|ALL
+|source|No|Extended mechanism to match trigger conditions against Data with [source, dataId] identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger only evaluates data having the same source.|String|-|
+
+|=======================
+
+
+[[Alert]]
+=== Alert
+Alerts are generated when an Alert Trigger fires, based on a set of defined conditions + 
+that have been matched, possibly more than once or have held true over a period of time. + 
+ + 
+When fired the trigger can perform actions based on plugins (e-mail, sms, etc). + 
+ + 
+Alerts then start moving through the Open, Acknowledged, Resolved life-cycle. + 
+ + 
+- Open status represents an alert which has not been seen/taken yet by any user. + 
+- Acknowledge status represents an alert which has been seen/taken by any user and it is pending resolution. + 
+- Resolved status represents an alert which problem has been resolved. + 
+ + 
+Alerts can be resolved automatically using AUTORESOLVE <<Trigger>> conditions or manually via API. + 
+ + 
+Alert can attach a list of notes defined by the user. + 
+ + 
+There are many options on triggers to help ensure that alerts are not generated too frequently, + 
+including ways of automatically disabling and enabling the trigger. + 
+
+
+Subtype of <<Event>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|severity|No|Severity set for a <<Trigger>> and assigned to an alert when it is generated.|String|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
+|status|No|Lifecycle current status.|String|OPEN, ACKNOWLEDGED, RESOLVED|
+|notes|No|Notes attached with this alert.|List of <<Note>>|-|
+|lifecycle|No|List of lifecycle states that this alert has navigated.|List of <<LifeCycle>>|-|
+|resolvedEvalSets|No|The Eval Sets that resolved the <<Trigger>> in AUTORESOLVE mode. + 
+ Null for non AUTORESOLVE triggers.|List of List of <<ConditionEval>>|-|
+
+|=======================
+
+
+[[Data]]
+=== Data
+A base class for incoming data into alerts subsystem. + 
+All Data has TenantId, Id and a timestamp. + 
+An Id should be unique within the tenant. + 
+The timestamp is used to ensure that data is time-ordered when being sent into the alerting engine. + 
+If not assigned the timestamp will be assigned to current time.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|tenantId|No|Tenant id owner of this data.|String|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|
+|source|No|Extended mechanism to match trigger conditions against Data with [source, dataId] identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger only evaluates data having the same source.|String|-|
+|id|No|Data id unique within the tenant.|String|-|
+|timestamp|No|Timestamp for the data.|long|-|If not assigned, timestamp will be assigned to current time.
+|value|No|Value for single-value condition types.|String|-|
+|context|No|Properties defined by the user for this data. Context is propagated on generated Events/Alerts.|Map of [String, String]|-|
 
 |=======================
 
@@ -3073,155 +3156,6 @@ STRICT_TIMEOUT +
 |=======================
 
 
-[[Data]]
-=== Data
-A base class for incoming data into alerts subsystem. + 
-All Data has TenantId, Id and a timestamp. + 
-An Id should be unique within the tenant. + 
-The timestamp is used to ensure that data is time-ordered when being sent into the alerting engine. + 
-If not assigned the timestamp will be assigned to current time.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|tenantId|No|Tenant id owner of this data.|String|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|
-|source|No|Extended mechanism to match trigger conditions against Data with [source, dataId] identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger only evaluates data having the same source.|String|-|
-|id|No|Data id unique within the tenant.|String|-|
-|timestamp|No|Timestamp for the data.|long|-|If not assigned, timestamp will be assigned to current time.
-|value|No|Value for single-value condition types.|String|-|
-|context|No|Properties defined by the user for this data. Context is propagated on generated Events/Alerts.|Map of [String, String]|-|
-
-|=======================
-
-
-[[Alert]]
-=== Alert
-Alerts are generated when an Alert Trigger fires, based on a set of defined conditions + 
-that have been matched, possibly more than once or have held true over a period of time. + 
- + 
-When fired the trigger can perform actions based on plugins (e-mail, sms, etc). + 
- + 
-Alerts then start moving through the Open, Acknowledged, Resolved life-cycle. + 
- + 
-- Open status represents an alert which has not been seen/taken yet by any user. + 
-- Acknowledge status represents an alert which has been seen/taken by any user and it is pending resolution. + 
-- Resolved status represents an alert which problem has been resolved. + 
- + 
-Alerts can be resolved automatically using AUTORESOLVE <<Trigger>> conditions or manually via API. + 
- + 
-Alert can attach a list of notes defined by the user. + 
- + 
-There are many options on triggers to help ensure that alerts are not generated too frequently, + 
-including ways of automatically disabling and enabling the trigger. + 
-
-
-Subtype of <<Event>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|severity|No|Severity set for a <<Trigger>> and assigned to an alert when it is generated.|String|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
-|status|No|Lifecycle current status.|String|OPEN, ACKNOWLEDGED, RESOLVED|
-|notes|No|Notes attached with this alert.|List of <<Note>>|-|
-|lifecycle|No|List of lifecycle states that this alert has navigated.|List of <<LifeCycle>>|-|
-|resolvedEvalSets|No|The Eval Sets that resolved the <<Trigger>> in AUTORESOLVE mode. + 
- Null for non AUTORESOLVE triggers.|List of List of <<ConditionEval>>|-|
-
-|=======================
-
-
-[[GroupConditionsInfo]]
-=== GroupConditionsInfo
-A convenience class used in the REST API to POST a new Group Condition. + 
- + 
-A group-level condition uses dataId tokens for the dataIds defined in the condition.  + 
-The group members must then replace the tokens with actual dataIds. + 
- + 
-For example, we may define a group ThresholdCondition like ( $SystemLoad$ > 80 ). + 
-Each member must then replace $SystemLoad$ with the actual system load dataId for that member. + 
- + 
-The dataIdMemberMap is a map of the dataId tokens in the group conditions to the actual dataIds + 
-used for the current member triggers. + 
-Because most condition types have only one dataId the map will typically have 1 entry per condition. + 
-But because a condition could have multiple dataIds (e.g CompareCondition has dataId and data2Id), + 
-it may have more entries than conditions. + 
-The inner map maps member triggerIds to the dataId to be used for that member trigger for the given token. + 
-It should have 1 entry for each member trigger. + 
- + 
-For example, let's define a group trigger with two conditions: + 
- + 
-ThresholdCondition( $SystemLoad$ > 80 ) + 
-ThresholdCondition( $HeapUsed$ > 70 ) + 
- + 
-If the group has two current members, with triggerId's Member1 and Member2, + 
-the map would look like this: + 
- + 
-{ + 
-"$SystemLoad$":{"Member1":"Member1SystemLoad", "Member2":"Member2SystemLoad"}, + 
-"$HeapUsed$":{"Member1":"Member1HeapUsed", "Member2":"Member2HeapUsed"} + 
-} + 
- + 
-So, in the example the actual $SystemLoad$ dataIds would be Member1SystemLoad and Member2SystemLoad. + 
-With this Map we can now add the group-level conditions and also the two member-level conditions + 
-to each member + 
- + 
-A NOTE ABOUT EXTERNAL CONDITIONS. <code>ExternalCondition.expression</code> will automatically have the + 
-same token replacement performed. So, all occurrences of the dataId token found in the expression, + 
-will be replaced with the mapping. This allows the expression of a group external condition to be + 
-automatically customized to the member.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|conditions|No|A list of conditions for a Group Trigger.|List of <<Condition>>|-|
-|dataIdMemberMap|No|A map of the dataId tokens in the group conditions to the actual dataIds used for the current member triggers. Can be empty if the group has no existing members.|Map of [String, Map of [String, String]]|-|
-
-|=======================
-
-
-[[UnorphanMemberInfo]]
-=== UnorphanMemberInfo
-A convenience class used in the REST API to un-orphan an orphan group Member Trigger. + 
- + 
-A group-level condition uses dataId tokens for the dataIds defined in the condition. + 
-The group members must then replace the tokens with actual dataIds. + 
- + 
-For example, we may define a group ThresholdCondition like ( $SystemLoad$ > 80 ). + 
-Each member must then replace $SystemLoad$ with the actual system load dataId for that member. + 
-The dataIdMap is a map of the dataId tokens in the group conditions to the actual dataIds to + 
-be used for the member being added. For example, assume the group trigger has two conditions defined: + 
- + 
-ThresholdCondition( $SystemLoad$ > 80 ) and ThresholdCondition( $HeapUsed$ > 70 ) + 
- + 
-And now let's assume we are adding a new member, Member1.  The map would look like this: + 
- + 
-{ "$SystemLoad$":"Member1SystemLoad", "$HeapUsed$":"Member1HeapUsed" } + 
- + 
-So, in the example the actual dataIds would be Member1SystemLoad and Member1HeapUsed. + 
-With this Map we can now add the new member trigger. + 
- + 
-A NOTE ABOUT EXTERNAL CONDITIONS. ExternalCondition.expression will automatically have the + 
-same token replacement performed. So, all occurrences of the dataId token found in the expression, + 
-will be replaced with the mapping. + 
-This allows the expression of a group external condition to be automatically customized to the member.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|memberContext|No|Trigger context for member Trigger.|Map of [String, String]|-|
-|memberTags|No|Trigger tags for member Trigger.|Map of [String, String]|-|
-|dataIdMap|No|A map of the dataId tokens in the group conditions to the actual dataIds to be used for the member being added. + 
-Can be empty if the group has no current conditions.|Map of [String, String]|-|
-
-|=======================
-
-
 [[GroupMemberInfo]]
 === GroupMemberInfo
 A convenience class used in the REST API to POST a new group Member Trigger. + 
@@ -3257,6 +3191,45 @@ This allows the expression of a group external condition to be automatically cus
 |memberId|No|Trigger id for member Trigger.|String|-|
 |memberName|No|Trigger name for member Trigger.|String|-|
 |memberDescription|No|Trigger description for member Trigger.|String|-|
+|memberContext|No|Trigger context for member Trigger.|Map of [String, String]|-|
+|memberTags|No|Trigger tags for member Trigger.|Map of [String, String]|-|
+|dataIdMap|No|A map of the dataId tokens in the group conditions to the actual dataIds to be used for the member being added. + 
+Can be empty if the group has no current conditions.|Map of [String, String]|-|
+
+|=======================
+
+
+[[UnorphanMemberInfo]]
+=== UnorphanMemberInfo
+A convenience class used in the REST API to un-orphan an orphan group Member Trigger. + 
+ + 
+A group-level condition uses dataId tokens for the dataIds defined in the condition. + 
+The group members must then replace the tokens with actual dataIds. + 
+ + 
+For example, we may define a group ThresholdCondition like ( $SystemLoad$ > 80 ). + 
+Each member must then replace $SystemLoad$ with the actual system load dataId for that member. + 
+The dataIdMap is a map of the dataId tokens in the group conditions to the actual dataIds to + 
+be used for the member being added. For example, assume the group trigger has two conditions defined: + 
+ + 
+ThresholdCondition( $SystemLoad$ > 80 ) and ThresholdCondition( $HeapUsed$ > 70 ) + 
+ + 
+And now let's assume we are adding a new member, Member1.  The map would look like this: + 
+ + 
+{ "$SystemLoad$":"Member1SystemLoad", "$HeapUsed$":"Member1HeapUsed" } + 
+ + 
+So, in the example the actual dataIds would be Member1SystemLoad and Member1HeapUsed. + 
+With this Map we can now add the new member trigger. + 
+ + 
+A NOTE ABOUT EXTERNAL CONDITIONS. ExternalCondition.expression will automatically have the + 
+same token replacement performed. So, all occurrences of the dataId token found in the expression, + 
+will be replaced with the mapping. + 
+This allows the expression of a group external condition to be automatically customized to the member.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
 |memberContext|No|Trigger context for member Trigger.|Map of [String, String]|-|
 |memberTags|No|Trigger tags for member Trigger.|Map of [String, String]|-|
 |dataIdMap|No|A map of the dataId tokens in the group conditions to the actual dataIds to be used for the member being added. + 
@@ -3328,66 +3301,6 @@ Tag value cannot be null.|Map of [String, String]|-|
 |=======================
 
 
-[[Trigger]]
-=== Trigger
-A Trigger definition. + 
- + 
-A Trigger can fire an Alert or an Event. + 
- + 
-Triggers always start in FIRING mode. + 
- + 
-If the auto-resolve feature is enabled for the Trigger, then it will switch to AUTORESOLVE mode after firing. + 
- + 
-When the auto-resolve condition set is satisfied, or if the Trigger is reloaded (manually, via edit, or at startup), the trigger returns to FIRING mode. + 
- + 
-The mode is also needed when defining a trigger, to indicate the relevant mode for a conditions or dampening definition.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|tenantId|No|Tenant id owner of this trigger.|String|Tenant is overwritten from Hawkular-Tenant HTTP header parameter request|
-|id|No|Trigger identifier. Unique within the tenant.|String|-|Auto-generated UUID if not explicitly defined.
-|name|No|Trigger name. Used for display.|String|-|
-|description|No|Trigger description. Used for display.|String|-|
-|type|No|The type of the trigger.|String|STANDARD, GROUP, DATA_DRIVEN_GROUP, MEMBER, ORPHAN|STANDARD
-|eventType|No|The type of event produced by the trigger.|String|ALERT, EVENT|ALERT
-|eventCategory|No|The category of the event produced by the trigger.|String|-|
-|eventText|No|The text of the event produced by the trigger.|String|-|If not eventText defined. Description will be used. If not description defined, trigger name will be used.
-|severity|No|Severity of a trigger.|String|LOW, MEDIUM, HIGH, CRITICAL|MEDIUM
-|context|No|Properties defined by the user for this trigger. Context is propagated on generated Events/Alerts. Context cannot be used as criteria on finder methods.|Map of [String, String]|-|
-|tags|No|Tags defined by the user for this trigger. A tag is a [name, value] pair.Tags can be used as criteria on finder methods. + 
-Tag value cannot be null.|Map of [String, String]|-|
-|actions|No|A list of links to actions.|List of <<TriggerAction>>|-|
-|autoDisable|No|Disable automatically after firing.|boolean|-|false
-|autoEnable|No|Enable automatically if disabled and resolved manually.|boolean|-|false
-|autoResolve|No|Switch to auto-resolve mode after firing.|boolean|-|false
-|autoResolveAlerts|No|Resolve all unresolved alerts when auto-resolve condition-set is satisfied.|boolean|-|false
-|autoResolveMatch|No|The policy used for deciding whether the trigger auto-resolved condition-set is satisfied. ALL conditions must evaluate to true or ANY one condition must evaluate to true.|String|ALL, ANY|ALL
-|dataIdMap|No|Only set for MEMBER triggers, the dataIdMap used when adding the member. It is reused for group condition updates unless a new dataIdMap is provided.|Map of [String, String]|-|
-|memberOf|No|Only set for MEMBER triggers, the group trigger for which this is a member.|String|-|
-|enabled|No|A enabled trigger is loaded into the engine for data evaluation.|boolean|-|false
-|firingMatch|No|The policy used for deciding whether the trigger condition-set is satisfied. ALL conditions must evaluate to true or ANY one condition must evaluate to true.|String|ALL, ANY|ALL
-|source|No|Extended mechanism to match trigger conditions against Data with [source, dataId] identifiers. In this way it is possible to qualify triggers and data with a source such that a trigger only evaluates data having the same source.|String|-|
-
-|=======================
-
-
-[[ApiDeleted]]
-=== ApiDeleted
-Payload for a simple REST deleted number response.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|deleted|No|Deleted items.|Integer|-|
-
-|=======================
-
-
 [[ActionDefinition]]
 === ActionDefinition
 An action represents a consequence of an event. + 
@@ -3430,6 +3343,85 @@ If a <<TriggerAction>> defines no constraints the <<ActionDefinition>> constrain
 |=======================
 
 
+[[GroupConditionsInfo]]
+=== GroupConditionsInfo
+A convenience class used in the REST API to POST a new Group Condition. + 
+ + 
+A group-level condition uses dataId tokens for the dataIds defined in the condition.  + 
+The group members must then replace the tokens with actual dataIds. + 
+ + 
+For example, we may define a group ThresholdCondition like ( $SystemLoad$ > 80 ). + 
+Each member must then replace $SystemLoad$ with the actual system load dataId for that member. + 
+ + 
+The dataIdMemberMap is a map of the dataId tokens in the group conditions to the actual dataIds + 
+used for the current member triggers. + 
+Because most condition types have only one dataId the map will typically have 1 entry per condition. + 
+But because a condition could have multiple dataIds (e.g CompareCondition has dataId and data2Id), + 
+it may have more entries than conditions. + 
+The inner map maps member triggerIds to the dataId to be used for that member trigger for the given token. + 
+It should have 1 entry for each member trigger. + 
+ + 
+For example, let's define a group trigger with two conditions: + 
+ + 
+ThresholdCondition( $SystemLoad$ > 80 ) + 
+ThresholdCondition( $HeapUsed$ > 70 ) + 
+ + 
+If the group has two current members, with triggerId's Member1 and Member2, + 
+the map would look like this: + 
+ + 
+{ + 
+"$SystemLoad$":{"Member1":"Member1SystemLoad", "Member2":"Member2SystemLoad"}, + 
+"$HeapUsed$":{"Member1":"Member1HeapUsed", "Member2":"Member2HeapUsed"} + 
+} + 
+ + 
+So, in the example the actual $SystemLoad$ dataIds would be Member1SystemLoad and Member2SystemLoad. + 
+With this Map we can now add the group-level conditions and also the two member-level conditions + 
+to each member + 
+ + 
+A NOTE ABOUT EXTERNAL CONDITIONS. <code>ExternalCondition.expression</code> will automatically have the + 
+same token replacement performed. So, all occurrences of the dataId token found in the expression, + 
+will be replaced with the mapping. This allows the expression of a group external condition to be + 
+automatically customized to the member.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|conditions|No|A list of conditions for a Group Trigger.|List of <<Condition>>|-|
+|dataIdMemberMap|No|A map of the dataId tokens in the group conditions to the actual dataIds used for the current member triggers. Can be empty if the group has no existing members.|Map of [String, Map of [String, String]]|-|
+
+|=======================
+
+
+[[ApiDeleted]]
+=== ApiDeleted
+Payload for a simple REST deleted number response.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|deleted|No|Deleted items.|Integer|-|
+
+|=======================
+
+
+[[ApiError]]
+=== ApiError
+Payload for a REST error response.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|errorMsg|No|The error message.|String|-|
+
+|=======================
+
+
 [[Action]]
 === Action
 An action represents a consequence of an event. + 
@@ -3453,144 +3445,6 @@ Subtype of <<ActionDefinition>>
 |=======================
 
 
-[[MissingCondition]]
-=== MissingCondition
-A MissingCondition is used to evaluate when a data or an event has not been received on time interval. + 
- + 
-A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time, in milliseconds, starting to count from trigger was enabled or last received data/event.
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|interval|No|A time interval defined in milliseconds.|long|-|
-
-|=======================
-
-
-[[RateCondition]]
-=== RateCondition
-A threshold condition against rate of change over time. + 
- + 
-Typically used for "counter" metrics, that continuously increase or decrease. + 
-Given the last two datums for dataId: + 
- + 
-deltaTime   = datum.time - prevDatum.time + 
-deltaValue  = datum.value - prevData.value + 
-periods     = deltaTime / <conditionPeriod> + 
-rate        = deltaValue / periods + 
-match       = rate <conditionOperator> <conditionThreshold> + 
- + 
-In other words, take the rate of change for the most recent datums and compare it to the threshold. + 
-For example, + 
-Let's say we have a metric, sessionCount, that increments for each new session.  If the sessionCount increases too quickly, say more than 20 per minute, we want an alert.  We'd want: + 
- + 
-RateCondition( 'SessionCount', INCREASING, MINUTE, GT, 20 ) + 
- + 
-By specifying the SessionCount data as increasing, we know to ignore/reset if the previous session count is less than the current session count.  This indicates that maybe the counter was reset (maybe due to a restart). + 
- + 
-Note that rate of change is always determined as an absolute value. So threshold values should be >= 0.
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|direction|No|Indicate if a metric is increasing/decreasing.|String|DECREASING, INCREASING, NA|
-|period|No|Time period used for the evaluation.|String|SECOND, MINUTE, HOUR, DAY, WEEK|
-|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
-|threshold|No|Condition threshold.|Double|-|
-
-|=======================
-
-
-[[EventCondition]]
-=== EventCondition
-An EventCondition is used for condition evaluations over Event data using expressions. + 
- + 
-Expression is a comma separated list of the following 3 tokens structure: + 
- + 
-<event.field> <operator> <constant> [,<event.field> <operator> <constant>]* + 
- + 
-<event.field> represent a fixed field of event structure or a key of tags. + 
-Supported fields are the following: + 
-- tenantId + 
-- id + 
-- ctime + 
-- text + 
-- category + 
-- tags.<key> + 
- + 
-<operator> is a string representing a string/numeric operator, supported ones are: + 
-"==" equals + 
-"!=" not equals + 
-"starts" starts with String operator + 
-"ends" ends with String operator + 
-"contains" contains String operator + 
-"match" match String operator + 
-"<" less than + 
-"<=" less or equals than + 
-">" greater than + 
-">=" greater or equals than + 
-"==" equals + 
- + 
-<constant> is a string that might be interpreted as a number if is not closed with single quotes or a string constant if it is closed with single quotes + 
-i.e. 23, 'test' + 
- + 
-A constant string can contain special character comma but escaped with backslash. + 
-i.e '\,test', 'test\,' + 
- + 
-So, putting everything together, a valid expression might look like: + 
-event.id starts 'IDXYZ', event.tag.category == 'Server', event.tag.from end '.com' + 
- + 
-A non valid expression will return false. + 
-
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|expression|No|Event expression used for this condition.|String|-|
-
-|=======================
-
-
-[[ConditionEval]]
-=== ConditionEval
-A base class to represent an evaluation state of a specific condition.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|match|No|Result of the condition evaluation.|boolean|-|
-|evalTimestamp|No|Time of condition evaluation.|long|-|
-|dataTimestamp|No|Time stamped on the data used in the evaluation.|long|-|
-|type|No|The type of the condition eval defined. Each type has its specific properties defined on its subtype of condition eval.|String|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|
-|context|No|Properties defined by the user at Data level on the dataId used for this evaluation.|Map of [String, String]|-|
-|displayString|No|A canonical display string of the evaluation (the result of a call to #getLog()).|String|-|
-
-|=======================
-
-
-[[ThresholdCondition]]
-=== ThresholdCondition
-A numeric threshold condition.
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
-|threshold|No|Condition threshold.|Double|-|
-
-|=======================
-
-
 [[NelsonCondition]]
 === NelsonCondition
 A condition to detect instability based on historical data. + 
@@ -3605,6 +3459,22 @@ Subtype of <<Condition>>
 
 |activeRules|No|Set of NelsonRule to evaluate.|List of <<NelsonRule>>|Rule1, Rule2, Rule3, Rule4, Rule5, Rule6, Rule7, Rule8|All Rules
 |sampleSize|No|Number of samples used to establish baseline information (mean, standard deviation).|int|-|50
+
+|=======================
+
+
+[[Note]]
+=== Note
+A simple note representation.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|user|No|The user who creates the note.|String|-|
+|ctime|No|Note creation time.|long|Timestamp in milliseconds.|
+|text|No|The note text.|String|-|
 
 |=======================
 
@@ -3627,26 +3497,6 @@ Subtype of <<Condition>>
 |=======================
 
 
-[[CompareCondition]]
-=== CompareCondition
-A numeric comparison condition. + 
- + 
-Examples: + 
-X > 80% of Y, FreeSpace < 20% of TotalSpace + 
-
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
-|data2Id|No|Data identifier of the metric used for comparison.|String|-|
-|data2Multiplier|No|Straight multiplier to be applied to data2Id on the comparison. Final comparison expression can be read as "dataId <operator> data2Multiplier*data2Id".|Double|-|
-
-|=======================
-
-
 [[ExternalCondition]]
 === ExternalCondition
 An ExternalCondition is used for condition evaluations performed outside of the Alerting engine. + 
@@ -3663,39 +3513,6 @@ Subtype of <<Condition>>
 
 |alerterId|No|An identifier assigned by the external alerter to identify this condition as being handled by that. It should be unique enough such that external AlerterIds are unique.|String|-|
 |expression|No|The operator/pattern/expression/description of the external condition. The use of this field is up to the external engine, It may be a pattern, expression or operator used to configure/drive an external evaluation engine or may just be a static description of the externally defined event.|String|-|
-
-|=======================
-
-
-[[AvailabilityCondition]]
-=== AvailabilityCondition
-An availability condition definition. + 
- + 
-Examples: + 
-X is DOWN
-
-Subtype of <<Condition>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|operator|No|Availability operator.|String|DOWN, NOT_UP, UP|
-
-|=======================
-
-
-[[Note]]
-=== Note
-A simple note representation.
-
-
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|user|No|The user who creates the note.|String|-|
-|ctime|No|Note creation time.|long|Timestamp in milliseconds.|
-|text|No|The note text.|String|-|
 
 |=======================
 
@@ -3803,6 +3620,200 @@ It is also possible to use a GMT-relative value: +
 |=======================
 
 
+[[MissingCondition]]
+=== MissingCondition
+A MissingCondition is used to evaluate when a data or an event has not been received on time interval. + 
+ + 
+A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time, in milliseconds, starting to count from trigger was enabled or last received data/event.
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|interval|No|A time interval defined in milliseconds.|long|-|
+
+|=======================
+
+
+[[EventCondition]]
+=== EventCondition
+An EventCondition is used for condition evaluations over Event data using expressions. + 
+ + 
+Expression is a comma separated list of the following 3 tokens structure: + 
+ + 
+<event.field> <operator> <constant> [,<event.field> <operator> <constant>]* + 
+ + 
+<event.field> represent a fixed field of event structure or a key of tags. + 
+Supported fields are the following: + 
+- tenantId + 
+- id + 
+- ctime + 
+- text + 
+- category + 
+- tags.<key> + 
+ + 
+<operator> is a string representing a string/numeric operator, supported ones are: + 
+"==" equals + 
+"!=" not equals + 
+"starts" starts with String operator + 
+"ends" ends with String operator + 
+"contains" contains String operator + 
+"match" match String operator + 
+"<" less than + 
+"<=" less or equals than + 
+">" greater than + 
+">=" greater or equals than + 
+"==" equals + 
+ + 
+<constant> is a string that might be interpreted as a number if is not closed with single quotes or a string constant if it is closed with single quotes + 
+i.e. 23, 'test' + 
+ + 
+A constant string can contain special character comma but escaped with backslash. + 
+i.e '\,test', 'test\,' + 
+ + 
+So, putting everything together, a valid expression might look like: + 
+event.id starts 'IDXYZ', event.tag.category == 'Server', event.tag.from end '.com' + 
+ + 
+A non valid expression will return false. + 
+
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|expression|No|Event expression used for this condition.|String|-|
+
+|=======================
+
+
+[[AvailabilityCondition]]
+=== AvailabilityCondition
+An availability condition definition. + 
+ + 
+Examples: + 
+X is DOWN
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|operator|No|Availability operator.|String|DOWN, NOT_UP, UP|
+
+|=======================
+
+
+[[CompareCondition]]
+=== CompareCondition
+A numeric comparison condition. + 
+ + 
+Examples: + 
+X > 80% of Y, FreeSpace < 20% of TotalSpace + 
+
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
+|data2Id|No|Data identifier of the metric used for comparison.|String|-|
+|data2Multiplier|No|Straight multiplier to be applied to data2Id on the comparison. Final comparison expression can be read as "dataId <operator> data2Multiplier*data2Id".|Double|-|
+
+|=======================
+
+
+[[LifeCycle]]
+=== LifeCycle
+A lifecycle state representation.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|status|No|The status of this lifecycle.|String|OPEN, ACKNOWLEDGED, RESOLVED|OPEN
+|user|No|The user who creates the state + 
+Open statutes are created by 'system' + 
+In AUTORESOLVE triggers Resolved statutes are create by 'AutoResolve'.|String|-|
+|stime|No|Creation time for this state.|long|Timestamp in milliseconds.|
+
+|=======================
+
+
+[[StringCondition]]
+=== StringCondition
+A string comparison condition.
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|operator|No|String operator.|String|EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, MATCH|
+|pattern|No|Pattern to be used with the string operator.|String|-|
+|ignoreCase|No|Flag to indicate whether pattern should ignore case in the string operator expression.|boolean|-|false
+
+|=======================
+
+
+[[ConditionEval]]
+=== ConditionEval
+A base class to represent an evaluation state of a specific condition.
+
+
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|match|No|Result of the condition evaluation.|boolean|-|
+|evalTimestamp|No|Time of condition evaluation.|long|-|
+|dataTimestamp|No|Time stamped on the data used in the evaluation.|long|-|
+|type|No|The type of the condition eval defined. Each type has its specific properties defined on its subtype of condition eval.|String|AVAILABILITY, COMPARE, STRING, THRESHOLD, RANGE, EXTERNAL, EVENT, RATE, MISSING, NELSON|
+|context|No|Properties defined by the user at Data level on the dataId used for this evaluation.|Map of [String, String]|-|
+|displayString|No|A canonical display string of the evaluation (the result of a call to #getLog()).|String|-|
+
+|=======================
+
+
+[[RateCondition]]
+=== RateCondition
+A threshold condition against rate of change over time. + 
+ + 
+Typically used for "counter" metrics, that continuously increase or decrease. + 
+Given the last two datums for dataId: + 
+ + 
+deltaTime   = datum.time - prevDatum.time + 
+deltaValue  = datum.value - prevData.value + 
+periods     = deltaTime / <conditionPeriod> + 
+rate        = deltaValue / periods + 
+match       = rate <conditionOperator> <conditionThreshold> + 
+ + 
+In other words, take the rate of change for the most recent datums and compare it to the threshold. + 
+For example, + 
+Let's say we have a metric, sessionCount, that increments for each new session.  If the sessionCount increases too quickly, say more than 20 per minute, we want an alert.  We'd want: + 
+ + 
+RateCondition( 'SessionCount', INCREASING, MINUTE, GT, 20 ) + 
+ + 
+By specifying the SessionCount data as increasing, we know to ignore/reset if the previous session count is less than the current session count.  This indicates that maybe the counter was reset (maybe due to a restart). + 
+ + 
+Note that rate of change is always determined as an absolute value. So threshold values should be >= 0.
+
+Subtype of <<Condition>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|direction|No|Indicate if a metric is increasing/decreasing.|String|DECREASING, INCREASING, NA|
+|period|No|Time period used for the evaluation.|String|SECOND, MINUTE, HOUR, DAY, WEEK|
+|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
+|threshold|No|Condition threshold.|Double|-|
+
+|=======================
+
+
 [[TriggerAction]]
 === TriggerAction
 Links an <<ActionDefinition>> with a <<Trigger>>. + 
@@ -3826,36 +3837,32 @@ If a <<TriggerAction>> defines no constraints the <<ActionDefinition>> constrain
 |=======================
 
 
-[[StringCondition]]
-=== StringCondition
-A string comparison condition.
+[[ThresholdCondition]]
+=== ThresholdCondition
+A numeric threshold condition.
 
 Subtype of <<Condition>>
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|operator|No|String operator.|String|EQUAL, NOT_EQUAL, STARTS_WITH, ENDS_WITH, CONTAINS, MATCH|
-|pattern|No|Pattern to be used with the string operator.|String|-|
-|ignoreCase|No|Flag to indicate whether pattern should ignore case in the string operator expression.|boolean|-|false
+|operator|No|Compare operator [LT (<), GT (>), LTE (<=), GTE (>=)].|String|LT, GT, LTE, GTE|
+|threshold|No|Condition threshold.|Double|-|
 
 |=======================
 
 
-[[LifeCycle]]
-=== LifeCycle
-A lifecycle state representation.
+[[EventConditionEval]]
+=== EventConditionEval
+An evaluation state for event condition.
 
-
+Subtype of <<ConditionEval>>
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|status|No|The status of this lifecycle.|String|OPEN, ACKNOWLEDGED, RESOLVED|OPEN
-|user|No|The user who creates the state + 
-Open statutes are created by 'system' + 
-In AUTORESOLVE triggers Resolved statutes are create by 'AutoResolve'.|String|-|
-|stime|No|Creation time for this state.|long|Timestamp in milliseconds.|
+|condition|No|Event condition linked with this state.|<<EventCondition>>|-|
+|value|No|Event value used for dataId.|<<Event>>|-|
 
 |=======================
 
@@ -3872,6 +3879,53 @@ Subtype of <<ConditionEval>>
 |condition|No|Missing condition linked with this state.|<<MissingCondition>>|-|
 |previousTime|No|Time when trigger was enabled or last time a data/event was received.|long|-|
 |time|No|Time when most recently evaluation of missing condition.|long|-|
+
+|=======================
+
+
+[[ThresholdConditionEval]]
+=== ThresholdConditionEval
+An evaluation state for threshold condition.
+
+Subtype of <<ConditionEval>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|condition|No|Threshold condition linked with this state.|<<ThresholdCondition>>|-|
+|value|No|Numeric value for dataId used in the evaluation.|Double|-|
+
+|=======================
+
+
+[[ExternalConditionEval]]
+=== ExternalConditionEval
+An evaluation state for an external condition. + 
+Note that external conditions may report a Data value or an Event.
+
+Subtype of <<ConditionEval>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|condition|No|External condition linked with this state.|<<ExternalCondition>>|-|
+|value|No|String value used for dataId.|String|-|
+|event|No|Event value used for dataId.|<<Event>>|-|
+
+|=======================
+
+
+[[ThresholdRangeConditionEval]]
+=== ThresholdRangeConditionEval
+An evaluation state for threshold range condition.
+
+Subtype of <<ConditionEval>>
+[cols="15,^10,35,^15,^15,^15", options="header"]
+|=======================
+|Name|Required|Description|Type|Allowable Values|Default Value
+
+|condition|No|Threshold range condition linked with this state.|<<ThresholdRangeCondition>>|-|
+|value|No|Numeric value for dataId used in the evaluation.|Double|-|
 
 |=======================
 
@@ -3893,17 +3947,17 @@ Subtype of <<ConditionEval>>
 |=======================
 
 
-[[ThresholdConditionEval]]
-=== ThresholdConditionEval
-An evaluation state for threshold condition.
+[[AvailabilityConditionEval]]
+=== AvailabilityConditionEval
+An evaluation state for availability condition.
 
 Subtype of <<ConditionEval>>
 [cols="15,^10,35,^15,^15,^15", options="header"]
 |=======================
 |Name|Required|Description|Type|Allowable Values|Default Value
 
-|condition|No|Threshold condition linked with this state.|<<ThresholdCondition>>|-|
-|value|No|Numeric value for dataId used in the evaluation.|Double|-|
+|condition|No|Availability condition linked with this state.|<<AvailabilityCondition>>|-|
+|value|No|Availability value used for dataId.|String|UP, DOWN, UNAVAILABLE|
 
 |=======================
 
@@ -3923,21 +3977,6 @@ Subtype of <<ConditionEval>>
 |=======================
 
 
-[[AvailabilityConditionEval]]
-=== AvailabilityConditionEval
-An evaluation state for availability condition.
-
-Subtype of <<ConditionEval>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|condition|No|Availability condition linked with this state.|<<AvailabilityCondition>>|-|
-|value|No|Availability value used for dataId.|String|UP, DOWN, UNAVAILABLE|
-
-|=======================
-
-
 [[RateConditionEval]]
 === RateConditionEval
 An evaluation state for rate condition.
@@ -3953,53 +3992,6 @@ Subtype of <<ConditionEval>>
 |previousTime|No|Time for first (older) value for dataId used in the evaluation.|long|-|
 |time|No|Time for second (newer) value for dataId used in the evaluation.|long|-|
 |rate|No|Calculated rate for this evaluation.|Double|-|
-
-|=======================
-
-
-[[ThresholdRangeConditionEval]]
-=== ThresholdRangeConditionEval
-An evaluation state for threshold range condition.
-
-Subtype of <<ConditionEval>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|condition|No|Threshold range condition linked with this state.|<<ThresholdRangeCondition>>|-|
-|value|No|Numeric value for dataId used in the evaluation.|Double|-|
-
-|=======================
-
-
-[[EventConditionEval]]
-=== EventConditionEval
-An evaluation state for event condition.
-
-Subtype of <<ConditionEval>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|condition|No|Event condition linked with this state.|<<EventCondition>>|-|
-|value|No|Event value used for dataId.|<<Event>>|-|
-
-|=======================
-
-
-[[ExternalConditionEval]]
-=== ExternalConditionEval
-An evaluation state for an external condition. + 
-Note that external conditions may report a Data value or an Event.
-
-Subtype of <<ConditionEval>>
-[cols="15,^10,35,^15,^15,^15", options="header"]
-|=======================
-|Name|Required|Description|Type|Allowable Values|Default Value
-
-|condition|No|External condition linked with this state.|<<ExternalCondition>>|-|
-|value|No|String value used for dataId.|String|-|
-|event|No|Event value used for dataId.|<<Event>>|-|
 
 |=======================
 
