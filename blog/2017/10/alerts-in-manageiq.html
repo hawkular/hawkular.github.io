@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Hawkular Alerts in ManageIQ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+
+	
+<!-- Fixed navbar -->
+<nav class="navbar navbar-fixed-top" role="navigation">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../..//">Home</a>
+    </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="../../../blog.html" role="button">Blog</a></li>
+        <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+          Community
+          <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li class="menu-item">
+              <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+            </li>
+            <li class="menu-item">
+              <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+            </li>
+            <li class="menu-item dropdown dropdown-submenu">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                <ul class="dropdown-menu">
+                  <li class="menu-item ">
+                    <a href="../../../community/labs/datamining/">Datamining</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../hawkular-clients/android-client/">Android client</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                  </li>
+                </ul>
+            </li>
+            <li>
+              <a href="https://github.com/hawkular">GitHub Repositories</a>
+            <li>
+              <a href="https://travis-ci.org/hawkular">CI Builds</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <div id="wrap">
+        <div class="dropup">
+          <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+          <script>
+            window.addEventListener('load', function() {
+              renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+          </script>
+        </div>
+      </div>
+    </div>
+</nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Hawkular Alerts in ManageIQ</h1>
+            <p>A blog post by Edgar Hernández</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/alerts.html">alerts</a> 
+          |
+      <a href="/tags/manageiq.html">manageiq</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular project includes an alerting module that can be used to send
+notifications when certain conditions are met. The alerting module is bundled
+in Hawkular Middleware Manager (aka. Hawkular Services)</p>
+</div>
+<div class="paragraph">
+<p>ManageIQ also has alerting capabilities and Hawkular Middleware Manager
+integrates to it. Once Hawkular is added as a provider, ManageIQ alerting
+features can be used to monitor servers managed by Hawkular.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_manageiq_alerting_terminology">ManageIQ alerting terminology</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In ManageIQ, two terms are used:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Alert</dt>
+<dd>
+<p>Defines the which type of infrastructure item should be monitored, the
+conditions and the actions to take when the conditions are met.</p>
+</dd>
+<dt class="hdlist1">Alert profile</dt>
+<dd>
+<p>It is a relation between a set of alerts and a set of
+infrastructure items. The set of alerts in the profile will all be applied to
+the set of infrastructure items. If any of the infrastructure items met the
+conditions in one of the alerts, the actions of the alert will run.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>ManageIQ has support for several types of infrastructure items, but Hawkular
+Middleware Manager supports only a subset of them. Middleware servers are an
+example of infrastructure items that are supported by Hawkular.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_alerting_terminology">Hawkular alerting terminology</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular&#8217;s alerting module has several kinds of objects (and terms). The two
+objects that are relevant from a ManageIQ perspective are:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Group trigger</dt>
+<dd>
+<p>Defines the set of conditions that should be met to fire an
+alert or an event. A group trigger is a template and no alert nor events will
+be fired until a member is added to it.</p>
+</dd>
+<dt class="hdlist1">Group member</dt>
+<dd>
+<p>It&#8217;s an association of a group trigger with the actual data to be
+evaluated. Internally to Hawkular, group members are managed instances of group
+triggers. Changes to the group trigger are pushed down to the members.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>Currently, ManageIQ creates group triggers that raise events (not alerts) and
+polls Hawkular to catch the events and run configured actions, if needed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_terminology_relationships">Terminology relationships</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When a user creates a ManageIQ alert, a Hawkular group trigger is created in
+the background. From then, any changes to the ManageIQ alert are replicated to
+the associated Hawkular group trigger until the alert is deleted, which causes
+the group trigger to also be deleted.</p>
+</div>
+<div class="paragraph">
+<p>While ManageIQ alerts have a direct relation with Hawkular group triggers,
+ManageIQ alert profiles are a little bit more complicated. For each alert in a
+ManageIQ profile, one Hawkular group member is created for each infrastructure
+item in the profile.</p>
+</div>
+<div class="paragraph">
+<p>This means that nothing is created in Hawkular if:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The alert profile is empty (has no alerts nor infrastructure items)</p>
+</li>
+<li>
+<p>The alert profile has alerts but has no infrastructure items</p>
+</li>
+<li>
+<p>The alert profile has infrastructure items but has no alerts</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If a ManageIQ alert profile has one alert and has assigned multiple
+infrastructure items, then the relevant Hawkular group trigger will have as
+many members as infrastructure items are in the ManageIQ alert profile.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/miq-hawkular-one-alert-three-inf-items.png" alt="Mapping of a ManageIQ alert profile with one alert and three infrastructure items" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>If a ManageIQ alert profile has multiple alerts and has assigned only one
+infrastructure item, then each Hawkular group trigger will have one member.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/miq-hawkular-three-alerts-one-inf-item.png" alt="Mapping of a ManageIQ alert profile with three alerts and one infrastructure item" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>With these two examples, you should be able to guess what will happen if the
+ManageIQ alert profile has a set of alerts and a set of infrastructure items.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_manageiq_alerts">Creating ManageIQ alerts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alerts are created by navigating to <em>Control &gt; Explorer &gt; Alerts</em>. In the alerts
+tree, select the <em>All alerts</em> folder. This will enable the <em>Add a New Alert</em> option
+under the <em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert.png" alt="Create new ManageIQ alert" width="550">
+</div>
+</div>
+<div class="paragraph">
+<p>In the form to create/edit an alert, be sure to select <em>Middleware server</em> in the
+<em>Based On</em> field. Currently, this is the only infrastructure item supported by
+Hawkular. If you choose something else, the alert won&#8217;t be managed by Hawkular.
+All other options can be filled as desired.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-form.png" alt="Form to create new ManageIQ alert">
+</div>
+</div>
+<div class="paragraph">
+<p>When the alert is created, it will be available in the control explorer and
+will be available to be included in an alert profile. In the background, a
+Hawkular group trigger is also created.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_an_alert_profile">Creating an alert profile</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alert profiles are created by navigating to <em>Control &gt; Explorer &gt; Alert
+Profiles</em>. In the alerts tree, select the <em>Middleware server Alert Profiles</em> item.
+This will enable the <em>Add a Middleware Server Alert Profile</em> option under the
+<em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-profile.png" alt="Create new ManageIQ alert profile" width="750">
+</div>
+</div>
+<div class="paragraph">
+<p>In the form to create/edit an alert profile, write a description and select the
+desired alerts to evaluate. At least, one alert is required to be able to
+create the alert profile.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-profile-form.png" alt="Form to create new ManageIQ alert profile" width="600">
+</div>
+</div>
+<div class="paragraph">
+<p>When the alert profile is created, it will be available in the control explorer
+which will also list the alerts contained in the profile. Nothing will be
+created in Hawkular because when the profile is created it is still not
+assigned to middleware servers.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_assigning_middleware_servers_to_an_alert_profile">Assigning middleware servers to an alert profile</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To assign middleware servers to an alert profile, select the desired profile in
+the control explorer. In the toolbar, use the <em>Edit assignments for this Alert
+Profile</em> options under the <em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-alert-profile-assignments-button.png" alt="ManageIQ edit assignments option for alert profiles" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>This will show the assignments page. An alert profile can be assigned to
+specific middleware servers or to all inventoried middleware servers (The
+Enterprise).</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-alert-profile-edit-assignments-screen.png" alt="ManageIQ edit assignments screen for alert profiles" width="340">
+</div>
+</div>
+<div class="paragraph">
+<p>Once you have chosen the desired middleware servers (or the enterprise) and
+changes are saved, the view page of the alert will be displayed again.</p>
+</div>
+<div class="paragraph">
+<p>In the background, Hawkular group members will be created to make effective the
+configuration and alerts should start triggering.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_viewing_alerts_in_the_timeline">Viewing alerts in the timeline</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The timeline of ManageIQ Hawkular provider will log events if the configuration
+of an alert is enabled to show timeline events.  Hawkular’s provider timeline
+can be accessed through the summary page of the provider, under the <em>Monitoring</em>
+menu:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-hawkular-summary-timeline-button.png" alt="ManageIQ Hawkular provider timeline menu button" width="700">
+</div>
+</div>
+<div class="paragraph">
+<p>If the alert has enabled the standard <em>Show on Timeline</em> configuration, the
+options to query the events are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Event type: Management Events</p>
+</li>
+<li>
+<p>Category: Alarm/Status Change/Errors</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-hawkular-timeline-alerts.png" alt="Hawkular timeline alerts" width="700">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>ManageIQ and Hawkular, albeit being two independent projects, they can be
+connected together to complement each other features. In this post is discussed
+how the alerting integration works and how to configure a basic alert.</p>
+</div>
+<div class="paragraph">
+<p>At the time of writing, ManageIQ supports only <em>Middleware Servers</em> as targets
+and, also, only a limited set of metrics is available to configure alerts.
+There is ongoing work to provide a wider range of metrics and this is expected
+to be available in following versions.</p>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by Edgar Hernández on  11 October 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

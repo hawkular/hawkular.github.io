@@ -6,9 +6,293 @@
     <atom:link href="http://www.hawkular.org/feed.xml" rel="self" type="application/rss+xml" />
     <description>Blog posts about Hawkular</description>
     <language>en-us</language>
-    <pubDate>Wed, 20 Sep 2017 07:48:07 +0000</pubDate>
-    <lastBuildDate>Wed, 20 Sep 2017 07:48:07 +0000</lastBuildDate>
+    <pubDate>Wed, 11 Oct 2017 14:56:50 +0000</pubDate>
+    <lastBuildDate>Wed, 11 Oct 2017 14:56:50 +0000</lastBuildDate>
 
+    <item>
+      <title>Hawkular Alerts in ManageIQ</title>
+      <link>http://www.hawkular.org/blog/2017/10/alerts-in-manageiq.html</link>
+      <author>noreply@hawkular.org (Edgar Hernández)</author>
+      <pubDate>Wed, 11 Oct 2017 00:00:00 +0000</pubDate>
+      <guid isPermaLink="false">blog/2017/10/alerts-in-manageiq.html</guid>
+      	<description>
+	&lt;div id=&quot;preamble&quot;&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular project includes an alerting module that can be used to send
+notifications when certain conditions are met. The alerting module is bundled
+in Hawkular Middleware Manager (aka. Hawkular Services)&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;ManageIQ also has alerting capabilities and Hawkular Middleware Manager
+integrates to it. Once Hawkular is added as a provider, ManageIQ alerting
+features can be used to monitor servers managed by Hawkular.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_manageiq_alerting_terminology&quot;&gt;ManageIQ alerting terminology&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In ManageIQ, two terms are used:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;dlist&quot;&gt;
+&lt;dl&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Alert&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;Defines the which type of infrastructure item should be monitored, the
+conditions and the actions to take when the conditions are met.&lt;/p&gt;
+&lt;/dd&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Alert profile&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;It is a relation between a set of alerts and a set of
+infrastructure items. The set of alerts in the profile will all be applied to
+the set of infrastructure items. If any of the infrastructure items met the
+conditions in one of the alerts, the actions of the alert will run.&lt;/p&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;ManageIQ has support for several types of infrastructure items, but Hawkular
+Middleware Manager supports only a subset of them. Middleware servers are an
+example of infrastructure items that are supported by Hawkular.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_hawkular_alerting_terminology&quot;&gt;Hawkular alerting terminology&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Hawkular&amp;#8217;s alerting module has several kinds of objects (and terms). The two
+objects that are relevant from a ManageIQ perspective are:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;dlist&quot;&gt;
+&lt;dl&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Group trigger&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;Defines the set of conditions that should be met to fire an
+alert or an event. A group trigger is a template and no alert nor events will
+be fired until a member is added to it.&lt;/p&gt;
+&lt;/dd&gt;
+&lt;dt class=&quot;hdlist1&quot;&gt;Group member&lt;/dt&gt;
+&lt;dd&gt;
+&lt;p&gt;It&amp;#8217;s an association of a group trigger with the actual data to be
+evaluated. Internally to Hawkular, group members are managed instances of group
+triggers. Changes to the group trigger are pushed down to the members.&lt;/p&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Currently, ManageIQ creates group triggers that raise events (not alerts) and
+polls Hawkular to catch the events and run configured actions, if needed.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_terminology_relationships&quot;&gt;Terminology relationships&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When a user creates a ManageIQ alert, a Hawkular group trigger is created in
+the background. From then, any changes to the ManageIQ alert are replicated to
+the associated Hawkular group trigger until the alert is deleted, which causes
+the group trigger to also be deleted.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;While ManageIQ alerts have a direct relation with Hawkular group triggers,
+ManageIQ alert profiles are a little bit more complicated. For each alert in a
+ManageIQ profile, one Hawkular group member is created for each infrastructure
+item in the profile.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This means that nothing is created in Hawkular if:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;The alert profile is empty (has no alerts nor infrastructure items)&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The alert profile has alerts but has no infrastructure items&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;The alert profile has infrastructure items but has no alerts&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If a ManageIQ alert profile has one alert and has assigned multiple
+infrastructure items, then the relevant Hawkular group trigger will have as
+many members as infrastructure items are in the ManageIQ alert profile.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/miq-hawkular-one-alert-three-inf-items.png&quot; alt=&quot;Mapping of a ManageIQ alert profile with one alert and three infrastructure items&quot; width=&quot;500&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If a ManageIQ alert profile has multiple alerts and has assigned only one
+infrastructure item, then each Hawkular group trigger will have one member.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/miq-hawkular-three-alerts-one-inf-item.png&quot; alt=&quot;Mapping of a ManageIQ alert profile with three alerts and one infrastructure item&quot; width=&quot;500&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;With these two examples, you should be able to guess what will happen if the
+ManageIQ alert profile has a set of alerts and a set of infrastructure items.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_creating_manageiq_alerts&quot;&gt;Creating ManageIQ alerts&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Alerts are created by navigating to &lt;em&gt;Control &amp;gt; Explorer &amp;gt; Alerts&lt;/em&gt;. In the alerts
+tree, select the &lt;em&gt;All alerts&lt;/em&gt; folder. This will enable the &lt;em&gt;Add a New Alert&lt;/em&gt; option
+under the &lt;em&gt;Configuration&lt;/em&gt; button.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-create-alert.png&quot; alt=&quot;Create new ManageIQ alert&quot; width=&quot;550&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the form to create/edit an alert, be sure to select &lt;em&gt;Middleware server&lt;/em&gt; in the
+&lt;em&gt;Based On&lt;/em&gt; field. Currently, this is the only infrastructure item supported by
+Hawkular. If you choose something else, the alert won&amp;#8217;t be managed by Hawkular.
+All other options can be filled as desired.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-create-alert-form.png&quot; alt=&quot;Form to create new ManageIQ alert&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When the alert is created, it will be available in the control explorer and
+will be available to be included in an alert profile. In the background, a
+Hawkular group trigger is also created.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_creating_an_alert_profile&quot;&gt;Creating an alert profile&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Alert profiles are created by navigating to &lt;em&gt;Control &amp;gt; Explorer &amp;gt; Alert
+Profiles&lt;/em&gt;. In the alerts tree, select the &lt;em&gt;Middleware server Alert Profiles&lt;/em&gt; item.
+This will enable the &lt;em&gt;Add a Middleware Server Alert Profile&lt;/em&gt; option under the
+&lt;em&gt;Configuration&lt;/em&gt; button.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-create-alert-profile.png&quot; alt=&quot;Create new ManageIQ alert profile&quot; width=&quot;750&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the form to create/edit an alert profile, write a description and select the
+desired alerts to evaluate. At least, one alert is required to be able to
+create the alert profile.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-create-alert-profile-form.png&quot; alt=&quot;Form to create new ManageIQ alert profile&quot; width=&quot;600&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;When the alert profile is created, it will be available in the control explorer
+which will also list the alerts contained in the profile. Nothing will be
+created in Hawkular because when the profile is created it is still not
+assigned to middleware servers.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_assigning_middleware_servers_to_an_alert_profile&quot;&gt;Assigning middleware servers to an alert profile&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;To assign middleware servers to an alert profile, select the desired profile in
+the control explorer. In the toolbar, use the &lt;em&gt;Edit assignments for this Alert
+Profile&lt;/em&gt; options under the &lt;em&gt;Configuration&lt;/em&gt; button.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-alert-profile-assignments-button.png&quot; alt=&quot;ManageIQ edit assignments option for alert profiles&quot; width=&quot;500&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;This will show the assignments page. An alert profile can be assigned to
+specific middleware servers or to all inventoried middleware servers (The
+Enterprise).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-alert-profile-edit-assignments-screen.png&quot; alt=&quot;ManageIQ edit assignments screen for alert profiles&quot; width=&quot;340&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;Once you have chosen the desired middleware servers (or the enterprise) and
+changes are saved, the view page of the alert will be displayed again.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;In the background, Hawkular group members will be created to make effective the
+configuration and alerts should start triggering.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_viewing_alerts_in_the_timeline&quot;&gt;Viewing alerts in the timeline&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;The timeline of ManageIQ Hawkular provider will log events if the configuration
+of an alert is enabled to show timeline events.  Hawkular’s provider timeline
+can be accessed through the summary page of the provider, under the &lt;em&gt;Monitoring&lt;/em&gt;
+menu:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-hawkular-summary-timeline-button.png&quot; alt=&quot;ManageIQ Hawkular provider timeline menu button&quot; width=&quot;700&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;If the alert has enabled the standard &lt;em&gt;Show on Timeline&lt;/em&gt; configuration, the
+options to query the events are:&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;ulist&quot;&gt;
+&lt;ul&gt;
+&lt;li&gt;
+&lt;p&gt;Event type: Management Events&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Category: Alarm/Status Change/Errors&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class=&quot;imageblock&quot;&gt;
+&lt;div class=&quot;content&quot;&gt;
+&lt;img src=&quot;http://www.hawkular.org//img/blog/2017/2017-10-11-miq-hawkular-timeline-alerts.png&quot; alt=&quot;Hawkular timeline alerts&quot; width=&quot;700&quot;&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class=&quot;sect1&quot;&gt;
+&lt;h2 id=&quot;_conclusion&quot;&gt;Conclusion&lt;/h2&gt;
+&lt;div class=&quot;sectionbody&quot;&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;ManageIQ and Hawkular, albeit being two independent projects, they can be
+connected together to complement each other features. In this post is discussed
+how the alerting integration works and how to configure a basic alert.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class=&quot;paragraph&quot;&gt;
+&lt;p&gt;At the time of writing, ManageIQ supports only &lt;em&gt;Middleware Servers&lt;/em&gt; as targets
+and, also, only a limited set of metrics is available to configure alerts.
+There is ongoing work to provide a wider range of metrics and this is expected
+to be available in following versions.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+	</description>
+    </item>
     <item>
       <title>Connecting Hawkular Agent to Hawkular Services over SSL</title>
       <link>http://www.hawkular.org/blog/2017/09/agent-to-services-over-ssl.html</link>

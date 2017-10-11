@@ -106,7 +106,7 @@
 
       </section>
 
-	<!--<p><em>20 September 2017</em></p>-->
+	<!--<p><em>11 October 2017</em></p>-->
 
 	<section>
       <div class="container">
@@ -4614,7 +4614,7 @@ This method should be invoked before of a creation of a new action.</p>
 <br>
 Status fields:<br>
 {<br>
-"status":"&lt;STARTED&gt;|&lt;FAILED&gt;",<br>
+"status":"&lt;UP&gt;|&lt;DOWN&gt;",<br>
 "Implementation-Version":"&lt;Version&gt;",<br>
 "Built-From-Git-SHA1":"&lt;Git-SHA1&gt;",<br>
 "distributed":"&lt;true|false&gt;",<br>
@@ -8089,6 +8089,14 @@ X is DOWN</p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.</p></td>
@@ -8263,6 +8271,14 @@ X &gt; 80% of Y, FreeSpace &lt; 20% of TotalSpace<br></p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.</p></td>
@@ -8426,6 +8442,14 @@ X &gt; 80% of Y, FreeSpace &lt; 20% of TotalSpace<br></p>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.</p></td>
@@ -8491,6 +8515,14 @@ X &gt; 80% of Y, FreeSpace &lt; 20% of TotalSpace<br></p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user at Data level on the dataId used for this evaluation.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string of the evaluation (the result of a call to #getLog()).</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 </tbody>
@@ -8910,41 +8942,42 @@ Tag value cannot be null.</p></td>
 <div class="paragraph">
 <p>An EventCondition is used for condition evaluations over Event data using expressions.<br>
 <br>
-Expression is a comma separated list of the following 3-token structure:<br>
+Expression is a comma separated list of the following 3 tokens structure:<br>
 <br>
-&lt;eventField&gt; &lt;operator&gt; &lt;constant&gt; [,&lt;eventField&gt; &lt;operator&gt; &lt;constant&gt;]*<br>
+&lt;event.field&gt; &lt;operator&gt; &lt;constant&gt; [,&lt;event.field&gt; &lt;operator&gt; &lt;constant&gt;]*<br>
 <br>
-&lt;eventField&gt; represents a fixed field of the Event structure, or a tag key.<br>
-Supported eventFields:<br>
-- tenantId (String)<br>
-- id (String)<br>
-- ctime (Numeric time since epoch in milliseconds)<br>
-- text (String)<br>
-- category (String)<br>
-- tags.&lt;key&gt; (String)<br>
+&lt;event.field&gt; represent a fixed field of event structure or a key of tags.<br>
+Supported fields are the following:<br>
+- tenantId<br>
+- id<br>
+- ctime<br>
+- text<br>
+- category<br>
+- tags.&lt;key&gt;<br>
 <br>
-&lt;operator&gt; is a string representing a string/numeric operator.
-Supported operators:<br>
-"starts" starts with String<br>
-"ends" ends with String<br>
-"contains" contains String<br>
-"match" regex match String<br>
+&lt;operator&gt; is a string representing a string/numeric operator, supported ones are:<br>
 "==" equals<br>
 "!=" not equals<br>
+"starts" starts with String operator<br>
+"ends" ends with String operator<br>
+"contains" contains String operator<br>
+"match" match String operator<br>
 "&lt;" less than<br>
-"&#8656;" less than or equals<br>
+"&#8656;" less or equals than<br>
 "&gt;" greater than<br>
-"&gt;=" greater than or equals<br>
+"&gt;=" greater or equals than<br>
+"==" equals<br>
 <br>
-A String &lt;constant&gt; must be enclosed in single-quotes. Special characters must be<br>
-escaped with a backslash. Examples: 'test', '\,test\\'
+&lt;constant&gt; is a string that might be interpreted as a number if is not closed with single quotes or a string constant if it is closed with single quotes<br>
+i.e. 23, 'test'<br>
 <br>
-A Numeric &lt;constant&gt; must be a valid number. Examples: 0, 23, 90.5, -10
+A constant string can contain special character comma but escaped with backslash.<br>
+i.e '\,test', 'test\,'<br>
 <br>
-Example of a valid expression:<br>
-id starts 'IDXYZ', category == 'Server', tags.from ends '.com'<br>
+So, putting everything together, a valid expression might look like:<br>
+event.id starts 'IDXYZ', event.tag.category == 'Server', event.tag.from end '.com'<br>
 <br>
-An invalid expression will always return false.<br></p>
+A non valid expression will return false.<br></p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
@@ -9036,6 +9069,14 @@ An invalid expression will always return false.<br></p>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this condition.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -9204,6 +9245,14 @@ The Alerting engine assumes a true evaluation for the data being sent in from th
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this condition.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -9571,7 +9620,7 @@ In AUTORESOLVE triggers Resolved statutes are create by 'AutoResolve'.</p></td>
 <div class="paragraph">
 <p>A MissingCondition is used to evaluate when a data or an event has not been received on time interval.<br>
 <br>
-A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time starting to count from trigger was enabled or last received data/event.</p>
+A MissingCondition will be evaluated to true when a data/event has not been received in the last interval time, in milliseconds, starting to count from trigger was enabled or last received data/event.</p>
 </div>
 <table class="tableblock frame-all grid-all spread">
 <colgroup>
@@ -9663,6 +9712,14 @@ A MissingCondition will be evaluated to true when a data/event has not been rece
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this condition.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -9974,6 +10031,14 @@ Note that rate of change is always determined as an absolute value. So threshold
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.</p></td>
@@ -10177,6 +10242,14 @@ Note that rate of change is always determined as an absolute value. So threshold
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">dataId</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">Yes</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Data identifier used for condition evaluation. dataId is used in conjunction with operators defined at subtype condition level.</p></td>
@@ -10337,6 +10410,14 @@ Note that rate of change is always determined as an absolute value. So threshold
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this condition.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>
@@ -10524,6 +10605,14 @@ Note that rate of change is always determined as an absolute value. So threshold
 <td class="tableblock halign-left valign-top"><p class="tableblock">Properties defined by the user for this condition.</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">object</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">map[string,string]</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock">displayString</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">No</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A canonical display string for the condition expression. Can be null until the condition is fully defined.</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">string</p></td>
+<td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 <td class="tableblock halign-center valign-top"><p class="tableblock">-</p></td>
 </tr>
 <tr>

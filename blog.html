@@ -107,6 +107,286 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/10/alerts-in-manageiq.html"><h1>Hawkular Alerts in ManageIQ</h1></a>
+            <p>11 October 2017, by Edgar Hernández</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular project includes an alerting module that can be used to send
+notifications when certain conditions are met. The alerting module is bundled
+in Hawkular Middleware Manager (aka. Hawkular Services)</p>
+</div>
+<div class="paragraph">
+<p>ManageIQ also has alerting capabilities and Hawkular Middleware Manager
+integrates to it. Once Hawkular is added as a provider, ManageIQ alerting
+features can be used to monitor servers managed by Hawkular.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_manageiq_alerting_terminology">ManageIQ alerting terminology</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>In ManageIQ, two terms are used:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Alert</dt>
+<dd>
+<p>Defines the which type of infrastructure item should be monitored, the
+conditions and the actions to take when the conditions are met.</p>
+</dd>
+<dt class="hdlist1">Alert profile</dt>
+<dd>
+<p>It is a relation between a set of alerts and a set of
+infrastructure items. The set of alerts in the profile will all be applied to
+the set of infrastructure items. If any of the infrastructure items met the
+conditions in one of the alerts, the actions of the alert will run.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>ManageIQ has support for several types of infrastructure items, but Hawkular
+Middleware Manager supports only a subset of them. Middleware servers are an
+example of infrastructure items that are supported by Hawkular.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_hawkular_alerting_terminology">Hawkular alerting terminology</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Hawkular&#8217;s alerting module has several kinds of objects (and terms). The two
+objects that are relevant from a ManageIQ perspective are:</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Group trigger</dt>
+<dd>
+<p>Defines the set of conditions that should be met to fire an
+alert or an event. A group trigger is a template and no alert nor events will
+be fired until a member is added to it.</p>
+</dd>
+<dt class="hdlist1">Group member</dt>
+<dd>
+<p>It&#8217;s an association of a group trigger with the actual data to be
+evaluated. Internally to Hawkular, group members are managed instances of group
+triggers. Changes to the group trigger are pushed down to the members.</p>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>Currently, ManageIQ creates group triggers that raise events (not alerts) and
+polls Hawkular to catch the events and run configured actions, if needed.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_terminology_relationships">Terminology relationships</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When a user creates a ManageIQ alert, a Hawkular group trigger is created in
+the background. From then, any changes to the ManageIQ alert are replicated to
+the associated Hawkular group trigger until the alert is deleted, which causes
+the group trigger to also be deleted.</p>
+</div>
+<div class="paragraph">
+<p>While ManageIQ alerts have a direct relation with Hawkular group triggers,
+ManageIQ alert profiles are a little bit more complicated. For each alert in a
+ManageIQ profile, one Hawkular group member is created for each infrastructure
+item in the profile.</p>
+</div>
+<div class="paragraph">
+<p>This means that nothing is created in Hawkular if:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>The alert profile is empty (has no alerts nor infrastructure items)</p>
+</li>
+<li>
+<p>The alert profile has alerts but has no infrastructure items</p>
+</li>
+<li>
+<p>The alert profile has infrastructure items but has no alerts</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>If a ManageIQ alert profile has one alert and has assigned multiple
+infrastructure items, then the relevant Hawkular group trigger will have as
+many members as infrastructure items are in the ManageIQ alert profile.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/miq-hawkular-one-alert-three-inf-items.png" alt="Mapping of a ManageIQ alert profile with one alert and three infrastructure items" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>If a ManageIQ alert profile has multiple alerts and has assigned only one
+infrastructure item, then each Hawkular group trigger will have one member.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/miq-hawkular-three-alerts-one-inf-item.png" alt="Mapping of a ManageIQ alert profile with three alerts and one infrastructure item" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>With these two examples, you should be able to guess what will happen if the
+ManageIQ alert profile has a set of alerts and a set of infrastructure items.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_manageiq_alerts">Creating ManageIQ alerts</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alerts are created by navigating to <em>Control &gt; Explorer &gt; Alerts</em>. In the alerts
+tree, select the <em>All alerts</em> folder. This will enable the <em>Add a New Alert</em> option
+under the <em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert.png" alt="Create new ManageIQ alert" width="550">
+</div>
+</div>
+<div class="paragraph">
+<p>In the form to create/edit an alert, be sure to select <em>Middleware server</em> in the
+<em>Based On</em> field. Currently, this is the only infrastructure item supported by
+Hawkular. If you choose something else, the alert won&#8217;t be managed by Hawkular.
+All other options can be filled as desired.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-form.png" alt="Form to create new ManageIQ alert">
+</div>
+</div>
+<div class="paragraph">
+<p>When the alert is created, it will be available in the control explorer and
+will be available to be included in an alert profile. In the background, a
+Hawkular group trigger is also created.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_creating_an_alert_profile">Creating an alert profile</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Alert profiles are created by navigating to <em>Control &gt; Explorer &gt; Alert
+Profiles</em>. In the alerts tree, select the <em>Middleware server Alert Profiles</em> item.
+This will enable the <em>Add a Middleware Server Alert Profile</em> option under the
+<em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-profile.png" alt="Create new ManageIQ alert profile" width="750">
+</div>
+</div>
+<div class="paragraph">
+<p>In the form to create/edit an alert profile, write a description and select the
+desired alerts to evaluate. At least, one alert is required to be able to
+create the alert profile.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-create-alert-profile-form.png" alt="Form to create new ManageIQ alert profile" width="600">
+</div>
+</div>
+<div class="paragraph">
+<p>When the alert profile is created, it will be available in the control explorer
+which will also list the alerts contained in the profile. Nothing will be
+created in Hawkular because when the profile is created it is still not
+assigned to middleware servers.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_assigning_middleware_servers_to_an_alert_profile">Assigning middleware servers to an alert profile</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>To assign middleware servers to an alert profile, select the desired profile in
+the control explorer. In the toolbar, use the <em>Edit assignments for this Alert
+Profile</em> options under the <em>Configuration</em> button.</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-alert-profile-assignments-button.png" alt="ManageIQ edit assignments option for alert profiles" width="500">
+</div>
+</div>
+<div class="paragraph">
+<p>This will show the assignments page. An alert profile can be assigned to
+specific middleware servers or to all inventoried middleware servers (The
+Enterprise).</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-alert-profile-edit-assignments-screen.png" alt="ManageIQ edit assignments screen for alert profiles" width="340">
+</div>
+</div>
+<div class="paragraph">
+<p>Once you have chosen the desired middleware servers (or the enterprise) and
+changes are saved, the view page of the alert will be displayed again.</p>
+</div>
+<div class="paragraph">
+<p>In the background, Hawkular group members will be created to make effective the
+configuration and alerts should start triggering.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_viewing_alerts_in_the_timeline">Viewing alerts in the timeline</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>The timeline of ManageIQ Hawkular provider will log events if the configuration
+of an alert is enabled to show timeline events.  Hawkular’s provider timeline
+can be accessed through the summary page of the provider, under the <em>Monitoring</em>
+menu:</p>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-hawkular-summary-timeline-button.png" alt="ManageIQ Hawkular provider timeline menu button" width="700">
+</div>
+</div>
+<div class="paragraph">
+<p>If the alert has enabled the standard <em>Show on Timeline</em> configuration, the
+options to query the events are:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>Event type: Management Events</p>
+</li>
+<li>
+<p>Category: Alarm/Status Change/Errors</p>
+</li>
+</ul>
+</div>
+<div class="imageblock">
+<div class="content">
+<img src="/img/blog/2017/2017-10-11-miq-hawkular-timeline-alerts.png" alt="Hawkular timeline alerts" width="700">
+</div>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_conclusion">Conclusion</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>ManageIQ and Hawkular, albeit being two independent projects, they can be
+connected together to complement each other features. In this post is discussed
+how the alerting integration works and how to configure a basic alert.</p>
+</div>
+<div class="paragraph">
+<p>At the time of writing, ManageIQ supports only <em>Middleware Servers</em> as targets
+and, also, only a limited set of metrics is available to configure alerts.
+There is ongoing work to provide a wider range of metrics and this is expected
+to be available in following versions.</p>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/09/agent-to-services-over-ssl.html"><h1>Connecting Hawkular Agent to Hawkular Services over SSL</h1></a>
             <p>19 September 2017, by Josejulio Martínez</p>
             <p><div id="preamble">
@@ -1004,207 +1284,13 @@ Simple thresholds are not expressive enough to detect metric patterns or trends 
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/08/alerts-multiple-sources.html"><h1>Hawkular Alerts with Prometheus, ElasticSearch, Kafka</h1></a>
-            <p>11 August 2017, by John Mazzitelli</p>
-            <p><div class="sect1">
-<h2 id="_federated_alerts">Federated Alerts</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerts aims to be a federated alerting system. That is to say, it can fire alerts and send notifications that are triggered by data coming from a number of third-party external systems.</p>
-</div>
-<div class="paragraph">
-<p>Thus, Hawkular Alerts is more than just an alerting system for use with Hawkular Metrics. In fact, Hawkular Alerts can be used independently of Hawkular Metrics. This means you do not even have to be using Hawkular Metrics to take advantage of the functionality provided by Hawkular Alerts.</p>
-</div>
-<div class="paragraph">
-<p>This is a key differentiator between Hawkular Alerts and other alerting systems. Most alerting systems only alert on data coming from their respective storage systems (e.g. the Prometheus Alert Engine alerts only on Prometheus data). Hawkular Alerts, on the other hand, can trigger alerts based on data from various systems.</p>
-</div>
-<div class="sect2">
-<h3 id="_alerts_vs_events">Alerts vs. Events</h3>
-<div class="paragraph">
-<p>Before we begin, a quick clarification is in order. When it is said that Hawkular Alerts fires an "alert" it means some data came into Hawkular Alerts that matched some conditions which triggered the creation of an alert in Hawkular Alerts backend storage (which can then trigger additional actions such as sending emails or calling a webhook). An "alert" typically refers to a problem that has been detected, and someone should take action to fix it. An alert has a lifecycle attached to it - alerts are <em>opened</em>, then <em>acknowledged</em> by some user who will hopefully fix the problem, then <em>resolved</em> when the problem can be considered closed.</p>
-</div>
-<div class="paragraph">
-<p>However, there can be conditions that occur that do not represent problems but nevertheless are events you want recorded. There is no lifecycle associated with events and no additional actions are triggered by events, but "events" are fired by Hawkular Alerts in the same general manner as "alerts" are.</p>
-</div>
-<div class="paragraph">
-<p>In this document, when it is said that Hawkular Alerts can fire "alerts" based on data coming from external third-party systems such as Prometheus, ElasticSearch, and Kakfa, this also means events can be fired as well as alerts. What this means is you can record any event (not just a "problem", aka "alert") that can be gleaned from this data coming from external third-party systems.</p>
-</div>
-<div class="paragraph">
-<p>See <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_alerting_philosophy">alerting philosophy</a> for more.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_demo">Demo</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>There is a <a href="https://youtu.be/mM1mwJneKO4">recorded demo found here</a> that will illustrate what this document is describing. After you read this document, you should watch the demo to gain further clarity on what is being explained. The demo is the <code>multiple-sources</code> example which you can run yourself found <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples/multiple-sources">here</a> (note: at the time of writing, this example is only found in the <a href="https://github.com/hawkular/hawkular-alerts/tree/next/examples/multiple-sources">next branch</a>, to be merged in master soon).</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_prometheus">Prometheus</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerts can take the results of Prometheus metric queries and use the queried data for triggers that can fire alerts.</p>
-</div>
-<div class="paragraph">
-<p>This Hawkular Alerts trigger will fire an alert (and send an email) when a Prometheus metric indicates our store&#8217;s inventory of widgets is consistently low (as defined by the Prometheus query you see in the "expression" field of the condition):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
-   "id": "low-stock-prometheus-trigger",
-   "name": "Low Stock",
-   "description": "The number of widgets in stock is consistently low.",
-   "severity": "MEDIUM",
-   "enabled": true,
-   "tags": {
-      "prometheus": "Prometheus"
-   },
-   "actions":[
-      {
-      "actionPlugin": "email",
-      "actionId": "email-notify-owner"
-      }
-   ]
-},
-"conditions":[
-   {
-      "type": "EXTERNAL",
-      "alerterId": "prometheus",
-      "dataId": "prometheus-dataid",
-      "expression": "rate(products_in_inventory{product=\"widget\"}[30s])&lt;2"
-   }
-]</code></pre>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_integration_with_prometheus_alert_engine">Integration with Prometheus Alert Engine</h3>
-<div class="paragraph">
-<p>As a side note, though not demostrated in the example, Hawkular Alerts also has an integration with Prometheus' own Alert Engine. This means the alerts generated by Prometheus itself can be forward to Hawkular Alerts which can, in turn, be used for additional processing, perhaps for use with data that is unavailable to Prometheus that can tell Hawkular Alerts to fire other alerts. For example, Hawkular Alerts can take Prometheus alerts as input and feed it back into other conditions that trigger on the Prometheus alert along with ElasticSearch logs.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_elasticsearch">ElasticSearch</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerts can examine logs stored in ElasticSearch and trigger alerts based on patterns that match within the ElasticSearch log messages.</p>
-</div>
-<div class="paragraph">
-<p>This Hawkular Alerts trigger will fire an alert (and send an email) when ElasticSearch logs indicate sales are being lost due to inventory being out of stock of items (as defined by the condition which looks for a log category of "FATAL" which happens to mean a lost sale in the case of the store&#8217;s logs). Notice dampening is enabled on this trigger - this alert will only fire when the logs indicate lost sales every 3 times.</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
-   "id": "lost-sale-elasticsearch-trigger",
-   "name": "Lost Sale",
-   "description": "A sale was lost due to inventory out of stock.",
-   "severity": "CRITICAL",
-   "enabled": true,
-   "tags": {
-      "Elasticsearch": "Localhost instance"
-   },
-   "context": {
-      "timestamp": "@timestamp",
-      "filter": "{\"match\":{\"category\":\"inventory\"}}",
-      "interval": "10s",
-      "index": "store",
-      "mapping": "level:category,@timestamp:ctime,message:text,category:dataId,index:tags"
-   },
-   "actions":[
-      {
-      "actionPlugin": "email",
-      "actionId": "email-notify-owner"
-      }
-   ]
-},
-"dampenings": [
-   {
-      "triggerMode": "FIRING",
-      "type":"STRICT",
-      "evalTrueSetting": 3
-   }
-],
-"conditions":[
-   {
-      "type": "EVENT",
-      "dataId": "inventory",
-      "expression": "category == 'FATAL'"
-   }
-]</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_kafka">Kafka</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerts can examine data retrieved from Kafka message streams and trigger alerts based that Kafka data.</p>
-</div>
-<div class="paragraph">
-<p>This Hawkular Alerts trigger will fire an alert when data over a Kakfa topic indicates a large purchase was made to fill the store&#8217;s inventory (as defined by the condition which evaluates to true when any number over 17 is received on the Kafka topic):</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">"trigger":{
-   "id": "large-inventory-purchase-kafka-trigger",
-   "name": "Large Inventory Purchase",
-   "description": "A large purchase was made to restock inventory.",
-   "severity": "LOW",
-   "enabled": true,
-   "tags": {
-      "Kafka": "Localhost instance"
-   },
-   "context": {
-      "topic": "store",
-      "kafka.bootstrap.servers": "localhost:9092",
-      "kafka.group.id": "hawkular-alerting"
-   },
-   "actions":[ ]
-},
-"conditions":[
-   {
-      "type": "THRESHOLD",
-      "dataId": "store",
-      "operator": "GT",
-      "threshold": 17
-   }
-]</code></pre>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_but_wait_there_s_more">But, Wait! There&#8217;s More!</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>The above only mentions the different ways Hawkular Metrics retrieves data for use in determining what alerts to fire. What is not covered here is the fact that Hawkular Alerts can stream data in the other direction as well - Hawkular Alerts can send alert and event data <em>to</em> things like an ElasticSearch server or a Kafka broker. There are additional examples (mentioned below) that can demonstrate this capability.</p>
-</div>
-<div class="paragraph">
-<p>The point is Hawkular Alerts should be seen as a shared, common alerting engine that can be shared for use by multiple third-party systems and can be used as both a consumer and producer - as a consumer of the data from external third-party systems (which is used to fire alerts and events) and as a producer to send notifications of alerts and events to external third-party systems.</p>
-</div>
-<div class="sect2">
-<h3 id="_more_examples">More Examples</h3>
-<div class="paragraph">
-<p>Take a look at the Hawkular Alerts <a href="https://github.com/hawkular/hawkular-alerts/tree/master/examples">examples</a> for more examples on using external systems as data to be used for triggering alerts. (note: at the time of writing, some examples are currently in the <a href="https://github.com/hawkular/hawkular-alerts/tree/next/examples">next branch</a> such as the Kafka ones).</p>
-</div>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>11 August 2017 - <a href="blog/2017/08/alerts-multiple-sources.html">Hawkular Alerts with Prometheus, ElasticSearch, Kafka</a></li>
           <li>28 July 2017 - <a href="blog/2017/07/opentracing-ejb.html">OpenTracing EJB instrumentation</a></li>
           <li>24 July 2017 - <a href="blog/2017/07/grafana-new-query-interface.html">Grafana: new query interface</a></li>
           <li>18 July 2017 - <a href="blog/2017/07/jaeger-with-security-proxy.html">Protecting Jaeger UI with a sidecar security proxy</a></li>
