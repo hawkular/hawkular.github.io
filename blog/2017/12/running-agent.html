@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8"/>
+    <title>Hawkular - Running Hawkular Agent</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="keywords" content="">
+    <meta name="generator" content="JBake">
+
+    <!-- css -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="../../../css/bootstrap.min.css" rel="stylesheet">
+    <link href="../../../css/asciidoctor.css" rel="stylesheet">
+    <link href="../../../css/base.css" rel="stylesheet">
+    <link href="../../../css/tabzilla.css" rel="stylesheet">
+    <link href="../../../css/styles.css" rel="stylesheet">
+    <link href="../../../css/prettify.css" rel="stylesheet">
+    <link href="../../../css/ekko-lightbox.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="../../../js/html5shiv.min.js"></script>
+    <![endif]-->
+    <script src="../../../js/moment.min.js"></script>
+    <script src="../../../js/jquery-1.11.2.min.js"></script>
+
+    <!-- Fav and touch icons -->
+    <!--<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../assets/ico/apple-touch-icon-144-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../assets/ico/apple-touch-icon-114-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../assets/ico/apple-touch-icon-72-precomposed.png">
+    <link rel="apple-touch-icon-precomposed" href="../assets/ico/apple-touch-icon-57-precomposed.png">-->
+    <link rel="shortcut icon" href="../../../favicon.ico">
+    
+  </head>
+  <body onload="prettyPrint()" data-spy="scroll" data-offset="80" data-target="#toc">
+
+	
+<!-- Fixed navbar -->
+<nav class="navbar navbar-fixed-top" role="navigation">
+  <div class="container">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <a class="navbar-brand" href="../../..//">Home</a>
+    </div>
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+      <ul class="nav navbar-nav">
+        <li><a href="../../../blog.html" role="button">Blog</a></li>
+        <li class="dropdown"><a aria-expanded="false" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button">
+          Community
+          <span class="caret"></span>
+          </a>
+          <ul class="dropdown-menu" role="menu">
+            <li class="menu-item">
+              <a href="../../../community/docs/getting-involved/">Getting Involved</a>
+            </li>
+            <li class="menu-item">
+              <a href="../../../community/docs/developer-guide/">Developer Guide</a>
+            </li>
+            <li class="menu-item dropdown dropdown-submenu">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown">Labs</a>
+                <ul class="dropdown-menu">
+                  <li class="menu-item ">
+                    <a href="../../../community/labs/datamining/">Datamining</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="https://github.com/pilhuhn/hawkfx">HawkFX</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="../../../hawkular-clients/android-client/">Android client</a>
+                  </li>
+                  <li class="menu-item ">
+                    <a href="https://github.com/jotak/hawkular-java-toolbox">Client-side java toolbox</a>
+                  </li>
+                </ul>
+            </li>
+            <li>
+              <a href="https://github.com/hawkular">GitHub Repositories</a>
+            <li>
+              <a href="https://travis-ci.org/hawkular">CI Builds</a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <div id="wrap">
+        <div class="dropup">
+          <a class="tabnav-closed" href="#" id="tab">Red Hat</a>
+          <script>
+            window.addEventListener('load', function() {
+              renderTabzilla("Hawkular", "https://hawkular.github.io", true );
+            }, false);
+          </script>
+        </div>
+      </div>
+    </div>
+</nav>
+
+    <section class="main-banner blog-mainbanner">
+        <div class="container">
+            <h1>Running Hawkular Agent</h1>
+            <p>A blog post by John Mazzitelli</p>
+<!-- show tags for this page -->
+   <p> 
+      <a href="/tags/agent.html">agent</a> 
+          |
+      <a href="/tags/metrics.html">metrics</a> 
+          |
+      <a href="/tags/prometheus.html">prometheus</a> 
+  </p>
+        </div>
+    </section>
+
+    <div class="blog-container">
+        <br/><br/>
+    	<p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that Hawkular is moving towards integraton with Prometheus as its metrics collection and storage system, the agent
+has had some changes. This document will discuss those changes and how to run the Hawkular Agent, specifically version 2.0.0.Final.</p>
+</div>
+<div class="paragraph">
+<p>First, the Hawkular Agent now only runs as a javaagent (no longer does it run inside WildFly as a subsystem extension).
+So to run the agent, simply attach it as a javaagent to whatever JVM you want to monitor (be it a WildFly or EAP app server or
+any JVM application that exposes metrics via JMX). For example, add this command line option to the command that starts the JVM:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>-javaagent:hawkular-javaagent.jar=config=hawkular-javaagent-config.yaml,delay=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The configuration file contains all the settings necessary to start the agent and connect to the Hawkular Server.
+Once connected, the agent will pull down additional configuration settings from the server.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_running_in_wildfly">Running in WildFly</h3>
+<div class="paragraph">
+<p>If you are attaching the agent to a WildFly server, you must configure some additional settings.</p>
+</div>
+<div class="paragraph">
+<p>If you are running WildFly in standalone mode, the standalone.conf you should have something like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>JBOSS_MODULES_SYSTEM_PKGS="org.jboss.byteman,org.jboss.logmanager"
+...
+JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+...
+JAVA_OPTS="$JAVA_OPTS -javaagent:$JBOSS_HOME/bin/hawkular-javaagent.jar=config=$JBOSS_HOME/standalone/configuration/hawkular-javaagent-config.yaml,delay=10"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you are running WildFly in domain mode, the host controller&#8217;s domain.conf file should have something like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>HOST_CONTROLLER_JAVA_OPTS="$HOST_CONTROLLER_JAVA_OPTS -Dhawkular.agent.metadata.domain=true \
+   -Djboss.modules.system.pkgs=org.jboss.byteman,org.jboss.logmanager \
+   -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
+   -Djboss.host.server-excluded-properties=jboss.modules.system.pkgs,java.util.logging.manager,hawkular.agent.metadata.domain \
+   -javaagent:$JBOSS_HOME/bin/hawkular-javaagent.jar=config=$JBOSS_HOME/domain/configuration/hawkular-javaagent-config-domain.yaml,delay=10"</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_running_in_wildfly_domain_mode">Running in WildFly Domain Mode</h4>
+<div class="paragraph">
+<p>When running WildFly in domain mode, a Hawkular Agent runs in the host controller.
+There also needs to be a Hawkular Agent running in each of the slave servers spawned by the host controller. You ensure
+an agent is attached to each slave server by adding the proper -javaagent command line option to the
+server JVM command found in the host controller&#8217;s host.xml. Note also that you also have to tell each
+slave server&#8217;s agent what port it should bind the metrics exporter endpoint to. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>  &lt;jvms&gt;
+    &lt;jvm name="default"&gt;
+      &lt;jvm-options&gt;
+        ...
+        &lt;!-- HAWKULAR SETTINGS --&gt;
+        &lt;option value="-Djboss.modules.system.pkgs=org.jboss.byteman,org.jboss.logmanager"/&gt;
+        &lt;option value="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"/&gt;
+        &lt;option value="-javaagent:${jboss.home.dir}/bin/hawkular-javaagent.jar=config=${jboss.domain.config.dir}/hawkular-javaagent-config-metrics-only.yaml,delay=10"/&gt;
+      &lt;/jvm-options&gt;
+    &lt;/jvm&gt;
+  &lt;/jvms&gt;
+  &lt;servers&gt;
+    &lt;server name="server-one" group="main-server-group"&gt;
+      &lt;jvm name="default"&gt;
+        &lt;jvm-options&gt;
+          &lt;!-- HAWKULAR SETTINGS --&gt;
+          &lt;option value="-Dhawkular.agent.metrics.port=9780"/&gt;
+        &lt;/jvm-options&gt;
+      &lt;/jvm&gt;
+    &lt;/server&gt;
+  &lt;/servers&gt;
+  ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The slave server agents are to be run in metrics-only mode (that is, no managed-servers section is defined in their configuration files).</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example">Example</h3>
+<div class="paragraph">
+<p>To see an example WildFly distribution configured to run the Hawkular Agent in either standalone or domain mode,
+build from source or grab from a Maven repository the Maven artifact "org.hawkular.agent:hawkular-javaagent-wildfly-dist".
+Look at its <code>bin/</code> directory for the domain.conf and standalone.conf files and look in the
+<code>standalone/configuration</code> and <code>domain/configuration</code> directories for the different agent configuration files. Note also
+the <code>host-hawkular.xml</code> that is to be used with the <code>--host-config</code> option when running in domain mode.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_it_works">How It Works</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When the agent starts, it reads its configuration file from disk. The agent then attempts to connect to the Hawkular Server.
+The agent will download some additional configuration from the Hawkular Server that it overlays on top of its existing
+configuration (this pulls down specific metadata for the types of resources it is to manage).</p>
+</div>
+<div class="paragraph">
+<p>The agent will also pull down a separate configuration file that is used to configure
+the <a href="https://github.com/prometheus/jmx_exporter">Prometheus JMX Exporter</a> which is started by the agent. This is
+called the "Metrics Exporter". Thus you will get an agent that collects inventory and stores it in Hawkular,
+but you will also have a metrics exporter that will be used to expose metrics for collection by Hawkular&#8217;s Prometheus Server.</p>
+</div>
+<div class="paragraph">
+<p>The agent determines what configuration files to pull down via the settings in the local agent configuration file. The local agent configuration file is the one referred to in the javaagent command line - it is where you told the agent to find the configuration file. e.g. <code>javaagent:hawkular-javaagent.jar=config=this-config-file.yaml,delay=10</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>subsystem:
+  type-version: WF10
+...
+metrics-exporter:
+  config-file: WF10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As an example, if the agent is to monitor EAP6, you would replace "WF10" with "EAP6". As more supported products are
+added, additional configuration files are loaded on the Hawkular Server which can then be pulled down by the agent
+by simply changing the values of these <code>type-version</code> and <code>config-file</code> settings.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Note that a WildFly host controller agent must be told to download the metrics exporter
+config file of "WF10-DOMAIN" while the type-version should still be "WF10".
+See the WildFly+Agent distro (Maven artifact org.hawkular.agent:hawkular-javaagent-wildfly-dist) as an example.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>When an agent itself is registered in inventory on the Hawkular Server, Hawkular&#8217;s Prometheus Server will be told to
+scrape the agent&#8217;s metrics exporter endpoint, thus the agent&#8217;s metrics are collected automatically.</p>
+</div>
+<div class="sect2">
+<h3 id="_how_it_works_with_wildfly_domain_mode">How It Works with WildFly Domain Mode</h3>
+<div class="paragraph">
+<p>The agent runs in the host controller. The host controller&#8217;s agent can get all of the inventory for the host controller
+and its slave servers. There is also a metrics exporter running in the host controller&#8217;s agent as well (so
+metrics for the host controller can be collected).</p>
+</div>
+<div class="paragraph">
+<p>An agent runs in each slave server as well, but those agents run in "metrics-only" mode. No inventory is collected
+by these agents, but they do start a metrics exporter so metrics from each slave server can be collected.</p>
+</div>
+<div class="paragraph">
+<p>To configure the Prometheus JMX Exporter in the slave server&#8217;s agent, you must turn it on in "slave proxy mode" via these
+settings within the local agent configuration file. This is the agent configuration file you told the slave server to use in their -javaagent command line argument. See the host.xml entry you added for the slave servers. e.g.:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;jvms&gt;
+  &lt;jvm name="default"&gt;
+    &lt;jvm-options&gt;
+      &lt;option value="-javaagent:${jboss.home.dir}/bin/hawkular-javaagent.jar=config=${jboss.domain.config.dir}/hawkular-javaagent-config-metrics-only.yaml,delay=10"/&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>metrics-exporter:
+  proxy:
+    mode: slave
+    data-dir: ${jboss.domain.base.dir}/data/hawkular-metrics-exporter</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The host controller&#8217;s agent must turn on the Prometheus JMX Exporter in "master proxy mode" in the host controller agent&#8217;s local configuration file (this is the configuration file you told the host controller agent to use in its -javaagent command line option within the domain.conf file):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>metrics-exporter:
+  proxy:
+    mode: master
+    data-dir: ${jboss.domain.data.dir}/hawkular-metrics-exporter</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note the data directories between the slaves and master must be the same. It is recommended to use a subdirectory under WildFly&#8217;s domain/data directory as you see in the examples above.</p>
+</div>
+<div class="paragraph">
+<p>What happens under the covers is the slave server will write a file to the data directory describing the
+metrics exporter endpoint it started. The master will collect this information from all slaves and makes
+sure the Hawkular Server will tell the Prometheus Server to scrape those slave endpoints as well as the host controller
+agent&#8217;s own metrics exporter endpoint.</p>
+</div>
+</div>
+</div>
+</div></p>
+    	<hr /><br /><br />
+
+        <p><em>Published by John Mazzitelli on  11 December 2017</em></p>
+
+    <div id="disqus_thread"></div>
+        <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES * * */
+        var disqus_shortname = 'hawkular';
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function() {
+            var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+            dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+            (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+        })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+    </div>
+
+		</div>
+		<div id="push"></div>
+    </div>
+
+    <section class="redhat clearfix">
+      <div class="container">
+        <p class="pull-left">
+          <a href="http://www.redhat.com/">
+            <img alt="redhatlogo-white" src="../../..//img/redhatlogo-white.png" width="130">
+          </a>
+        </p>
+        <p class="muted credit pull-right">
+				  &copy; 2016 | Hawkular is released under <a href="/license.html">Apache License v2.0</a>
+					<a href="https://twitter.com/hawkular_org" class="twitter-follow-button" data-show-count="false" data-size="medium">Follow @hawkular_org</a>
+				  <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+					<iframe src="https://ghbtns.com/github-btn.html?user=hawkular&repo=hawkular-services&type=star" frameborder="0" scrolling="0" class="github-stars-btn"></iframe>
+				</p>
+
+    <!--p id="forkongithubp"><span id="forkongithub">
+      <a href="https://github.com/hawkular" class="bg-grey">
+        Fork me on GitHub
+      </a>
+    </span></p-->
+      </div>
+    </section>
+
+    <!-- javascript -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <!-- js -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+    <script src="../../../js/jbossorg-tabzilla.js"></script>
+    <script src="../../../js/behavior.js"></script>
+    <script src="../../../js/prettify.js"></script>
+    <script src="../../../js//ekko-lightbox.min.js"></script>
+
+<script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES * * */
+    var disqus_shortname = 'hawkular';
+    
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+  ga('create', 'UA-61728352-1', 'auto');
+  ga('send', 'pageview');
+</script>
+
+  </body>
+</html>

@@ -107,6 +107,215 @@
 
 
 <div class="blog-container">
+            <a href="blog/2017/12/running-agent.html"><h1>Running Hawkular Agent</h1></a>
+            <p>11 December 2017, by John Mazzitelli</p>
+            <p><div id="preamble">
+<div class="sectionbody">
+<div class="paragraph">
+<p>Now that Hawkular is moving towards integraton with Prometheus as its metrics collection and storage system, the agent
+has had some changes. This document will discuss those changes and how to run the Hawkular Agent, specifically version 2.0.0.Final.</p>
+</div>
+<div class="paragraph">
+<p>First, the Hawkular Agent now only runs as a javaagent (no longer does it run inside WildFly as a subsystem extension).
+So to run the agent, simply attach it as a javaagent to whatever JVM you want to monitor (be it a WildFly or EAP app server or
+any JVM application that exposes metrics via JMX). For example, add this command line option to the command that starts the JVM:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>-javaagent:hawkular-javaagent.jar=config=hawkular-javaagent-config.yaml,delay=10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The configuration file contains all the settings necessary to start the agent and connect to the Hawkular Server.
+Once connected, the agent will pull down additional configuration settings from the server.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_running_in_wildfly">Running in WildFly</h3>
+<div class="paragraph">
+<p>If you are attaching the agent to a WildFly server, you must configure some additional settings.</p>
+</div>
+<div class="paragraph">
+<p>If you are running WildFly in standalone mode, the standalone.conf you should have something like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>JBOSS_MODULES_SYSTEM_PKGS="org.jboss.byteman,org.jboss.logmanager"
+...
+JAVA_OPTS="$JAVA_OPTS -Djava.util.logging.manager=org.jboss.logmanager.LogManager"
+...
+JAVA_OPTS="$JAVA_OPTS -javaagent:$JBOSS_HOME/bin/hawkular-javaagent.jar=config=$JBOSS_HOME/standalone/configuration/hawkular-javaagent-config.yaml,delay=10"</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>If you are running WildFly in domain mode, the host controller&#8217;s domain.conf file should have something like:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>HOST_CONTROLLER_JAVA_OPTS="$HOST_CONTROLLER_JAVA_OPTS -Dhawkular.agent.metadata.domain=true \
+   -Djboss.modules.system.pkgs=org.jboss.byteman,org.jboss.logmanager \
+   -Djava.util.logging.manager=org.jboss.logmanager.LogManager \
+   -Djboss.host.server-excluded-properties=jboss.modules.system.pkgs,java.util.logging.manager,hawkular.agent.metadata.domain \
+   -javaagent:$JBOSS_HOME/bin/hawkular-javaagent.jar=config=$JBOSS_HOME/domain/configuration/hawkular-javaagent-config-domain.yaml,delay=10"</code></pre>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_running_in_wildfly_domain_mode">Running in WildFly Domain Mode</h4>
+<div class="paragraph">
+<p>When running WildFly in domain mode, a Hawkular Agent runs in the host controller.
+There also needs to be a Hawkular Agent running in each of the slave servers spawned by the host controller. You ensure
+an agent is attached to each slave server by adding the proper -javaagent command line option to the
+server JVM command found in the host controller&#8217;s host.xml. Note also that you also have to tell each
+slave server&#8217;s agent what port it should bind the metrics exporter endpoint to. For example:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>  &lt;jvms&gt;
+    &lt;jvm name="default"&gt;
+      &lt;jvm-options&gt;
+        ...
+        &lt;!-- HAWKULAR SETTINGS --&gt;
+        &lt;option value="-Djboss.modules.system.pkgs=org.jboss.byteman,org.jboss.logmanager"/&gt;
+        &lt;option value="-Djava.util.logging.manager=org.jboss.logmanager.LogManager"/&gt;
+        &lt;option value="-javaagent:${jboss.home.dir}/bin/hawkular-javaagent.jar=config=${jboss.domain.config.dir}/hawkular-javaagent-config-metrics-only.yaml,delay=10"/&gt;
+      &lt;/jvm-options&gt;
+    &lt;/jvm&gt;
+  &lt;/jvms&gt;
+  &lt;servers&gt;
+    &lt;server name="server-one" group="main-server-group"&gt;
+      &lt;jvm name="default"&gt;
+        &lt;jvm-options&gt;
+          &lt;!-- HAWKULAR SETTINGS --&gt;
+          &lt;option value="-Dhawkular.agent.metrics.port=9780"/&gt;
+        &lt;/jvm-options&gt;
+      &lt;/jvm&gt;
+    &lt;/server&gt;
+  &lt;/servers&gt;
+  ...</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The slave server agents are to be run in metrics-only mode (that is, no managed-servers section is defined in their configuration files).</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_example">Example</h3>
+<div class="paragraph">
+<p>To see an example WildFly distribution configured to run the Hawkular Agent in either standalone or domain mode,
+build from source or grab from a Maven repository the Maven artifact "org.hawkular.agent:hawkular-javaagent-wildfly-dist".
+Look at its <code>bin/</code> directory for the domain.conf and standalone.conf files and look in the
+<code>standalone/configuration</code> and <code>domain/configuration</code> directories for the different agent configuration files. Note also
+the <code>host-hawkular.xml</code> that is to be used with the <code>--host-config</code> option when running in domain mode.</p>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_how_it_works">How It Works</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>When the agent starts, it reads its configuration file from disk. The agent then attempts to connect to the Hawkular Server.
+The agent will download some additional configuration from the Hawkular Server that it overlays on top of its existing
+configuration (this pulls down specific metadata for the types of resources it is to manage).</p>
+</div>
+<div class="paragraph">
+<p>The agent will also pull down a separate configuration file that is used to configure
+the <a href="https://github.com/prometheus/jmx_exporter">Prometheus JMX Exporter</a> which is started by the agent. This is
+called the "Metrics Exporter". Thus you will get an agent that collects inventory and stores it in Hawkular,
+but you will also have a metrics exporter that will be used to expose metrics for collection by Hawkular&#8217;s Prometheus Server.</p>
+</div>
+<div class="paragraph">
+<p>The agent determines what configuration files to pull down via the settings in the local agent configuration file. The local agent configuration file is the one referred to in the javaagent command line - it is where you told the agent to find the configuration file. e.g. <code>javaagent:hawkular-javaagent.jar=config=this-config-file.yaml,delay=10</code>:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>subsystem:
+  type-version: WF10
+...
+metrics-exporter:
+  config-file: WF10</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>As an example, if the agent is to monitor EAP6, you would replace "WF10" with "EAP6". As more supported products are
+added, additional configuration files are loaded on the Hawkular Server which can then be pulled down by the agent
+by simply changing the values of these <code>type-version</code> and <code>config-file</code> settings.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<div class="title">Note</div>
+</td>
+<td class="content">
+Note that a WildFly host controller agent must be told to download the metrics exporter
+config file of "WF10-DOMAIN" while the type-version should still be "WF10".
+See the WildFly+Agent distro (Maven artifact org.hawkular.agent:hawkular-javaagent-wildfly-dist) as an example.
+</td>
+</tr>
+</table>
+</div>
+<div class="paragraph">
+<p>When an agent itself is registered in inventory on the Hawkular Server, Hawkular&#8217;s Prometheus Server will be told to
+scrape the agent&#8217;s metrics exporter endpoint, thus the agent&#8217;s metrics are collected automatically.</p>
+</div>
+<div class="sect2">
+<h3 id="_how_it_works_with_wildfly_domain_mode">How It Works with WildFly Domain Mode</h3>
+<div class="paragraph">
+<p>The agent runs in the host controller. The host controller&#8217;s agent can get all of the inventory for the host controller
+and its slave servers. There is also a metrics exporter running in the host controller&#8217;s agent as well (so
+metrics for the host controller can be collected).</p>
+</div>
+<div class="paragraph">
+<p>An agent runs in each slave server as well, but those agents run in "metrics-only" mode. No inventory is collected
+by these agents, but they do start a metrics exporter so metrics from each slave server can be collected.</p>
+</div>
+<div class="paragraph">
+<p>To configure the Prometheus JMX Exporter in the slave server&#8217;s agent, you must turn it on in "slave proxy mode" via these
+settings within the local agent configuration file. This is the agent configuration file you told the slave server to use in their -javaagent command line argument. See the host.xml entry you added for the slave servers. e.g.:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>&lt;jvms&gt;
+  &lt;jvm name="default"&gt;
+    &lt;jvm-options&gt;
+      &lt;option value="-javaagent:${jboss.home.dir}/bin/hawkular-javaagent.jar=config=${jboss.domain.config.dir}/hawkular-javaagent-config-metrics-only.yaml,delay=10"/&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>metrics-exporter:
+  proxy:
+    mode: slave
+    data-dir: ${jboss.domain.base.dir}/data/hawkular-metrics-exporter</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The host controller&#8217;s agent must turn on the Prometheus JMX Exporter in "master proxy mode" in the host controller agent&#8217;s local configuration file (this is the configuration file you told the host controller agent to use in its -javaagent command line option within the domain.conf file):</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="prettyprint highlight"><code>metrics-exporter:
+  proxy:
+    mode: master
+    data-dir: ${jboss.domain.data.dir}/hawkular-metrics-exporter</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Note the data directories between the slaves and master must be the same. It is recommended to use a subdirectory under WildFly&#8217;s domain/data directory as you see in the examples above.</p>
+</div>
+<div class="paragraph">
+<p>What happens under the covers is the slave server will write a file to the data directory describing the
+metrics exporter endpoint it started. The master will collect this information from all slaves and makes
+sure the Hawkular Server will tell the Prometheus Server to scrape those slave endpoints as well as the host controller
+agent&#8217;s own metrics exporter endpoint.</p>
+</div>
+</div>
+</div>
+</div></p>
+            <br />
+            <hr /><br />
+            <br />
             <a href="blog/2017/10/alerts-in-manageiq.html"><h1>Hawkular Alerts in ManageIQ</h1></a>
             <p>11 October 2017, by Edgar Hernández</p>
             <p><div id="preamble">
@@ -1108,188 +1317,13 @@ using a <a href="https://docs.openshift.com/container-platform/3.6/dev_guide/rou
             <br />
             <hr /><br />
             <br />
-            <a href="blog/2017/08/alerts-nelson-rules.html"><h1>Advanced Behaviour Detection with Nelson Rules</h1></a>
-            <p>15 August 2017, by Lucas Ponce</p>
-            <p><div class="sect1">
-<h2 id="_modeling_conditions">Modeling Conditions</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerting offers several types of <a href="http://www.hawkular.org/community/docs/developer-guide/alerts.html#_conditions">Conditions</a> for defining Triggers. Most of the Conditions deal with numeric data but String, Availability and Event data are also supported.</p>
-</div>
-<div class="paragraph">
-<p>Modeling scenarios for detecting behaviours is highly dependent on the nature of the Domain being represented.  The Domain may only require simple numeric threshold conditions to efficiently detect unexpected situations.</p>
-</div>
-<div class="paragraph">
-<p>In other domains, it can be non-trivial to identify unusual metric variations that may lead to a problem.
-Simple thresholds are not expressive enough to detect metric patterns or trends that can identify potential problems.</p>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_nelson_rules">Nelson Rules</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Hawkular Alerting supports Conditions based on <a href="https://en.wikipedia.org/wiki/Nelson_rules">Nelson Rules</a> to enable advanced detection on Numeric metrics.</p>
-</div>
-<div class="paragraph">
-<p>These rules are based on the mean and the standard deviation of the samples and offer additional techniques for modeling complex scenarios.</p>
-</div>
-<div class="paragraph">
-<p>For example,</p>
-</div>
-<div class="listingblock">
-<div class="content">
-<pre class="prettyprint highlight"><code class="language-json" data-lang="json">...
-"trigger":{
-   "id": "nelson-rule-trigger",
-   "name": "Nelson Rule Trigger",
-   "description": "An example Trigger that uses Nelson Rules Conditions.",
-   "enabled": true,
-   "actions":[]
-},
-"conditions":[
-   {
-      "type": "NELSON", <b class="conum">(1)</b>
-      "dataId": "metric-data-id",
-      "activeRules": ["Rule1","Rule2"], <b class="conum">(2)</b>
-      "sampleSize": 75 <b class="conum">(3)</b>
-   }
-]
-...</code></pre>
-</div>
-</div>
-<div class="colist arabic">
-<ol>
-<li>
-<p>Mark this Condition as a NelsonRule</p>
-</li>
-<li>
-<p>Define the Nelson Rules to activate (Rule1, Rule2, &#8230;&#8203;, Rule8) for metric-data-id (all rules are activated by default)</p>
-</li>
-<li>
-<p>Define the sampleSize (by default this value is set to 50)</p>
-</li>
-</ol>
-</div>
-<div class="paragraph">
-<p>Each rule represents a specific pattern as described below:</p>
-</div>
-<div class="sect2">
-<h3 id="_rule_1">Rule 1</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr1.png" alt="Nelson Rule 1">
-</div>
-</div>
-<div class="paragraph">
-<p>One sample is grossly out of control.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_2">Rule 2</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr2.png" alt="Nelson Rule 2">
-</div>
-</div>
-<div class="paragraph">
-<p>Some prolonged error has been detected.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_3">Rule 3</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr3.png" alt="Nelson Rule 3">
-</div>
-</div>
-<div class="paragraph">
-<p>An unusual trend has been detected.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_4">Rule 4</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr4.png" alt="Nelson Rule 4">
-</div>
-</div>
-<div class="paragraph">
-<p>The oscillation of a metric is beyond an expected amount of noise.</p>
-</div>
-<div class="paragraph">
-<p>Note that the rule is concerned with directionality only. The position of the mean and the size of the standard deviation have no bearing.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_5">Rule 5</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr5.png" alt="Nelson Rule 5">
-</div>
-</div>
-<div class="paragraph">
-<p>There is a medium tendency for samples to be mediumly out of control.</p>
-</div>
-<div class="paragraph">
-<p>The side of the mean for the third point is unspecified.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_6">Rule 6</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr6.png" alt="Nelson Rule 6">
-</div>
-</div>
-<div class="paragraph">
-<p>There is a strong tendency for samples to be out of control.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_7">Rule 7</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr7.png" alt="Nelson Rule 7">
-</div>
-</div>
-<div class="paragraph">
-<p>A greater variation would be expected.</p>
-</div>
-</div>
-<div class="sect2">
-<h3 id="_rule_8">Rule 8</h3>
-<div class="imageblock">
-<div class="content">
-<img src="/img/blog/2017/nr8.png" alt="Nelson Rule 8">
-</div>
-</div>
-<div class="paragraph">
-<p>Jumping from above to below whilst missing the first standard deviation band is rarely random.</p>
-</div>
-</div>
-</div>
-</div>
-<div class="sect1">
-<h2 id="_conclusion">Conclusion</h2>
-<div class="sectionbody">
-<div class="paragraph">
-<p>Applying Nelson Rules in our scenario can help to detect potential "out of control" situations.</p>
-</div>
-<div class="paragraph">
-<p>But as discussed, modeling scenarios are highly dependent of the nature of the Domain; applying Nelson Rules is a useful tool to help identify a problem.  Although, the alerts are predictive and a Domain&#8217;s Analyst may need to evaluate the quality of the model.</p>
-</div>
-</div>
-</div></p>
-            <br />
-            <hr /><br />
-            <br />
 
 
 
     <div class="large-4 columns blog-post-listings">
         <h2>Older posts:</h2>
         <ul>
+          <li>15 August 2017 - <a href="blog/2017/08/alerts-nelson-rules.html">Advanced Behaviour Detection with Nelson Rules</a></li>
           <li>11 August 2017 - <a href="blog/2017/08/alerts-multiple-sources.html">Hawkular Alerts with Prometheus, ElasticSearch, Kafka</a></li>
           <li>28 July 2017 - <a href="blog/2017/07/opentracing-ejb.html">OpenTracing EJB instrumentation</a></li>
           <li>24 July 2017 - <a href="blog/2017/07/grafana-new-query-interface.html">Grafana: new query interface</a></li>
